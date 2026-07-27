@@ -7,8 +7,9 @@ node_modules/
 *.exe
 *.zip
 
-# Windows 예약 장치명 (bash 오류로 생성된 더미 파일)
+# Windows 예약 장치명 / bash 오류로 생성된 더미 파일
 /nul
+/_ul
  
 # Android TWA ���� ���� 
 .gradle/ 
