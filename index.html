@@ -4965,9 +4965,13 @@ function exportCSV() {
 function searchNews() {
   const q = document.getElementById('newsQuery').value.trim();
   if (!q) { alert('종목명 또는 종목코드를 입력해주세요.'); return; }
-  // DART 공시 + 네이버 금융뉴스 동시 오픈
+  // DART 공시 오픈
   openDart(q);
-  setTimeout(() => window.open(`https://search.naver.com/search.naver?where=news&query=${encodeURIComponent(q)}`, '_blank'), 300);
+  // 6자리 종목코드 → 네이버 금융 해당 종목 뉴스 페이지, 종목명 → 네이버 뉴스 탭 검색
+  const naverUrl = /^\d{6}$/.test(q)
+    ? `https://finance.naver.com/item/news.naver?code=${q}`
+    : `https://search.naver.com/search.naver?where=news&query=${encodeURIComponent(q)}`;
+  setTimeout(() => window.open(naverUrl, '_blank'), 300);
 }
 
 function openDart(q) {
@@ -4999,7 +5003,11 @@ function openInvesting() {
 function openNewsQuery(site) {
   const q = document.getElementById('newsQuery').value.trim();
   if (site === 'naver') {
-    window.open(`https://search.naver.com/search.naver?where=news&query=${encodeURIComponent(q||'')}`, '_blank');
+    // 6자리 종목코드 → 네이버 금융 뉴스 페이지, 종목명 → 네이버 뉴스 탭
+    const url = /^\d{6}$/.test(q)
+      ? `https://finance.naver.com/item/news.naver?code=${q}`
+      : `https://search.naver.com/search.naver?where=news&query=${encodeURIComponent(q||'')}`;
+    window.open(url, '_blank');
   }
 }
 
