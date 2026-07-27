@@ -1260,11 +1260,6 @@
   .sub-tab-panel {
     display: none;
   }
-  /* main-tab-panel: 풀너비 탭 패널 (종합 외 탭들) */
-  .main-tab-panel {
-    display: none;
-    width: 100%;
-  }
   .sub-tab-panel.active {
     display: block;
   }
@@ -2055,23 +2050,26 @@
 
   </div><!-- /hts-left -->
 
-    <!-- ── RIGHT: 우측 패널 (종합: 미니탭 | 기타: 풀너비) ── -->
+  <!-- ── RIGHT: 사이드바 패널 ── -->
   <div class="hts-right">
+    <div class="sub-tab-body">
 
-    <!-- ========== 종합탭 우측 미니탭 래퍼 ========== -->
-    <div id="main-right-wrapper">
-      <div class="right-mini-tabs">
-        <button class="mini-tab-btn active" data-rtab="balance" onclick="switchRightTab('balance')">잔고요약</button>
-        <button class="mini-tab-btn" data-rtab="cash" onclick="switchRightTab('cash')">예수금</button>
-        <button class="mini-tab-btn" data-rtab="order" onclick="switchRightTab('order')">주문입력</button>
-        <button class="mini-tab-btn" data-rtab="calc" onclick="switchRightTab('calc')">계산기</button>
-        <button class="mini-tab-btn" data-rtab="news" onclick="switchRightTab('news')">뉴스/공시</button>
-        <button class="mini-tab-btn" data-rtab="corp" onclick="switchRightTab('corp')">기업정보</button>
-      </div>
+      <!-- 💼 잔고 -->
+      <div id="stab-balance" class="sub-tab-panel active">
 
-      <!-- [미니탭 1] 잔고요약 + 도넛 -->
-      <div id="rtab-balance" class="mini-tab-panel active">
-        <div class="card">
+  <!-- 총 자산 설정 (사이드바 전용) -->
+  <div class="card" style="padding:10px 14px;margin-bottom:10px;">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span style="font-size:12px;font-weight:700;color:var(--text3);white-space:nowrap;">💰 총 자산</span>
+      <input type="text" inputmode="decimal" id="totalAssetInput2" placeholder="예: 100,000,000"
+        style="flex:1;min-width:100px;padding:5px 9px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;outline:none;"
+        oninput="formatWithComma(this);document.getElementById('totalAssetInput').value=this.value;previewAssetRatio()"
+        onkeydown="if(event.key==='Enter')saveTotalAsset()">
+      <button class="btn btn-primary btn-sm" onclick="saveTotalAsset()" style="padding:4px 10px;font-size:12px;">설정</button>
+    </div>
+  </div>
+
+  <div class="card">
     <div class="card-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> 잔고 요약</div>
     <div class="hts-bar" style="margin-bottom:0;">
       <div class="hts-bar-cell">
@@ -2105,53 +2103,8 @@
       <div class="portfolio-bar-legend" id="balDonutLegend" style="flex:1;min-width:180px;"></div>
     </div>
   </div>
-      </div><!-- /rtab-balance -->
 
-      <!-- [미니탭 2] 예수금 관리 -->
-      <div id="rtab-cash" class="mini-tab-panel">
-        <div class="card">
-    <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;">
-      <span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> 예수금 관리</span>
-      <span style="display:flex;align-items:center;gap:8px;">
-        <span id="cashTabBalance" style="font-size:15px;font-weight:700;color:var(--green)"></span>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="refreshCashDisplay()" title="예수금 자동 계산 새로고침" style="display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> 새로고침</button>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="openCashManualModal()" title="입출금 내역 대신 실제 예수금을 직접 입력" style="display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> 직접 입력</button>
-      </span>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
-      <select id="cf2_type" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg3);color:var(--text);min-height:40px;">
-        <option value="deposit">입금</option>
-        <option value="withdraw">출금</option>
-      </select>
-      <input id="cf2_date" type="date" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg3);color:var(--text);min-height:40px;">
-      <input id="cf2_amount" type="text" inputmode="decimal" placeholder="금액 (원)" oninput="formatWithComma(this)" style="flex:1;min-width:110px;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg3);color:var(--text);min-height:40px;">
-      <input id="cf2_memo" type="text" placeholder="메모 (선택)" style="flex:1;min-width:90px;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg3);color:var(--text);min-height:40px;">
-      <button class="btn btn-primary btn-sm" onclick="saveCash2()">추가</button>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>날짜</th>
-            <th>구분</th>
-            <th style="text-align:right">금액</th>
-            <th>메모</th>
-            <th style="text-align:center">삭제</th>
-          </tr>
-        </thead>
-        <tbody id="cashTabBody"></tbody>
-      </table>
-    </div>
-    <div id="cashTabEmpty" class="empty-state" style="display:none">입금/출금 내역이 없습니다.</div>
-    <div style="margin-top:14px;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;font-size:13px;color:var(--text3);">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg> 예수금 = 입금 합계 − 출금 합계 − 현금 매수 합계 + 현금 매도 합계
-    </div>
-  </div>
-      </div><!-- /rtab-cash -->
-
-      <!-- [미니탭 3] 빠른 주문 입력 -->
-      <div id="rtab-order" class="mini-tab-panel">
-        <!-- ── 빠른 주문 입력 ── -->
+  <!-- ── 빠른 주문 입력 ── -->
   <div class="card">
     <div class="card-title" style="margin-bottom:12px;">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
@@ -2196,11 +2149,8 @@
     </button>
     <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:6px;">상세 입력은 <a onclick="switchSubTab('add')" style="color:var(--accent);cursor:pointer;text-decoration:underline;">매수등록 탭</a>에서</div>
   </div>
-      </div><!-- /rtab-order -->
 
-      <!-- [미니탭 4] 계산기 (복리 + 물타기) -->
-      <div id="rtab-calc" class="mini-tab-panel">
-        <!-- ── 복리 계산기 (접이식) ── -->
+  <!-- ── 복리 계산기 (접이식) ── -->
   <div class="card">
     <button class="calc-toggle-btn" id="calcToggleBtn" onclick="toggleCalcPanel()">
       <span style="display:flex;align-items:center;gap:7px;">
@@ -2237,227 +2187,11 @@
       </div>
     </div>
   </div>
-        <div style="height:12px;"></div>
-        <div style="display:grid;grid-template-columns:1fr;gap:20px;align-items:start;">
+</div>
 
-    <!-- ■ 물타기 계산기 -->
-    <div class="card">
-      <div class="card-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg> 물타기 계산기</div>
-      <div style="font-size:13px;color:var(--text3);margin-bottom:14px;">기존 보유 수량에 추가 매수 시 새 평균단가를 계산합니다.</div>
-      <div class="form-grid" style="grid-template-columns:1fr 1fr;">
-        <div class="form-group"><label>기존 평균단가 (원)</label><input type="text" inputmode="decimal" id="wa_avgPrice" placeholder="80,000" oninput="formatWithComma(this);calcWaterDown()"></div>
-        <div class="form-group"><label>기존 보유 수량 (주)</label><input type="number" id="wa_qty" placeholder="100" min="0" oninput="calcWaterDown()"></div>
-        <div class="form-group"><label>추가 매수 가격 (원)</label><input type="text" inputmode="decimal" id="wa_addPrice" placeholder="65,000" oninput="formatWithComma(this);calcWaterDown()"></div>
-        <div class="form-group"><label>추가 매수 수량 (주)</label><input type="number" id="wa_addQty" placeholder="50" min="0" oninput="calcWaterDown()"></div>
-      </div>
-      <div id="wa_result" style="display:none;margin-top:4px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px;">
-        <div style="font-size:13px;color:var(--text3);margin-bottom:10px;font-weight:600;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> 계산 결과</div>
-        <table style="width:100%;border-collapse:collapse;font-size:14px;">
-          <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 0;color:var(--text2)">새 평균단가</td><td id="wa_newAvg" style="text-align:right;font-weight:700;font-size:16px;color:var(--accent)"></td></tr>
-          <tr><td style="padding:6px 0;color:var(--text2)">평균단가 변동</td><td id="wa_change" style="text-align:right;font-weight:700"></td></tr>
-          <tr><td style="padding:6px 0;color:var(--text2)">총 보유 수량</td><td id="wa_totalQty" style="text-align:right;font-weight:600"></td></tr>
-          <tr><td style="padding:6px 0;color:var(--text2)">총 매수금액</td><td id="wa_totalAmt" style="text-align:right;font-weight:600"></td></tr>
-          <tr><td style="padding:6px 0;color:var(--text3);font-size:13px">&nbsp;&nbsp;기존 매수금액</td><td id="wa_oldAmt" style="text-align:right;color:var(--text3);font-size:13px"></td></tr>
-          <tr><td style="padding:6px 0;color:var(--text3);font-size:13px">&nbsp;&nbsp;추가 매수금액</td><td id="wa_addAmt" style="text-align:right;color:var(--text3);font-size:13px"></td></tr>
-        </table>
-      </div>
-      <button class="btn btn-ghost" style="margin-top:12px;" onclick="['wa_avgPrice','wa_qty','wa_addPrice','wa_addQty'].forEach(id=>{document.getElementById(id).value=''}); document.getElementById('wa_result').style.display='none';">초기화</button>
-    </div>
-
-  </div>
-      </div><!-- /rtab-calc -->
-
-      <!-- [미니탭 5] 뉴스 / 공시 -->
-      <div id="rtab-news" class="mini-tab-panel">
-        <!-- 종목 검색 -->
-  <div class="card">
-    <div class="card-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> 종목 공시 · 뉴스 검색</div>
-    <div class="alert alert-info"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg> 아래 검색창에 종목명 또는 종목코드를 입력하면 DART 공시, 네이버 증권 뉴스, Investing.com에서 직접 검색합니다.</div>
-    <div class="news-search-box">
-      <input type="text" id="newsQuery" placeholder="삼성전자 / 005930 / AAPL" list="newsStockList" style="flex:1;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:16px;outline:none;">
-      <datalist id="newsStockList"></datalist>
-      <button class="btn btn-primary" onclick="searchNews()">검색</button>
-    </div>
-  </div>
-
-  <!-- 공시 · 뉴스 링크 그리드 -->
-  <div class="news-grid">
-
-    <!-- DART -->
-    <div>
-      <div class="card">
-        <div class="card-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg> DART 전자공시</div>
-        <div class="news-links">
-          <div class="news-link-item" onclick="openDart()">
-            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-            <div class="nl-info">
-              <h4>DART 공시 검색</h4>
-              <p>금융감독원 전자공시시스템 · 사업보고서, 분기보고서, 주요사항보고서</p>
-            </div>
-            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-          </div>
-          <div class="news-link-item" onclick="openUrl('https://dart.fss.or.kr/dsac001/mainY.do')">
-            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
-            <div class="nl-info">
-              <h4>오늘의 공시</h4>
-              <p>당일 제출된 최신 공시 모아보기</p>
-            </div>
-            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-          </div>
-          <div class="news-link-item" onclick="openUrl('https://dart.fss.or.kr/dsab007/main.do')">
-            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
-            <div class="nl-info">
-              <h4>분기 / 반기 / 사업보고서</h4>
-              <p>DART 문서검색 — 보고서 종류별 필터 가능</p>
-            </div>
-            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-          </div>
-          <div class="news-link-item" onclick="openUrl('https://opendart.fss.or.kr/intro/main.do')">
-            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
-            <div class="nl-info">
-              <h4>DART OpenAPI 신청</h4>
-              <p>OpenDART API 키 신청 및 서비스 안내</p>
-            </div>
-            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6z"/></svg> 국내 증시 뉴스</div>
-        <div class="news-links">
-          <div class="news-link-item" onclick="openUrl('https://finance.naver.com/')">
-            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
-            <div class="nl-info"><h4>네이버 금융 메인</h4><p>코스피·코스닥 시장 현황</p></div>
-            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-          </div>
-          <div class="news-link-item" onclick="openUrl('https://www.hankyung.com/economy')">
-            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>
-            <div class="nl-info"><h4>한국경제 증권</h4><p>한국경제신문 증권 섹션</p></div>
-            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-          </div>
-          <div class="news-link-item" onclick="openUrl('https://www.mk.co.kr/news/stock/')">
-            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg></div>
-            <div class="nl-info"><h4>매일경제 주식</h4><p>매일경제신문 주식 섹션</p></div>
-            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- INVESTING.COM & 해외 -->
-    <div>
-      <div class="card">
-        <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Investing.com</div>
-        <div class="news-links">
-          <div class="news-link-item" onclick="openInvesting()">
-            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
-            <div class="nl-info">
-              <h4>Investing.com 종목 검색</h4>
-              <p>글로벌 주식·ETF·지수·FX 검색</p>
-            </div>
-            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-          </div>
-          <div class="news-link-item" onclick="openUrl('https://kr.investing.com/news/stock-market-news')">
-            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6z"/></svg></div>
-            <div class="nl-info"><h4>증시 뉴스</h4><p>Investing.com 한국어판 최신 뉴스</p></div>
-            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-          </div>
-          <div class="news-link-item" onclick="openUrl('https://kr.investing.com/economic-calendar/')">
-            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
-            <div class="nl-info"><h4>경제 캘린더</h4><p>FOMC·CPI·고용지표 등 주요 일정</p></div>
-            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-          </div>
-          <div class="news-link-item" onclick="openUrl('https://kr.investing.com/earnings-calendar/')">
-            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-            <div class="nl-info"><h4>실적 캘린더</h4><p>글로벌 기업 실적 발표 일정</p></div>
-            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> 해외 증시 리소스</div>
-        <div class="news-links">
-          <div class="news-link-item" onclick="openUrl('https://finance.yahoo.com')">
-            <div class="nl-icon"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#7c3aed"></span></div>
-            <div class="nl-info"><h4>Yahoo Finance</h4><p>미국 주식 뉴스·실적·재무제표</p></div>
-            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-          </div>
-          <div class="news-link-item" onclick="openUrl('https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany')">
-            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></div>
-            <div class="nl-info"><h4>SEC EDGAR</h4><p>미국 기업 10-K·10-Q·8-K 공시</p></div>
-            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-          </div>
-          <div class="news-link-item" onclick="openUrl('https://seekingalpha.com')">
-            <div class="nl-icon"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3b82f6"></span></div>
-            <div class="nl-info"><h4>Seeking Alpha</h4><p>미국 주식 분석·아이디어</p></div>
-            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-          </div>
-          <div class="news-link-item" onclick="openUrl('https://www.macrotrends.net')">
-            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
-            <div class="nl-info"><h4>Macrotrends</h4><p>주식·거시경제 장기 데이터 차트</p></div>
-            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 포트폴리오 종목별 바로가기 -->
-  <div class="card" id="portfolioNewsCard" style="display:none">
-    <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> 보유 종목별 공시·뉴스 바로가기</div>
-    <div id="portfolioNewsLinks" style="display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
-  </div>
-      </div><!-- /rtab-news -->
-
-      <!-- [미니탭 6] 기업정보 / 분석 -->
-      <div id="rtab-corp" class="mini-tab-panel">
-        <div class="card">
-          <div class="card-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            기업정보 조회
-          </div>
-          <div style="display:flex;gap:6px;margin-bottom:10px;">
-            <input id="corpSearchInput" type="text" placeholder="종목명 또는 티커 입력" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:13px;" onkeydown="if(event.key==='Enter')openCorpInfo()">
-            <button onclick="openCorpInfo()" style="padding:7px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">조회</button>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-            <button onclick="openCorpLink('dart')" style="padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;text-align:left;">
-              📋 DART 전자공시
-            </button>
-            <button onclick="openCorpLink('naver')" style="padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;text-align:left;">
-              📈 네이버 주식
-            </button>
-            <button onclick="openCorpLink('investing')" style="padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;text-align:left;">
-              🌐 Investing.com
-            </button>
-            <button onclick="openCorpLink('fsc')" style="padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;text-align:left;">
-              🏛️ 금융감독원
-            </button>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            주요 지수 / 리소스
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-            <button onclick="window.open('https://finance.yahoo.com','_blank')" style="padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;text-align:left;">🇺🇸 Yahoo Finance</button>
-            <button onclick="window.open('https://www.macrotrends.net','_blank')" style="padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;text-align:left;">📊 Macrotrends</button>
-            <button onclick="window.open('https://kr.investing.com/economic-calendar/','_blank')" style="padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;text-align:left;">📅 경제캘린더</button>
-            <button onclick="window.open('https://www.fearandgreedindex.com','_blank')" style="padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;text-align:left;">😱 공포탐욕지수</button>
-          </div>
-        </div>
-      </div><!-- /rtab-corp -->
-
-    </div><!-- /main-right-wrapper -->
-
-    <!-- ========== 다른 탭: 풀너비 패널 ========== -->
-
-    <!-- ➕ 매수등록 -->
-    <div id="stab-add" class="main-tab-panel" style="display:none;">
-      <!-- ADD STOCK FORM -->
+      <!-- ➕ 매수등록 -->
+      <div id="stab-add" class="sub-tab-panel">
+  <!-- ADD STOCK FORM -->
   <div class="card">
     <div class="card-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M5 12h14"/><path d="M12 5v14"/></svg> 매수 / 추가 매수</div>
     <div class="form-grid">
@@ -2552,11 +2286,11 @@
       <button class="btn btn-ghost" onclick="clearStockForm()">초기화</button>
     </div>
   </div>
-    </div><!-- /stab-add -->
+      </div>
 
-    <!-- 📓 투자일지 -->
-    <div id="stab-journal" class="main-tab-panel" style="display:none;">
-      <div id="journalLayout">
+      <!-- 📓 투자일지 -->
+      <div id="stab-journal" class="sub-tab-panel">
+  <div id="journalLayout">
 
   <!-- LEFT: FORM -->
   <div>
@@ -2730,11 +2464,12 @@
   </div>
 
   </div>
-    </div><!-- /stab-journal -->
+</div>
+      </div>
 
-    <!-- 📋 거래기록 -->
-    <div id="stab-trades" class="main-tab-panel" style="display:none;">
-      <div class="card">
+      <!-- 📋 거래기록 -->
+      <div id="stab-trades" class="sub-tab-panel">
+  <div class="card">
     <div class="section-row">
       <div class="section-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> 거래 기록</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
@@ -2774,10 +2509,228 @@
     <div id="tradeEmpty" class="empty-state" style="display:none">거래 기록이 없습니다</div>
   </div>
   <datalist id="tStockList"></datalist>
-    </div><!-- /stab-trades -->
+</div>
+
+      <!-- 💰 예수금 -->
+      <div id="stab-cash" class="sub-tab-panel">
+  <div class="card">
+    <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;">
+      <span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> 예수금 관리</span>
+      <span style="display:flex;align-items:center;gap:8px;">
+        <span id="cashTabBalance" style="font-size:15px;font-weight:700;color:var(--green)"></span>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="refreshCashDisplay()" title="예수금 자동 계산 새로고침" style="display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> 새로고침</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="openCashManualModal()" title="입출금 내역 대신 실제 예수금을 직접 입력" style="display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> 직접 입력</button>
+      </span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+      <select id="cf2_type" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg3);color:var(--text);min-height:40px;">
+        <option value="deposit">입금</option>
+        <option value="withdraw">출금</option>
+      </select>
+      <input id="cf2_date" type="date" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg3);color:var(--text);min-height:40px;">
+      <input id="cf2_amount" type="text" inputmode="decimal" placeholder="금액 (원)" oninput="formatWithComma(this)" style="flex:1;min-width:110px;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg3);color:var(--text);min-height:40px;">
+      <input id="cf2_memo" type="text" placeholder="메모 (선택)" style="flex:1;min-width:90px;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg3);color:var(--text);min-height:40px;">
+      <button class="btn btn-primary btn-sm" onclick="saveCash2()">추가</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>날짜</th>
+            <th>구분</th>
+            <th style="text-align:right">금액</th>
+            <th>메모</th>
+            <th style="text-align:center">삭제</th>
+          </tr>
+        </thead>
+        <tbody id="cashTabBody"></tbody>
+      </table>
+    </div>
+    <div id="cashTabEmpty" class="empty-state" style="display:none">입금/출금 내역이 없습니다.</div>
+    <div style="margin-top:14px;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;font-size:13px;color:var(--text3);">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg> 예수금 = 입금 합계 − 출금 합계 − 현금 매수 합계 + 현금 매도 합계
+    </div>
+  </div>
+</div>
+
+      <!-- 🧮 계산기 -->
+      <div id="stab-calc" class="sub-tab-panel">
+  <div style="display:grid;grid-template-columns:1fr;gap:20px;align-items:start;">
+
+    <!-- ■ 물타기 계산기 -->
+    <div class="card">
+      <div class="card-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg> 물타기 계산기</div>
+      <div style="font-size:13px;color:var(--text3);margin-bottom:14px;">기존 보유 수량에 추가 매수 시 새 평균단가를 계산합니다.</div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="form-group"><label>기존 평균단가 (원)</label><input type="text" inputmode="decimal" id="wa_avgPrice" placeholder="80,000" oninput="formatWithComma(this);calcWaterDown()"></div>
+        <div class="form-group"><label>기존 보유 수량 (주)</label><input type="number" id="wa_qty" placeholder="100" min="0" oninput="calcWaterDown()"></div>
+        <div class="form-group"><label>추가 매수 가격 (원)</label><input type="text" inputmode="decimal" id="wa_addPrice" placeholder="65,000" oninput="formatWithComma(this);calcWaterDown()"></div>
+        <div class="form-group"><label>추가 매수 수량 (주)</label><input type="number" id="wa_addQty" placeholder="50" min="0" oninput="calcWaterDown()"></div>
+      </div>
+      <div id="wa_result" style="display:none;margin-top:4px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px;">
+        <div style="font-size:13px;color:var(--text3);margin-bottom:10px;font-weight:600;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> 계산 결과</div>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 0;color:var(--text2)">새 평균단가</td><td id="wa_newAvg" style="text-align:right;font-weight:700;font-size:16px;color:var(--accent)"></td></tr>
+          <tr><td style="padding:6px 0;color:var(--text2)">평균단가 변동</td><td id="wa_change" style="text-align:right;font-weight:700"></td></tr>
+          <tr><td style="padding:6px 0;color:var(--text2)">총 보유 수량</td><td id="wa_totalQty" style="text-align:right;font-weight:600"></td></tr>
+          <tr><td style="padding:6px 0;color:var(--text2)">총 매수금액</td><td id="wa_totalAmt" style="text-align:right;font-weight:600"></td></tr>
+          <tr><td style="padding:6px 0;color:var(--text3);font-size:13px">&nbsp;&nbsp;기존 매수금액</td><td id="wa_oldAmt" style="text-align:right;color:var(--text3);font-size:13px"></td></tr>
+          <tr><td style="padding:6px 0;color:var(--text3);font-size:13px">&nbsp;&nbsp;추가 매수금액</td><td id="wa_addAmt" style="text-align:right;color:var(--text3);font-size:13px"></td></tr>
+        </table>
+      </div>
+      <button class="btn btn-ghost" style="margin-top:12px;" onclick="['wa_avgPrice','wa_qty','wa_addPrice','wa_addQty'].forEach(id=>{document.getElementById(id).value=''}); document.getElementById('wa_result').style.display='none';">초기화</button>
+    </div>
+
+  </div>
+</div>
+
+      <!-- 📡 뉴스 -->
+      <div id="stab-news" class="sub-tab-panel">
+
+  <!-- 종목 검색 -->
+  <div class="card">
+    <div class="card-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> 종목 공시 · 뉴스 검색</div>
+    <div class="alert alert-info"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg> 아래 검색창에 종목명 또는 종목코드를 입력하면 DART 공시, 네이버 증권 뉴스, Investing.com에서 직접 검색합니다.</div>
+    <div class="news-search-box">
+      <input type="text" id="newsQuery" placeholder="삼성전자 / 005930 / AAPL" list="newsStockList" style="flex:1;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:16px;outline:none;">
+      <datalist id="newsStockList"></datalist>
+      <button class="btn btn-primary" onclick="searchNews()">검색</button>
+    </div>
+  </div>
+
+  <!-- 공시 · 뉴스 링크 그리드 -->
+  <div class="news-grid">
+
+    <!-- DART -->
+    <div>
+      <div class="card">
+        <div class="card-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg> DART 전자공시</div>
+        <div class="news-links">
+          <div class="news-link-item" onclick="openDart()">
+            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div class="nl-info">
+              <h4>DART 공시 검색</h4>
+              <p>금융감독원 전자공시시스템 · 사업보고서, 분기보고서, 주요사항보고서</p>
+            </div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
+          </div>
+          <div class="news-link-item" onclick="openUrl('https://dart.fss.or.kr/dsac001/mainY.do')">
+            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+            <div class="nl-info">
+              <h4>오늘의 공시</h4>
+              <p>당일 제출된 최신 공시 모아보기</p>
+            </div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
+          </div>
+          <div class="news-link-item" onclick="openUrl('https://dart.fss.or.kr/dsab007/main.do')">
+            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+            <div class="nl-info">
+              <h4>분기 / 반기 / 사업보고서</h4>
+              <p>DART 문서검색 — 보고서 종류별 필터 가능</p>
+            </div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
+          </div>
+          <div class="news-link-item" onclick="openUrl('https://opendart.fss.or.kr/intro/main.do')">
+            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+            <div class="nl-info">
+              <h4>DART OpenAPI 신청</h4>
+              <p>OpenDART API 키 신청 및 서비스 안내</p>
+            </div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6z"/></svg> 국내 증시 뉴스</div>
+        <div class="news-links">
+          <div class="news-link-item" onclick="openUrl('https://finance.naver.com/')">
+            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
+            <div class="nl-info"><h4>네이버 금융 메인</h4><p>코스피·코스닥 시장 현황</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
+          </div>
+          <div class="news-link-item" onclick="openUrl('https://www.hankyung.com/economy')">
+            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>
+            <div class="nl-info"><h4>한국경제 증권</h4><p>한국경제신문 증권 섹션</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
+          </div>
+          <div class="news-link-item" onclick="openUrl('https://www.mk.co.kr/news/stock/')">
+            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg></div>
+            <div class="nl-info"><h4>매일경제 주식</h4><p>매일경제신문 주식 섹션</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INVESTING.COM & 해외 -->
+    <div>
+      <div class="card">
+        <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Investing.com</div>
+        <div class="news-links">
+          <div class="news-link-item" onclick="openInvesting()">
+            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+            <div class="nl-info">
+              <h4>Investing.com 종목 검색</h4>
+              <p>글로벌 주식·ETF·지수·FX 검색</p>
+            </div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
+          </div>
+          <div class="news-link-item" onclick="openUrl('https://kr.investing.com/news/stock-market-news')">
+            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6z"/></svg></div>
+            <div class="nl-info"><h4>증시 뉴스</h4><p>Investing.com 한국어판 최신 뉴스</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
+          </div>
+          <div class="news-link-item" onclick="openUrl('https://kr.investing.com/economic-calendar/')">
+            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+            <div class="nl-info"><h4>경제 캘린더</h4><p>FOMC·CPI·고용지표 등 주요 일정</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
+          </div>
+          <div class="news-link-item" onclick="openUrl('https://kr.investing.com/earnings-calendar/')">
+            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <div class="nl-info"><h4>실적 캘린더</h4><p>글로벌 기업 실적 발표 일정</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> 해외 증시 리소스</div>
+        <div class="news-links">
+          <div class="news-link-item" onclick="openUrl('https://finance.yahoo.com')">
+            <div class="nl-icon"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#7c3aed"></span></div>
+            <div class="nl-info"><h4>Yahoo Finance</h4><p>미국 주식 뉴스·실적·재무제표</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
+          </div>
+          <div class="news-link-item" onclick="openUrl('https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany')">
+            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></div>
+            <div class="nl-info"><h4>SEC EDGAR</h4><p>미국 기업 10-K·10-Q·8-K 공시</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
+          </div>
+          <div class="news-link-item" onclick="openUrl('https://seekingalpha.com')">
+            <div class="nl-icon"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3b82f6"></span></div>
+            <div class="nl-info"><h4>Seeking Alpha</h4><p>미국 주식 분석·아이디어</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
+          </div>
+          <div class="news-link-item" onclick="openUrl('https://www.macrotrends.net')">
+            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+            <div class="nl-info"><h4>Macrotrends</h4><p>주식·거시경제 장기 데이터 차트</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 포트폴리오 종목별 바로가기 -->
+  <div class="card" id="portfolioNewsCard" style="display:none">
+    <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> 보유 종목별 공시·뉴스 바로가기</div>
+    <div id="portfolioNewsLinks" style="display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
+  </div>
+</div>
 
     <!-- ⭐ 관심종목 -->
-    <div id="stab-watchlist" class="main-tab-panel" style="display:none;">
+    <div id="stab-watchlist" class="sub-tab-panel">
       <div class="card" style="margin-bottom:12px;">
         <div class="card-title" style="margin-bottom:10px;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -2803,58 +2756,7 @@
       </div>
     </div><!-- /stab-watchlist -->
 
-    <!-- 🏷️ 테마별 -->
-    <div id="stab-theme" class="main-tab-panel" style="display:none;">
-      <div class="card" style="max-width:860px;margin:0 auto;">
-        <div class="card-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-          테마별 종목
-        </div>
-        <div id="themeList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;"></div>
-        <div id="themeStockTable">
-          <div style="color:var(--text3);font-size:13px;text-align:center;padding:40px 0;">
-            왼쪽에서 테마를 선택하면 해당 종목이 표시됩니다.
-          </div>
-        </div>
-      </div>
-    </div><!-- /stab-theme -->
-
-    <!-- 📋 전종목 -->
-    <div id="stab-allstock" class="main-tab-panel" style="display:none;">
-      <div class="card" style="max-width:1000px;margin:0 auto;">
-        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-          <span style="display:flex;align-items:center;gap:6px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-            전종목 조회
-          </span>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input id="allStockSearch" type="text" placeholder="종목명·티커 검색" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:12px;width:160px;" oninput="filterAllStocks()">
-            <select id="allStockMarket" onchange="filterAllStocks()" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:12px;">
-              <option value="">전체</option>
-              <option value="KOSPI">KOSPI</option>
-              <option value="KOSDAQ">KOSDAQ</option>
-              <option value="US">미국</option>
-            </select>
-          </div>
-        </div>
-        <div style="overflow-x:auto;">
-          <table class="hts-table" id="allStockTable" style="min-width:600px;">
-            <thead>
-              <tr>
-                <th>종목명</th><th>티커</th><th>시장</th><th>현재가</th><th>등락</th><th>등락률</th><th>거래량</th><th>시총</th><th>액션</th>
-              </tr>
-            </thead>
-            <tbody id="allStockBody">
-              <tr><td colspan="9" style="text-align:center;color:var(--text3);padding:40px;">
-                데이터를 불러오는 중...
-              </td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div style="display:flex;justify-content:center;gap:8px;margin-top:12px;" id="allStockPagination"></div>
-      </div>
-    </div><!-- /stab-allstock -->
-
+    </div><!-- /sub-tab-body -->
   </div><!-- /hts-right -->
 
 </div><!-- /hts-layout -->
@@ -3134,7 +3036,7 @@
 // ============================================================
 const STORAGE_KEY = 'stockbook_v1';
 let state = { portfolio: [], trades: [], journals: [], totalAsset: 0, mcChecks: {}, cashflows: [], mcSettings: {}, monthlySnapshots: [], cashManual: null, analysisChecks: {} };
-let currentSubTab = 'main'; // 현재 활성 서브탭 추적 (재접속 시 복원용)
+let currentSubTab = 'balance'; // 현재 활성 서브탭 추적 (재접속 시 복원용)
 let sellTargetIdx = null;
 let priceTargetIdx = null;
 let tradeFilter = 'all';
@@ -3994,174 +3896,44 @@ function switchTab(name) {
   if (name === 'news') renderNewsPortfolioLinks();
 }
 function switchSubTab(name) {
-  currentSubTab = name;
+  currentSubTab = name; // 현재 탭 기억 (재접속 시 복원)
   const isMobile = window.innerWidth <= 1100;
-  const htsLeft   = document.querySelector('.hts-left');
-  const htsLayout = document.querySelector('.hts-layout');
-  const mainRightWrapper = document.getElementById('main-right-wrapper');
+  const htsLeft    = document.querySelector('.hts-left');
+  const htsLayout  = document.querySelector('.hts-layout');
 
-  // 탭 버튼 active 처리
   document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
   const activeBtn = document.querySelector(`.sub-tab-btn[data-tab="${name}"]`);
   if (activeBtn) activeBtn.classList.add('active');
 
-  // ── 레이아웃: 종합 탭 = 2컬럼, 나머지 = 풀너비 ──
-  if (name === 'main') {
+  // ── 레이아웃: 잔고 탭 = 2컬럼, 나머지 = 풀너비 ──
+  if (name === 'balance') {
     htsLayout.classList.remove('non-balance-mode');
     htsLayout.classList.add('balance-mode');
     if (htsLeft) {
       htsLeft.style.display = '';
       if (isMobile) htsLeft.classList.add('mobile-show');
     }
-    if (mainRightWrapper) mainRightWrapper.style.display = '';
-    // 모든 main-tab-panel 숨기기
-    document.querySelectorAll('.main-tab-panel').forEach(p => p.style.display = 'none');
-    // 종합탭 렌더
     renderPortfolio();
     renderBalanceSummary();
-    populateQOStockList();
+    populateQOStockList(); // 빠른 주문 종목 목록 갱신
+    // 사이드바 총자산 입력 동기화
+    const ta2 = document.getElementById('totalAssetInput2');
+    const ta1 = document.getElementById('totalAssetInput');
+    if (ta2 && ta1) ta2.value = ta1.value;
   } else {
     htsLayout.classList.remove('balance-mode');
     htsLayout.classList.add('non-balance-mode');
     if (htsLeft && isMobile) htsLeft.classList.remove('mobile-show');
-    if (mainRightWrapper) mainRightWrapper.style.display = 'none';
-    // 모든 main-tab-panel 숨기기 후 해당 탭만 표시
-    document.querySelectorAll('.main-tab-panel').forEach(p => p.style.display = 'none');
-    const panel = document.getElementById('stab-' + name);
-    if (panel) panel.style.display = '';
   }
 
-  // 탭별 렌더 함수
+  document.querySelectorAll('.sub-tab-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('stab-' + name);
+  if (panel) panel.classList.add('active');
   if (name === 'journal')   { renderJournals(); updateJournalDatalist(); }
   if (name === 'trades')    renderTrades();
-  if (name === 'watchlist') renderWatchlist();
-  if (name === 'theme')     renderThemeTab();
-  if (name === 'allstock')  renderAllStockTab();
-}
-
-// ── 우측 미니탭 전환 ──
-function switchRightTab(rtab) {
-  document.querySelectorAll('.mini-tab-btn').forEach(b => b.classList.remove('active'));
-  const activeBtn = document.querySelector(`.mini-tab-btn[data-rtab="${rtab}"]`);
-  if (activeBtn) activeBtn.classList.add('active');
-  document.querySelectorAll('.mini-tab-panel').forEach(p => p.classList.remove('active'));
-  const panel = document.getElementById('rtab-' + rtab);
-  if (panel) panel.classList.add('active');
-  // 미니탭별 렌더
-  if (rtab === 'cash')  renderCashTab();
-  if (rtab === 'news')  renderNewsPortfolioLinks();
-  if (rtab === 'order') populateQOStockList();
-}
-
-// ── 기업정보 탭: 조회 ──
-function openCorpInfo() {
-  const q = (document.getElementById('corpSearchInput')?.value || '').trim();
-  if (!q) return;
-  window.open(`https://finance.naver.com/search/searchList.naver?query=${encodeURIComponent(q)}`, '_blank');
-}
-function openCorpLink(type) {
-  const q = (document.getElementById('corpSearchInput')?.value || '').trim();
-  const enc = encodeURIComponent(q);
-  const urls = {
-    dart: `https://dart.fss.or.kr/dsab001/search.ax?textCrpNm=${enc}`,
-    naver: q ? `https://finance.naver.com/search/searchList.naver?query=${enc}` : 'https://finance.naver.com',
-    investing: `https://kr.investing.com/search/?q=${enc}`,
-    fsc: 'https://www.fss.or.kr'
-  };
-  window.open(urls[type] || '#', '_blank');
-}
-
-// ── 테마별 탭 렌더 ──
-function renderThemeTab() {
-  const themeListEl = document.getElementById('themeList');
-  const tableEl = document.getElementById('themeStockTable');
-  if (!themeListEl) return;
-  // state.portfolio 에서 themes 수집
-  const themes = {};
-  (state.portfolio || []).forEach(s => {
-    const th = s.theme || '미분류';
-    if (!themes[th]) themes[th] = [];
-    themes[th].push(s);
-  });
-  const themeNames = Object.keys(themes);
-  if (themeNames.length === 0) {
-    themeListEl.innerHTML = '<span style="color:var(--text3);font-size:13px;">등록된 종목이 없습니다.</span>';
-    tableEl.innerHTML = '';
-    return;
-  }
-  themeListEl.innerHTML = themeNames.map(t =>
-    `<button onclick="showThemeStocks('${t.replace(/'/g,"\\'")}',this)" style="padding:6px 12px;border:1px solid var(--border);border-radius:20px;background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;">${t} <span style="color:var(--text3)">(${themes[t].length})</span></button>`
-  ).join('');
-  tableEl.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:40px 0;">테마를 선택하세요.</div>';
-}
-function showThemeStocks(theme, btn) {
-  document.querySelectorAll('#themeList button').forEach(b => b.style.background = '');
-  if (btn) btn.style.background = 'var(--accent)'; btn && (btn.style.color='#fff');
-  const tableEl = document.getElementById('themeStockTable');
-  if (!tableEl) return;
-  const stocks = (state.portfolio || []).filter(s => (s.theme || '미분류') === theme);
-  if (stocks.length === 0) { tableEl.innerHTML = '<p style="color:var(--text3);text-align:center;padding:20px;">종목 없음</p>'; return; }
-  tableEl.innerHTML = `<table class="hts-table" style="margin-top:8px;"><thead><tr><th>종목명</th><th>티커</th><th>수량</th><th>평균단가</th><th>평가손익</th></tr></thead><tbody>${
-    stocks.map(s => {
-      const pnl = (s.currentPrice - s.avgPrice) * s.qty;
-      const pnlPct = s.avgPrice ? ((s.currentPrice - s.avgPrice)/s.avgPrice*100).toFixed(2) : '0.00';
-      const cls = pnl >= 0 ? 'pos' : 'neg';
-      return `<tr><td>${s.name}</td><td>${s.ticker}</td><td>${(s.qty||0).toLocaleString()}</td><td>${(s.avgPrice||0).toLocaleString()}원</td><td class="${cls}">${pnl>=0?'+':''}${Math.round(pnl).toLocaleString()}원 (${pnlPct}%)</td></tr>`;
-    }).join('')
-  }</tbody></table>`;
-}
-
-// ── 전종목 탭 렌더 ──
-let allStockData = []; let allStockPage = 1; const allStockPerPage = 50;
-function renderAllStockTab() {
-  const bodyEl = document.getElementById('allStockBody');
-  if (!bodyEl) return;
-  // 포트폴리오 종목으로 채우기 (추후 API 연결 가능)
-  allStockData = (state.portfolio || []).map(s => ({
-    name: s.name, ticker: s.ticker, market: s.market || 'KR',
-    price: s.currentPrice || 0, change: 0, changePct: 0,
-    volume: s.volume || 0, marketCap: 0
-  }));
-  filterAllStocks();
-}
-function filterAllStocks() {
-  const q = (document.getElementById('allStockSearch')?.value || '').toLowerCase();
-  const mkt = document.getElementById('allStockMarket')?.value || '';
-  let filtered = allStockData.filter(s =>
-    (!q || s.name.toLowerCase().includes(q) || s.ticker.toLowerCase().includes(q)) &&
-    (!mkt || s.market === mkt)
-  );
-  allStockPage = 1;
-  renderAllStockTable(filtered);
-}
-function renderAllStockTable(data) {
-  const bodyEl = document.getElementById('allStockBody');
-  if (!bodyEl) return;
-  const start = (allStockPage-1)*allStockPerPage;
-  const slice = data.slice(start, start+allStockPerPage);
-  if (slice.length === 0) {
-    bodyEl.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:30px;">표시할 종목이 없습니다.</td></tr>';
-  } else {
-    bodyEl.innerHTML = slice.map(s => {
-      const cls = s.changePct >= 0 ? 'pos' : 'neg';
-      return `<tr>
-        <td>${s.name}</td><td>${s.ticker}</td><td>${s.market}</td>
-        <td>${s.price.toLocaleString()}</td>
-        <td class="${cls}">${s.change >= 0 ? '+' : ''}${s.change.toLocaleString()}</td>
-        <td class="${cls}">${s.changePct >= 0 ? '+' : ''}${s.changePct.toFixed(2)}%</td>
-        <td>${s.volume.toLocaleString()}</td><td>${s.marketCap ? s.marketCap.toLocaleString()+'억' : '-'}</td>
-        <td><button onclick="switchSubTab('main')" style="font-size:11px;padding:3px 8px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;">종합</button></td>
-      </tr>`;
-    }).join('');
-  }
-  // 페이지네이션
-  const pages = Math.ceil(data.length / allStockPerPage);
-  const paginEl = document.getElementById('allStockPagination');
-  if (paginEl) {
-    paginEl.innerHTML = pages > 1 ? Array.from({length:pages},(_,i)=>
-      `<button onclick="allStockPage=${i+1};renderAllStockTable(allStockData)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:${allStockPage===i+1?'var(--accent)':'var(--bg3)'};color:${allStockPage===i+1?'#fff':'var(--text2)'};font-size:11px;cursor:pointer;">${i+1}</button>`
-    ).join('') : '';
-  }
+  if (name === 'cash')      renderCashTab();
+  if (name === 'news')      renderNewsPortfolioLinks();
+  if (name === 'watchlist') { renderWatchlist(); }
 }
 
 /* ── 빠른 주문 입력 함수들 ── */
@@ -5882,8 +5654,8 @@ document.getElementById('headerDate').textContent = new Date().toLocaleDateStrin
 document.getElementById('f_date').value = today();
 document.getElementById('j_buyDate').value = today();
 renderPortfolio();
-// 시작 시 항상 종합 탭을 기본으로 표시
-switchSubTab('main');
+// 시작 시 항상 잔고 탭을 기본으로 표시
+switchSubTab('balance');
 updateDatalist('stockNameList');
 updateDatalist('jStockList');
 updateDatalist('tStockList');
