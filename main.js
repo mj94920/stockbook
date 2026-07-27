@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, safeStorage } = require('electron');
 const path  = require('path');
 const fs    = require('fs');
 const https = require('https');
@@ -145,6 +145,49 @@ ipcMain.handle('fetch-naver-finance', async (_event, code) => {
     console.error('[StockBook] fetch-naver-finance 오류:', e.message);
     return null;
   }
+});
+
+// ── IPC: API 키 암호화 저장 (safeStorage) ───────────────────────────────────
+function getCredFile(broker) {
+  return path.join(app.getPath('userData'), `${broker}-cred.enc`);
+}
+
+ipcMain.handle('save-api-key', async (_event, { broker, fields }) => {
+  try {
+    if (!safeStorage.isEncryptionAvailable()) return { ok: false, error: 'safeStorage 불가' };
+    const encrypted = safeStorage.encryptString(JSON.stringify(fields));
+    fs.writeFileSync(getCredFile(broker), encrypted);
+    return { ok: true };
+  } catch (e) {
+    console.error('[StockBook] save-api-key 오류:', e.message);
+    return { ok: false, error: e.message };
+  }
+});
+
+ipcMain.handle('load-api-key', async (_event, broker) => {
+  try {
+    const f = getCredFile(broker);
+    if (!fs.existsSync(f)) return null;
+    const buf = fs.readFileSync(f);
+    return JSON.parse(safeStorage.decryptString(buf));
+  } catch (e) {
+    console.error('[StockBook] load-api-key 오류:', e.message);
+    return null;
+  }
+});
+
+ipcMain.handle('delete-api-key', async (_event, broker) => {
+  try {
+    const f = getCredFile(broker);
+    if (fs.existsSync(f)) fs.unlinkSync(f);
+    return true;
+  } catch (e) {
+    return false;
+  }
+});
+
+ipcMain.handle('check-api-key', async (_event, broker) => {
+  return fs.existsSync(getCredFile(broker));
 });
 
 // ── IPC 핸들러 ──────────────────────────────────────────────────────────────

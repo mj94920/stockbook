@@ -1,11 +1,11 @@
 {
   "name": "stockbook",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "description": "나만의 주식 포트폴리오 관리 앱",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win portable"
+    "build": "electron-builder --win"
   },
   "build": {
     "appId": "com.mj.stockbook",
@@ -26,8 +26,15 @@
       "logo.svg"
     ],
     "win": {
-      "target": "zip",
+      "target": "nsis",
       "icon": "icon-512.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowDirChange": true,
+      "createDesktopShortcut": true,
+      "runAfterFinish": true,
+      "language": "1042"
     }
   },
   "devDependencies": {

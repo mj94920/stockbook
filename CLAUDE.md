@@ -1,196 +1,129 @@
-# StockBook PWA — 프로젝트 메모
+# StockBook — 프로젝트 메모
 
-## 최근 작업 내역
+> 현재 버전: **v1.4.4** | Git: `https://github.com/mj94920/stockbook.git`
+> GitHub Pages: `https://mj94920.github.io/stockbook/`
 
-### 2026-07-02 (세션 2)
-- 코드 변경 없음 — 사용자가 "총자산 3400만인데 총매입 3300만 넘는데 예수금이 900만 넘는 게 말이 되냐"고 질문 → `getCashBalance()` 로직 분석해서 설명
-  - 예수금 계산 우선순위가 실제로는 **3단계**임을 확인 (기존 CLAUDE.md엔 "두 군데 저장소"로만 기록돼 있었는데 부정확했음): ① `state.cashManual`(잔고탭 "예수금 직접 설정") 최우선 → ② `state.totalAsset - 보유종목 현재평가금액`(총자산 직접입력값에서 평가금액을 뺌) → ③ `calcExsugeum()`(입출금 내역 기반, 매수·매도 체결금액으로 가감)
-  - 사용자가 착각한 지점: 예수금이 "총자산 − 매입원가"로 계산되는 줄 알았는데, 실제로는 "총자산 − 현재 평가금액"으로 계산됨. 당시 보유 3종목(제룡전기·두산에너빌리티·포스코DX)이 전부 평가손실 상태(매입원가 합계 3,307만 vs 평가금액 합계 2,502만, 평가손 약 -806만)라서 그 손실분만큼 예수금이 부풀어 보였던 것 — 버그 아님, 계산 기준 차이
-  - **총자산 입력값(`state.totalAsset`)이 오래돼서 최신화 안 됐을 가능성**을 사용자에게 확인 요청함(실제 계좌 예수금과 비교해보라고 안내) — 아직 사용자 회신 대기
-- (세션 2 이어서) 사용자가 "3400 중에 3302 샀는데 예수금이 970이냐"고 재차 지적 → 사용자 계산이 맞고 앱 로직이 틀렸던 것으로 결론
-  - 근본 원인: `getCashBalance()`의 총자산 기반 분기가 `총자산 - 현재평가금액(시가)`로 계산돼서, 보유종목이 평가손실 상태면 그 손실액만큼 예수금이 허위로 부풀어 보이는 구조적 결함이었음(단순 착시가 아니라 실제 버그)
-  - 수정: `총자산 - 매입원가(취득원가)`로 계산 기준 변경 (`주식포트폴리오관리.html` 4400번째 줄 `getCashBalance()`) → 예수금이 주가 변동에 흔들리지 않고, 대신 "총 잔고"(예수금+평가금액)가 평가손익만큼 총자산 입력값과 달라지도록 변경(실제 순자산에 더 가까워짐)
-  - `renderBalanceSummary()`/`renderBalanceDonut()`/`renderPortfolioBar()`가 전부 `getCashBalance()`를 공유해서 쓰므로 이 함수 한 곳만 고치면 잔고탭 요약바·도넛차트·자산비중 막대바 전부 자동으로 같이 정확해짐
-  - 실데이터로 검증: 예수금 973만→167만, 총잔고 3,475만→2,669만으로 변경 확인
-  - node -e 스크립트로 인라인 JS 문법 검증 완료. 아직 커밋 전, 데스크톱 exe 재빌드도 안 함 — 사용자가 앱에서 잔고탭 확인 후 재빌드 진행 예정
-- 사용자가 "수정했는데도 970으로 계속 남아있어서 결국 직접 입력했다"고 보고 → 원인 파악: **제가 소스만 고치고 exe 재빌드를 안 한 상태에서 "앱에서 확인해보라"고 안내**했던 것이 원인. exe 빌드시각(15:04) < 소스 수정시각(15:26)으로 확인. 실행 중이던 구버전 exe(ASAR)는 소스 수정 미반영이라 예전 계산식 그대로였음
-  - **이전에도 동일한 원인의 혼선이 있었음(2026-07-02 세션1, "디자인이 하나도 안 바뀌었다" 사례)** — 소스만 고친 상태에서 사용자에게 "앱에서 확인해달라"고 하면 실행 중인 구버전 exe를 보게 되어 매번 혼선 발생. **앞으로는 소스 수정 후 사용자에게 확인을 요청하기 전에, 반드시 먼저 exe 재빌드까지 완료한 뒤에 "확인해달라"고 해야 함** (또는 소스만 고친 상태면 "지금은 exe 재빌드 전이라 브라우저로 HTML 파일을 직접 열어서 확인해야 한다"고 명시적으로 안내)
-  - 사용자가 이미 cashManual로 직접 입력해서 당장 급한 불은 껐음, exe 재빌드는 사용자 응답 대기 중 제안한 상태
-- 사용자가 예수금 개념을 명확히 정의함: "예수금 = 총자산 − 총매입원가, 보유 중엔 손익 상관없이 안 변함. 매도 시엔 (남은 예수금 + 매도한 종목 매입원가 + 실현손익)이 새 예수금" — 코드 리뷰로 검증한 결과 **정확한 개념이고, 사용자 요구가 곧 정답**
-  - 현재 코드 상태 진단: 매수는 자동으로 맞음(포트폴리오 총매입원가가 늘어나면서 예수금이 자동으로 줄어드는 구조라서), **매도는 안 맞음** — `confirmSell()`(3432번째 줄)이 종목을 포트폴리오에서 제거만 하고 `state.totalAsset`/`state.cashManual`을 전혀 갱신하지 않아서, 매도해도 실현손익이 예수금에 반영 안 됨(총자산 기준이면 매입원가만큼만 늘고 손익 누락, cashManual 기준이면 아예 그대로 고정)
-  - 수정 방향 논의 중: 매도 확정 시 이미 계산되는 `pnl`(3444번째 줄)을 이용해서 총자산 또는 cashManual에 매도금액만큼 자동 반영하도록 고치자고 제안 → 아직 사용자 승인 대기, 코드 수정 안 함
-- 사용자가 버전을 "1.3.12로 올려달라"고 했다가 빌드 직전에 "1.3.1"로 정정함 → **최종 버전은 1.3.12가 아니라 1.3.1**로 반영됨
-  - `package.json` version 필드를 1.3.0 → 1.3.1로 변경
-  - 실행 중이던 구버전 exe 프로세스 4개(임시폴더 StockBook.exe) + `StockBook 1.3.0.exe` 전부 종료 후 `npm run build` 재빌드
-  - `StockBook 1.3.1.exe`를 `StockBook-PWA\` 폴더에 배치, 구버전 `StockBook 1.3.0.exe` 삭제
-  - 이 빌드엔 오늘 수정한 예수금 계산식(총자산−매입원가) 반영됨. 매도 시 예수금 자동반영 수정건은 미승인이라 이번 빌드엔 미포함
-  - git 커밋은 아직 안 함(package.json, HTML 변경사항 모두 미커밋 상태) — 사용자 exe 확인 후 진행 예정
+---
 
-### 2026-07-02
-- 사용자가 제미나이에게 다크/라이트 테마·유리모프·가격 변동 깜빡임 애니메이션 등 UI 리디자인을 부탁해 이미 `주식포트폴리오관리.html`에 대규모로 적용된 상태(커밋 전, 1200줄+ diff)였음
-  - 사용자가 "백업/복원 버튼 글씨가 되돌아갔다"고 보고 → 제미나이가 CSS를 통째로 재작성하면서 기존에 있던 세부 규칙들을 누락시킨 것으로 확인
-  - git show HEAD 원본과 현재 파일의 `<style>` 블록을 클래스 단위로 전수 비교해서 "실제 HTML/JS에서 쓰이는데 CSS가 통째로 빠진 것"만 골라 새 테마 변수(`--accent`, `--card-bg`, `--border-light` 등)에 맞게 복구, 폰트·버튼 모양·배경 그라데이션 등 스타일 개선분은 그대로 유지
-  - 복구한 것: `.sub-tab-panel`(표시/숨김 규칙 자체가 빠져서 서브탭들이 전부 동시에 노출되던 심각한 버그), `.journal-card`/`.journal-detail`(투자일지 카드 스타일+접기/펼치기 전체 누락), `.return-pos`/`.return-neg`(수익률 색상 누락), `.header-btn-text{display:none}`(백업/복원 버튼 아이콘 전용 처리), `.header-date` 모바일 숨김, 체크박스 그룹, 거래기록 필터 버튼, 뉴스탭 검색창/안내문구/링크카드, 티커 뱃지, 폼 액션, 섹션 타이틀 등
-  - 확인 결과 JS 함수 삭제는 없었음(전부 CSS 누락 문제), `goal_months`/`goalDashboard`/`exsugeumAmt` 등 일부 `getElementById` 미스매치는 이번 리디자인과 무관한 기존(구버전 목표금액 기능 잔재) 이슈로 손대지 않음
-  - 브라우저로 파일 직접 열어서 육안 확인 요청한 상태 — 아직 커밋 전, 데스크톱 exe 재빌드도 안 함
-- 종목명 ↔ 티커(종목코드) 양방향 자동완성 추가 (종목 편집 모달 한정)
-  - `lookupTickerByName(name)`: 한글명이면 네이버 자동완성(`ac.stock.naver.com/ac`) 우선, 해외명이면 야후 검색(`v1/finance/search`)
-  - `lookupNameByTicker(ticker)`: 6자리 숫자면 네이버 자동완성으로 역조회, 아니면 야후 검색으로 역조회
-  - `es_name`/`es_ticker` 필드에 blur 이벤트 리스너 추가 — 상대 필드가 비어있을 때만 자동 채움(기존 값 덮어쓰지 않음), 실패 시 조용히 무시(에러 토스트 없음)
-  - "매수/추가 매수" 등록 폼(`f_name`)에는 애초에 티커 입력란이 없어서 적용 안 함 — 필요하면 폼에 필드 추가부터 논의 필요
-  - curl 테스트로 네이버 자동완성 API가 `Origin: finance.naver.com`일 때만 CORS 허용되는 걸 확인 — 실브라우저(github.io/Electron)에서 국내 종목 자동완성이 막힐 가능성 있음, 사용자가 실제 테스트 후 피드백 예정
-  - node --check로 인라인 JS 문법 검증 완료, 커밋/빌드는 아직 안 함
-- 사용자가 "디자인이 하나도 안 바뀌었다"고 보고 → 원인은 코드가 아니라 **실행 중이던 구버전 `StockBook 1.3.0.exe`(ASAR 패키징이라 소스 수정 미반영)를 보고 있었던 것**으로 확인 (tasklist로 실행 프로세스 확인)
-  - 소스 HTML에는 테마 토글 버튼(`themeToggleBtn`)·그라데이션·유리모프 전부 정상 존재 확인됨
-  - 새 디자인 확인하려면 exe 종료 후 `npm run build` 재빌드 필요 — 아직 사용자 승인/실행 안 함
-- 사용자 요청으로 데스크톱 exe 재빌드 완료: 실행 중이던 구버전 프로세스 종료 → `npm run build` → `C:\Temp\StockBookBuild\StockBook 1.3.0.exe` → `StockBook-PWA\` 폴더의 구버전 교체, 새 exe 실행해서 사용자에게 확인 요청
-  - 버전 번호는 1.3.0 그대로 유지 (사용자가 버전업 요청 안 함) — 리디자인 CSS 복구분 + 종목명↔티커 자동완성 기능이 이 빌드에 포함됨
-  - 아직 git 커밋은 안 함 (사용자 육안 확인 대기 중)
-- "잔고" 서브탭이 예수금 탭이랑 똑같이 보인다는 사용자 지적 → 원인 파악: `잔고` 버튼(`switchSubTab('balance')`)이 다른 서브탭들과 달리 오른쪽 패널을 전혀 안 바꾸고 `renderPortfolio()`만 호출 후 return해서, 직전에 보고 있던 패널(예: 예수금)이 그대로 남아있던 게 원인
-  - 모바일에서는 이 "잔고" 버튼이 평소 숨겨진 왼쪽 보유종목 테이블(`.hts-left`)을 보여주는 유일한 방법이라 그 동작은 그대로 유지
-  - 데스크톱에서는 왼쪽에 보유종목 테이블이 항상 떠 있어서 잔고 탭이 오른쪽에 보여줄 고유 콘텐츠가 없었던 것 — 사용자가 "예수금+보유종목 요약 패널로 채우기"를 선택
-  - `stab-balance` 패널 신설: 예수금 / 보유종목 평가금액 / 총 잔고 / 평가손익 4칸 요약바(`renderBalanceSummary()`, `calcExsugeum()` 재사용)
-  - `switchSubTab()` 수정: 'balance'+모바일일 때만 기존 hts-left 토글, 그 외(데스크톱)에는 다른 탭처럼 표준 패널 전환 로직 타도록 변경
-  - 이 변경 포함해서 데스크톱 exe 재빌드 완료, 실행해서 사용자에게 확인 요청한 상태 — 아직 커밋 전
-- 잔고 탭에 자산 구성 도넛 차트 추가 (사용자 요청: "전체 자산, 보유 종목 비중, 예수금을 도넛 형태로 시각화")
-  - 외부 차트 라이브러리 없이 순수 CSS `conic-gradient`로 구현 (`.donut-wrap`/`.donut-chart`/`.donut-hole`), 가운데 구멍에 총자산 금액 표시
-  - `renderBalanceDonut(cash, totalVal, total)`: 보유종목별 평가금액을 기존 `COLORS` 팔레트로 색칠 + 예수금은 `var(--bg4)` 회색 계열, 기존 자산비중 바(`renderPortfolioBar`)와 색상 일관성 유지
-  - `renderBalanceSummary()`에서 같이 호출되도록 연결, 데이터 없을 때 빈 상태 처리
-  - 이 변경 포함해서 데스크톱 exe 재빌드 완료, 실행해서 사용자에게 확인 요청한 상태 — 아직 커밋 전
-- 사용자가 "이미 저장해 놓은 잔고가 있는데 그래프에 반영이 안 된다"고 지적 → 원인: 이 앱은 예수금/잔고를 잡는 방식이 두 가지임
-  - ① 왼쪽 상단 "💼 총 자산" 직접 입력 필드(`state.totalAsset`, `totalAssetInput`) — 기존 자산비중 막대바(`renderPortfolioBar`)가 우선적으로 쓰던 방식
-  - ② 예수금 탭의 입출금 내역(`state.cashflows` → `calcExsugeum()`) — 새로 만든 잔고탭 요약/도넛이 처음엔 이것만 썼음
-  - 사용자는 ①(총자산 직접 입력)을 이미 써놨는데 ②만 참조해서 반영이 안 됐던 것 — `renderBalanceSummary()`를 고쳐서 `state.totalAsset > 0`이면 그걸 우선 쓰고(기존 자산비중 바와 동일 로직), 없을 때만 `calcExsugeum()` 폴백하도록 수정
-  - **이 앱의 예수금 개념이 두 군데 저장소로 나뉘어 있다는 점은 향후 잔고/예수금 관련 기능 건드릴 때마다 꼭 같이 고려해야 함** — 하나만 보고 고치면 다시 이런 불일치가 남
-  - 이 변경 포함해서 데스크톱 exe 재빌드 완료, 실행해서 사용자에게 확인 요청한 상태 — 아직 커밋 전
+## 앱 구조
 
-### 2026-07-01
-- Yahoo Finance API를 이용한 시세 자동 조회 기능 구현 (Cloudflare Worker 없이 브라우저 직접 호출)
-  - `fetchYFQuote(ticker)`: 단일 종목 조회. 한국 6자리 코드는 `.KS`→`.KQ` 순 자동 시도
-  - `fetchAllPrices()`: 티커 등록 종목 전체 일괄 조회
-  - `fetchSinglePrice()`: 개별 현재가 모달에서 해당 종목만 조회
-  - 조회 시 `currentPrice` 외 `prevClose`(전일종가), `openPrice`(당일 시가)도 저장
-- 포트폴리오 툴바에 "🔄 시세 새로고침" 버튼 추가
-- 현재가 일괄 업데이트 모달 상단에 "🔄 자동 조회" 버튼 추가
-- 개별 현재가 모달에 "🔄 자동 조회" 버튼 + 전일종가·시가·전일비 표시 추가
-- 포트폴리오 테이블 현재가 셀 하단에 전일 대비 등락률(`±X.XX%`) 표시 추가
-- 티커가 없는 종목은 기존 수동 입력 방식 유지 (자동 조회 버튼 숨김 처리)
-- 매수 등록 폼에 현재가 자동 조회 연동
-  - `fetchCurrentForForm()`: 종목명 선택 시 티커가 있으면 자동 조회 후 `f_current` 자동 입력
-  - `_onFormNameChange()`: `f_name` 변경 이벤트 통합 핸들러 — 섹터/포지션 자동완성 + 시세 조회 트리거
-  - `f_current` 옆에 "🔄 조회" 버튼 추가 (수동 재조회용, 티커 없는 종목은 숨김)
-  - 라벨 옆 상태 텍스트(`f_current_status`)로 조회 중/완료/실패 표시
-  - 폼 초기화 시 버튼·상태 텍스트도 함께 리셋
-- v1.2.2 데스크톱 exe 빌드 완료: `npm run build` → `C:\Temp\StockBookBuild\StockBook 1.2.2.exe`
-  - `StockBook-PWA\` 폴더에 배치, 구버전 1.2.1.exe 삭제
-- v1.2.2 GitHub push 완료 (commit: a9d59bb) → 모바일 즉시 반영
-- 야후 파이낸스 한국 주식 오류 수정 (v1.2.3): `.KS`/`.KQ` 혼동으로 엉뚱한 종목 시세 반환 문제
-  - 한국 6자리 코드는 네이버 금융 API(`m.stock.naver.com/api/stock/{code}/basic`) 우선 사용
-  - 네이버 CORS 차단 시 야후 파이낸스 `.KS`→`.KQ` 폴백 유지
-  - 해외 종목은 야후 파이낸스 그대로 사용
-  - `fetchNaverQuote()`, `fetchYFQuoteIntl()` 함수 분리, `fetchYFQuote()`는 통합 라우터로 변경
-- v1.2.3 데스크톱 빌드 완료 (`StockBook-PWA\` 폴더에 배치, 1.2.2.exe는 실행 중이라 수동 삭제 필요)
-- v1.2.3 GitHub push 완료 (commit: 4b010e5)
-- 월복리 시뮬레이터 입력값 영구 저장 (v1.3.0)
-  - `state.mcSettings`에 원금·수익률·기간·추가납입·시작일 저장 → 앱 재시작 후 자동 복원·재계산
-  - 초기화 버튼 클릭 시 `mcSettings`도 함께 리셋
-  - `_applyState()` 및 복원 restore 코드에도 `mcSettings:{}` 기본값 추가
-- v1.3.0 데스크톱 빌드 완료 (`StockBook 1.3.0.exe`, `StockBook-PWA\` 폴더에 배치)
-- v1.3.0 GitHub push 완료 (commit: 8b1f077)
-- 월복리 시뮬레이터 월별 실적 자동 달성 체크 기능 추가 (v1.3.0 추가 커밋 c2b46b9)
-  - `state.monthlySnapshots[]`: 월별 실제 잔액 스냅샷 저장 구조 추가
-  - 테이블 열 변경: 목표잔액 | 실제잔액 | 실제수익률 | 달성(자동)
-  - 달성 자동 판정: 실제잔액 ≥ 목표잔액 → ✅, 미달 → ❌, 미입력 → —
-  - 실제수익률 색상: 목표 이상=초록, 수익but미달=노랑, 손실=빨강
-  - 현재 달 행: 파란 배경 + ◀현재 표시, 현재 총자산 자동 반영
-  - 📌 이번 달 실적 기록 버튼: 현재 총자산을 이번 달 스냅샷으로 즉시 저장
-  - 실제잔액 셀 클릭 → 수동 입력/수정 가능 (`editMcSnapshot`)
-  - 시작일 미입력 시 기존 수동 체크(toggleMcCheck) 방식 유지
-- 포트폴리오 현재가 셀 sub-text 변경: 전일 대비 → 평균단가 대비 손익 표시 (commit: f119801)
-  - 이익: 빨간색 `+N원 (+X.XX%)` / 손실: 파란색 `-N원 (-X.XX%)`
-  - 기존 prevClose 기반 전일등락 표시 제거
-- 월별 실적 입력 모달 추가 (commit: 980cfd7)
-  - Electron에서 `prompt()`가 동작하지 않아 전용 모달(`mcSnapshotModal`)로 교체
-  - 실제잔액 셀 클릭 시 연도/월 표시 + 금액 입력 팝업, Enter 키 저장 지원
-- 뉴스탭 종목 버튼 정리 (commit: 2d07ba5)
-  - 📰뉴스(네이버 뉴스 검색) 제거 — 💹네이버 금융 메인에 뉴스 포함되어 중복
-  - KRX 버튼 제거 — 링크 미작동
-  - 국내 종목: 📋DART · 💹네이버 / 해외 종목: 📋DART · Inv. 만 유지
-- 뉴스탭 보유 종목 링크 중복 제거 (commit: 6e282dc)
-  - 검색창 위 quick-links(portfolioQuickLinks) 삭제
-  - 하단 "⚡ 보유 종목별 공시·뉴스 바로가기" 카드 하나만 유지
-- PRD.md 생성: 제품 개요·기능 명세·기술 스택·버전 히스토리·향후 계획 정리
+- **플랫폼**: Electron EXE (오프라인 독자 실행) + PWA/TWA (Android)
+- **언어**: HTML (디자인·레이아웃) + Vanilla JS (로직·API)
+- **데이터**: JSON 로컬 저장 (`C:\Users\mj949\AppData\Roaming\StockBook\stockbook-data.json`)
+- **빌드**: `npm run build` → `C:\Temp\StockBookBuild\` → ZIP
+- **모바일**: GitHub Pages push만으로 자동 반영 (APK 재빌드 불필요)
 
-### 2026-06-30 (세션 4)
-- 코드 변경 없음 — `codebase-analyzer` 스킬 존재 여부 확인
-  - 해당 스킬은 설치되어 있지 않음
-  - 대안으로 `/code-review`, `/security-review`, `/init`, `/review`, `/simplify` 안내
+### 빌드 주의사항
+- HTML은 ASAR 패키징 → 소스만 고치면 안 됨, 반드시 `npm run build` 후 사용자에게 확인 요청할 것
+- 소스만 고친 상태면 "브라우저에서 HTML 직접 열어 확인" 또는 "exe 재빌드 후 확인" 명시
 
-### 2026-06-30 (세션 3)
-- 코드 변경 없음 — 설치된 스킬 목록 확인 및 `/generate-project-idea` 스킬 동작 확인
-  - 스킬 파일 정상 존재 확인: `C:\Users\mj949\.claude\commands\generate-project-idea.md`
+---
 
-### 2026-06-30 (세션 2)
-- `/generate-project-idea` 커스텀 Claude Code 스킬 생성
-  - 위치: `C:\Users\mj949\.claude\commands\generate-project-idea.md`
-  - 기능: 도메인/주제를 받아 개발 프로젝트 아이디어 5개 생성 → 선택 시 상세 기획서(화면구성·데이터모델·로드맵) 제공
-  - 인자 없이 호출하면 컨텍스트 질문, 주제 입력 시 바로 아이디어 생성
+## 핵심 로직 메모
 
-### 2026-06-30
-- 버그 점검 및 수정 (4개)
-  1. `fmtCommaInput` 미정의 → `formatWithComma`로 수정 (투자일지 추가매수 단가 입력 시 ReferenceError)
-  2. `saveBulkEdit()` 목표가·손절가 필드명 오류: `targetPrice`/`stopLoss` → `target1`/`stop1` 통일 (전체 편집에서 저장해도 포트폴리오 테이블에 반영 안 되던 문제)
-  3. 월복리 시뮬레이터 표 열 불일치: 헤더 5열(월·잔액·월수익·누적수익률·달성✓) vs 바디 4열 → 월 수익(`monthProfit = balance * r`) 계산 추가 및 5열 출력으로 수정
-  4. `renderPortfolioBar()` 내 `portfolioBarSegs.innerHTML` 이중 할당 제거 (첫 번째 불필요한 할당 삭제)
-- 데스크톱 exe 재빌드 미실시 — 위 변경 반영하려면 `npm run build` 필요
+### 예수금 계산 (`getCashBalance()`)
+우선순위 3단계:
+1. `state.cashManual` — 잔고탭 "예수금 직접 설정" 최우선
+2. `state.totalAsset - 총매입원가` — 총자산 직접입력값 기반
+3. `calcExsugeum()` — 입출금 내역 기반 폴백
 
-### 2026-06-29
-- 모바일 물타기 탭 복구: 서브탭 CSS에 `flex-wrap:nowrap` + `-webkit-overflow-scrolling:touch` 추가
-  - 원인: 기본 `.sub-tabs`의 `flex-wrap:wrap`이 모바일에서 재정의되지 않아 7개 탭이 두 줄로 넘어가 고정 높이(44px)에 가려짐
-- 거래기록 탭에서 수동 "빠른 등록" 폼 제거
-  - 사유: 매수/매도 등록 시 자동 기록되는 방식이므로 별도 수동 입력 불필요
-  - 관련 JS 함수(`addTrade`, `clearTradeForm`), `t_name` 이벤트 리스너, `t_date` 초기화 코드 함께 삭제
-  - `<datalist id="tStockList">` 는 `updateDatalist()` 호출이 남아있어 hidden 상태로 유지
-- GitHub push 완료 (commit: 912a781)
-- v1.2.1 데스크톱 exe 재빌드: `npm run build` → `C:\Temp\StockBookBuild\StockBook 1.2.1.exe`
-  - package.json 버전 1.2.0 → 1.2.1 업데이트
-  - StockBook-PWA\ 폴더에 1.2.1.exe 배치, 구버전 1.2.0.exe 삭제
+**원칙**: 예수금 = 총자산 − 총매입원가 (주가 변동과 무관, 매도 시 실현손익 반영)
 
-### 2026-06-26
-- 정기 자동저장 크론 설정 확인 및 등록 (30분 간격, `3,33 * * * *`)
-- 크론은 세션 내에서만 유지되며 세션 종료 시 소멸되는 한계 확인
-- 세션 간 기억 보존 구조 확립: 크론(세션 중 30분 저장) + CLAUDE.md(세션 종료 시 저장) + 다음 세션 시작 시 CLAUDE.md 읽어 복원
-- `deleteStock()` 버그 수정: 종목 삭제 시 `state.trades`, `state.journals`에서도 해당 종목 기록 함께 삭제 (기존엔 portfolio에서만 제거)
-- `confirmSell()` 개선: 매도 시 기존 buy 투자일지 자동 업데이트(매도일·투자기간·수익률 기록), 일지 없으면 sell 타입 초안 자동 생성
-- 서브탭에 "💰 예수금" 탭 신규 추가: 입금/출금 폼 + 내역 테이블 상시 표시, 잔액 자동 계산 (입금−출금−현금매수+현금매도)
-- 고아 데이터 정리 기능 추가: 구버전 deleteStock 버그로 JSON 파일에 남은 고아 거래기록/투자일지를 `cleanOrphanedData()`로 일괄 삭제
-  - 거래기록 탭 상단에 🧹 "고아 데이터 정리" 버튼 추가 (포트폴리오에 없는 종목 기록이 있을 때만 빨간색으로 표시)
-  - 1.2.0 exe 재빌드 완료
-- StockBook 1.2.0.exe를 `StockBook-PWA` 폴더로 교체 (구버전 1.1.4.exe 삭제)
-- .gitignore에 `node_modules/`, `*.exe`, `*.zip` 추가
-- v1.2.0 전체 변경사항 GitHub push 완료 (`github.com/mj94920/stockbook`)
-  - 모바일 TWA 앱은 APK 재빌드 없이 GitHub Pages HTML 업데이트만으로 갱신됨 (network-first SW 전략)
+`renderBalanceSummary()` / `renderBalanceDonut()` / `renderPortfolioBar()` 전부 이 함수를 공유 → 한 곳만 고치면 전체 반영됨
 
-## 미결 사항
-- 제미나이 리디자인 CSS 복구본 + 종목명↔티커 자동완성 + 잔고탭 요약 패널 + 자산구성 도넛차트, 전부 포함해서 데스크톱 exe 재빌드 완료(`StockBook 1.3.0.exe`), 사용자 육안 확인 대기 중
-  - CSS: 다크모드 토글·그라데이션·유리모프·서브탭 전환·투자일지 카드가 정상으로 보이는지
-  - 자동완성: 네이버 자동완성 API가 실브라우저에서 CORS로 막히는지 확인 필요, 막히면 Cloudflare Worker 프록시 전환 검토
-  - 잔고탭: 데스크톱에서 예수금 탭과 구분되게 보이는지, 도넛 차트가 종목 수 늘어나도 잘 나뉘는지, 모바일에서 기존 전체 테이블 보기 동작이 그대로인지, 총자산 직접입력값이 도넛에 반영되는지(방금 수정분)
-  - 확인 끝나면 git 커밋 필요 (아직 커밋 전)
-- 시세 자동 조회: Yahoo Finance 직접 호출 방식으로 1차 구현 완료
-  - CORS 허용 여부가 Yahoo Finance 정책에 따라 달라질 수 있음 → 실제 브라우저 환경에서 테스트 필요
-  - 조회 실패 시 Cloudflare Worker 프록시 방식으로 전환 고려
-  - 한국 종목 `.KS`/`.KQ` 구분이 자동으로 되는지 실종목으로 검증 필요
-- 네이버 금융 CORS 허용 여부 실환경 테스트 필요 (차단 시 Cloudflare Worker 프록시 방식으로 전환)
-- 1.2.2.exe 수동 삭제 필요 (실행 중이라 자동 삭제 실패)
-- `getCashBalance()` 예수금 계산식을 "총자산-평가금액"→"총자산-매입원가"로 수정 완료(코드만), 사용자가 앱 잔고탭에서 육안 확인 후 데스크톱 exe 재빌드 + git 커밋 필요
-- 매도 시 예수금 자동 반영 안 되는 문제 수정 필요: `confirmSell()`에서 실현손익(pnl)을 총자산 또는 cashManual에 반영하도록 코드 추가 — 사용자 승인 대기 중
-- v1.3.1 exe(예수금 계산식 수정 포함) 사용자 확인 대기 중 — 확인 끝나면 git 커밋 필요(package.json, HTML 미커밋 상태)
+---
 
+## 증권사 API 현황
 
-## 참고
-- HTML은 ASAR로 패키징되어 있어 소스 수정만으로는 반영 안 됨 — 수정 후 반드시 `npm run build` 필요
-- 데스크톱 빌드: `npm run build` → `C:\Temp\StockBookBuild\StockBook x.x.x.exe` → `StockBook-PWA\` 폴더로 복사
-- 모바일 업데이트: HTML 수정 후 `git push origin main` 만으로 GitHub Pages 갱신 (APK 재빌드 불필요)
-- 현재 버전: 1.3.0
-- 데스크톱 앱 실제 저장 데이터 파일: `C:\Users\mj949\AppData\Roaming\StockBook\stockbook-data.json` — 특정 종목만 시세조회/기능이 안 될 때 이 파일에서 해당 종목 항목(ticker 필드 유무 등)을 직접 확인하면 원인 파악이 빠름
+| 증권사 | 상태 | 비고 |
+|--------|------|------|
+| 한국투자증권 (KIS) | ✅ API 키 발급 완료 | REST, 국내+미국 분리 |
+| 토스증권 | ⏳ 사전 신청 후 발급 대기 | REST+WebSocket, LLM 친화적, 국내+미국 통합 |
+| 미래에셋 | ❌ 개인 신청 불가 | 주력 계좌지만 API 연동 불가 |
+| 키움 | 스킵 | 가족 계좌, COM방식 Electron 연동 까다로움 |
+
+- 토스 API 문서: `developers.tossinvest.com` (OpenAPI JSON 스펙 공개 → 코드 자동 생성 가능)
+- 미래에셋 계좌에 제룡전기·두산에너빌리티·포스코DX 손실 보유 중 → 회복 시 토스증권으로 대체출고 계획
+- **시세 조회 현재**: 네이버 금융 BrowserWindow 스크래핑 → KIS REST API로 교체 예정
+
+### API 키 관리 방침
+- 각 사용자가 자신의 API 키를 직접 입력 (로그인 팝업 방식)
+- Electron `safeStorage`로 로컬 암호화 저장, 외부 서버 전송 없음
+- 설정 팝업에서 증권사별 키 입력·저장·삭제
+
+---
+
+## 로드맵
+
+### 단기 (진행 중)
+- [ ] **Setup.exe (NSIS) 전환** — 독자적 오프라인 설치 프로그램
+  - `package.json` win target: `nsis`, `oneClick: false`, `language: 1042`
+  - 설치 경로 선택·바탕화면 바로가기·프로그램 추가/제거 등록
+- [ ] **KIS API 시세 조회 연동** — 네이버 BrowserWindow 스크래핑 대체
+- [ ] **API 키 입력 팝업** — 증권사별 키 입력 UI (아래 논의 참고)
+
+### 중기
+- [ ] 토스 API 키 발급 후 멀티 잔고 통합 (전 증권사 합산 뷰)
+- [ ] Vue.js 도입 검토 — 데이터 바인딩 복잡도 증가 시점에
+
+### 언어/아키텍처 방향
+- **HTML**: 디자인·레이아웃 전담
+- **JavaScript**: API 연동·상태관리·비즈니스 로직
+- **Electron main.js**: API 호출 (CORS 우회) → IPC → 렌더러(HTML)로 데이터 전달
+- Electron EXE 구조에서만 가능: CORS 제약 없는 API 호출, 로컬 파일 접근, 오프라인 동작
+
+---
+
+## API 키 팝업 구현 논의
+
+### 방식: 최초 실행 시 설정 마법사 + 설정탭 상시 접근
+
+```
+앱 첫 실행 (또는 키 미등록 시)
+  └── 모달 팝업: "증권사 API 키를 등록해주세요"
+        ├── 한국투자증권: APP Key / APP Secret 입력
+        └── 토스증권: Client ID / Client Secret 입력 (발급 후)
+```
+
+### 저장 방식
+```javascript
+// main.js (Electron 메인 프로세스)
+const { safeStorage } = require('electron')
+
+// 저장: 암호화해서 로컬 파일에 기록
+ipcMain.handle('save-api-key', (event, { broker, key, secret }) => {
+  const encrypted = safeStorage.encryptString(JSON.stringify({ key, secret }))
+  fs.writeFileSync(`${userDataPath}/${broker}-cred.enc`, encrypted)
+})
+
+// 불러오기
+ipcMain.handle('load-api-key', (event, { broker }) => {
+  const buf = fs.readFileSync(`${userDataPath}/${broker}-cred.enc`)
+  return JSON.parse(safeStorage.decryptString(buf))
+})
+```
+
+### 장점
+- 외부 서버 불필요, 완전 오프라인
+- 키가 평문으로 JSON에 저장되지 않음 (OS 키체인 수준 암호화)
+- 여러 사용자가 각자 PC에서 자기 키 사용 가능
+
+### UI 흐름
+1. 앱 시작 → main.js에서 `.enc` 파일 존재 확인
+2. 없으면 → 렌더러에 `show-api-setup` IPC 발송 → 설정 모달 자동 오픈
+3. 있으면 → 복호화 후 메모리에 로드, 모달 없이 바로 시작
+4. 설정탭에서 언제든 키 변경·삭제 가능
+
+---
+
+## 버전 히스토리 요약
+
+| 버전 | 주요 내용 |
+|------|---------|
+| v1.2.x | Yahoo Finance/네이버 시세 조회, 월복리 시뮬레이터, 거래기록 자동화 |
+| v1.3.x | 다크/라이트 테마, 잔고탭 도넛차트, 예수금 계산식 수정, 티커 자동완성 |
+| v1.4.0 | Electron IPC 시세 조회, 기업 분석 드로어 |
+| v1.4.1 | 모바일 인트로, 뉴스탭 정리 |
+| v1.4.2 | 탭버그·주소창·버튼겹침 수정, 예수금 역산 |
+| v1.4.3 | 탭버그 완전 수정 (switchSubTab early return 제거) |
+| v1.4.4 | 기업 분석 드로어, 예수금↔총자산 연동 버그 수정, 세로모드 종목명 겹침 수정, 저장소 이름 변경(stockbook--→stockbook) |

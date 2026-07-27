@@ -1081,6 +1081,53 @@
     border-color: var(--accent);
     background: rgba(37,99,235,0.1);
   }
+  /* API 키 설정 섹션 */
+  .api-key-broker-block { margin-bottom: 16px; }
+  .api-key-broker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .api-key-broker-name { font-size: 13px; font-weight: 600; color: var(--text2); }
+  .api-key-status {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .api-key-status.saved  { background: rgba(74,222,128,0.13); color: #4ade80; }
+  .api-key-status.empty  { background: var(--bg3); color: var(--text3); }
+  .api-key-input-row { margin-bottom: 7px; }
+  .api-key-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .api-key-input:focus { outline: none; border-color: var(--accent); }
+  .api-key-input::placeholder { color: var(--text3); }
+  .api-key-actions { display: flex; gap: 6px; margin-top: 8px; }
+  .api-key-toggle-btn {
+    width: 100%;
+    font-size: 12px;
+    padding: 6px 0;
+    margin-top: 2px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text3);
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .api-key-toggle-btn:hover { background: var(--bg3); color: var(--text2); }
+
   .settings-close-row {
     display: flex;
     justify-content: flex-end;
@@ -5059,11 +5106,107 @@ function openSettings() {
     const btn = document.getElementById('themeOpt' + m.charAt(0).toUpperCase() + m.slice(1));
     if (btn) btn.classList.toggle('active', m === saved);
   });
+  // API 키 등록 상태 갱신
+  loadApiKeysUI();
 }
 
 function closeSettings() {
   const modal = document.getElementById('settingsModal');
   if (modal) modal.classList.remove('open');
+  // 입력 필드 접기
+  ['kis'].forEach(broker => {
+    const f = document.getElementById(broker + 'KeyFields');
+    const b = document.getElementById(broker + 'ToggleBtn');
+    if (f) f.style.display = 'none';
+    if (b) b.textContent = '▾ 입력 / 수정';
+  });
+}
+
+// ── API 키 설정 ────────────────────────────────────────────────────────────
+async function loadApiKeysUI() {
+  if (!window.electronAPI?.checkApiKey) return;
+  const kisOk = await window.electronAPI.checkApiKey('kis');
+  const el = document.getElementById('kisKeyStatus');
+  if (el) {
+    el.textContent  = kisOk ? '✓ 등록됨' : '미등록';
+    el.className    = 'api-key-status ' + (kisOk ? 'saved' : 'empty');
+  }
+}
+
+function toggleApiKeyFields(broker) {
+  const fields = document.getElementById(broker + 'KeyFields');
+  const btn    = document.getElementById(broker + 'ToggleBtn');
+  if (!fields) return;
+  const isOpen = fields.style.display !== 'none';
+  fields.style.display = isOpen ? 'none' : 'block';
+  if (btn) btn.textContent = isOpen ? '▾ 입력 / 수정' : '▴ 닫기';
+  // 열 때: 저장된 계좌번호를 플레이스홀더로 표시
+  if (!isOpen && window.electronAPI?.loadApiKey) {
+    window.electronAPI.loadApiKey(broker).then(data => {
+      if (!data) return;
+      if (broker === 'kis') {
+        const k = document.getElementById('kisAppKey');
+        const s = document.getElementById('kisAppSecret');
+        const a = document.getElementById('kisAccount');
+        if (k && data.appKey)    k.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)';
+        if (s && data.appSecret) s.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)';
+        if (a) { a.value = data.account || ''; }
+      }
+    });
+  }
+}
+
+async function saveApiKey(broker) {
+  if (!window.electronAPI?.saveApiKey) return alert('Electron 환경에서만 사용 가능합니다.');
+  if (broker === 'kis') {
+    const keyEl    = document.getElementById('kisAppKey');
+    const secretEl = document.getElementById('kisAppSecret');
+    const acctEl   = document.getElementById('kisAccount');
+    const newKey    = keyEl?.value.trim()    || '';
+    const newSecret = secretEl?.value.trim() || '';
+    const newAcct   = acctEl?.value.trim()   || '';
+    // 비워둔 항목은 기존 저장값 유지
+    const existing = (await window.electronAPI.loadApiKey('kis')) || {};
+    const fields = {
+      appKey:    newKey    || existing.appKey    || '',
+      appSecret: newSecret || existing.appSecret || '',
+      account:   newAcct   || existing.account   || '',
+    };
+    if (!fields.appKey || !fields.appSecret) {
+      alert('APP Key와 APP Secret을 모두 입력해주세요.');
+      return;
+    }
+    const result = await window.electronAPI.saveApiKey('kis', fields);
+    if (result?.ok) {
+      if (keyEl)    { keyEl.value = '';    keyEl.placeholder    = '●●●●●●●● (저장됨 — 변경 시만 입력)'; }
+      if (secretEl) { secretEl.value = ''; secretEl.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)'; }
+      toggleApiKeyFields('kis'); // 저장 후 접기
+      loadApiKeysUI();
+    } else {
+      alert('저장 실패: ' + (result?.error || '알 수 없는 오류'));
+    }
+  }
+}
+
+async function deleteApiKey(broker) {
+  if (!window.electronAPI?.deleteApiKey) return;
+  const name = broker === 'kis' ? '한국투자증권 (KIS)' : broker;
+  const confirmed = await window.electronAPI.showConfirm(`${name} API 키를 삭제하시겠습니까?`);
+  if (!confirmed) return;
+  await window.electronAPI.deleteApiKey(broker);
+  if (broker === 'kis') {
+    const k = document.getElementById('kisAppKey');
+    const s = document.getElementById('kisAppSecret');
+    const a = document.getElementById('kisAccount');
+    if (k) { k.value = ''; k.placeholder = 'APP Key'; }
+    if (s) { s.value = ''; s.placeholder = 'APP Secret'; }
+    if (a) { a.value = ''; }
+    const f = document.getElementById('kisKeyFields');
+    const b = document.getElementById('kisToggleBtn');
+    if (f) f.style.display = 'none';
+    if (b) b.textContent = '▾ 입력 / 수정';
+  }
+  loadApiKeysUI();
 }
 
 // ============================================================
@@ -5827,10 +5970,47 @@ function _toggleCheck(stockKey, checkKey, val) {
       </div>
     </div>
 
+    <!-- 증권사 API 키 -->
+    <div class="settings-section">
+      <div class="settings-section-label">증권사 API 키</div>
+
+      <!-- 한국투자증권 KIS -->
+      <div class="api-key-broker-block">
+        <div class="api-key-broker-header">
+          <div class="api-key-broker-name">🏦 한국투자증권 (KIS)</div>
+          <span class="api-key-status empty" id="kisKeyStatus">미등록</span>
+        </div>
+        <div id="kisKeyFields" style="display:none;">
+          <div class="api-key-input-row">
+            <input class="api-key-input" id="kisAppKey" type="password" placeholder="APP Key" autocomplete="off">
+          </div>
+          <div class="api-key-input-row">
+            <input class="api-key-input" id="kisAppSecret" type="password" placeholder="APP Secret" autocomplete="off">
+          </div>
+          <div class="api-key-input-row">
+            <input class="api-key-input" id="kisAccount" type="text" placeholder="계좌번호 (예: 50123456-01)" autocomplete="off">
+          </div>
+          <div class="api-key-actions">
+            <button class="btn btn-primary" style="flex:1;font-size:12px;padding:7px 0;" onclick="saveApiKey('kis')">저장</button>
+            <button class="btn btn-ghost" style="font-size:12px;padding:7px 12px;" onclick="deleteApiKey('kis')">삭제</button>
+          </div>
+        </div>
+        <button class="api-key-toggle-btn" id="kisToggleBtn" onclick="toggleApiKeyFields('kis')">▾ 입력 / 수정</button>
+      </div>
+
+      <!-- 토스증권 (준비 중) -->
+      <div class="api-key-broker-block">
+        <div class="api-key-broker-header">
+          <div class="api-key-broker-name" style="opacity:0.4;">🟣 토스증권</div>
+          <span class="api-key-status empty" style="opacity:0.4;">발급 대기 중</span>
+        </div>
+      </div>
+    </div>
+
     <div class="settings-close-row">
       <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.4.4</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.4.5</div>
   </div>
 </div>
 
