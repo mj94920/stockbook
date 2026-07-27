@@ -31,7 +31,7 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowDirChange": true,
+      "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "runAfterFinish": true,
       "language": "1042"
