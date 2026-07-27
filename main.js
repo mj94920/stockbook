@@ -11,12 +11,13 @@ function getDataFile() {
 }
 
 // ── 내부 HTTPS 헬퍼 (CORS 제한 없음) ────────────────────────────────────────
-function httpsGet(url, timeoutMs = 8000) {
+function httpsGet(url, timeoutMs = 8000, extraHeaders = {}) {
   return new Promise((resolve, reject) => {
     const req = https.get(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
         'Accept':     'application/json, text/plain, */*',
+        ...extraHeaders,
       }
     }, res => {
       let body = '';
@@ -29,6 +30,105 @@ function httpsGet(url, timeoutMs = 8000) {
     req.on('error', reject);
     req.setTimeout(timeoutMs, () => { req.destroy(); reject(new Error('Timeout')); });
   });
+}
+
+function httpsPost(url, body, extraHeaders = {}) {
+  return new Promise((resolve, reject) => {
+    const json    = JSON.stringify(body);
+    const urlObj  = new URL(url);
+    const options = {
+      hostname: urlObj.hostname,
+      port:     parseInt(urlObj.port) || 443,
+      path:     urlObj.pathname + urlObj.search,
+      method:   'POST',
+      headers: {
+        'Content-Type':   'application/json; charset=UTF-8',
+        'Content-Length': Buffer.byteLength(json),
+        ...extraHeaders,
+      },
+    };
+    const req = https.request(options, res => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end',  () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) resolve(data);
+        else reject(new Error(`HTTP ${res.statusCode}: ${data.slice(0, 200)}`));
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(12000, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.write(json);
+    req.end();
+  });
+}
+
+// ── KIS API 시세 조회 ─────────────────────────────────────────────────────────
+// 메모리 내 토큰 캐시 (앱 재시작 시 초기화)
+let _kisToken      = null;
+let _kisTokenExpiry = 0;
+
+async function getKisToken() {
+  // 유효한 캐시 토큰 재사용
+  if (_kisToken && Date.now() < _kisTokenExpiry) return _kisToken;
+  // 저장된 API 키 로드
+  const credFile = getCredFile('kis');
+  if (!fs.existsSync(credFile)) return null;
+  let creds;
+  try {
+    creds = JSON.parse(safeStorage.decryptString(fs.readFileSync(credFile)));
+  } catch (_) { return null; }
+  if (!creds?.appKey || !creds?.appSecret) return null;
+  // 토큰 발급
+  try {
+    const res = JSON.parse(await httpsPost(
+      'https://openapi.koreainvestment.com:9443/oauth2/tokenP',
+      { grant_type: 'client_credentials', appkey: creds.appKey, appsecret: creds.appSecret }
+    ));
+    if (!res.access_token) return null;
+    _kisToken       = { token: res.access_token, appKey: creds.appKey, appSecret: creds.appSecret };
+    // 만료 30분 전에 갱신 (expires_in은 초 단위, 기본 86400)
+    _kisTokenExpiry = Date.now() + ((res.expires_in || 86400) - 1800) * 1000;
+    console.log('[StockBook] KIS 토큰 발급 완료 — 만료:', new Date(_kisTokenExpiry).toLocaleTimeString());
+    return _kisToken;
+  } catch (e) {
+    console.error('[StockBook] KIS 토큰 발급 실패:', e.message);
+    return null;
+  }
+}
+
+async function fetchKisPrice(code) {
+  const auth = await getKisToken();
+  if (!auth) return null;
+  try {
+    const body = await httpsGet(
+      `https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-price?FID_COND_MRKT_DIV_CODE=J&FID_INPUT_ISCD=${code}`,
+      10000,
+      {
+        authorization: `Bearer ${auth.token}`,
+        appkey:        auth.appKey,
+        appsecret:     auth.appSecret,
+        tr_id:         'FHKST01010100',
+      }
+    );
+    const d = JSON.parse(body);
+    const o = d?.output;
+    if (!o?.stck_prpr) return null;
+    const price     = parseFloat(o.stck_prpr);   // 현재가
+    const prevClose = parseFloat(o.stck_sdpr);   // 전일 종가
+    const openPrice = parseFloat(o.stck_oprc);   // 시가
+    if (!price) return null;
+    return {
+      symbol:    code,
+      price,
+      prevClose: prevClose || null,
+      openPrice: openPrice || null,
+      currency:  'KRW',
+      source:    'KIS',
+    };
+  } catch (e) {
+    console.error('[StockBook] KIS 시세 조회 실패:', e.message);
+    return null;
+  }
 }
 
 // ── IPC: 시세 조회 (main 프로세스에서 직접 요청 → CORS 없음) ────────────────
@@ -68,7 +168,11 @@ ipcMain.handle('fetch-quote', async (_event, rawTicker) => {
   };
 
   if (isKrNum) {
-    // 1) 네이버 금융 (국내 전용, 가장 정확)
+    // 1) KIS REST API (API 키 등록 시 — 실시간 공식 데이터)
+    const kisResult = await fetchKisPrice(rawTicker);
+    if (kisResult) return kisResult;
+
+    // 2) 네이버 금융 (KIS 미등록 또는 실패 시 폴백)
     try {
       const body = await httpsGet(`https://m.stock.naver.com/api/stock/${rawTicker}/basic`);
       const d    = JSON.parse(body);
@@ -84,7 +188,7 @@ ipcMain.handle('fetch-quote', async (_event, rawTicker) => {
       };
     } catch (_) { /* 네이버 실패 시 야후 폴백 */ }
 
-    // 2) 야후 파이낸스 v7 quote .KS / .KQ
+    // 3) 야후 파이낸스 v7 quote .KS / .KQ
     for (const suffix of ['.KS', '.KQ']) {
       const result = await fetchYFv7(rawTicker + suffix);
       if (result) return { ...result, currency: result.currency || 'KRW' };
