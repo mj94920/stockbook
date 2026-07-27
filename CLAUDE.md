@@ -1,6 +1,6 @@
 # StockBook — 프로젝트 메모
 
-> 현재 버전: **v1.4.4** | Git: `https://github.com/mj94920/stockbook.git`
+> 현재 버전: **v2.0** | Git: `https://github.com/mj94920/stockbook.git`
 > GitHub Pages: `https://mj94920.github.io/stockbook/`
 
 ---
@@ -127,3 +127,4 @@ ipcMain.handle('load-api-key', (event, { broker }) => {
 | v1.4.2 | 탭버그·주소창·버튼겹침 수정, 예수금 역산 |
 | v1.4.3 | 탭버그 완전 수정 (switchSubTab early return 제거) |
 | v1.4.4 | 기업 분석 드로어, 예수금↔총자산 연동 버그 수정, 세로모드 종목명 겹침 수정, 저장소 이름 변경(stockbook--→stockbook) |
+| v2.0 | NSIS 설치 마법사, KIS API 키 팝업 (safeStorage 암호화), KIS REST API 시세 조회 연동 |
