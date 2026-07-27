@@ -1776,21 +1776,27 @@
 
   /* ── 서브탭을 최상단 전체 너비 네비게이션으로 ── */
   .sub-tabs {
+    width: 100% !important;
+    box-sizing: border-box !important;
     border-radius: 0 !important;
-    padding: 0 20px !important;
+    padding: 0 24px !important;
     border-left: none !important; border-right: none !important; border-top: none !important;
     position: sticky;
     top: 64px;
     z-index: 90;
-    background: rgba(11,15,25,0.97) !important;
-    border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+    background: rgba(11,15,25,0.98) !important;
+    border-bottom: 1px solid rgba(99,102,241,0.18) !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
     flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none;
   }
+  .sub-tab-btn {
+    padding: 10px 14px !important;
+  }
   .sub-tabs::-webkit-scrollbar { display: none; }
   body.light-mode .sub-tabs {
-    background: rgba(248,250,252,0.97) !important;
+    background: rgba(248,250,252,0.98) !important;
     border-bottom-color: rgba(0,0,0,0.08) !important;
   }
 
@@ -1798,8 +1804,9 @@
   .hts-layout { transition: none; }
   .hts-layout.balance-mode {
     display: grid;
-    grid-template-columns: 1fr 370px;
-    gap: 20px;
+    grid-template-columns: 1fr 380px;
+    gap: 16px;
+    align-items: start;
   }
   .hts-layout.non-balance-mode {
     display: block !important;
@@ -1812,6 +1819,23 @@
     max-height: none !important;
     overflow: visible !important;
     width: 100%;
+  }
+
+  /* ── 잔고 탭에서 hts-left 정리: 요약바/게이지/총자산카드 숨김 ── */
+  .hts-layout.balance-mode #htsSummary,
+  .hts-layout.balance-mode .portfolio-bar-wrap {
+    display: none !important;
+  }
+  /* 잔고 탭일 때 총 자산 설정 카드 숨김 (사이드바에 있음) */
+  .hts-layout.balance-mode .total-asset-card {
+    display: none !important;
+  }
+
+  /* 서브탭 아래로 sticky 오프셋 조정 (헤더64 + 탭바48) */
+  .hts-layout.balance-mode .hts-right {
+    position: sticky;
+    top: 112px;
+    max-height: calc(100vh - 120px);
   }
 
   /* ── 잔고 우측 사이드바 통합 패널 ── */
@@ -1922,7 +1946,7 @@
   <div class="hts-left">
 
   <!-- TOTAL ASSET SETTING -->
-  <div class="card" style="padding:12px 16px;margin-bottom:12px;">
+  <div class="card total-asset-card" style="padding:12px 16px;margin-bottom:12px;">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
       <span style="font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> 총 자산</span>
       <input type="text" inputmode="decimal" id="totalAssetInput" placeholder="예: 100,000,000 (1억)" min="0" step="any"
@@ -2000,6 +2024,19 @@
 
       <!-- 💼 잔고 -->
       <div id="stab-balance" class="sub-tab-panel active">
+
+  <!-- 총 자산 설정 (사이드바 전용) -->
+  <div class="card" style="padding:10px 14px;margin-bottom:10px;">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span style="font-size:12px;font-weight:700;color:var(--text3);white-space:nowrap;">💰 총 자산</span>
+      <input type="text" inputmode="decimal" id="totalAssetInput2" placeholder="예: 100,000,000"
+        style="flex:1;min-width:100px;padding:5px 9px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;outline:none;"
+        oninput="formatWithComma(this);document.getElementById('totalAssetInput').value=this.value;previewAssetRatio()"
+        onkeydown="if(event.key==='Enter')saveTotalAsset()">
+      <button class="btn btn-primary btn-sm" onclick="saveTotalAsset()" style="padding:4px 10px;font-size:12px;">설정</button>
+    </div>
+  </div>
+
   <div class="card">
     <div class="card-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> 잔고 요약</div>
     <div class="hts-bar" style="margin-bottom:0;">
@@ -3847,6 +3884,10 @@ function switchSubTab(name) {
     renderPortfolio();
     renderBalanceSummary();
     populateQOStockList(); // 빠른 주문 종목 목록 갱신
+    // 사이드바 총자산 입력 동기화
+    const ta2 = document.getElementById('totalAssetInput2');
+    const ta1 = document.getElementById('totalAssetInput');
+    if (ta2 && ta1) ta2.value = ta1.value;
   } else {
     htsLayout.classList.remove('balance-mode');
     htsLayout.classList.add('non-balance-mode');
