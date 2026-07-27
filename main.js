@@ -336,6 +336,22 @@ ipcMain.handle('show-confirm', async (_event, message) => {
 
 // ── 창 생성 ──────────────────────────────────────────────────────────────────
 function createWindow() {
+  // ── 스플래시 스크린 ───────────────────────────────────────────────────────
+  const splash = new BrowserWindow({
+    width:           400,
+    height:          260,
+    frame:           false,
+    transparent:     true,
+    alwaysOnTop:     true,
+    resizable:       false,
+    skipTaskbar:     true,
+    icon:            path.join(__dirname, 'icon-512.png'),
+    backgroundColor: '#00000000',
+    webPreferences:  { nodeIntegration: false, contextIsolation: true }
+  });
+  splash.loadFile(path.join(__dirname, 'splash.html'));
+  splash.center();
+
   // HTML 파일을 임시 ASCII 경로에 복사 후 로드 (Electron 파일 로드 안정성)
   const srcHtml = path.join(__dirname, 'index.html');
   const tmpHtml = path.join(app.getPath('temp'), 'stockbook-app.html');
@@ -361,7 +377,13 @@ function createWindow() {
 
   win.loadFile(tmpHtml);
   win.setMenuBarVisibility(false);
-  win.once('ready-to-show', () => win.show()); // 렌더링 완료 후 창 표시
+  // 스플래시 최소 1.4초 표시 후 메인 창 표시, 스플래시 닫기
+  win.once('ready-to-show', () => {
+    setTimeout(() => {
+      win.show();
+      if (!splash.isDestroyed()) splash.close();
+    }, 1400);
+  });
 
   // ── 외부 URL은 모두 시스템 기본 브라우저로 열기 ──────────────────────────
   win.webContents.setWindowOpenHandler(({ url }) => {

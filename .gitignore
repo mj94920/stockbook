@@ -6,8 +6,11 @@ signing-key-info.txt
 node_modules/
 *.exe
 *.zip
+
+# Windows ì˜ˆì•½ ì¥ì¹˜ëª… (bash ì˜¤ë¥˜ë¡œ ìƒì„±ëœ ë”ë¯¸ íŒŒì¼)
+/nul
  
-# Android TWA ºôµå ÆÄÀÏ 
+# Android TWA ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 
 .gradle/ 
 app/ 
 build/ 
