@@ -67,21 +67,25 @@ function httpsPost(url, body, extraHeaders = {}) {
 }
 
 // ── URL-encoded Form POST 헬퍼 (KRX API용) ──────────────────────────────────
-function httpsFormPost(url, formBody, timeoutMs = 20000) {
+function httpsFormPost(url, formBody, extraHeaders = {}, timeoutMs = 20000) {
   return new Promise((resolve, reject) => {
     const urlObj  = new URL(url);
+    const bodyBuf = Buffer.from(formBody, 'utf-8');
     const options = {
       hostname: urlObj.hostname,
       port:     parseInt(urlObj.port) || 443,
       path:     urlObj.pathname + urlObj.search,
       method:   'POST',
       headers: {
-        'Content-Type':   'application/x-www-form-urlencoded; charset=UTF-8',
-        'Content-Length': Buffer.byteLength(formBody),
-        'User-Agent':     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
-        'Referer':        'https://data.krx.co.kr/',
-        'Origin':         'https://data.krx.co.kr',
-        'Accept':         'application/json, text/plain, */*',
+        'Content-Type':     'application/x-www-form-urlencoded; charset=UTF-8',
+        'Content-Length':   bodyBuf.length,
+        'User-Agent':       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+        'Referer':          'https://data.krx.co.kr/',
+        'Origin':           'https://data.krx.co.kr',
+        'Accept':           'application/json, text/plain, */*',
+        'Accept-Language':  'ko-KR,ko;q=0.9',
+        'X-Requested-With': 'XMLHttpRequest',
+        ...extraHeaders,
       },
     };
     const req = https.request(options, res => {
@@ -95,9 +99,51 @@ function httpsFormPost(url, formBody, timeoutMs = 20000) {
     });
     req.on('error', reject);
     req.setTimeout(timeoutMs, () => { req.destroy(); reject(new Error('Timeout')); });
-    req.write(formBody);
+    req.write(bodyBuf);
     req.end();
   });
+}
+
+// ── KRX CSV 파서 (OTP 다운로드 응답용) ──────────────────────────────────────
+function parseCsvLine(line) {
+  const cols = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { cols.push(cur.replace(/,/g, '')); cur = ''; }
+    else { cur += c; }
+  }
+  cols.push(cur.replace(/,/g, ''));
+  return cols;
+}
+
+function parseKrxCsv(raw, market) {
+  const cleaned = raw.replace(/^﻿/, '').replace(/\r/g, '');
+  const lines   = cleaned.split('\n').filter(l => l.trim());
+  if (lines.length < 2) return [];
+
+  // 헤더로 컬럼 인덱스 동적 탐색 (KRX가 컬럼 순서 바꿔도 안전)
+  const headers = parseCsvLine(lines[0]);
+  const ci = name => headers.findIndex(h => h.includes(name));
+  const iCode = ci('종목코드'), iName = ci('종목명'),
+        iClose = ci('종가'),   iChg  = ci('대비'),
+        iRate  = ci('등락률'), iVol  = ci('거래량'), iCap = ci('시가총액');
+
+  return lines.slice(1).map(line => {
+    const c = parseCsvLine(line);
+    const get = (i, fb) => (i >= 0 && c[i]) ? c[i].trim() : (fb >= 0 && c[fb] ? c[fb].trim() : '0');
+    return {
+      ISU_SRT_CD:    (iCode  >= 0 ? c[iCode]  : c[0] || '').trim(),
+      ISU_ABBRV:     (iName  >= 0 ? c[iName]  : c[1] || '').trim(),
+      TDD_CLSPRC:    get(iClose,  4),
+      CMPPREVDD_PRC: get(iChg,    5),
+      FLUC_RT:       get(iRate,   6),
+      ACC_TRDVOL:    get(iVol,   10),
+      MKTCAP:        get(iCap,   12),
+      _market:       market,
+    };
+  }).filter(r => r.ISU_SRT_CD && /^\d{6}$/.test(r.ISU_SRT_CD));
 }
 
 // ── KRX 전종목 데이터 캐시 ───────────────────────────────────────────────────
@@ -125,21 +171,39 @@ ipcMain.handle('fetch-krx-stocks', async () => {
     } catch (_) {}
   }
 
-  // KRX API 실시간 조회
+  // KRX API 실시간 조회 — OTP → CSV 2단계 (세션 불필요, 공식 다운로드 방식)
   try {
-    const fetchMarket = async (mktId) => {
-      const formBody = `bld=dbms%2FMDC%2FSTAT%2Fstandard%2FMDCSTAT01901&locale=ko_KR&mktId=${mktId}&share=1&money=1&csvxls_isNo=false`;
-      const raw  = await httpsFormPost('https://data.krx.co.kr/comm/bldAttendant/getJsonData.cmd', formBody);
-      const json = JSON.parse(raw);
-      return json.OutBlock_1 || [];
+    const KRX_PARAMS = mktId =>
+      `bld=dbms%2FMDC%2FSTAT%2Fstandard%2FMDCSTAT01901&locale=ko_KR&mktId=${mktId}&share=1&money=1&csvxls_isNo=false`;
+
+    const fetchMarket = async (mktId, label) => {
+      // Step 1: OTP 발급
+      const otp = (await httpsFormPost(
+        'https://data.krx.co.kr/comm/fileDn/GenerateOTP/generate.cmd',
+        KRX_PARAMS(mktId),
+        {},
+        15000
+      )).trim();
+      if (!otp || otp.length < 10) throw new Error(`OTP 발급 실패: "${otp}"`);
+
+      // Step 2: OTP로 CSV 다운로드
+      const csv = await httpsFormPost(
+        'https://data.krx.co.kr/comm/fileDn/download_csv.cmd',
+        `code=${encodeURIComponent(otp)}`,
+        { 'Accept': 'text/csv,*/*' },
+        30000
+      );
+
+      const rows = parseKrxCsv(csv, label);
+      console.log(`[StockBook] KRX ${label} CSV: ${rows.length}종목`);
+      return rows;
     };
 
     const toNum = s => parseFloat((s || '0').replace(/,/g, '')) || 0;
 
-    const [kospi, kosdaq] = await Promise.all([
-      fetchMarket('STK'),
-      fetchMarket('KSQ'),
-    ]);
+    // KOSPI·KOSDAQ 순차 실행 (KRX 서버 부하 고려)
+    const kospi  = await fetchMarket('STK', 'KOSPI');
+    const kosdaq = await fetchMarket('KSQ', 'KOSDAQ');
 
     const parse = (rows, mkt) => rows.map(r => ({
       code:      r.ISU_SRT_CD  || '',
