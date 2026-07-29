@@ -1,6 +1,6 @@
 # StockBook — 프로젝트 운영 지침서
 
-> 현재 버전: **v2.2.5** | Git: `https://github.com/mj94920/stockbook.git` (branch: main)
+> 현재 버전: **v2.2.6** | Git: `https://github.com/mj94920/stockbook.git` (branch: main)
 > GitHub Pages: `https://mj94920.github.io/stockbook/`
 
 ---
@@ -211,3 +211,4 @@ function getCredFile(broker) {
 | v2.2.3 | 고아 요소 null 크래시 수정 (f_name·f_price·f_qty·es_name·es_ticker addEventListener null 체크 추가 → TDZ 패턴 제거 → 설정 버튼 먹통 근본 해결) |
 | v2.2.4 | 전종목 KRX API 수정 — getJsonData.cmd LOGOUT 에러 → OTP+CSV 2단계 다운로드 방식으로 교체 (세션 불필요, pykrx 방식) |
 | v2.2.5 | 시장 지수 티커 CORS 수정 — 렌더러 직접 fetch → IPC fetch-market-tickers (main.js httpsGet) 로 교체, preload.js fetchMarketTickers 추가 |
+| v2.2.6 | 전종목 KRX CSV 미표시 근본 수정 — OTP 발급 POST→GET 방식 변경(pykrx 동일), CSV 다운로드 Buffer 수신+인코딩 자동감지(UTF-8 BOM/EUC-KR), 0종목 시 에러 처리로 상태 표시 보장, httpsFormPostBuf 추가 |

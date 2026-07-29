@@ -146,6 +146,42 @@ function parseKrxCsv(raw, market) {
   }).filter(r => r.ISU_SRT_CD && /^\d{6}$/.test(r.ISU_SRT_CD));
 }
 
+// ── httpsFormPost — 응답을 Buffer로 반환하는 변형 (CSV 인코딩 감지용) ──────────
+function httpsFormPostBuf(url, formBody, extraHeaders = {}, timeoutMs = 30000) {
+  return new Promise((resolve, reject) => {
+    const urlObj  = new URL(url);
+    const bodyBuf = Buffer.from(formBody, 'utf-8');
+    const options = {
+      hostname: urlObj.hostname,
+      port:     parseInt(urlObj.port) || 443,
+      path:     urlObj.pathname + urlObj.search,
+      method:   'POST',
+      headers: {
+        'Content-Type':     'application/x-www-form-urlencoded; charset=UTF-8',
+        'Content-Length':   bodyBuf.length,
+        'User-Agent':       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+        'Referer':          'https://data.krx.co.kr/contents/MDC/MAIN/main/index.cmd',
+        'Origin':           'https://data.krx.co.kr',
+        'Accept':           'text/csv, application/octet-stream, */*',
+        'Accept-Language':  'ko-KR,ko;q=0.9',
+        ...extraHeaders,
+      },
+    };
+    const req = https.request(options, res => {
+      const chunks = [];
+      res.on('data', chunk => chunks.push(chunk));
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) resolve(Buffer.concat(chunks));
+        else reject(new Error(`HTTP ${res.statusCode}: ${Buffer.concat(chunks).toString('utf-8').slice(0, 200)}`));
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(timeoutMs, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.write(bodyBuf);
+    req.end();
+  });
+}
+
 // ── KRX 전종목 데이터 캐시 ───────────────────────────────────────────────────
 let _krxCache     = null;
 let _krxCacheTime = 0;
@@ -171,31 +207,58 @@ ipcMain.handle('fetch-krx-stocks', async () => {
     } catch (_) {}
   }
 
-  // KRX API 실시간 조회 — OTP → CSV 2단계 (세션 불필요, 공식 다운로드 방식)
+  // KRX API 실시간 조회 — OTP(GET) → CSV(POST Buffer) 2단계 (세션 불필요, pykrx 방식)
   try {
-    const KRX_PARAMS = mktId =>
-      `bld=dbms%2FMDC%2FSTAT%2Fstandard%2FMDCSTAT01901&locale=ko_KR&mktId=${mktId}&share=1&money=1&csvxls_isNo=false`;
+    // OTP 쿼리 — URL 인코딩 없이 그대로 (KRX 서버가 / 포함 그대로 받음)
+    const KRX_OTP_QUERY = mktId =>
+      `bld=dbms/MDC/STAT/standard/MDCSTAT01901&locale=ko_KR&mktId=${mktId}&share=1&money=1&csvxls_isNo=false`;
 
     const fetchMarket = async (mktId, label) => {
-      // Step 1: OTP 발급
-      const otp = (await httpsFormPost(
-        'https://data.krx.co.kr/comm/fileDn/GenerateOTP/generate.cmd',
-        KRX_PARAMS(mktId),
-        {},
-        15000
+      // Step 1: OTP 발급 — GET 방식 (pykrx와 동일, POST 하면 다른 응답 반환)
+      const otp = (await httpsGet(
+        `https://data.krx.co.kr/comm/fileDn/GenerateOTP/generate.cmd?${KRX_OTP_QUERY(mktId)}`,
+        15000,
+        {
+          'Referer': 'https://data.krx.co.kr/contents/MDC/MAIN/main/index.cmd',
+          'Accept':  'text/plain, */*; q=0.01',
+          'X-Requested-With': 'XMLHttpRequest',
+        }
       )).trim();
-      if (!otp || otp.length < 10) throw new Error(`OTP 발급 실패: "${otp}"`);
+      if (!otp || otp.length < 10) throw new Error(`KRX OTP 발급 실패 (${label}): "${otp.slice(0, 100)}"`);
+      console.log(`[StockBook] KRX ${label} OTP: ${otp.slice(0, 20)}...`);
 
-      // Step 2: OTP로 CSV 다운로드
-      const csv = await httpsFormPost(
+      // Step 2: OTP로 CSV 다운로드 (POST) — Buffer 반환으로 인코딩 감지
+      const buf = await httpsFormPostBuf(
         'https://data.krx.co.kr/comm/fileDn/download_csv.cmd',
-        `code=${encodeURIComponent(otp)}`,
-        { 'Accept': 'text/csv,*/*' },
+        `code=${otp}`,
+        { 'Accept': 'text/csv, application/octet-stream, */*' },
         30000
       );
 
+      // 인코딩 감지: UTF-8 BOM → UTF-8, 그 외 → EUC-KR 시도
+      let csv;
+      if (buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF) {
+        csv = buf.toString('utf-8'); // BOM 포함 UTF-8
+      } else {
+        try {
+          const { TextDecoder } = require('util');
+          csv = new TextDecoder('euc-kr').decode(buf);
+        } catch {
+          csv = buf.toString('utf-8');
+        }
+      }
+
+      // CSV 유효성 확인 — 한글 헤더 없으면 오류 페이지 응답
+      const firstLine = csv.slice(0, 400);
+      if (!firstLine.includes('종목') && !firstLine.includes('ISU')) {
+        throw new Error(`KRX ${label} CSV 형식 오류 (HTML/JSON 응답 추정). 앞부분: "${firstLine.replace(/\n/g, ' ').slice(0, 150)}"`);
+      }
+
       const rows = parseKrxCsv(csv, label);
-      console.log(`[StockBook] KRX ${label} CSV: ${rows.length}종목`);
+      if (rows.length === 0) {
+        throw new Error(`KRX ${label} CSV 파싱 결과 0종목. 앞부분: "${firstLine.replace(/\n/g, ' ').slice(0, 150)}"`);
+      }
+      console.log(`[StockBook] KRX ${label}: ${rows.length}종목 로드 완료`);
       return rows;
     };
 
