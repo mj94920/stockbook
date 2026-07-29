@@ -1,6 +1,6 @@
 # StockBook — 프로젝트 운영 지침서
 
-> 현재 버전: **v2.1.0** | Git: `https://github.com/mj94920/stockbook.git` (branch: main)
+> 현재 버전: **v2.2.0** | Git: `https://github.com/mj94920/stockbook.git` (branch: main)
 > GitHub Pages: `https://mj94920.github.io/stockbook/`
 
 ---
@@ -205,3 +205,4 @@ function getCredFile(broker) {
 | v1.4.4 | 기업 분석 드로어, 예수금↔총자산 연동 버그 수정, 저장소 이름 변경 |
 | v2.0 | NSIS 설치 마법사, KIS API 키 팝업 (safeStorage), KIS REST API 시세 조회 |
 | v2.1.0 | 증권사 카드 버튼 클릭 버그 수정 (mobileIntro pointer-events, settings scroll), twa-manifest 버전 210 |
+| v2.2.0 | 설정 모달 버튼 완전 먹통 근본 수정 (backdrop-filter 제거 — Electron GPU 합성 레이어 hit-test 버그), userData 경로 통일 (app.name='StockBook'), F12 DevTools 단축키 추가, twa-manifest 버전 220 |

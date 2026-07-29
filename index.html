@@ -998,9 +998,9 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.55);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    /* backdrop-filter 제거 — Electron Chromium에서 GPU 합성 레이어 + overflow-y:auto
+       조합 시 자식 요소 마우스 이벤트 hit-test 실패 버그 회피 */
+    background: rgba(0,0,0,0.72);
     z-index: 4000;
     align-items: center;
     justify-content: center;
@@ -1017,7 +1017,9 @@
     max-width: 92vw;
     max-height: 88vh;
     overflow-y: auto;
-    box-shadow: 0 16px 48px rgba(0,0,0,0.45);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.55);
+    position: relative; /* 독립 스택 컨텍스트 확보 */
+    z-index: 1;
   }
   .settings-title {
     font-size: 17px;
@@ -7091,7 +7093,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     <div class="settings-close-row">
       <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v2.1.0</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v2.2.0</div>
   </div>
 </div>
 

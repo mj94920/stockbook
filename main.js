@@ -3,6 +3,10 @@ const path  = require('path');
 const fs    = require('fs');
 const https = require('https');
 
+// ── userData 경로 통일: 개발 모드(stockbook)와 설치 모드(Stock Book) 동일하게 ──
+// 반드시 app.whenReady() 이전에 설정해야 한다.
+app.name = 'StockBook';
+
 let win;
 
 // ── 데이터 파일 경로: %APPDATA%\StockBook\stockbook-data.json ──────────────
@@ -397,6 +401,13 @@ function createWindow() {
     if (!url.startsWith('file://')) {
       event.preventDefault();
       shell.openExternal(url);
+    }
+  });
+
+  // ── F12 DevTools 토글 (설치 버전에서도 디버깅 가능) ─────────────────────────
+  win.webContents.on('before-input-event', (_event, input) => {
+    if (input.type === 'keyDown' && input.key === 'F12') {
+      win.webContents.toggleDevTools();
     }
   });
 
