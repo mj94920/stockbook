@@ -2869,37 +2869,47 @@
 
     <!-- 📋 전종목 -->
     <div id="stab-allstock" class="main-tab-panel" style="display:none;">
-      <div class="card" style="max-width:1000px;margin:0 auto;">
-        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+      <div class="card" style="max-width:1300px;margin:0 auto;">
+        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
           <span style="display:flex;align-items:center;gap:6px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
             전종목 조회
+            <span id="allStockCount" style="font-size:11px;color:var(--text3);font-weight:400;"></span>
           </span>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input id="allStockSearch" type="text" placeholder="종목명·티커 검색" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:12px;width:160px;" oninput="filterAllStocks()">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input id="allStockSearch" type="text" placeholder="종목명·코드 검색" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:12px;width:160px;" oninput="filterAllStocks()">
             <select id="allStockMarket" onchange="filterAllStocks()" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:12px;">
               <option value="">전체</option>
               <option value="KOSPI">KOSPI</option>
               <option value="KOSDAQ">KOSDAQ</option>
-              <option value="US">미국</option>
             </select>
+            <button onclick="loadKrxStocks(true)" id="allStockRefreshBtn" style="padding:5px 10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;">🔄 새로고침</button>
           </div>
         </div>
+        <div id="allStockStatus" style="font-size:11px;color:var(--text3);margin-bottom:6px;min-height:16px;"></div>
         <div style="overflow-x:auto;">
-          <table class="hts-table" id="allStockTable" style="min-width:600px;">
+          <table class="hts-table" id="allStockTable" style="min-width:780px;">
             <thead>
               <tr>
-                <th>종목명</th><th>티커</th><th>시장</th><th>현재가</th><th>등락</th><th>등락률</th><th>거래량</th><th>시총</th><th>액션</th>
+                <th style="width:36px;text-align:right;">No.</th>
+                <th>종목명</th><th>코드</th><th>시장</th>
+                <th style="text-align:right;">현재가</th>
+                <th style="text-align:right;">전일대비</th>
+                <th style="text-align:right;">등락률</th>
+                <th style="text-align:right;">거래량</th>
+                <th style="text-align:right;">시총(억)</th>
+                <th>액션</th>
               </tr>
             </thead>
             <tbody id="allStockBody">
-              <tr><td colspan="9" style="text-align:center;color:var(--text3);padding:40px;">
-                데이터를 불러오는 중...
+              <tr><td colspan="10" style="text-align:center;color:var(--text3);padding:48px 20px;">
+                <div style="font-size:13px;margin-bottom:12px;">KRX 상장 전종목을 불러옵니다 (KOSPI + KOSDAQ)</div>
+                <button onclick="loadKrxStocks()" style="padding:8px 20px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;">📋 전종목 불러오기</button>
               </td></tr>
             </tbody>
           </table>
         </div>
-        <div style="display:flex;justify-content:center;gap:8px;margin-top:12px;" id="allStockPagination"></div>
+        <div style="display:flex;justify-content:center;align-items:center;gap:4px;margin-top:12px;flex-wrap:wrap;" id="allStockPagination"></div>
       </div>
     </div><!-- /stab-allstock -->
 
@@ -4303,57 +4313,151 @@ function showThemeStocks(theme, btn) {
   }</tbody></table>`;
 }
 
-// ── 전종목 탭 렌더 ──
-let allStockData = []; let allStockPage = 1; const allStockPerPage = 50;
+// ── 전종목 탭 렌더 (KRX API 연동) ──
+let allStockData      = [];
+let _allStockFiltered = [];
+let allStockPage      = 1;
+const allStockPerPage = 100;
+
 function renderAllStockTab() {
-  const bodyEl = document.getElementById('allStockBody');
-  if (!bodyEl) return;
-  // 포트폴리오 종목으로 채우기 (추후 API 연결 가능)
-  allStockData = (state.portfolio || []).map(s => ({
-    name: s.name, ticker: s.ticker, market: s.market || 'KR',
-    price: s.currentPrice || 0, change: 0, changePct: 0,
-    volume: s.volume || 0, marketCap: 0
-  }));
-  filterAllStocks();
+  if (allStockData.length > 0) {
+    filterAllStocks();
+    return;
+  }
+  // 첫 진입 시 자동 로드
+  loadKrxStocks();
 }
+
+async function loadKrxStocks(forceRefresh) {
+  const bodyEl   = document.getElementById('allStockBody');
+  const statusEl = document.getElementById('allStockStatus');
+  const countEl  = document.getElementById('allStockCount');
+  const btnEl    = document.getElementById('allStockRefreshBtn');
+  if (!bodyEl) return;
+
+  bodyEl.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:48px 20px;">
+    <div style="margin-bottom:8px;">KRX에서 전종목 데이터를 불러오는 중...</div>
+    <div style="font-size:11px;">KOSPI + KOSDAQ 전 상장 종목 (~2,500종목)</div>
+  </td></tr>`;
+  if (statusEl) statusEl.textContent = '';
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⏳ 로딩 중...'; }
+
+  try {
+    if (!window.electronAPI?.fetchKrxStocks) throw new Error('API 미지원 (구버전 앱)');
+    const result = await window.electronAPI.fetchKrxStocks();
+    if (!result?.ok) throw new Error(result?.error || '알 수 없는 오류');
+
+    allStockData = result.data;
+    allStockPage = 1;
+
+    const staleNote = result.stale ? ' ⚠️ (오래된 캐시)' : '';
+    const src       = result.fromCache ? '캐시' : 'KRX 실시간';
+    const ts        = result.cachedAt  ? new Date(result.cachedAt).toLocaleTimeString('ko-KR') : '';
+    if (statusEl) statusEl.textContent = `${src}${staleNote} · ${ts} 기준`;
+    if (countEl) countEl.textContent   = `(총 ${allStockData.length.toLocaleString()}종목)`;
+
+    filterAllStocks();
+  } catch (e) {
+    bodyEl.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--hts-dn);padding:40px 20px;">
+      <div style="margin-bottom:10px;">데이터 로드 실패: ${e.message}</div>
+      <button onclick="loadKrxStocks(true)" style="padding:7px 16px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">다시 시도</button>
+    </td></tr>`;
+    if (statusEl) statusEl.textContent = '오류 발생 — 재시도 버튼 클릭';
+  } finally {
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = '🔄 새로고침'; }
+  }
+}
+
 function filterAllStocks() {
-  const q = (document.getElementById('allStockSearch')?.value || '').toLowerCase();
-  const mkt = document.getElementById('allStockMarket')?.value || '';
-  let filtered = allStockData.filter(s =>
-    (!q || s.name.toLowerCase().includes(q) || s.ticker.toLowerCase().includes(q)) &&
+  const q   = (document.getElementById('allStockSearch')?.value || '').toLowerCase();
+  const mkt = document.getElementById('allStockMarket')?.value  || '';
+  _allStockFiltered = allStockData.filter(s =>
+    (!q   || s.name.toLowerCase().includes(q) || s.code.includes(q)) &&
     (!mkt || s.market === mkt)
   );
   allStockPage = 1;
-  renderAllStockTable(filtered);
+  renderAllStockTable();
 }
-function renderAllStockTable(data) {
+
+function renderAllStockTable() {
   const bodyEl = document.getElementById('allStockBody');
   if (!bodyEl) return;
-  const start = (allStockPage-1)*allStockPerPage;
-  const slice = data.slice(start, start+allStockPerPage);
+  const data   = _allStockFiltered;
+  const start  = (allStockPage - 1) * allStockPerPage;
+  const slice  = data.slice(start, start + allStockPerPage);
+
   if (slice.length === 0) {
-    bodyEl.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:30px;">표시할 종목이 없습니다.</td></tr>';
+    bodyEl.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:30px;">검색 결과가 없습니다.</td></tr>';
   } else {
-    bodyEl.innerHTML = slice.map(s => {
-      const cls = s.changePct >= 0 ? 'pos' : 'neg';
+    bodyEl.innerHTML = slice.map((s, i) => {
+      const up      = s.changePct >= 0;
+      const cls     = up ? 'pos' : 'neg';
+      const arrow   = s.change === 0 ? '—' : (up ? '▲' : '▼') + ' ' + Math.abs(s.change).toLocaleString();
+      const pctStr  = s.changePct === 0 ? '0.00%' : (up ? '+' : '') + s.changePct.toFixed(2) + '%';
+      const capStr  = s.marketCap > 0 ? Math.round(s.marketCap / 100000000).toLocaleString() : '-';
+      const volStr  = s.volume > 0 ? s.volume.toLocaleString() : '-';
+      const priceStr = s.price > 0 ? s.price.toLocaleString() : '-';
+      const mktBadge = s.market === 'KOSPI'
+        ? `<span style="font-size:9px;background:#1e3a5f;color:#6ab0f5;padding:1px 5px;border-radius:3px;white-space:nowrap;">KOSPI</span>`
+        : `<span style="font-size:9px;background:#1a3d2b;color:#4caf81;padding:1px 5px;border-radius:3px;white-space:nowrap;">KOSDAQ</span>`;
+      const safeCode = s.code.replace(/'/g, '');
+      const safeName = s.name.replace(/'/g, '').replace(/"/g, '');
       return `<tr>
-        <td>${s.name}</td><td>${s.ticker}</td><td>${s.market}</td>
-        <td>${s.price.toLocaleString()}</td>
-        <td class="${cls}">${s.change >= 0 ? '+' : ''}${s.change.toLocaleString()}</td>
-        <td class="${cls}">${s.changePct >= 0 ? '+' : ''}${s.changePct.toFixed(2)}%</td>
-        <td>${s.volume.toLocaleString()}</td><td>${s.marketCap ? s.marketCap.toLocaleString()+'억' : '-'}</td>
-        <td><button onclick="switchSubTab('main')" style="font-size:11px;padding:3px 8px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;">종합</button></td>
+        <td style="color:var(--text3);font-size:10px;text-align:right;">${start + i + 1}</td>
+        <td style="font-weight:600;white-space:nowrap;">${s.name}</td>
+        <td style="font-family:monospace;font-size:11px;color:var(--text3);">${s.code}</td>
+        <td>${mktBadge}</td>
+        <td style="text-align:right;font-weight:600;">${priceStr}</td>
+        <td style="text-align:right;" class="${cls}">${arrow}</td>
+        <td style="text-align:right;font-weight:600;" class="${cls}">${pctStr}</td>
+        <td style="text-align:right;font-size:11px;color:var(--text2);">${volStr}</td>
+        <td style="text-align:right;font-size:11px;color:var(--text2);">${capStr}</td>
+        <td style="white-space:nowrap;">
+          <button onclick="allStockAddWatch('${safeCode}','${safeName}','${s.market}')"
+            title="관심종목 추가" style="font-size:10px;padding:2px 6px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:3px;cursor:pointer;">★</button>
+          <button onclick="allStockOpenChart('${safeCode}','${safeName}')"
+            title="기업 분석" style="font-size:10px;padding:2px 6px;background:var(--accent);color:#fff;border:none;border-radius:3px;cursor:pointer;margin-left:2px;">📊</button>
+        </td>
       </tr>`;
     }).join('');
   }
-  // 페이지네이션
-  const pages = Math.ceil(data.length / allStockPerPage);
+
+  // ── 컴팩트 페이지네이션 ──
+  const total   = data.length;
+  const pages   = Math.ceil(total / allStockPerPage);
   const paginEl = document.getElementById('allStockPagination');
-  if (paginEl) {
-    paginEl.innerHTML = pages > 1 ? Array.from({length:pages},(_,i)=>
-      `<button onclick="allStockPage=${i+1};renderAllStockTable(allStockData)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:${allStockPage===i+1?'var(--accent)':'var(--bg3)'};color:${allStockPage===i+1?'#fff':'var(--text2)'};font-size:11px;cursor:pointer;">${i+1}</button>`
-    ).join('') : '';
+  if (!paginEl) return;
+  if (pages <= 1) { paginEl.innerHTML = ''; return; }
+
+  const cur = allStockPage;
+  const pbtn = (p, label) => {
+    const active = p === cur;
+    return `<button onclick="allStockPage=${p};renderAllStockTable()" style="min-width:28px;padding:3px 7px;border:1px solid ${active?'var(--accent)':'var(--border)'};border-radius:4px;background:${active?'var(--accent)':'var(--bg3)'};color:${active?'#fff':'var(--text2)'};font-size:11px;cursor:pointer;">${label !== undefined ? label : p}</button>`;
+  };
+  let html = pbtn(1,'«') + pbtn(Math.max(1, cur-1),'‹');
+  const lo = Math.max(1, cur-3), hi = Math.min(pages, cur+3);
+  if (lo > 2) html += `<span style="font-size:11px;color:var(--text3);padding:0 2px;">…</span>`;
+  for (let p = lo; p <= hi; p++) html += pbtn(p);
+  if (hi < pages-1) html += `<span style="font-size:11px;color:var(--text3);padding:0 2px;">…</span>`;
+  html += pbtn(Math.min(pages, cur+1),'›') + pbtn(pages,'»');
+  html += `<span style="font-size:11px;color:var(--text3);margin-left:6px;">${cur} / ${pages}페이지 · ${total.toLocaleString()}종목</span>`;
+  paginEl.innerHTML = html;
+}
+
+function allStockAddWatch(code, name, market) {
+  if (!state.watchlist) state.watchlist = [];
+  if (state.watchlist.find(w => w.ticker === code)) {
+    alert(`${name}은(는) 이미 관심종목에 있습니다.`); return;
   }
+  state.watchlist.push({ ticker: code, name, market: market || 'KOSPI', addedAt: Date.now() });
+  saveState();
+  alert(`★ ${name}(${code}) 관심종목 추가`);
+}
+
+function allStockOpenChart(code, name) {
+  // 기업분석 드로어 오픈
+  if (typeof openStockDrawer === 'function') { openStockDrawer(code, name); return; }
+  switchSubTab('main');
 }
 
 /* ── 빠른 주문 입력 함수들 ── */

@@ -66,6 +66,118 @@ function httpsPost(url, body, extraHeaders = {}) {
   });
 }
 
+// ── URL-encoded Form POST 헬퍼 (KRX API용) ──────────────────────────────────
+function httpsFormPost(url, formBody, timeoutMs = 20000) {
+  return new Promise((resolve, reject) => {
+    const urlObj  = new URL(url);
+    const options = {
+      hostname: urlObj.hostname,
+      port:     parseInt(urlObj.port) || 443,
+      path:     urlObj.pathname + urlObj.search,
+      method:   'POST',
+      headers: {
+        'Content-Type':   'application/x-www-form-urlencoded; charset=UTF-8',
+        'Content-Length': Buffer.byteLength(formBody),
+        'User-Agent':     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+        'Referer':        'https://data.krx.co.kr/',
+        'Origin':         'https://data.krx.co.kr',
+        'Accept':         'application/json, text/plain, */*',
+      },
+    };
+    const req = https.request(options, res => {
+      const chunks = [];
+      res.on('data', chunk => chunks.push(chunk));
+      res.on('end', () => {
+        const data = Buffer.concat(chunks).toString('utf-8');
+        if (res.statusCode >= 200 && res.statusCode < 300) resolve(data);
+        else reject(new Error(`HTTP ${res.statusCode}: ${data.slice(0, 200)}`));
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(timeoutMs, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.write(formBody);
+    req.end();
+  });
+}
+
+// ── KRX 전종목 데이터 캐시 ───────────────────────────────────────────────────
+let _krxCache     = null;
+let _krxCacheTime = 0;
+const KRX_CACHE_TTL = 60 * 60 * 1000; // 1시간
+
+ipcMain.handle('fetch-krx-stocks', async () => {
+  // 메모리 캐시 유효 시 즉시 반환
+  if (_krxCache && (Date.now() - _krxCacheTime) < KRX_CACHE_TTL) {
+    return { ok: true, data: _krxCache, fromCache: true, cachedAt: _krxCacheTime };
+  }
+
+  // 파일 캐시 확인 (앱 재시작 간 유지)
+  const cacheFile = path.join(app.getPath('userData'), 'krx-stocks.json');
+  if (!_krxCache && fs.existsSync(cacheFile)) {
+    try {
+      const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+      if (cached.ts && (Date.now() - cached.ts) < KRX_CACHE_TTL) {
+        _krxCache     = cached.data;
+        _krxCacheTime = cached.ts;
+        console.log('[StockBook] KRX 파일 캐시 로드:', _krxCache.length, '종목');
+        return { ok: true, data: _krxCache, fromCache: true, cachedAt: cached.ts };
+      }
+    } catch (_) {}
+  }
+
+  // KRX API 실시간 조회
+  try {
+    const fetchMarket = async (mktId) => {
+      const formBody = `bld=dbms%2FMDC%2FSTAT%2Fstandard%2FMDCSTAT01901&locale=ko_KR&mktId=${mktId}&share=1&money=1&csvxls_isNo=false`;
+      const raw  = await httpsFormPost('https://data.krx.co.kr/comm/bldAttendant/getJsonData.cmd', formBody);
+      const json = JSON.parse(raw);
+      return json.OutBlock_1 || [];
+    };
+
+    const toNum = s => parseFloat((s || '0').replace(/,/g, '')) || 0;
+
+    const [kospi, kosdaq] = await Promise.all([
+      fetchMarket('STK'),
+      fetchMarket('KSQ'),
+    ]);
+
+    const parse = (rows, mkt) => rows.map(r => ({
+      code:      r.ISU_SRT_CD  || '',
+      name:      r.ISU_ABBRV   || '',
+      market:    mkt,
+      price:     toNum(r.TDD_CLSPRC),
+      change:    toNum(r.CMPPREVDD_PRC),
+      changePct: toNum(r.FLUC_RT),
+      volume:    toNum(r.ACC_TRDVOL),
+      marketCap: toNum(r.MKTCAP),
+    }));
+
+    const combined    = [...parse(kospi, 'KOSPI'), ...parse(kosdaq, 'KOSDAQ')];
+    _krxCache         = combined;
+    _krxCacheTime     = Date.now();
+
+    try {
+      fs.writeFileSync(cacheFile, JSON.stringify({ ts: _krxCacheTime, data: combined }), 'utf-8');
+    } catch (_) {}
+
+    console.log('[StockBook] KRX 전종목 조회 완료:', combined.length, '종목');
+    return { ok: true, data: combined, fromCache: false, cachedAt: _krxCacheTime };
+  } catch (e) {
+    console.error('[StockBook] KRX 조회 실패:', e.message);
+    // 실패 시 파일 캐시라도 반환 (만료됐어도)
+    if (fs.existsSync(cacheFile)) {
+      try {
+        const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+        if (cached.data?.length > 0) {
+          console.log('[StockBook] KRX 만료 캐시 폴백:', cached.data.length, '종목');
+          return { ok: true, data: cached.data, fromCache: true, cachedAt: cached.ts, stale: true };
+        }
+      } catch (_) {}
+    }
+    return { ok: false, error: e.message };
+  }
+});
+
 // ── KIS API 시세 조회 ─────────────────────────────────────────────────────────
 // 메모리 내 토큰 캐시 (앱 재시작 시 초기화)
 let _kisToken      = null;
