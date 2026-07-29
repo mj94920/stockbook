@@ -1087,19 +1087,19 @@
     border-color: var(--accent);
     background: rgba(37,99,235,0.1);
   }
-  /* API 키 설정 섹션 — 증권사 탭 선택 스타일 */
+  /* API 키 설정 섹션 — 증권사 카드 그리드 스타일 */
   .broker-tab-group {
-    display: flex;
-    gap: 6px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
     margin-bottom: 10px;
   }
   .broker-tab-btn {
-    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 3px;
-    padding: 10px 6px 8px;
+    gap: 6px;
+    padding: 12px 6px 10px;
     border-radius: 10px;
     border: 1.5px solid var(--border);
     background: var(--bg2);
@@ -1109,13 +1109,22 @@
     transition: border-color 0.15s, background 0.15s, color 0.15s;
     position: relative;
   }
-  .broker-tab-btn:hover { border-color: var(--accent); color: var(--text); }
+  .broker-tab-btn:hover { border-color: var(--border-light); color: var(--text); }
   .broker-tab-btn.active {
-    border-color: var(--accent);
-    background: rgba(96,165,250,0.1);
-    color: var(--accent);
+    border-color: var(--broker-color, var(--accent));
+    background: color-mix(in srgb, var(--broker-color, var(--accent)) 12%, transparent);
+    color: var(--text);
   }
-  .broker-tab-icon { font-size: 20px; line-height: 1; }
+  .broker-logo-box {
+    width: 38px; height: 38px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff;
+    background: var(--broker-color, var(--accent));
+    transition: opacity 0.15s;
+  }
+  .broker-tab-btn:not(.active) .broker-logo-box { opacity: 0.55; }
+  .broker-tab-btn.active .broker-logo-box { opacity: 1; }
   .broker-tab-name { font-size: 10px; font-weight: 600; }
   .broker-tab-check {
     position: absolute;
@@ -5905,23 +5914,28 @@ async function loadApiKeysUI() {
     updateApiStatusBar(false);
     return;
   }
-  const kisOk  = await window.electronAPI.checkApiKey('kis');
-  const tossOk = await window.electronAPI.checkApiKey('toss');
+  const kisOk    = await window.electronAPI.checkApiKey('kis');
+  const kiwoomOk = await window.electronAPI.checkApiKey('kiwoom');
+  const lsOk     = await window.electronAPI.checkApiKey('ls');
+  const tossOk   = await window.electronAPI.checkApiKey('toss');
 
-  // 상단바 인디케이터
+  // 상단바 인디케이터 (연결된 첫 번째 증권사 표시)
+  const anyOk = kisOk || kiwoomOk || lsOk || tossOk;
   updateApiStatusBar(kisOk);
-  if (!kisOk && tossOk) {
-    const dot = document.getElementById('apiStatusDot');
+  if (!kisOk && anyOk) {
+    const dot   = document.getElementById('apiStatusDot');
     const label = document.getElementById('apiStatusLabel');
     if (dot) dot.style.background = '#22c55e';
-    if (label) label.textContent = '토스 연결됨';
+    const connected = kiwoomOk ? '키움' : lsOk ? 'LS' : '토스';
+    if (label) label.textContent = `${connected} 연결됨`;
   }
 
-  // 증권사 탭 배지 (✓) 업데이트
-  const kisBadge  = document.getElementById('brokerCheck_kis');
-  const tossBadge = document.getElementById('brokerCheck_toss');
-  if (kisBadge)  kisBadge.textContent  = kisOk  ? '✓' : '';
-  if (tossBadge) tossBadge.textContent = tossOk ? '✓' : '';
+  // 증권사 카드 배지 (✓) 업데이트
+  const badges = { kis: kisOk, kiwoom: kiwoomOk, ls: lsOk, toss: tossOk };
+  Object.entries(badges).forEach(([b, ok]) => {
+    const el = document.getElementById('brokerCheck_' + b);
+    if (el) el.textContent = ok ? '✓' : '';
+  });
 }
 
 // ── 증권사 탭 선택 ──
@@ -5958,6 +5972,42 @@ function renderBrokerFields(broker) {
         if (k && data.appKey)    k.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)';
         if (s && data.appSecret) s.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)';
         if (a && data.account)   a.value = data.account;
+      });
+    }
+  } else if (broker === 'kiwoom') {
+    panel.innerHTML = `
+      <div class="broker-fields-hint">키움증권 Open API+ REST 키입니다. 기존 저장값은 빈칸으로 두면 유지됩니다.</div>
+      <div class="api-key-input-row"><input class="api-key-input" id="kiwoomAppKey" type="password" placeholder="App Key" autocomplete="off"></div>
+      <div class="api-key-input-row"><input class="api-key-input" id="kiwoomAppSecret" type="password" placeholder="App Secret" autocomplete="off"></div>
+      <div class="api-key-actions">
+        <button class="btn btn-primary" style="flex:1;font-size:12px;padding:7px 0;" onclick="saveApiKey('kiwoom')">저장</button>
+        <button class="btn btn-ghost" style="font-size:12px;padding:7px 12px;" onclick="deleteApiKey('kiwoom')">삭제</button>
+      </div>`;
+    if (window.electronAPI?.loadApiKey) {
+      window.electronAPI.loadApiKey('kiwoom').then(data => {
+        if (!data) return;
+        const k = document.getElementById('kiwoomAppKey');
+        const s = document.getElementById('kiwoomAppSecret');
+        if (k && data.appKey)    k.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)';
+        if (s && data.appSecret) s.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)';
+      });
+    }
+  } else if (broker === 'ls') {
+    panel.innerHTML = `
+      <div class="broker-fields-hint">LS증권 EBest OpenAPI 키입니다. 기존 저장값은 빈칸으로 두면 유지됩니다.</div>
+      <div class="api-key-input-row"><input class="api-key-input" id="lsAppKey" type="password" placeholder="App Key" autocomplete="off"></div>
+      <div class="api-key-input-row"><input class="api-key-input" id="lsAppSecret" type="password" placeholder="App Secret" autocomplete="off"></div>
+      <div class="api-key-actions">
+        <button class="btn btn-primary" style="flex:1;font-size:12px;padding:7px 0;" onclick="saveApiKey('ls')">저장</button>
+        <button class="btn btn-ghost" style="font-size:12px;padding:7px 12px;" onclick="deleteApiKey('ls')">삭제</button>
+      </div>`;
+    if (window.electronAPI?.loadApiKey) {
+      window.electronAPI.loadApiKey('ls').then(data => {
+        if (!data) return;
+        const k = document.getElementById('lsAppKey');
+        const s = document.getElementById('lsAppSecret');
+        if (k && data.appKey)    k.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)';
+        if (s && data.appSecret) s.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)';
       });
     }
   } else if (broker === 'toss') {
@@ -6016,7 +6066,6 @@ async function saveApiKey(broker) {
     const newKey    = keyEl?.value.trim()    || '';
     const newSecret = secretEl?.value.trim() || '';
     const newAcct   = acctEl?.value.trim()   || '';
-    // 비워둔 항목은 기존 저장값 유지
     const existing = (await window.electronAPI.loadApiKey('kis')) || {};
     const fields = {
       appKey:    newKey    || existing.appKey    || '',
@@ -6036,11 +6085,58 @@ async function saveApiKey(broker) {
       alert('저장 실패: ' + (result?.error || '알 수 없는 오류'));
     }
   }
+  if (broker === 'kiwoom') {
+    const keyEl    = document.getElementById('kiwoomAppKey');
+    const secretEl = document.getElementById('kiwoomAppSecret');
+    const newKey    = keyEl?.value.trim()    || '';
+    const newSecret = secretEl?.value.trim() || '';
+    const existing = (await window.electronAPI.loadApiKey('kiwoom')) || {};
+    const fields = {
+      appKey:    newKey    || existing.appKey    || '',
+      appSecret: newSecret || existing.appSecret || '',
+    };
+    if (!fields.appKey || !fields.appSecret) {
+      alert('App Key와 App Secret을 모두 입력해주세요.');
+      return;
+    }
+    const result = await window.electronAPI.saveApiKey('kiwoom', fields);
+    if (result?.ok) {
+      loadApiKeysUI();
+      renderBrokerFields('kiwoom');
+      showToast('✅ 키움증권 API 키 저장 완료');
+    } else {
+      alert('저장 실패: ' + (result?.error || '알 수 없는 오류'));
+    }
+  }
+  if (broker === 'ls') {
+    const keyEl    = document.getElementById('lsAppKey');
+    const secretEl = document.getElementById('lsAppSecret');
+    const newKey    = keyEl?.value.trim()    || '';
+    const newSecret = secretEl?.value.trim() || '';
+    const existing = (await window.electronAPI.loadApiKey('ls')) || {};
+    const fields = {
+      appKey:    newKey    || existing.appKey    || '',
+      appSecret: newSecret || existing.appSecret || '',
+    };
+    if (!fields.appKey || !fields.appSecret) {
+      alert('App Key와 App Secret을 모두 입력해주세요.');
+      return;
+    }
+    const result = await window.electronAPI.saveApiKey('ls', fields);
+    if (result?.ok) {
+      loadApiKeysUI();
+      renderBrokerFields('ls');
+      showToast('✅ LS증권 API 키 저장 완료');
+    } else {
+      alert('저장 실패: ' + (result?.error || '알 수 없는 오류'));
+    }
+  }
 }
 
 async function deleteApiKey(broker) {
   if (!window.electronAPI?.deleteApiKey) return;
-  const name = broker === 'kis' ? '한국투자증권 (KIS)' : broker === 'toss' ? '토스증권' : broker;
+  const nameMap = { kis: '한국투자증권 (KIS)', kiwoom: '키움증권', ls: 'LS증권', toss: '토스증권' };
+  const name = nameMap[broker] || broker;
   const confirmed = await window.electronAPI.showConfirm(`${name} API 키를 삭제하시겠습니까?`);
   if (!confirmed) return;
   await window.electronAPI.deleteApiKey(broker);
@@ -6958,15 +7054,29 @@ function _toggleCheck(stockKey, checkKey, val) {
     <div class="settings-section">
       <div class="settings-section-label">증권사 API 키</div>
 
-      <!-- 증권사 선택 탭 -->
+      <!-- 증권사 선택 카드 그리드 -->
       <div class="broker-tab-group" id="brokerTabGroup">
-        <button class="broker-tab-btn active" id="brokerTab_kis" onclick="selectBroker('kis')">
-          <span class="broker-tab-icon">🏦</span>
+        <button class="broker-tab-btn active" id="brokerTab_kis"
+          style="--broker-color:#8B3A2A" onclick="selectBroker('kis')">
+          <div class="broker-logo-box" style="font-size:15px;letter-spacing:-1px;">友</div>
           <span class="broker-tab-name">한국투자증권</span>
           <span class="broker-tab-check" id="brokerCheck_kis"></span>
         </button>
-        <button class="broker-tab-btn" id="brokerTab_toss" onclick="selectBroker('toss')">
-          <span class="broker-tab-icon">🟣</span>
+        <button class="broker-tab-btn" id="brokerTab_kiwoom"
+          style="--broker-color:#C2407A" onclick="selectBroker('kiwoom')">
+          <div class="broker-logo-box" style="font-size:11px;">키움</div>
+          <span class="broker-tab-name">키움증권</span>
+          <span class="broker-tab-check" id="brokerCheck_kiwoom"></span>
+        </button>
+        <button class="broker-tab-btn" id="brokerTab_ls"
+          style="--broker-color:#003087" onclick="selectBroker('ls')">
+          <div class="broker-logo-box" style="font-size:14px;letter-spacing:0;">LS</div>
+          <span class="broker-tab-name">LS증권</span>
+          <span class="broker-tab-check" id="brokerCheck_ls"></span>
+        </button>
+        <button class="broker-tab-btn" id="brokerTab_toss"
+          style="--broker-color:#2563EB" onclick="selectBroker('toss')">
+          <div class="broker-logo-box" style="font-size:10px;background:linear-gradient(135deg,#2563EB,#4F46E5);">toss</div>
           <span class="broker-tab-name">토스증권</span>
           <span class="broker-tab-check" id="brokerCheck_toss"></span>
         </button>
