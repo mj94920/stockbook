@@ -368,6 +368,159 @@ async function getKisToken() {
   }
 }
 
+// ── KIS WebSocket 실시간 시세 ──────────────────────────────────────────────
+const WebSocket = require('ws');
+
+let _kisWs                  = null;
+let _kisWsReconnectTimer    = null;
+let _kisWsSubscribedTickers = [];
+let _kisApprovalKey         = null;
+let _kisApprovalKeyExpiry   = 0;
+const KIS_WS_URL            = 'ws://ops.koreainvestment.com:21000';
+
+// WebSocket용 Approval Key (access_token과 별도 발급)
+async function getKisApprovalKey() {
+  if (_kisApprovalKey && Date.now() < _kisApprovalKeyExpiry) return _kisApprovalKey;
+  const credFile = getCredFile('kis');
+  if (!fs.existsSync(credFile)) return null;
+  let creds;
+  try {
+    creds = JSON.parse(safeStorage.decryptString(fs.readFileSync(credFile)));
+  } catch (_) { return null; }
+  if (!creds?.appKey || !creds?.appSecret) return null;
+  try {
+    const res = JSON.parse(await httpsPost(
+      'https://openapi.koreainvestment.com:9443/oauth2/Approval',
+      { grant_type: 'client_credentials', appkey: creds.appKey, secretkey: creds.appSecret }
+    ));
+    if (!res.approval_key) { console.error('[StockBook] KIS approval_key 없음:', JSON.stringify(res).slice(0,200)); return null; }
+    _kisApprovalKey       = res.approval_key;
+    _kisApprovalKeyExpiry = Date.now() + 23 * 3600 * 1000; // 23시간
+    console.log('[StockBook] KIS WebSocket approval_key 발급 완료');
+    return _kisApprovalKey;
+  } catch (e) {
+    console.error('[StockBook] KIS approval_key 발급 실패:', e.message);
+    return null;
+  }
+}
+
+function stopKisWebSocket() {
+  if (_kisWsReconnectTimer) { clearTimeout(_kisWsReconnectTimer); _kisWsReconnectTimer = null; }
+  if (_kisWs) {
+    _kisWs.removeAllListeners();
+    try { _kisWs.terminate(); } catch (_) {}
+    _kisWs = null;
+  }
+  _kisWsSubscribedTickers = [];
+  if (win && !win.isDestroyed()) win.webContents.send('kis-ws-status', 'disconnected');
+  console.log('[StockBook] KIS WebSocket 연결 종료');
+}
+
+async function startKisWebSocket(tickers) {
+  stopKisWebSocket();
+  if (!tickers || tickers.length === 0) return;
+
+  const approvalKey = await getKisApprovalKey();
+  if (!approvalKey) {
+    console.log('[StockBook] KIS WebSocket: approval_key 없음 → 실시간 시세 비활성화');
+    if (win && !win.isDestroyed()) win.webContents.send('kis-ws-status', 'no-key');
+    return;
+  }
+
+  _kisWsSubscribedTickers = [...tickers];
+  console.log(`[StockBook] KIS WebSocket 연결 시도 (${tickers.length}종목: ${tickers.join(',')})`);
+  if (win && !win.isDestroyed()) win.webContents.send('kis-ws-status', 'connecting');
+
+  const ws = new WebSocket(KIS_WS_URL);
+  _kisWs = ws;
+
+  ws.on('open', () => {
+    console.log('[StockBook] KIS WebSocket 연결됨 → 종목 구독 시작');
+    if (win && !win.isDestroyed()) win.webContents.send('kis-ws-status', 'connected');
+    for (const ticker of tickers) {
+      ws.send(JSON.stringify({
+        header: { approval_key: approvalKey, custtype: 'P', tr_type: '1', 'content-type': 'utf-8' },
+        body:   { input: { tr_id: 'H0STCNT0', tr_key: ticker } }
+      }));
+    }
+  });
+
+  ws.on('message', (raw) => {
+    const msg = raw.toString('utf-8');
+
+    // PINGPONG 하트비트
+    if (msg === 'PINGPONG') { ws.send('PINGPONG'); return; }
+
+    // JSON 응답 (구독 확인/에러)
+    if (msg.startsWith('{')) {
+      try {
+        const j = JSON.parse(msg);
+        const b = j?.body;
+        if (b?.rt_cd === '0') console.log('[StockBook] KIS 구독 확인:', b.msg1);
+        else if (b?.rt_cd)    console.warn('[StockBook] KIS 구독 응답:', b.msg1, b.msg_cd);
+      } catch (_) {}
+      return;
+    }
+
+    // 실시간 시세: "0|H0STCNT0|001|005930^153000^..."
+    const parts = msg.split('|');
+    if (parts.length < 4 || parts[0] === '1') return; // 암호화 데이터 무시
+    if (parts[1] !== 'H0STCNT0') return;
+
+    const fields     = parts[3].split('^');
+    const ticker     = fields[0];
+    const price      = parseInt(fields[2], 10);
+    const changeSign = fields[3]; // 2:상승 5:하락 3:보합
+    const change     = parseInt(fields[4], 10);
+    const changePct  = parseFloat(fields[5]);
+    if (!ticker || isNaN(price) || price <= 0) return;
+
+    const signed = (changeSign === '5' || changeSign === '4') ? -1 : 1;
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('kis-price-update', {
+        ticker,
+        price,
+        change:    signed * Math.abs(change),
+        changePct: signed * Math.abs(changePct),
+      });
+    }
+  });
+
+  ws.on('error', (err) => {
+    console.error('[StockBook] KIS WebSocket 오류:', err.message);
+    if (win && !win.isDestroyed()) win.webContents.send('kis-ws-status', 'error');
+  });
+
+  ws.on('close', (code) => {
+    console.log(`[StockBook] KIS WebSocket 종료 (code: ${code})`);
+    _kisWs = null;
+    if (win && !win.isDestroyed()) win.webContents.send('kis-ws-status', 'disconnected');
+    // 자동 재연결 (5초 후) — 의도적 종료가 아닐 때
+    if (_kisWsSubscribedTickers.length > 0) {
+      _kisWsReconnectTimer = setTimeout(() => startKisWebSocket(_kisWsSubscribedTickers), 5000);
+    }
+  });
+}
+
+ipcMain.handle('start-kis-realtime', async (_e, tickers) => {
+  await startKisWebSocket(tickers);
+  return { ok: true };
+});
+
+ipcMain.handle('stop-kis-realtime', async () => {
+  _kisWsSubscribedTickers = []; // 재연결 방지
+  stopKisWebSocket();
+  return { ok: true };
+});
+
+ipcMain.handle('get-kis-ws-status', () => {
+  if (!_kisWs) return 'disconnected';
+  const s = _kisWs.readyState;
+  if (s === WebSocket.CONNECTING) return 'connecting';
+  if (s === WebSocket.OPEN)       return 'connected';
+  return 'disconnected';
+});
+
 async function fetchKisPrice(code) {
   const auth = await getKisToken();
   if (!auth) return null;

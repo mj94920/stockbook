@@ -20,5 +20,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 시장 지수 티커 일괄 조회 (KOSPI·KOSDAQ·나스닥·S&P·DOW·SOX·환율·WTI 등)
   fetchMarketTickers: () => ipcRenderer.invoke('fetch-market-tickers'),
   // main 프로세스가 did-finish-load 후 파일 데이터를 직접 push하는 채널
-  onPushState: (callback)  => ipcRenderer.once('push-state', (_event, data) => callback(data))
+  onPushState: (callback)  => ipcRenderer.once('push-state', (_event, data) => callback(data)),
+
+  // ── KIS WebSocket 실시간 시세 ──
+  startRealtimePrice: (tickers) => ipcRenderer.invoke('start-kis-realtime', tickers),
+  stopRealtimePrice:  ()        => ipcRenderer.invoke('stop-kis-realtime'),
+  getWsStatus:        ()        => ipcRenderer.invoke('get-kis-ws-status'),
+  // 실시간 가격 업데이트 수신: { ticker, price, change, changePct }
+  onRealtimePrice: (cb) => ipcRenderer.on('kis-price-update', (_e, d) => cb(d)),
+  offRealtimePrice: ()  => ipcRenderer.removeAllListeners('kis-price-update'),
+  // WebSocket 연결 상태 변화 수신: 'connecting' | 'connected' | 'disconnected' | 'error' | 'no-key'
+  onWsStatus: (cb) => ipcRenderer.on('kis-ws-status', (_e, s) => cb(s)),
+  offWsStatus: ()  => ipcRenderer.removeAllListeners('kis-ws-status'),
 });
