@@ -169,6 +169,12 @@
     letter-spacing: -0.02em;
   }
   .logo img {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    flex-shrink: 0;
+  }
+  .logo img {
     width: 32px;
     height: 32px;
     border-radius: 8px;
@@ -4028,7 +4034,7 @@ function switchSubTab(name) {
     // 모든 main-tab-panel 숨기기 후 해당 탭만 표시
     document.querySelectorAll('.main-tab-panel').forEach(p => p.style.display = 'none');
     const panel = document.getElementById('stab-' + name);
-    if (panel) panel.style.display = '';
+    if (panel) panel.style.display = 'block';
   }
 
   // 탭별 렌더 함수
@@ -6174,7 +6180,9 @@ document.addEventListener('keydown', e => {
 
 // 모바일 standalone 인트로 (TWA/PWA 설치 앱 전용)
 (function() {
-  const isStandalone = window.navigator.standalone ||
+  const isElectron = navigator.userAgent.indexOf('Electron') > -1;
+  const isStandalone = isElectron ||
+    window.navigator.standalone ||
     window.matchMedia('(display-mode: standalone)').matches ||
     window.matchMedia('(display-mode: fullscreen)').matches;
   if (isStandalone) {
