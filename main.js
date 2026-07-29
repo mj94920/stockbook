@@ -411,6 +411,9 @@ ipcMain.handle('check-api-key', async (_event, broker) => {
 });
 
 // ── IPC 핸들러 ──────────────────────────────────────────────────────────────
+// 앱 버전 조회 (인트로 동적 반영용)
+ipcMain.handle('get-version', () => app.getVersion());
+
 ipcMain.handle('load-state', async () => {
   try {
     const f = getDataFile();
@@ -467,6 +470,12 @@ function createWindow() {
   });
   splash.loadFile(path.join(__dirname, 'splash.html'));
   splash.center();
+  // 스플래시 버전 텍스트를 package.json 버전으로 동적 반영
+  splash.webContents.on('did-finish-load', () => {
+    splash.webContents.executeJavaScript(
+      `var el = document.querySelector('.version'); if(el) el.textContent = 'v${app.getVersion()}';`
+    ).catch(() => {});
+  });
 
   // HTML 파일을 임시 ASCII 경로에 복사 후 로드 (Electron 파일 로드 안정성)
   const srcHtml = path.join(__dirname, 'index.html');

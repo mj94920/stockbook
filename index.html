@@ -1944,7 +1944,7 @@
   </div>
   <div id="mobileIntroText">
     <h1>Stock Book Mobile</h1>
-    <p>v2.1.0</p>
+    <p id="introVersion">v2.2.3</p>
   </div>
 </div>
 
@@ -4412,11 +4412,17 @@ function renderAllStockTable() {
         <td style="text-align:right;font-weight:600;" class="${cls}">${pctStr}</td>
         <td style="text-align:right;font-size:11px;color:var(--text2);">${volStr}</td>
         <td style="text-align:right;font-size:11px;color:var(--text2);">${capStr}</td>
-        <td style="white-space:nowrap;">
+        <td style="white-space:nowrap;min-width:190px;">
           <button onclick="allStockAddWatch('${safeCode}','${safeName}','${s.market}')"
-            title="관심종목 추가" style="font-size:10px;padding:2px 6px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:3px;cursor:pointer;">★</button>
+            title="관심종목 추가" style="font-size:10px;padding:2px 5px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:3px;cursor:pointer;">★</button>
+          <button onclick="allStockBuy('${safeCode}','${safeName}')"
+            title="매수 등록" style="font-size:10px;padding:2px 6px;background:#1b4f3c;color:#4caf81;border:1px solid #2d6a50;border-radius:3px;cursor:pointer;margin-left:2px;">매수</button>
+          <button onclick="allStockSell('${safeCode}','${safeName}')"
+            title="매도" style="font-size:10px;padding:2px 6px;background:#4a1c1c;color:#e57373;border:1px solid #6a2e2e;border-radius:3px;cursor:pointer;margin-left:2px;">매도</button>
           <button onclick="allStockOpenChart('${safeCode}','${safeName}')"
-            title="기업 분석" style="font-size:10px;padding:2px 6px;background:var(--accent);color:#fff;border:none;border-radius:3px;cursor:pointer;margin-left:2px;">📊</button>
+            title="기업 분석" style="font-size:10px;padding:2px 6px;background:var(--accent);color:#fff;border:none;border-radius:3px;cursor:pointer;margin-left:2px;">분석</button>
+          <button onclick="allStockMemo('${safeCode}','${safeName}')"
+            title="메모 편집" style="font-size:10px;padding:2px 6px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:3px;cursor:pointer;margin-left:2px;">메모</button>
         </td>
       </tr>`;
     }).join('');
@@ -4458,6 +4464,50 @@ function allStockOpenChart(code, name) {
   // 기업분석 드로어 오픈
   if (typeof openStockDrawer === 'function') { openStockDrawer(code, name); return; }
   switchSubTab('main');
+}
+
+function allStockBuy(code, name) {
+  // 포트폴리오에서 해당 종목 찾기
+  const existing = state.portfolio ? state.portfolio.findIndex(s => s.ticker === code || s.code === code) : -1;
+  if (existing >= 0) {
+    // 이미 보유 중 → 수량/단가 추가 매수 모달 (편집 모달 활용)
+    if (typeof openEditStockModal === 'function') {
+      switchSubTab('main');
+      setTimeout(() => openEditStockModal(existing), 100);
+    }
+  } else {
+    // 신규 매수 → 포트폴리오 탭으로 이동 후 종목 추가 모달
+    switchSubTab('main');
+    // 신규 종목을 바로 추가 (메모 없이 기본값)
+    setTimeout(() => {
+      if (typeof openAddStockModal === 'function') {
+        openAddStockModal(code, name);
+      } else {
+        // 폴백: 포트폴리오 탭에서 직접 추가하도록 안내
+        showToast(`💡 포트폴리오 탭에서 "${name}(${code})" 매수 등록`);
+      }
+    }, 150);
+  }
+}
+
+function allStockSell(code, name) {
+  const idx = state.portfolio ? state.portfolio.findIndex(s => s.ticker === code || s.code === code) : -1;
+  if (idx < 0) {
+    showToast(`⚠️ ${name}(${code})은(는) 포트폴리오에 없습니다.`);
+    return;
+  }
+  switchSubTab('main');
+  setTimeout(() => { if (typeof openSellModal === 'function') openSellModal(idx); }, 150);
+}
+
+function allStockMemo(code, name) {
+  const idx = state.portfolio ? state.portfolio.findIndex(s => s.ticker === code || s.code === code) : -1;
+  if (idx >= 0) {
+    switchSubTab('main');
+    setTimeout(() => { if (typeof openEditStockModal === 'function') openEditStockModal(idx); }, 150);
+  } else {
+    showToast(`💡 "${name}(${code})"을(를) 먼저 포트폴리오에 추가해주세요.`);
+  }
 }
 
 /* ── 빠른 주문 입력 함수들 ── */
@@ -6145,7 +6195,119 @@ function selectBroker(broker) {
   document.querySelectorAll('.broker-tab-btn').forEach(b => b.classList.remove('active'));
   const tab = document.getElementById('brokerTab_' + broker);
   if (tab) tab.classList.add('active');
+  openApiKeyPopup(broker);
+}
+
+function openApiKeyPopup(broker) {
+  const popup = document.getElementById('apiKeyPopup');
+  if (!popup) { renderBrokerFields(broker); return; }
+  const names = { kis:'한국투자증권 API 키', kiwoom:'키움증권 API 키', ls:'LS증권 API 키', toss:'토스증권 API 키' };
+  const titleEl = document.getElementById('apiKeyPopupTitle');
+  if (titleEl) titleEl.textContent = names[broker] || 'API 키 설정';
   renderBrokerFields(broker);
+  popup.style.display = 'flex';
+}
+
+function closeApiKeyPopup() {
+  const popup = document.getElementById('apiKeyPopup');
+  if (popup) popup.style.display = 'none';
+}
+
+// ─── 시작 로그인 팝업 ────────────────────────────────────────────────────────
+async function maybeShowLoginModal() {
+  if (!window.electronAPI) return; // PWA에서는 표시하지 않음
+  // 자동로그인 ON + API 키 저장됨 → 건너뜀
+  if (state.autoLogin) {
+    const checks = await Promise.allSettled(
+      ['kis','toss','kiwoom','ls'].map(b => window.electronAPI.checkApiKey(b))
+    );
+    const hasAny = checks.some(r => r.status === 'fulfilled' && r.value === true);
+    if (hasAny) return;
+  }
+  const modal = document.getElementById('loginModal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  const autoEl = document.getElementById('loginAutoCheck');
+  if (autoEl) autoEl.checked = !!state.autoLogin;
+  renderLoginFields();
+}
+
+function renderLoginFields() {
+  const broker = document.getElementById('loginBrokerSel')?.value || 'kis';
+  const area   = document.getElementById('loginFieldsArea');
+  if (!area) return;
+  const fieldMap = {
+    kis: [
+      { id:'lf_kisAppKey',    label:'APP Key',    type:'password', placeholder:'한국투자증권 APP Key' },
+      { id:'lf_kisAppSecret', label:'APP Secret', type:'password', placeholder:'APP Secret' },
+      { id:'lf_kisAccount',   label:'계좌번호',   type:'text',     placeholder:'예: 50123456-01' },
+    ],
+    kiwoom: [
+      { id:'lf_kiwoomAppKey',    label:'App Key',    type:'password', placeholder:'키움 App Key' },
+      { id:'lf_kiwoomAppSecret', label:'App Secret', type:'password', placeholder:'App Secret' },
+    ],
+    ls: [
+      { id:'lf_lsAppKey',    label:'App Key',    type:'password', placeholder:'LS증권 App Key' },
+      { id:'lf_lsAppSecret', label:'App Secret', type:'password', placeholder:'App Secret' },
+    ],
+    toss: [
+      { id:'lf_tossClientId',     label:'Client ID',     type:'password', placeholder:'Client ID' },
+      { id:'lf_tossClientSecret', label:'Client Secret', type:'password', placeholder:'Client Secret' },
+    ],
+  };
+  const fields = fieldMap[broker] || [];
+  area.innerHTML = fields.map(f =>
+    `<div style="margin-bottom:8px;">
+      <label style="font-size:11px;color:var(--text3);margin-bottom:3px;display:block;">${f.label}</label>
+      <input id="${f.id}" type="${f.type}" placeholder="${f.placeholder}"
+        style="width:100%;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-size:12px;box-sizing:border-box;font-family:monospace;">
+    </div>`
+  ).join('');
+  // 기존 저장 여부 확인
+  if (window.electronAPI?.checkApiKey) {
+    window.electronAPI.checkApiKey(broker).then(ok => {
+      const statusEl = document.getElementById('loginKeyStatus');
+      if (statusEl) statusEl.textContent = ok ? '✅ 저장됨' : '';
+    });
+  }
+}
+
+async function loginSaveKey() {
+  if (!window.electronAPI?.saveApiKey) { alert('Electron 환경에서만 사용 가능합니다.'); return; }
+  const broker = document.getElementById('loginBrokerSel')?.value || 'kis';
+  const fieldMap = {
+    kis:    { appKey:'lf_kisAppKey', appSecret:'lf_kisAppSecret', account:'lf_kisAccount' },
+    kiwoom: { appKey:'lf_kiwoomAppKey', appSecret:'lf_kiwoomAppSecret' },
+    ls:     { appKey:'lf_lsAppKey', appSecret:'lf_lsAppSecret' },
+    toss:   { clientId:'lf_tossClientId', clientSecret:'lf_tossClientSecret' },
+  };
+  const keyMap  = fieldMap[broker] || {};
+  const data    = {};
+  for (const [field, elId] of Object.entries(keyMap)) {
+    data[field] = document.getElementById(elId)?.value?.trim() || '';
+  }
+  // 기존 저장값과 병합 (빈칸 = 유지)
+  const existing = await window.electronAPI.loadApiKey(broker).catch(() => null) || {};
+  for (const k of Object.keys(data)) {
+    if (!data[k]) data[k] = existing[k] || '';
+  }
+  if (!Object.values(data).some(v => v)) { alert('API 키를 입력해주세요.'); return; }
+  const result = await window.electronAPI.saveApiKey(broker, data);
+  const statusEl = document.getElementById('loginKeyStatus');
+  if (result?.ok) {
+    if (statusEl) { statusEl.textContent = '✅ 저장 완료'; setTimeout(() => statusEl.textContent = '✅ 저장됨', 1500); }
+    if (typeof loadApiKeysUI === 'function') loadApiKeysUI();
+  } else {
+    alert('저장 실패: ' + (result?.error || '알 수 없는 오류'));
+  }
+}
+
+function loginProceed(doLogin) {
+  const autoEl = document.getElementById('loginAutoCheck');
+  state.autoLogin = !!(autoEl?.checked);
+  saveState();
+  const modal = document.getElementById('loginModal');
+  if (modal) modal.style.display = 'none';
 }
 
 function renderBrokerFields(broker) {
@@ -6251,6 +6413,7 @@ async function saveApiKey(broker) {
       if (result?.ok) {
         loadApiKeysUI();
         renderBrokerFields('toss');
+        closeApiKeyPopup();
         showToast('✅ 토스증권 API 키 저장 완료');
       } else {
         alert('저장 실패: ' + (result?.error || '알 수 없는 오류'));
@@ -6279,6 +6442,7 @@ async function saveApiKey(broker) {
     if (result?.ok) {
       loadApiKeysUI();
       renderBrokerFields('kis');
+      closeApiKeyPopup();
       showToast('✅ 한국투자증권 API 키 저장 완료');
     } else {
       alert('저장 실패: ' + (result?.error || '알 수 없는 오류'));
@@ -6302,6 +6466,7 @@ async function saveApiKey(broker) {
     if (result?.ok) {
       loadApiKeysUI();
       renderBrokerFields('kiwoom');
+      closeApiKeyPopup();
       showToast('✅ 키움증권 API 키 저장 완료');
     } else {
       alert('저장 실패: ' + (result?.error || '알 수 없는 오류'));
@@ -6325,6 +6490,7 @@ async function saveApiKey(broker) {
     if (result?.ok) {
       loadApiKeysUI();
       renderBrokerFields('ls');
+      closeApiKeyPopup();
       showToast('✅ LS증권 API 키 저장 완료');
     } else {
       alert('저장 실패: ' + (result?.error || '알 수 없는 오류'));
@@ -6654,11 +6820,24 @@ document.addEventListener('keydown', e => {
   if (isStandalone) {
     const intro = document.getElementById('mobileIntro');
     if (intro) {
+      // 인트로 버전 동적 반영: Electron이면 IPC, 아니면 HTML 텍스트 유지
+      if (isElectron && window.electronAPI?.getVersion) {
+        window.electronAPI.getVersion().then(v => {
+          const el = document.getElementById('introVersion');
+          if (el) el.textContent = 'v' + v;
+        }).catch(() => {});
+      }
       intro.classList.add('visible');
       setTimeout(() => {
         intro.classList.add('fade-out');
-        setTimeout(() => intro.remove(), 420);
-      }, 1600);
+        setTimeout(() => {
+          intro.remove();
+          // 인트로 종료 후 로그인 팝업 체크 (Electron 전용)
+          if (isElectron && typeof maybeShowLoginModal === 'function') {
+            maybeShowLoginModal();
+          }
+        }, 420);
+      }, 1800);
     }
   }
 })();
@@ -7223,6 +7402,58 @@ function _toggleCheck(stockKey, checkKey, val) {
 }
 </script>
 
+<!-- ─── 시작 로그인 팝업 ─── -->
+<div id="loginModal" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.88);align-items:center;justify-content:center;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px 26px 22px;width:420px;max-width:92vw;box-shadow:0 8px 40px rgba(0,0,0,.6);">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+      <img src="./icon-192.png" width="36" height="36" style="border-radius:8px;">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--text1);">Stock Book</div>
+        <div style="font-size:11px;color:var(--text3);">증권사 API 연결</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <label style="font-size:11px;color:var(--text3);margin-bottom:4px;display:block;">증권사 선택</label>
+      <select id="loginBrokerSel" onchange="renderLoginFields()" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-size:13px;cursor:pointer;">
+        <option value="kis">한국투자증권 (KIS)</option>
+        <option value="toss">토스증권</option>
+        <option value="kiwoom">키움증권</option>
+        <option value="ls">LS증권</option>
+      </select>
+    </div>
+
+    <div id="loginFieldsArea" style="margin-bottom:10px;"></div>
+
+    <button onclick="loginSaveKey()" style="width:100%;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px;">✅ API 추가 / 저장</button>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;">
+        <input type="checkbox" id="loginAutoCheck" style="accent-color:var(--accent);width:14px;height:14px;">
+        다음 시작 시 자동 로그인
+      </label>
+      <span id="loginKeyStatus" style="font-size:11px;color:#4caf81;"></span>
+    </div>
+
+    <div style="display:flex;gap:8px;">
+      <button onclick="loginProceed(false)" style="flex:1;padding:9px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;font-size:13px;color:var(--text2);cursor:pointer;">건너뛰기</button>
+      <button onclick="loginProceed(true)" style="flex:2;padding:9px;background:#1b4f3c;color:#4caf81;border:1px solid #2d6a50;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">🔓 로그인</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── 설정 모달에서 API 키 입력 팝업 ─── -->
+<div id="apiKeyPopup" onclick="if(event.target===this)closeApiKeyPopup()" style="display:none;position:fixed;inset:0;z-index:10002;background:rgba(0,0,0,.75);align-items:center;justify-content:center;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px 22px 18px;width:380px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.5);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="font-size:14px;font-weight:700;color:var(--text1);" id="apiKeyPopupTitle">API 키 설정</div>
+      <button onclick="closeApiKeyPopup()" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;line-height:1;">✕</button>
+    </div>
+    <!-- renderBrokerFields가 이 panel에 렌더링 -->
+    <div class="broker-fields-panel" id="brokerFieldsPanel"></div>
+  </div>
+</div>
+
 <!-- 설정 모달 -->
 <div id="settingsModal" onclick="if(event.target===this)closeSettings()">
   <div class="settings-panel">
@@ -7280,8 +7511,10 @@ function _toggleCheck(stockKey, checkKey, val) {
           <span class="broker-tab-check" id="brokerCheck_toss"></span>
         </button>
       </div>
-      <!-- 선택된 증권사 입력 필드 (JS로 렌더링) -->
-      <div class="broker-fields-panel" id="brokerFieldsPanel"></div>
+      <!-- API 키 입력은 카드 클릭 시 별도 팝업에서 처리 -->
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;padding:6px 8px;background:var(--bg3);border-radius:6px;">
+        💡 증권사 카드를 클릭하면 API 키 입력 팝업이 열립니다.
+      </div>
     </div>
 
     <div class="settings-close-row">
