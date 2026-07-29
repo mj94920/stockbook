@@ -306,12 +306,38 @@ ipcMain.handle('fetch-krx-stocks', async () => {
 });
 
 // ── KIS API 시세 조회 ─────────────────────────────────────────────────────────
-// 메모리 내 토큰 캐시 (앱 재시작 시 초기화)
+// 토큰 캐시: 메모리 + 파일 영구 저장 (앱 재시작 후에도 유효한 토큰 재사용)
 let _kisToken      = null;
 let _kisTokenExpiry = 0;
 
+function getKisTokenCacheFile() {
+  return path.join(app.getPath('userData'), 'kis-token-cache.json');
+}
+
+function loadKisTokenCache() {
+  try {
+    const cacheFile = getKisTokenCacheFile();
+    if (!fs.existsSync(cacheFile)) return;
+    const cache = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+    if (cache?.token && cache?.expiry && Date.now() < cache.expiry) {
+      _kisToken       = { token: cache.token, appKey: cache.appKey, appSecret: cache.appSecret };
+      _kisTokenExpiry = cache.expiry;
+      console.log('[StockBook] KIS 토큰 캐시 로드 — 만료:', new Date(_kisTokenExpiry).toLocaleTimeString());
+    }
+  } catch (_) {}
+}
+
+function saveKisTokenCache(token, appKey, appSecret, expiry) {
+  try {
+    fs.writeFileSync(getKisTokenCacheFile(), JSON.stringify({ token, appKey, appSecret, expiry }), 'utf-8');
+  } catch (_) {}
+}
+
+// 앱 시작 시 캐시 파일에서 토큰 로드
+loadKisTokenCache();
+
 async function getKisToken() {
-  // 유효한 캐시 토큰 재사용
+  // 메모리 캐시 유효하면 바로 반환
   if (_kisToken && Date.now() < _kisTokenExpiry) return _kisToken;
   // 저장된 API 키 로드
   const credFile = getCredFile('kis');
@@ -321,17 +347,20 @@ async function getKisToken() {
     creds = JSON.parse(safeStorage.decryptString(fs.readFileSync(credFile)));
   } catch (_) { return null; }
   if (!creds?.appKey || !creds?.appSecret) return null;
-  // 토큰 발급
+  // 토큰 발급 (하루 1회 제한 — 캐시 미스 시에만 호출됨)
   try {
     const res = JSON.parse(await httpsPost(
       'https://openapi.koreainvestment.com:9443/oauth2/tokenP',
       { grant_type: 'client_credentials', appkey: creds.appKey, appsecret: creds.appSecret }
     ));
     if (!res.access_token) return null;
-    _kisToken       = { token: res.access_token, appKey: creds.appKey, appSecret: creds.appSecret };
     // 만료 30분 전에 갱신 (expires_in은 초 단위, 기본 86400)
-    _kisTokenExpiry = Date.now() + ((res.expires_in || 86400) - 1800) * 1000;
-    console.log('[StockBook] KIS 토큰 발급 완료 — 만료:', new Date(_kisTokenExpiry).toLocaleTimeString());
+    const expiry    = Date.now() + ((res.expires_in || 86400) - 1800) * 1000;
+    _kisToken       = { token: res.access_token, appKey: creds.appKey, appSecret: creds.appSecret };
+    _kisTokenExpiry = expiry;
+    // 파일에도 저장 → 앱 재시작 후에도 재발급 없이 재사용
+    saveKisTokenCache(res.access_token, creds.appKey, creds.appSecret, expiry);
+    console.log('[StockBook] KIS 토큰 신규 발급 — 만료:', new Date(expiry).toLocaleTimeString());
     return _kisToken;
   } catch (e) {
     console.error('[StockBook] KIS 토큰 발급 실패:', e.message);

@@ -1,6 +1,6 @@
 # StockBook — 프로젝트 운영 지침서
 
-> 현재 버전: **v2.2.7** | Git: `https://github.com/mj94920/stockbook.git` (branch: main)
+> 현재 버전: **v2.2.8** | Git: `https://github.com/mj94920/stockbook.git` (branch: main)
 > GitHub Pages: `https://mj94920.github.io/stockbook/`
 
 ---
@@ -213,3 +213,4 @@ function getCredFile(broker) {
 | v2.2.5 | 시장 지수 티커 CORS 수정 — 렌더러 직접 fetch → IPC fetch-market-tickers (main.js httpsGet) 로 교체, preload.js fetchMarketTickers 추가 |
 | v2.2.6 | 전종목 KRX CSV 미표시 근본 수정 — OTP 발급 POST→GET 방식 변경(pykrx 동일), CSV 다운로드 Buffer 수신+인코딩 자동감지(UTF-8 BOM/EUC-KR), 0종목 시 에러 처리로 상태 표시 보장, httpsFormPostBuf 추가 |
 | v2.2.7 | 관심종목 이중저장소 버그 수정 (state.watchlist 단일화, localStorage 마이그레이션), 보유종목 버튼 겹침 수정 (col-action min-width:240px), 주문창 신규 종목 직접 입력 지원 (__new__ 센티넬, qo_new_name/qo_new_code) |
+| v2.2.8 | KIS 토큰 파일 캐싱 추가 (kis-token-cache.json) — 앱 재시작 후에도 유효한 토큰 재사용, 하루 1회 이상 재발급 방지 |
