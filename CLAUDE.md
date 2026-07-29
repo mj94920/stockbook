@@ -1,6 +1,6 @@
 # StockBook — 프로젝트 운영 지침서
 
-> 현재 버전: **v2.2.2** | Git: `https://github.com/mj94920/stockbook.git` (branch: main)
+> 현재 버전: **v2.2.3** | Git: `https://github.com/mj94920/stockbook.git` (branch: main)
 > GitHub Pages: `https://mj94920.github.io/stockbook/`
 
 ---
@@ -208,3 +208,4 @@ function getCredFile(broker) {
 | v2.2.0 | 설정 모달 버튼 완전 먹통 근본 수정 (backdrop-filter 제거 — Electron GPU 합성 레이어 hit-test 버그), userData 경로 통일 (app.name='StockBook'), F12 DevTools 단축키 추가, twa-manifest 버전 220 |
 | v2.2.1 | 설정 버튼 먹통 근본 수정 (async 단독 키워드 dangling 제거 → 스크립트 TDZ 버그), 시장 지수 티커 확장 (S&P500·DOW·SOX·원/100엔·니케이·WTI), twa-manifest 221 |
 | v2.2.2 | 전종목 탭 KRX API 연동 (KOSPI+KOSDAQ ~2,500종목, 캐시 1시간), httpsFormPost 헬퍼 추가, IPC fetch-krx-stocks, 컴팩트 페이지네이션, 관심종목·기업분석 연동 버튼 |
+| v2.2.3 | 고아 요소 null 크래시 수정 (f_name·f_price·f_qty addEventListener null 체크 추가 → TDZ 패턴 제거 → 설정 버튼 먹통 근본 해결) |

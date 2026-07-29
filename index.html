@@ -5038,20 +5038,18 @@ function _onFormNameChange(name) {
     if (statusEl) statusEl.textContent = '';
   }
 }
-document.getElementById('f_name').addEventListener('change', function() {
-  _onFormNameChange(this.value.trim());
-});
-document.getElementById('f_name').addEventListener('blur', function() {
-  _onFormNameChange(this.value.trim());
-});
+// 매수 등록 폼 이벤트 — 폼 요소가 현재 없을 수 있으므로 null 체크 필수
+{ const el = document.getElementById('f_name'); if (el) {
+  el.addEventListener('change', function() { _onFormNameChange(this.value.trim()); });
+  el.addEventListener('blur',   function() { _onFormNameChange(this.value.trim()); });
+  el.addEventListener('input',  updateCalcPreview);
+}}
 // f_ticker 요소가 없는 경우 null 체크 (없으면 스킵)
 { const el = document.getElementById('f_ticker'); if (el) el.addEventListener('change', function() { autoFillFromTicker(this.value.trim(), 'f'); }); }
 
-
 // Live calc preview for add form
-document.getElementById('f_price').addEventListener('input', updateCalcPreview);
-document.getElementById('f_qty').addEventListener('input', updateCalcPreview);
-document.getElementById('f_name').addEventListener('input', updateCalcPreview);
+{ const el = document.getElementById('f_price'); if (el) el.addEventListener('input', updateCalcPreview); }
+{ const el = document.getElementById('f_qty');   if (el) el.addEventListener('input', updateCalcPreview); }
 
 function updateCalcPreview() {
   const name = document.getElementById('f_name').value.trim();
