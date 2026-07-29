@@ -3249,7 +3249,7 @@ async function fetchTossQuote(code) {
   }
 }
 
-function fetchYFQuoteIntl(ticker) {
+async function fetchYFQuoteIntl(ticker) {
   // v7 quote 파서 (실시간 시세, 가장 정확)
   const parseYFv7 = data => {
     const result = data?.quoteResponse?.result?.[0];
@@ -3382,7 +3382,7 @@ async function lookupNameByTicker(ticker) {
 }
 
 // 티커가 등록된 전 종목 일괄 시세 조회
-async async function fetchAllPrices(silent = false) {
+async function fetchAllPrices(silent = false) {
   const targets = state.portfolio.filter(s => s.ticker);
   if (!targets.length) {
     if (!silent) showToast('📌 티커가 등록된 종목이 없습니다. 종목 편집에서 티커를 추가하세요.');
