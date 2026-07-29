@@ -937,6 +937,7 @@
     -webkit-backdrop-filter: blur(12px);
     box-shadow: -4px 0 16px rgba(0, 0, 0, 0.25);
     z-index: 1;
+    min-width: 240px;
   }
   body.light-mode .portfolio-table th.col-action,
   body.light-mode .portfolio-table td.col-action {
@@ -2256,9 +2257,15 @@
     <!-- 종목 선택 -->
     <div class="form-group" style="margin-bottom:8px;">
       <label style="font-size:12px;color:var(--text3);margin-bottom:4px;display:block;">종목</label>
-      <select id="qo_stock" style="width:100%;padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit;">
+      <select id="qo_stock" onchange="handleQOStockChange()" style="width:100%;padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit;">
         <option value="">종목을 선택하세요</option>
+        <option value="__new__">── 신규 종목 직접 입력 ──</option>
       </select>
+      <!-- 신규 종목 입력 필드 (신규 선택 시 표시) -->
+      <input type="text" id="qo_new_name" placeholder="종목명 (예: 삼성전자)" list="stockNameList"
+        style="display:none;width:100%;margin-top:6px;padding:8px 10px;border-radius:7px;border:1px solid var(--accent);background:var(--bg2);color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;">
+      <input type="text" id="qo_new_code" placeholder="종목코드 (예: 005930, 선택사항)"
+        style="display:none;width:100%;margin-top:4px;padding:7px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:12px;font-family:inherit;box-sizing:border-box;">
     </div>
     <!-- 현금/신용 토글 -->
     <div style="display:flex;gap:4px;margin-bottom:8px;">
@@ -4552,6 +4559,7 @@ function populateQOStockList() {
   if (!sel) return;
   const prev = sel.value;
   sel.innerHTML = '<option value="">종목을 선택하세요</option>';
+  sel.innerHTML += '<option value="__new__">── 신규 종목 직접 입력 ──</option>';
   (state.portfolio || []).forEach(s => {
     const opt = document.createElement('option');
     opt.value = s.name;
@@ -4561,8 +4569,27 @@ function populateQOStockList() {
   if (prev) sel.value = prev;
 }
 
+function handleQOStockChange() {
+  const sel  = document.getElementById('qo_stock');
+  const nm   = document.getElementById('qo_new_name');
+  const cd   = document.getElementById('qo_new_code');
+  const isNew = sel?.value === '__new__';
+  if (nm) nm.style.display = isNew ? 'block' : 'none';
+  if (cd) cd.style.display = isNew ? 'block' : 'none';
+  if (isNew && nm) nm.focus();
+}
+
 function submitQuickOrder() {
-  const stockName = document.getElementById('qo_stock')?.value?.trim();
+  let stockName = document.getElementById('qo_stock')?.value?.trim();
+  let stockCode = '';
+
+  // 신규 종목 직접 입력 모드
+  if (stockName === '__new__') {
+    stockName = document.getElementById('qo_new_name')?.value?.trim();
+    stockCode = document.getElementById('qo_new_code')?.value?.trim() || '';
+    if (!stockName) { alert('종목명을 입력해 주세요.'); return; }
+  }
+
   const qty       = parseInt(document.getElementById('qo_qty')?.value || '0');
   const priceRaw  = document.getElementById('qo_price')?.value?.replace(/,/g,'');
   const price     = parseFloat(priceRaw || '0');
@@ -4571,10 +4598,11 @@ function submitQuickOrder() {
   if (!qty || qty <= 0) { alert('수량을 입력해 주세요.'); return; }
   if (!price || price <= 0) { alert('단가를 입력해 주세요.'); return; }
 
-  const stockIdx = state.portfolio.findIndex(s => s.name === stockName);
+  let stockIdx = state.portfolio.findIndex(s => s.name === stockName);
+  // 신규 종목 매수: 포트폴리오에 자동 추가
   if (stockIdx === -1 && _qoMode === 'buy') {
-    alert('보유 종목에 없는 종목입니다.\n신규 매수는 매수등록 탭에서 입력해 주세요.');
-    return;
+    state.portfolio.push({ name: stockName, ticker: stockCode, avgPrice: price, qty: 0, sector: '', position: 'mid', tradeType: _qoTradeType });
+    stockIdx = state.portfolio.length - 1;
   }
 
   if (_qoMode === 'buy') {
@@ -6866,30 +6894,40 @@ function addWatchlistItem() {
   const inp = document.getElementById('watchlistInput');
   const raw = (inp?.value || '').trim();
   if (!raw) return;
-  const list = getWatchlist();
-  if (list.find(w => w.ticker === raw || w.name === raw)) {
+  // state.watchlist 기준으로 중복 체크
+  if (!state.watchlist) state.watchlist = [];
+  if (state.watchlist.find(w => w.ticker === raw || w.name === raw)) {
     showToast('이미 추가된 종목입니다.');
     return;
   }
   const isCode = /^\d{6}$/.test(raw);
-  list.push({ ticker: isCode ? raw : '', name: isCode ? '' : raw, price: null, change: null });
-  saveWatchlist(list);
+  state.watchlist.push({ ticker: isCode ? raw : '', name: isCode ? '' : raw, price: null, change: null, addedAt: Date.now() });
+  saveState();
   if (inp) inp.value = '';
   renderWatchlist();
   refreshWatchlist();
 }
 
 function removeWatchlistItem(idx) {
-  const list = getWatchlist();
-  list.splice(idx, 1);
-  saveWatchlist(list);
+  if (!state.watchlist) state.watchlist = [];
+  state.watchlist.splice(idx, 1);
+  saveState();
   renderWatchlist();
 }
 
 function renderWatchlist() {
   const body = document.getElementById('watchlistBody');
   if (!body) return;
-  const list = getWatchlist();
+  // state.watchlist 우선, 없으면 localStorage 마이그레이션
+  if (!state.watchlist || state.watchlist.length === 0) {
+    const legacy = (() => { try { return JSON.parse(localStorage.getItem('sb_watchlist_v1') || '[]'); } catch { return []; } })();
+    if (legacy.length > 0) {
+      state.watchlist = legacy;
+      saveState();
+      localStorage.removeItem('sb_watchlist_v1'); // 마이그레이션 후 삭제
+    }
+  }
+  const list = state.watchlist || [];
   if (!list.length) {
     body.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0;">관심종목을 추가해 보세요.</div>';
     return;
@@ -6921,7 +6959,8 @@ function renderWatchlist() {
 }
 
 async function refreshWatchlist() {
-  const list = getWatchlist();
+  if (!state.watchlist) state.watchlist = [];
+  const list = state.watchlist;
   if (!list.length) return;
   for (let i = 0; i < list.length; i++) {
     const w = list[i];
@@ -6957,7 +6996,7 @@ async function refreshWatchlist() {
     } catch(e) {}
     list[i] = w;
   }
-  saveWatchlist(list);
+  saveState(); // localStorage 아닌 state 저장
   renderWatchlist();
 }
 
