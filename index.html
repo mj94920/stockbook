@@ -1800,20 +1800,22 @@
 
   /* ── 시장 지수 헤더 티커 ── */
   .market-ticker {
-    display: flex; align-items: center; gap: 14px;
-    flex: 1; justify-content: center; padding: 0 8px;
-    font-size: 12px; overflow: hidden; flex-wrap: nowrap;
+    display: flex; align-items: center; gap: 10px;
+    flex: 1; justify-content: flex-start; padding: 0 8px;
+    font-size: 12px; overflow-x: auto; flex-wrap: nowrap;
+    scrollbar-width: none;
   }
+  .market-ticker::-webkit-scrollbar { display: none; }
   .market-ticker .mt-item {
-    display: flex; align-items: center; gap: 5px;
+    display: flex; align-items: center; gap: 4px;
     white-space: nowrap; color: var(--text2); font-size: 12px;
   }
-  .market-ticker .mt-name { color: var(--text3); font-size: 11px; font-weight: 400; }
+  .market-ticker .mt-name { color: var(--text3); font-size: 10px; font-weight: 400; }
   .market-ticker .mt-val  { font-weight: 600; font-size: 12px; }
-  .market-ticker .mt-chg  { font-size: 11px; }
+  .market-ticker .mt-chg  { font-size: 10px; }
   .market-ticker .mt-up   { color: var(--hts-up); }
   .market-ticker .mt-dn   { color: var(--hts-dn); }
-  .market-ticker .mt-sep  { color: var(--border); font-size: 16px; font-weight: 300; }
+  .market-ticker .mt-sep  { color: var(--border); font-size: 14px; font-weight: 300; flex-shrink: 0; }
   @media(max-width:900px){ .market-ticker { display:none; } }
 
   /* ── 서브탭을 최상단 전체 너비 네비게이션으로 ── */
@@ -1990,6 +1992,42 @@
       <span class="mt-name">NASDAQ</span>
       <span class="mt-val" id="tkNasdaq">--</span>
       <span class="mt-chg" id="tkNasdaqChg"></span>
+    </span>
+    <span class="mt-sep">|</span>
+    <span class="mt-item">
+      <span class="mt-name">S&amp;P500</span>
+      <span class="mt-val" id="tkSp500">--</span>
+      <span class="mt-chg" id="tkSp500Chg"></span>
+    </span>
+    <span class="mt-sep">|</span>
+    <span class="mt-item">
+      <span class="mt-name">DOW</span>
+      <span class="mt-val" id="tkDow">--</span>
+      <span class="mt-chg" id="tkDowChg"></span>
+    </span>
+    <span class="mt-sep">|</span>
+    <span class="mt-item">
+      <span class="mt-name">SOX</span>
+      <span class="mt-val" id="tkSox">--</span>
+      <span class="mt-chg" id="tkSoxChg"></span>
+    </span>
+    <span class="mt-sep">|</span>
+    <span class="mt-item">
+      <span class="mt-name">원/100엔</span>
+      <span class="mt-val" id="tkJpyKrw">--</span>
+      <span class="mt-chg" id="tkJpyKrwChg"></span>
+    </span>
+    <span class="mt-sep">|</span>
+    <span class="mt-item">
+      <span class="mt-name">니케이</span>
+      <span class="mt-val" id="tkNikkei">--</span>
+      <span class="mt-chg" id="tkNikkeiChg"></span>
+    </span>
+    <span class="mt-sep">|</span>
+    <span class="mt-item">
+      <span class="mt-name">WTI</span>
+      <span class="mt-val" id="tkWti">--</span>
+      <span class="mt-chg" id="tkWtiChg"></span>
     </span>
   </div>
 
@@ -4434,41 +4472,95 @@ function toggleCalcPanel() {
 
 /* ── 시장 지수 티커 ── */
 async function fetchMarketTicker() {
-  // Yahoo Finance를 통해 KOSPI(^KS11), KOSDAQ(^KQ11), USD/KRW(KRW=X), NASDAQ(^IXIC)
-  const symbols = { kospi: '^KS11', kosdaq: '^KQ11', usdkrw: 'KRW=X', nasdaq: '^IXIC' };
-  const ids     = { kospi: ['tkKospi','tkKospiChg'], kosdaq: ['tkKosdaq','tkKosdaqChg'],
-                    usdkrw: ['tkUsdKrw','tkUsdKrwChg'], nasdaq: ['tkNasdaq','tkNasdaqChg'] };
-  for (const [key, sym] of Object.entries(symbols)) {
+  // Yahoo Finance: 국내/미국/일본 지수 + 환율 + 원자재
+  const symbols = {
+    kospi:  '^KS11',   // 코스피
+    kosdaq: '^KQ11',   // 코스닥
+    nasdaq: '^IXIC',   // 나스닥
+    sp500:  '^GSPC',   // S&P500
+    dow:    '^DJI',    // 다우
+    sox:    '^SOX',    // 필라델피아 반도체
+    usdkrw: 'KRW=X',  // 원/달러
+    jpy:    'JPY=X',   // 엔/달러 (원/100엔 계산용)
+    usdkrw2:'KRW=X',  // KRW=X 재사용 (jpykrw 계산)
+    nikkei: '^N225',   // 닛케이
+    wti:    'CL=F',    // WTI 유가
+  };
+  const ids = {
+    kospi:  ['tkKospi',  'tkKospiChg'],
+    kosdaq: ['tkKosdaq', 'tkKosdaqChg'],
+    nasdaq: ['tkNasdaq', 'tkNasdaqChg'],
+    sp500:  ['tkSp500',  'tkSp500Chg'],
+    dow:    ['tkDow',    'tkDowChg'],
+    sox:    ['tkSox',    'tkSoxChg'],
+    usdkrw: ['tkUsdKrw', 'tkUsdKrwChg'],
+    nikkei: ['tkNikkei', 'tkNikkeiChg'],
+    wti:    ['tkWti',    'tkWtiChg'],
+  };
+
+  // 모든 심볼 병렬 fetch
+  const fetchSym = async (sym) => {
     try {
       const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=2d`;
-      const r   = await fetch(url);
-      if (!r.ok) continue;
-      const j   = await r.json();
-      const meta = j?.chart?.result?.[0]?.meta;
-      if (!meta) continue;
-      const price   = meta.regularMarketPrice;
-      const prevClose = meta.previousClose || meta.chartPreviousClose;
-      const chg       = price - prevClose;
-      const chgPct    = prevClose ? (chg / prevClose) * 100 : 0;
-      const isUp      = chg >= 0;
-      const cls       = isUp ? 'mt-up' : 'mt-dn';
+      const r = await fetch(url);
+      if (!r.ok) return null;
+      const j = await r.json();
+      return j?.chart?.result?.[0]?.meta ?? null;
+    } catch { return null; }
+  };
 
-      const valEl = document.getElementById(ids[key][0]);
-      const chgEl = document.getElementById(ids[key][1]);
-      if (!valEl) continue;
+  const [metaKospi, metaKosdaq, metaNasdaq, metaSp500, metaDow, metaSox,
+         metaUsdKrw, metaJpy, metaNikkei, metaWti] = await Promise.all([
+    fetchSym('^KS11'), fetchSym('^KQ11'), fetchSym('^IXIC'), fetchSym('^GSPC'),
+    fetchSym('^DJI'),  fetchSym('^SOX'),  fetchSym('KRW=X'), fetchSym('JPY=X'),
+    fetchSym('^N225'), fetchSym('CL=F'),
+  ]);
 
-      let dispPrice = price >= 1000
-        ? price.toLocaleString('ko-KR', {maximumFractionDigits: 0})
-        : price.toLocaleString('ko-KR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  const metas = { kospi: metaKospi, kosdaq: metaKosdaq, nasdaq: metaNasdaq, sp500: metaSp500,
+                  dow: metaDow, sox: metaSox, usdkrw: metaUsdKrw, nikkei: metaNikkei, wti: metaWti };
 
-      valEl.textContent = dispPrice;
-      valEl.className   = 'mt-val ' + cls;
-      if (chgEl) {
-        const sign = isUp ? '▲' : '▼';
-        chgEl.textContent = `${sign}${Math.abs(chgPct).toFixed(2)}%`;
-        chgEl.className   = 'mt-chg ' + cls;
-      }
-    } catch(e) { /* 네트워크 오류 시 무시 */ }
+  const setTicker = (valId, chgId, price, prevClose, fmt) => {
+    const valEl = document.getElementById(valId);
+    const chgEl = document.getElementById(chgId);
+    if (!valEl || price == null) return;
+    const chg    = price - prevClose;
+    const chgPct = prevClose ? (chg / prevClose) * 100 : 0;
+    const isUp   = chg >= 0;
+    const cls    = isUp ? 'mt-up' : 'mt-dn';
+    valEl.textContent = fmt(price);
+    valEl.className   = 'mt-val ' + cls;
+    if (chgEl) {
+      chgEl.textContent = `${isUp ? '▲' : '▼'}${Math.abs(chgPct).toFixed(2)}%`;
+      chgEl.className   = 'mt-chg ' + cls;
+    }
+  };
+
+  const fmtIndex = p => p >= 1000
+    ? p.toLocaleString('ko-KR', {maximumFractionDigits: 0})
+    : p.toLocaleString('ko-KR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  const fmtFx   = p => p.toLocaleString('ko-KR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  const fmtWti  = p => '$' + p.toFixed(2);
+
+  for (const [key, meta] of Object.entries(metas)) {
+    if (!meta) continue;
+    const price     = meta.regularMarketPrice;
+    const prevClose = meta.previousClose || meta.chartPreviousClose || price;
+    const [valId, chgId] = ids[key];
+    const fmt = (key === 'usdkrw') ? fmtFx : (key === 'wti') ? fmtWti : fmtIndex;
+    setTicker(valId, chgId, price, prevClose, fmt);
+  }
+
+  // 원/100엔 계산: (USD/KRW) / (USD/JPY) * 100
+  if (metaUsdKrw && metaJpy) {
+    const usdKrw    = metaUsdKrw.regularMarketPrice;
+    const usdJpy    = metaJpy.regularMarketPrice;
+    const prevUsdKrw = metaUsdKrw.previousClose || usdKrw;
+    const prevUsdJpy = metaJpy.previousClose || usdJpy;
+    if (usdJpy > 0) {
+      const jpyKrw100     = (usdKrw / usdJpy) * 100;
+      const prevJpyKrw100 = (prevUsdKrw / prevUsdJpy) * 100;
+      setTicker('tkJpyKrw', 'tkJpyKrwChg', jpyKrw100, prevJpyKrw100, fmtFx);
+    }
   }
 }
 
@@ -7093,7 +7185,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     <div class="settings-close-row">
       <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v2.2.0</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v2.2.1</div>
   </div>
 </div>
 
