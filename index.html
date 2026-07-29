@@ -1087,24 +1087,54 @@
     border-color: var(--accent);
     background: rgba(37,99,235,0.1);
   }
-  /* API 키 설정 섹션 */
-  .api-key-broker-block { margin-bottom: 16px; }
-  .api-key-broker-header {
+  /* API 키 설정 섹션 — 증권사 탭 선택 스타일 */
+  .broker-tab-group {
     display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .broker-tab-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 6px;
+    gap: 3px;
+    padding: 10px 6px 8px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--bg2);
+    color: var(--text2);
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    position: relative;
   }
-  .api-key-broker-name { font-size: 13px; font-weight: 600; color: var(--text2); }
-  .api-key-status {
+  .broker-tab-btn:hover { border-color: var(--accent); color: var(--text); }
+  .broker-tab-btn.active {
+    border-color: var(--accent);
+    background: rgba(96,165,250,0.1);
+    color: var(--accent);
+  }
+  .broker-tab-icon { font-size: 20px; line-height: 1; }
+  .broker-tab-name { font-size: 10px; font-weight: 600; }
+  .broker-tab-check {
+    position: absolute;
+    top: 6px; right: 8px;
     font-size: 11px;
-    padding: 3px 8px;
-    border-radius: 5px;
-    font-weight: 600;
-    letter-spacing: 0.01em;
+    color: #4ade80;
+    font-weight: 700;
   }
-  .api-key-status.saved  { background: rgba(74,222,128,0.13); color: #4ade80; }
-  .api-key-status.empty  { background: var(--bg3); color: var(--text3); }
+  .broker-fields-panel {
+    padding: 12px 14px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+  }
+  .broker-fields-hint {
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 9px;
+  }
   .api-key-input-row { margin-bottom: 7px; }
   .api-key-input {
     width: 100%;
@@ -1120,19 +1150,6 @@
   .api-key-input:focus { outline: none; border-color: var(--accent); }
   .api-key-input::placeholder { color: var(--text3); }
   .api-key-actions { display: flex; gap: 6px; margin-top: 8px; }
-  .api-key-toggle-btn {
-    width: 100%;
-    font-size: 12px;
-    padding: 6px 0;
-    margin-top: 2px;
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    color: var(--text3);
-    cursor: pointer;
-    font-family: inherit;
-  }
-  .api-key-toggle-btn:hover { background: var(--bg3); color: var(--text2); }
 
   .settings-close-row {
     display: flex;
@@ -5863,20 +5880,14 @@ function openSettings() {
     const btn = document.getElementById('themeOpt' + m.charAt(0).toUpperCase() + m.slice(1));
     if (btn) btn.classList.toggle('active', m === saved);
   });
-  // API 키 등록 상태 갱신
+  // API 키 등록 상태 갱신 + 첫 탭 초기화
   loadApiKeysUI();
+  selectBroker(_selectedBroker || 'kis');
 }
 
 function closeSettings() {
   const modal = document.getElementById('settingsModal');
   if (modal) modal.classList.remove('open');
-  // 입력 필드 접기
-  ['kis'].forEach(broker => {
-    const f = document.getElementById(broker + 'KeyFields');
-    const b = document.getElementById(broker + 'ToggleBtn');
-    if (f) f.style.display = 'none';
-    if (b) b.textContent = '▾ 입력 / 수정';
-  });
 }
 
 // ── API 키 설정 ────────────────────────────────────────────────────────────
@@ -5894,49 +5905,79 @@ async function loadApiKeysUI() {
     updateApiStatusBar(false);
     return;
   }
-  const kisOk = await window.electronAPI.checkApiKey('kis');
-  updateApiStatusBar(kisOk);
-  const el = document.getElementById('kisKeyStatus');
-  if (el) {
-    el.textContent  = kisOk ? '✓ 등록됨' : '미등록';
-    el.className    = 'api-key-status ' + (kisOk ? 'saved' : 'empty');
-  }
-  // 토스증권 상태
+  const kisOk  = await window.electronAPI.checkApiKey('kis');
   const tossOk = await window.electronAPI.checkApiKey('toss');
-  const tossEl = document.getElementById('tossKeyStatus');
-  if (tossEl) {
-    tossEl.textContent = tossOk ? '✓ 등록됨' : '미등록';
-    tossEl.className   = 'api-key-status ' + (tossOk ? 'saved' : 'empty');
-  }
-  // 상태바: KIS 또는 토스 중 하나라도 연결되면 표시
+
+  // 상단바 인디케이터
+  updateApiStatusBar(kisOk);
   if (!kisOk && tossOk) {
     const dot = document.getElementById('apiStatusDot');
     const label = document.getElementById('apiStatusLabel');
     if (dot) dot.style.background = '#22c55e';
     if (label) label.textContent = '토스 연결됨';
   }
+
+  // 증권사 탭 배지 (✓) 업데이트
+  const kisBadge  = document.getElementById('brokerCheck_kis');
+  const tossBadge = document.getElementById('brokerCheck_toss');
+  if (kisBadge)  kisBadge.textContent  = kisOk  ? '✓' : '';
+  if (tossBadge) tossBadge.textContent = tossOk ? '✓' : '';
 }
 
-function toggleApiKeyFields(broker) {
-  const fields = document.getElementById(broker + 'KeyFields');
-  const btn    = document.getElementById(broker + 'ToggleBtn');
-  if (!fields) return;
-  const isOpen = fields.style.display !== 'none';
-  fields.style.display = isOpen ? 'none' : 'block';
-  if (btn) btn.textContent = isOpen ? '▾ 입력 / 수정' : '▴ 닫기';
-  // 열 때: 저장된 계좌번호를 플레이스홀더로 표시
-  if (!isOpen && window.electronAPI?.loadApiKey) {
-    window.electronAPI.loadApiKey(broker).then(data => {
-      if (!data) return;
-      if (broker === 'kis') {
+// ── 증권사 탭 선택 ──
+let _selectedBroker = 'kis';
+
+function selectBroker(broker) {
+  _selectedBroker = broker;
+  document.querySelectorAll('.broker-tab-btn').forEach(b => b.classList.remove('active'));
+  const tab = document.getElementById('brokerTab_' + broker);
+  if (tab) tab.classList.add('active');
+  renderBrokerFields(broker);
+}
+
+function renderBrokerFields(broker) {
+  const panel = document.getElementById('brokerFieldsPanel');
+  if (!panel) return;
+  if (broker === 'kis') {
+    panel.innerHTML = `
+      <div class="broker-fields-hint">APP Key / Secret / 계좌번호를 입력하세요. 기존 저장값은 빈칸으로 두면 유지됩니다.</div>
+      <div class="api-key-input-row"><input class="api-key-input" id="kisAppKey" type="password" placeholder="APP Key" autocomplete="off"></div>
+      <div class="api-key-input-row"><input class="api-key-input" id="kisAppSecret" type="password" placeholder="APP Secret" autocomplete="off"></div>
+      <div class="api-key-input-row"><input class="api-key-input" id="kisAccount" type="text" placeholder="계좌번호 (예: 50123456-01)" autocomplete="off"></div>
+      <div class="api-key-actions">
+        <button class="btn btn-primary" style="flex:1;font-size:12px;padding:7px 0;" onclick="saveApiKey('kis')">저장</button>
+        <button class="btn btn-ghost" style="font-size:12px;padding:7px 12px;" onclick="deleteApiKey('kis')">삭제</button>
+      </div>`;
+    // 저장된 계좌번호 자동 채우기
+    if (window.electronAPI?.loadApiKey) {
+      window.electronAPI.loadApiKey('kis').then(data => {
+        if (!data) return;
         const k = document.getElementById('kisAppKey');
         const s = document.getElementById('kisAppSecret');
         const a = document.getElementById('kisAccount');
         if (k && data.appKey)    k.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)';
         if (s && data.appSecret) s.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)';
-        if (a) { a.value = data.account || ''; }
-      }
-    });
+        if (a && data.account)   a.value = data.account;
+      });
+    }
+  } else if (broker === 'toss') {
+    panel.innerHTML = `
+      <div class="broker-fields-hint">client_id는 앱키와 같은 개념입니다. 기존 저장값은 빈칸으로 두면 유지됩니다.</div>
+      <div class="api-key-input-row"><input class="api-key-input" id="tossClientId" type="password" placeholder="Client ID" autocomplete="off"></div>
+      <div class="api-key-input-row"><input class="api-key-input" id="tossClientSecret" type="password" placeholder="Client Secret" autocomplete="off"></div>
+      <div class="api-key-actions">
+        <button class="btn btn-primary" style="flex:1;font-size:12px;padding:7px 0;" onclick="saveApiKey('toss')">저장</button>
+        <button class="btn btn-ghost" style="font-size:12px;padding:7px 12px;" onclick="deleteApiKey('toss')">삭제</button>
+      </div>`;
+    if (window.electronAPI?.loadApiKey) {
+      window.electronAPI.loadApiKey('toss').then(data => {
+        if (!data) return;
+        const id = document.getElementById('tossClientId');
+        const sc = document.getElementById('tossClientSecret');
+        if (id && data.clientId)     id.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)';
+        if (sc && data.clientSecret) sc.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)';
+      });
+    }
   }
 }
 
@@ -5959,10 +6000,8 @@ async function saveApiKey(broker) {
       }
       const result = await window.electronAPI.saveApiKey('toss', fields);
       if (result?.ok) {
-        if (idEl)  { idEl.value  = ''; idEl.placeholder  = '●●●●●●●● (저장됨)'; }
-        if (secEl) { secEl.value = ''; secEl.placeholder = '●●●●●●●● (저장됨)'; }
-        toggleApiKeyFields('toss');
         loadApiKeysUI();
+        renderBrokerFields('toss');
         showToast('✅ 토스증권 API 키 저장 완료');
       } else {
         alert('저장 실패: ' + (result?.error || '알 수 없는 오류'));
@@ -5990,10 +6029,9 @@ async function saveApiKey(broker) {
     }
     const result = await window.electronAPI.saveApiKey('kis', fields);
     if (result?.ok) {
-      if (keyEl)    { keyEl.value = '';    keyEl.placeholder    = '●●●●●●●● (저장됨 — 변경 시만 입력)'; }
-      if (secretEl) { secretEl.value = ''; secretEl.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)'; }
-      toggleApiKeyFields('kis'); // 저장 후 접기
       loadApiKeysUI();
+      renderBrokerFields('kis');
+      showToast('✅ 한국투자증권 API 키 저장 완료');
     } else {
       alert('저장 실패: ' + (result?.error || '알 수 없는 오류'));
     }
@@ -6006,30 +6044,9 @@ async function deleteApiKey(broker) {
   const confirmed = await window.electronAPI.showConfirm(`${name} API 키를 삭제하시겠습니까?`);
   if (!confirmed) return;
   await window.electronAPI.deleteApiKey(broker);
-  if (broker === 'kis') {
-    const k = document.getElementById('kisAppKey');
-    const s = document.getElementById('kisAppSecret');
-    const a = document.getElementById('kisAccount');
-    if (k) { k.value = ''; k.placeholder = 'APP Key'; }
-    if (s) { s.value = ''; s.placeholder = 'APP Secret'; }
-    if (a) { a.value = ''; }
-    const f = document.getElementById('kisKeyFields');
-    const b = document.getElementById('kisToggleBtn');
-    if (f) f.style.display = 'none';
-    if (b) b.textContent = '▾ 입력 / 수정';
-  }
-  if (broker === 'toss') {
-    const id = document.getElementById('tossClientId');
-    const sc = document.getElementById('tossClientSecret');
-    if (id) { id.value = ''; id.placeholder = 'Client ID'; }
-    if (sc) { sc.value = ''; sc.placeholder = 'Client Secret'; }
-    const f2 = document.getElementById('tossKeyFields');
-    const b2 = document.getElementById('tossToggleBtn');
-    if (f2) f2.style.display = 'none';
-    if (b2) b2.textContent = '▾ 입력 / 수정';
-    _tossToken = null; _tossTokenExpiry = 0;
-  }
+  if (broker === 'toss') { _tossToken = null; _tossTokenExpiry = 0; }
   loadApiKeysUI();
+  renderBrokerFields(broker);
 }
 
 // ============================================================
@@ -6941,51 +6958,21 @@ function _toggleCheck(stockKey, checkKey, val) {
     <div class="settings-section">
       <div class="settings-section-label">증권사 API 키</div>
 
-      <!-- 한국투자증권 KIS -->
-      <div class="api-key-broker-block">
-        <div class="api-key-broker-header">
-          <div class="api-key-broker-name">🏦 한국투자증권 (KIS)</div>
-          <span class="api-key-status empty" id="kisKeyStatus">미등록</span>
-        </div>
-        <div id="kisKeyFields" style="display:none;">
-          <div class="api-key-input-row">
-            <input class="api-key-input" id="kisAppKey" type="password" placeholder="APP Key" autocomplete="off">
-          </div>
-          <div class="api-key-input-row">
-            <input class="api-key-input" id="kisAppSecret" type="password" placeholder="APP Secret" autocomplete="off">
-          </div>
-          <div class="api-key-input-row">
-            <input class="api-key-input" id="kisAccount" type="text" placeholder="계좌번호 (예: 50123456-01)" autocomplete="off">
-          </div>
-          <div class="api-key-actions">
-            <button class="btn btn-primary" style="flex:1;font-size:12px;padding:7px 0;" onclick="saveApiKey('kis')">저장</button>
-            <button class="btn btn-ghost" style="font-size:12px;padding:7px 12px;" onclick="deleteApiKey('kis')">삭제</button>
-          </div>
-        </div>
-        <button class="api-key-toggle-btn" id="kisToggleBtn" onclick="toggleApiKeyFields('kis')">▾ 입력 / 수정</button>
+      <!-- 증권사 선택 탭 -->
+      <div class="broker-tab-group" id="brokerTabGroup">
+        <button class="broker-tab-btn active" id="brokerTab_kis" onclick="selectBroker('kis')">
+          <span class="broker-tab-icon">🏦</span>
+          <span class="broker-tab-name">한국투자증권</span>
+          <span class="broker-tab-check" id="brokerCheck_kis"></span>
+        </button>
+        <button class="broker-tab-btn" id="brokerTab_toss" onclick="selectBroker('toss')">
+          <span class="broker-tab-icon">🟣</span>
+          <span class="broker-tab-name">토스증권</span>
+          <span class="broker-tab-check" id="brokerCheck_toss"></span>
+        </button>
       </div>
-
-      <!-- 토스증권 -->
-      <div class="api-key-broker-block">
-        <div class="api-key-broker-header">
-          <div class="api-key-broker-name">🟣 토스증권</div>
-          <span class="api-key-status empty" id="tossKeyStatus">미등록</span>
-        </div>
-        <div id="tossKeyFields" style="display:none;">
-          <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">client_id = 앱키와 같은 개념입니다</div>
-          <div class="api-key-input-row">
-            <input class="api-key-input" id="tossClientId" type="password" placeholder="Client ID" autocomplete="off">
-          </div>
-          <div class="api-key-input-row">
-            <input class="api-key-input" id="tossClientSecret" type="password" placeholder="Client Secret" autocomplete="off">
-          </div>
-          <div class="api-key-actions">
-            <button class="btn btn-primary" style="flex:1;font-size:12px;padding:7px 0;" onclick="saveApiKey('toss')">저장</button>
-            <button class="btn btn-ghost" style="font-size:12px;padding:7px 12px;" onclick="deleteApiKey('toss')">삭제</button>
-          </div>
-        </div>
-        <button class="api-key-toggle-btn" id="tossToggleBtn" onclick="toggleApiKeyFields('toss')">▾ 입력 / 수정</button>
-      </div>
+      <!-- 선택된 증권사 입력 필드 (JS로 렌더링) -->
+      <div class="broker-fields-panel" id="brokerFieldsPanel"></div>
     </div>
 
     <div class="settings-close-row">
