@@ -4652,23 +4652,30 @@ async function fetchMarketTicker() {
     wti:    ['tkWti',    'tkWtiChg'],
   };
 
-  // 모든 심볼 병렬 fetch
-  const fetchSym = async (sym) => {
-    try {
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=2d`;
-      const r = await fetch(url);
-      if (!r.ok) return null;
-      const j = await r.json();
-      return j?.chart?.result?.[0]?.meta ?? null;
-    } catch { return null; }
-  };
+  // Electron: main 프로세스 IPC (CORS 없음) / PWA: 직접 fetch 폴백
+  let raw = {};
+  if (isElectron && window.electronAPI?.fetchMarketTickers) {
+    try { raw = await window.electronAPI.fetchMarketTickers() || {}; } catch (_) {}
+  } else {
+    // PWA 폴백 — 브라우저에서 CORS 허용 시에만 동작
+    const fetchSym = async (sym) => {
+      try {
+        const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=2d`);
+        if (!r.ok) return null;
+        return (await r.json())?.chart?.result?.[0]?.meta ?? null;
+      } catch { return null; }
+    };
+    const [a,b,c,d,e,f,g,h,i,j] = await Promise.all([
+      fetchSym('^KS11'), fetchSym('^KQ11'), fetchSym('^IXIC'), fetchSym('^GSPC'),
+      fetchSym('^DJI'),  fetchSym('^SOX'),  fetchSym('KRW=X'), fetchSym('JPY=X'),
+      fetchSym('^N225'), fetchSym('CL=F'),
+    ]);
+    raw = { kospi:a, kosdaq:b, nasdaq:c, sp500:d, dow:e, sox:f, usdkrw:g, jpy:h, nikkei:i, wti:j };
+  }
 
-  const [metaKospi, metaKosdaq, metaNasdaq, metaSp500, metaDow, metaSox,
-         metaUsdKrw, metaJpy, metaNikkei, metaWti] = await Promise.all([
-    fetchSym('^KS11'), fetchSym('^KQ11'), fetchSym('^IXIC'), fetchSym('^GSPC'),
-    fetchSym('^DJI'),  fetchSym('^SOX'),  fetchSym('KRW=X'), fetchSym('JPY=X'),
-    fetchSym('^N225'), fetchSym('CL=F'),
-  ]);
+  const { kospi:metaKospi, kosdaq:metaKosdaq, nasdaq:metaNasdaq, sp500:metaSp500,
+          dow:metaDow, sox:metaSox, usdkrw:metaUsdKrw, jpy:metaJpy,
+          nikkei:metaNikkei, wti:metaWti } = raw;
 
   const metas = { kospi: metaKospi, kosdaq: metaKosdaq, nasdaq: metaNasdaq, sp500: metaSp500,
                   dow: metaDow, sox: metaSox, usdkrw: metaUsdKrw, nikkei: metaNikkei, wti: metaWti };

@@ -412,6 +412,45 @@ ipcMain.handle('fetch-quote', async (_event, rawTicker) => {
   return null;
 });
 
+// ── IPC: 시장 지수 티커 일괄 조회 (CORS 우회 — main 프로세스에서 실행) ────────
+ipcMain.handle('fetch-market-tickers', async () => {
+  const symbols = {
+    kospi:  '^KS11',
+    kosdaq: '^KQ11',
+    nasdaq: '^IXIC',
+    sp500:  '^GSPC',
+    dow:    '^DJI',
+    sox:    '^SOX',
+    usdkrw: 'KRW=X',
+    jpy:    'JPY=X',
+    nikkei: '^N225',
+    wti:    'CL=F',
+  };
+
+  const fetchSym = async (sym) => {
+    for (const host of ['query1', 'query2']) {
+      try {
+        const body = await httpsGet(
+          `https://${host}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=2d`,
+          15000
+        );
+        const meta = JSON.parse(body)?.chart?.result?.[0]?.meta;
+        if (meta?.regularMarketPrice) return meta;
+      } catch (_) {}
+    }
+    return null;
+  };
+
+  const results = {};
+  await Promise.all(
+    Object.entries(symbols).map(async ([key, sym]) => {
+      results[key] = await fetchSym(sym);
+    })
+  );
+  console.log('[StockBook] 지수 티커:', Object.entries(results).filter(([,v])=>v).map(([k])=>k).join(', '));
+  return results;
+});
+
 // ── IPC: 네이버 금융 재무 데이터 (annual + summary) ─────────────────────────
 ipcMain.handle('fetch-naver-finance', async (_event, code) => {
   if (!code || !/^\d{6}$/.test(code.trim())) return null;

@@ -17,6 +17,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getVersion: () => ipcRenderer.invoke('get-version'),
   // KRX 전종목 데이터 조회 (KOSPI + KOSDAQ, 캐시 포함)
   fetchKrxStocks: () => ipcRenderer.invoke('fetch-krx-stocks'),
+  // 시장 지수 티커 일괄 조회 (KOSPI·KOSDAQ·나스닥·S&P·DOW·SOX·환율·WTI 등)
+  fetchMarketTickers: () => ipcRenderer.invoke('fetch-market-tickers'),
   // main 프로세스가 did-finish-load 후 파일 데이터를 직접 push하는 채널
   onPushState: (callback)  => ipcRenderer.once('push-state', (_event, data) => callback(data))
 });
