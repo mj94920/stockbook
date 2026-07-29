@@ -5296,20 +5296,20 @@ function closeEditStockModal() {
 }
 
 // 종목 편집 모달 — 종목명 입력 시 티커 자동완성, 티커 입력 시 종목명 자동완성
-document.getElementById('es_name').addEventListener('blur', async function() {
+{ const el = document.getElementById('es_name'); if (el) el.addEventListener('blur', async function() {
   const nameVal = this.value.trim();
   const tickerEl = document.getElementById('es_ticker');
-  if (!nameVal || tickerEl.value.trim()) return;
+  if (!nameVal || tickerEl?.value.trim()) return;
   const hit = await lookupTickerByName(nameVal);
-  if (hit) tickerEl.value = hit.code;
-});
-document.getElementById('es_ticker').addEventListener('blur', async function() {
+  if (hit && tickerEl) tickerEl.value = hit.code;
+}); }
+{ const el = document.getElementById('es_ticker'); if (el) el.addEventListener('blur', async function() {
   const tickerVal = this.value.trim();
   const nameEl = document.getElementById('es_name');
-  if (!tickerVal || nameEl.value.trim()) return;
+  if (!tickerVal || nameEl?.value.trim()) return;
   const name = await lookupNameByTicker(tickerVal);
-  if (name) nameEl.value = name;
-});
+  if (name && nameEl) nameEl.value = name;
+}); }
 
 function saveEditStock() {
   const idx = parseInt(document.getElementById('es_idx').value);
