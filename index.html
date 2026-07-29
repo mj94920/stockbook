@@ -1015,6 +1015,8 @@
     padding: 28px;
     width: 360px;
     max-width: 92vw;
+    max-height: 88vh;
+    overflow-y: auto;
     box-shadow: 0 16px 48px rgba(0,0,0,0.45);
   }
   .settings-title {
@@ -1403,6 +1405,7 @@
   }
   #mobileIntro.fade-out {
     animation: introFadeOut 0.4s ease forwards;
+    pointer-events: none;
   }
 
   /* ── SCROLLBAR ── */
@@ -1937,7 +1940,7 @@
   </div>
   <div id="mobileIntroText">
     <h1>Stock Book Mobile</h1>
-    <p>v2.0.1</p>
+    <p>v2.1.0</p>
   </div>
 </div>
 
@@ -7056,25 +7059,25 @@ function _toggleCheck(stockKey, checkKey, val) {
 
       <!-- 증권사 선택 카드 그리드 -->
       <div class="broker-tab-group" id="brokerTabGroup">
-        <button class="broker-tab-btn active" id="brokerTab_kis"
+        <button type="button" class="broker-tab-btn active" id="brokerTab_kis"
           style="--broker-color:#8B3A2A" onclick="selectBroker('kis')">
           <div class="broker-logo-box" style="font-size:15px;letter-spacing:-1px;">友</div>
           <span class="broker-tab-name">한국투자증권</span>
           <span class="broker-tab-check" id="brokerCheck_kis"></span>
         </button>
-        <button class="broker-tab-btn" id="brokerTab_kiwoom"
+        <button type="button" class="broker-tab-btn" id="brokerTab_kiwoom"
           style="--broker-color:#C2407A" onclick="selectBroker('kiwoom')">
           <div class="broker-logo-box" style="font-size:11px;">키움</div>
           <span class="broker-tab-name">키움증권</span>
           <span class="broker-tab-check" id="brokerCheck_kiwoom"></span>
         </button>
-        <button class="broker-tab-btn" id="brokerTab_ls"
+        <button type="button" class="broker-tab-btn" id="brokerTab_ls"
           style="--broker-color:#003087" onclick="selectBroker('ls')">
           <div class="broker-logo-box" style="font-size:14px;letter-spacing:0;">LS</div>
           <span class="broker-tab-name">LS증권</span>
           <span class="broker-tab-check" id="brokerCheck_ls"></span>
         </button>
-        <button class="broker-tab-btn" id="brokerTab_toss"
+        <button type="button" class="broker-tab-btn" id="brokerTab_toss"
           style="--broker-color:#2563EB" onclick="selectBroker('toss')">
           <div class="broker-logo-box" style="font-size:10px;background:linear-gradient(135deg,#2563EB,#4F46E5);">toss</div>
           <span class="broker-tab-name">토스증권</span>
@@ -7088,7 +7091,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     <div class="settings-close-row">
       <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v2.0</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v2.1.0</div>
   </div>
 </div>
 

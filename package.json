@@ -1,6 +1,6 @@
 {
   "name": "stockbook",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "나만의 주식 포트폴리오 관리 앱",
   "main": "main.js",
   "scripts": {
@@ -19,10 +19,12 @@
       "main.js",
       "preload.js",
       "index.html",
+      "splash.html",
       "manifest.json",
       "sw.js",
       "icon-192.png",
       "icon-512.png",
+      "icon.ico",
       "logo.svg"
     ],
     "win": {
