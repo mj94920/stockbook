@@ -1917,7 +1917,23 @@
 
 <!-- HEADER -->
 <div class="header">
-  <div class="logo"><img src="./logo.svg" alt="Stock Book 로고"> <span>Stock Book</span></div>
+  <div class="logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="30" height="30" style="border-radius:7px;flex-shrink:0">
+  <rect width="512" height="512" rx="112" ry="112" fill="#0d1f3c"/>
+  <line x1="108" y1="344" x2="108" y2="325" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
+  <line x1="108" y1="402" x2="108" y2="385" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
+  <rect x="87" y="344" width="42" height="42" rx="5" ry="5" fill="white" opacity="0.9"/>
+  <line x1="196" y1="292" x2="196" y2="273" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
+  <line x1="196" y1="354" x2="196" y2="338" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
+  <rect x="175" y="292" width="42" height="58" rx="5" ry="5" fill="white" opacity="0.9"/>
+  <line x1="284" y1="236" x2="284" y2="215" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
+  <line x1="284" y1="314" x2="284" y2="295" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
+  <rect x="263" y="236" width="42" height="74" rx="5" ry="5" fill="white" opacity="0.9"/>
+  <line x1="372" y1="175" x2="372" y2="152" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
+  <line x1="372" y1="285" x2="372" y2="264" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
+  <rect x="351" y="175" width="42" height="96" rx="5" ry="5" fill="white" opacity="0.9"/>
+  <path d="M 88,365 C 135,340 175,305 220,278 C 265,252 315,215 405,168" fill="none" stroke="#4ade80" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
+  <polygon points="405,168 378,172 390,196" fill="#4ade80" opacity="0.95"/>
+</svg> <span>Stock Book</span></div>
 
   <!-- 시장 지수 티커 -->
   <div class="market-ticker" id="marketTickerBar">
@@ -1973,7 +1989,7 @@
 <!-- ========== 최상단 탭 네비게이션 ========== -->
 <div class="sub-tabs">
   <button class="sub-tab-btn active" data-tab="main" onclick="switchSubTab('main')"><span class="tab-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></span><span class="tab-text">종합</span></button>
-  <button class="sub-tab-btn" data-tab="add" onclick="switchSubTab('add')"><span class="tab-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span><span class="tab-text">매수등록</span></button>
+  <button class="sub-tab-btn" data-tab="add" onclick="switchSubTab('add')"><span class="tab-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span><span class="tab-text">실현손익</span></button>
   <button class="sub-tab-btn" data-tab="journal" onclick="switchSubTab('journal')"><span class="tab-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span><span class="tab-text">투자일지</span></button>
   <button class="sub-tab-btn" data-tab="trades" onclick="switchSubTab('trades')"><span class="tab-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span class="tab-text">거래기록</span></button>
   <button class="sub-tab-btn" data-tab="watchlist" onclick="switchSubTab('watchlist')"><span class="tab-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span><span class="tab-text">관심종목</span></button>
@@ -2213,9 +2229,9 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
         복리 계산기
       </span>
-      <span class="calc-arrow">▾</span>
+      <span class="calc-arrow">▴</span>
     </button>
-    <div class="calc-collapsible" id="calcCollapsible">
+    <div class="calc-collapsible open" id="calcCollapsible">
       <div style="margin-top:12px;">
         <div class="form-grid" style="gap:8px;">
           <div class="form-group"><label>초기 원금 (원)</label><input type="text" inputmode="decimal" id="mc_principal" placeholder="10,000,000" oninput="formatWithComma(this);calcMonthlyCompound()"></div>
@@ -2463,102 +2479,59 @@
 
     <!-- ➕ 매수등록 -->
     <div id="stab-add" class="main-tab-panel" style="display:none;">
-      <!-- ADD STOCK FORM -->
-  <div class="card">
-    <div class="card-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M5 12h14"/><path d="M12 5v14"/></svg> 매수 / 추가 매수</div>
-    <div class="form-grid">
-      <div class="form-group">
-        <label>종목명 *</label>
-        <input type="text" id="f_name" placeholder="삼성전자" list="stockNameList">
-        <datalist id="stockNameList"></datalist>
-      </div>
-      <div class="form-group">
-        <label>섹터</label>
-        <select id="f_sector">
-          <option value="">선택</option>
-          <optgroup label="테크·첨단">
-            <option>반도체</option><option>IT/플랫폼</option><option>AI/소프트웨어</option>
-            <option>로봇</option><option>우주항공</option><option>보안/사이버</option>
-          </optgroup>
-          <optgroup label="에너지·소재">
-            <option>2차전지</option><option>원자력</option><option>에너지</option>
-            <option>철강/소재</option><option>화학</option>
-          </optgroup>
-          <optgroup label="산업·방산">
-            <option>방산</option><option>조선</option><option>자동차</option>
-            <option>기계/장비</option>
-          </optgroup>
-          <optgroup label="바이오·헬스">
-            <option>바이오/헬스</option><option>의료기기</option><option>제약</option>
-          </optgroup>
-          <optgroup label="금융·부동산">
-            <option>금융</option><option>보험</option><option>부동산/건설</option>
-          </optgroup>
-          <optgroup label="소비·서비스">
-            <option>소비재</option><option>유통/물류</option><option>식품/음료</option>
-            <option>통신</option><option>게임/엔터</option><option>미디어</option>
-          </optgroup>
-          <optgroup label="기타">
-            <option>ETF/리츠</option><option>해외주식</option><option>기타</option>
-          </optgroup>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>매수 가격 * (원/$)</label>
-        <input type="text" inputmode="decimal" id="f_price" placeholder="75,000" oninput="formatWithComma(this);refreshAllPct('f_','f_price')">
-      </div>
-      <div class="form-group">
-        <label>수량 *</label>
-        <input type="number" id="f_qty" placeholder="10" min="1" step="1">
-      </div>
-      <div class="form-group">
-        <label>포트폴리오 위치</label>
-        <select id="f_pos">
-          <option value="">선택</option>
-          <option value="top"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;margin-right:4px;"></span>제일 위 (고위험·고수익)</option>
-          <option value="mid"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#3b82f6;margin-right:4px;"></span>중간 (성장주)</option>
-          <option value="bot"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;margin-right:4px;"></span>제일 아래 (배당·안정)</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>현재 주가 (손익 계산용) <span id="f_current_status" style="font-size:11px;color:var(--text3);font-weight:400;"></span></label>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <input type="text" inputmode="decimal" id="f_current" placeholder="80,000" oninput="formatWithComma(this)" style="flex:1;min-width:0;">
-          <button type="button" id="f_current_fetch_btn" onclick="fetchCurrentForForm()" style="display:none;padding:6px 10px;background:var(--bg3);border:1.5px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text2);font-size:13px;white-space:nowrap;font-family:inherit;" title="현재가 자동 조회"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> 조회</button>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>날짜</label>
-        <input type="date" id="f_date">
-      </div>
-      <div class="form-group">
-        <label>매매 구분</label>
-        <select id="f_tradeType">
-          <option value="cash">현금매매</option>
-          <option value="credit">신용매매</option>
+  <!-- 실현손익 요약 카드 -->
+  <div class="card" style="margin-bottom:12px;">
+    <div class="section-row">
+      <div class="section-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> 실현손익 요약</div>
+      <div style="display:flex;gap:6px;">
+        <select id="realizedYear" onchange="renderRealizedTab()" style="padding:5px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;">
+          <option value="all">전체</option>
         </select>
       </div>
     </div>
-
-    <!-- 목표가/손절가 -->
-    <div style="border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-top:4px;background:var(--bg3);">
-      <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:10px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> 목표가 · 손절가 설정 (선택)</div>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <div class="form-group"><label style="color:var(--green);font-size:12px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> 목표가 1단계</label><div style="display:flex;gap:4px;"><input type="text" inputmode="decimal" id="f_target1" placeholder="가격" oninput="formatWithComma(this);syncPP('f_target1','f_target1_p',getNum('f_price'))" style="flex:1;min-width:0;"><input type="number" id="f_target1_p" placeholder="%" step="0.1" oninput="syncPC('f_target1_p','f_target1',getNum('f_price'))" style="width:54px;" title="% 입력 → 가격 자동 계산"></div></div>
-        <div class="form-group"><label style="color:var(--green);font-size:12px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> 목표가 2단계</label><div style="display:flex;gap:4px;"><input type="text" inputmode="decimal" id="f_target2" placeholder="가격" oninput="formatWithComma(this);syncPP('f_target2','f_target2_p',getNum('f_price'))" style="flex:1;min-width:0;"><input type="number" id="f_target2_p" placeholder="%" step="0.1" oninput="syncPC('f_target2_p','f_target2',getNum('f_price'))" style="width:54px;" title="% 입력 → 가격 자동 계산"></div></div>
-        <div class="form-group"><label style="color:var(--green);font-size:12px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> 목표가 3단계</label><div style="display:flex;gap:4px;"><input type="text" inputmode="decimal" id="f_target3" placeholder="가격" oninput="formatWithComma(this);syncPP('f_target3','f_target3_p',getNum('f_price'))" style="flex:1;min-width:0;"><input type="number" id="f_target3_p" placeholder="%" step="0.1" oninput="syncPC('f_target3_p','f_target3',getNum('f_price'))" style="width:54px;" title="% 입력 → 가격 자동 계산"></div></div>
-        <div class="form-group"><label style="color:var(--red);font-size:12px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> 손절가</label><div style="display:flex;gap:4px;"><input type="text" inputmode="decimal" id="f_stop1" placeholder="가격" oninput="formatWithComma(this);syncPP('f_stop1','f_stop1_p',getNum('f_price'))" style="flex:1;min-width:0;"><input type="number" id="f_stop1_p" placeholder="%" step="0.1" oninput="syncPC('f_stop1_p','f_stop1',getNum('f_price'))" style="width:54px;" title="% 입력 → 가격 자동 계산"></div></div>
+    <div id="realizedSummary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px;">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">총 매도 횟수</div>
+        <div id="rs_count" style="font-size:20px;font-weight:700;">-</div>
       </div>
-    </div>
-
-    <div class="calc-preview" id="calcPreview" style="display:none"></div>
-
-    <div class="form-actions">
-      <button class="btn btn-primary" onclick="addStock()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> 매수 등록</button>
-      <button class="btn btn-ghost" onclick="clearStockForm()">초기화</button>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">실현 손익 합계</div>
+        <div id="rs_total" style="font-size:18px;font-weight:700;">-</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">평균 수익률</div>
+        <div id="rs_avg" style="font-size:18px;font-weight:700;">-</div>
+      </div>
     </div>
   </div>
-    </div><!-- /stab-add -->
+
+  <!-- 매도 거래 목록 -->
+  <div class="card">
+    <div class="section-row">
+      <div class="section-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> 매도 거래 내역</div>
+      <input type="text" placeholder="종목 검색..." id="realizedSearch" oninput="renderRealizedTab()"
+        style="padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;width:140px;outline:none;">
+    </div>
+    <div style="overflow-x:auto;margin-top:10px;">
+      <table class="hts-table" style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr>
+            <th>날짜</th>
+            <th>종목</th>
+            <th style="text-align:right">매수가</th>
+            <th style="text-align:right">매도가</th>
+            <th style="text-align:right">수량</th>
+            <th style="text-align:right">실현손익</th>
+            <th style="text-align:right">수익률</th>
+            <th>비고</th>
+          </tr>
+        </thead>
+        <tbody id="realizedBody"></tbody>
+      </table>
+    </div>
+    <div id="realizedEmpty" class="empty-state" style="display:none;">매도 기록이 없습니다</div>
+  </div>
+</div><!-- /stab-add -->
 
     <!-- 📓 투자일지 -->
     <div id="stab-journal" class="main-tab-panel" style="display:none;">
@@ -3009,17 +2982,11 @@
 <!-- EDIT STOCK MODAL -->
 <div class="modal-overlay" id="editStockModal">
   <div class="modal" style="max-width:480px">
-    <div class="modal-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> 종목 정보 편집</div>
+    <div class="modal-title" style="display:flex;align-items:center;gap:8px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> <span id="editModalStockName" style="color:var(--accent)">종목 메모</span></div>
     <input type="hidden" id="es_idx">
     <div class="form-grid" style="gap:10px;">
-      <div class="form-group">
-        <label>종목명</label>
-        <input type="text" id="es_name" placeholder="삼성전자">
-      </div>
-      <div class="form-group">
-        <label>티커 (종목코드)</label>
-        <input type="text" id="es_ticker" placeholder="005930" style="font-family:monospace;letter-spacing:1px;">
-      </div>
+      
+      
       <div class="form-group">
         <label>섹터</label>
         <select id="es_sector">
@@ -3229,7 +3196,60 @@ async function fetchNaverQuote(code) {
 }
 
 // 해외 종목 전용 — 야후 파이낸스 v7 quote (query1 → query2 → CORS프록시 순 fallback)
-async function fetchYFQuoteIntl(ticker) {
+async // ── 토스증권 API 현재가 조회 ──
+let _tossToken = null;
+let _tossTokenExpiry = 0;
+
+async function getTossToken() {
+  // 캐시된 토큰이 유효하면 재사용
+  if (_tossToken && Date.now() < _tossTokenExpiry - 60000) return _tossToken;
+  if (!window.electronAPI?.loadApiKey) return null;
+  const creds = await window.electronAPI.loadApiKey('toss');
+  if (!creds?.clientId || !creds?.clientSecret) return null;
+  try {
+    const body = new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: creds.clientId,
+      client_secret: creds.clientSecret,
+    });
+    const res = await fetch('https://openapi.tossinvest.com/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    _tossToken = data.access_token;
+    _tossTokenExpiry = Date.now() + (data.expires_in || 3600) * 1000;
+    return _tossToken;
+  } catch(e) {
+    console.error('토스 토큰 발급 실패:', e);
+    return null;
+  }
+}
+
+async function fetchTossQuote(code) {
+  try {
+    const token = await getTossToken();
+    if (!token) return null;
+    // 종목코드 정규화: 한국 주식은 6자리 숫자
+    const res = await fetch(`https://openapi.tossinvest.com/api/v1/prices?code=${encodeURIComponent(code)}`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    // 토스 응답 구조에서 현재가 추출
+    const price = data?.price ?? data?.currentPrice ?? data?.close ?? data?.[0]?.price;
+    const prevClose = data?.previousClose ?? data?.prevClose ?? data?.basePrice;
+    if (!price) return null;
+    return { price: Number(price), prevClose: prevClose ? Number(prevClose) : null };
+  } catch(e) {
+    console.error('토스 시세 조회 실패:', e);
+    return null;
+  }
+}
+
+function fetchYFQuoteIntl(ticker) {
   // v7 quote 파서 (실시간 시세, 가장 정확)
   const parseYFv7 = data => {
     const result = data?.quoteResponse?.result?.[0];
@@ -3362,16 +3382,24 @@ async function lookupNameByTicker(ticker) {
 }
 
 // 티커가 등록된 전 종목 일괄 시세 조회
-async function fetchAllPrices(silent = false) {
+async async function fetchAllPrices(silent = false) {
   const targets = state.portfolio.filter(s => s.ticker);
   if (!targets.length) {
     if (!silent) showToast('📌 티커가 등록된 종목이 없습니다. 종목 편집에서 티커를 추가하세요.');
     return;
   }
   if (!silent) showToast('🔄 시세 조회 중...', 60000);
+  // 토스증권 API 등록 여부 확인
+  const tossAvail = window.electronAPI?.checkApiKey ? await window.electronAPI.checkApiKey('toss') : false;
   let updated = 0, failed = 0;
   await Promise.allSettled(targets.map(async s => {
-    const q = await fetchYFQuote(s.ticker);
+    let q = null;
+    // 토스증권 등록 시 6자리 한국 종목코드는 토스로 우선 조회
+    if (tossAvail && /^\d{6}$/.test(s.ticker)) {
+      q = await fetchTossQuote(s.ticker);
+    }
+    // 실패 시 야후 파이낸스 폴백
+    if (!q) q = await fetchYFQuote(s.ticker);
     if (q) {
       s.currentPrice = q.price;
       if (q.prevClose != null) s.prevClose = q.prevClose;
@@ -3995,6 +4023,7 @@ function switchTab(name) {
   document.querySelectorAll('.tab-btn')[idx].classList.add('active');
   document.getElementById('tab-'+name).classList.add('active');
   if (name === 'portfolio') renderPortfolio();
+  if (name === 'add') renderRealizedTab();
   if (name === 'journal') { renderJournals(); updateJournalDatalist(); }
   if (name === 'trades') renderTrades();
   if (name === 'news') renderNewsPortfolioLinks();
@@ -4078,6 +4107,94 @@ function openCorpLink(type) {
 }
 
 // ── 테마별 탭 렌더 ──
+// ── 평단가/수량 인라인 편집 ──
+function startInlineEdit(event, idx, field) {
+  const td = event.currentTarget;
+  const s = state.portfolio[idx];
+  if (!s) return;
+  const curVal = field === 'avgPrice' ? (s.avgPrice || 0) : (s.qty || 0);
+  const label = field === 'avgPrice' ? '평단가' : '수량';
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.inputMode = 'decimal';
+  inp.value = field === 'avgPrice' ? curVal.toLocaleString('ko-KR') : String(curVal);
+  inp.style.cssText = 'width:90px;padding:3px 6px;border:1px solid var(--accent);border-radius:5px;background:var(--bg);color:var(--text);font-size:13px;text-align:right;outline:none;';
+  td.innerHTML = '';
+  td.appendChild(inp);
+  inp.focus(); inp.select();
+  function commit() {
+    const raw = inp.value.replace(/,/g,'').trim();
+    const num = parseFloat(raw);
+    if (!isNaN(num) && num > 0) {
+      if (field === 'avgPrice') s.avgPrice = num;
+      else s.qty = Math.floor(num);
+      save();
+      showToast(`✅ ${s.name} ${label} 수정 완료`);
+    }
+    renderPortfolio();
+  }
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    if (e.key === 'Escape') { renderPortfolio(); }
+  });
+  inp.addEventListener('blur', () => { setTimeout(commit, 150); });
+  if (field === 'avgPrice') inp.addEventListener('input', () => formatWithComma(inp));
+}
+
+// ── 실현손익 탭 렌더 ──
+function renderRealizedTab() {
+  const yr = document.getElementById('realizedYear')?.value || 'all';
+  const q = (document.getElementById('realizedSearch')?.value || '').toLowerCase();
+
+  // 연도 옵션 채우기
+  const yrSel = document.getElementById('realizedYear');
+  if (yrSel && yrSel.options.length <= 1) {
+    const years = [...new Set(state.trades.filter(t=>t.type==='sell'&&t.date).map(t=>t.date.substring(0,4)))].sort().reverse();
+    years.forEach(y => { const o=document.createElement('option'); o.value=o.textContent=y; yrSel.appendChild(o); });
+  }
+
+  const sells = state.trades.filter(t => {
+    if (t.type !== 'sell') return false;
+    if (yr !== 'all' && t.date && !t.date.startsWith(yr)) return false;
+    if (q && !t.name?.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  // 요약
+  const count = sells.length;
+  const total = sells.reduce((s,t) => s + (t.pnl||0), 0);
+  const avgPct = count ? sells.reduce((s,t) => s + (t.pnlPct||0), 0) / count : 0;
+  const totCls = total >= 0 ? 'up' : 'dn';
+  const avgCls = avgPct >= 0 ? 'up' : 'dn';
+  const rsCount = document.getElementById('rs_count');
+  const rsTotal = document.getElementById('rs_total');
+  const rsAvg = document.getElementById('rs_avg');
+  if (rsCount) rsCount.textContent = count + '건';
+  if (rsTotal) rsTotal.innerHTML = `<span class="${totCls}">${total>=0?'+':''}${Math.round(total).toLocaleString('ko-KR')}원</span>`;
+  if (rsAvg) rsAvg.innerHTML = `<span class="${avgCls}">${avgPct>=0?'+':''}${avgPct.toFixed(2)}%</span>`;
+
+  // 테이블
+  const tbody = document.getElementById('realizedBody');
+  const empty = document.getElementById('realizedEmpty');
+  if (!tbody) return;
+  if (!sells.length) { tbody.innerHTML=''; if(empty) empty.style.display=''; return; }
+  if(empty) empty.style.display='none';
+  tbody.innerHTML = sells.map(t => {
+    const pnlCls = (t.pnl||0)>=0?'up':'dn';
+    const pctCls = (t.pnlPct||0)>=0?'up':'dn';
+    return `<tr>
+      <td>${t.date||'-'}</td>
+      <td><strong>${t.name||'-'}</strong>${t.ticker?`<br><span style="font-size:11px;color:var(--text3)">${t.ticker}</span>`:''}</td>
+      <td style="text-align:right">${t.buyPrice?t.buyPrice.toLocaleString('ko-KR'):'-'}</td>
+      <td style="text-align:right">${t.price?t.price.toLocaleString('ko-KR'):'-'}</td>
+      <td style="text-align:right">${t.qty?t.qty.toLocaleString('ko-KR'):'-'}</td>
+      <td style="text-align:right"><span class="${pnlCls}">${t.pnl!=null?(((t.pnl>=0)?'+':'')+Math.round(t.pnl).toLocaleString('ko-KR')+'원'):'-'}</span></td>
+      <td style="text-align:right"><span class="${pctCls}">${t.pnlPct!=null?(((t.pnlPct>=0)?'+':'')+t.pnlPct.toFixed(2)+'%'):'-'}</span></td>
+      <td style="font-size:12px;color:var(--text2)">${t.note||'-'}</td>
+    </tr>`;
+  }).join('');
+}
+
 function renderThemeTab() {
   const themeListEl = document.getElementById('themeList');
   const tableEl = document.getElementById('themeStockTable');
@@ -4496,9 +4613,9 @@ function renderPortfolio() {
         ${s.sector?`<span class="sector">${s.sector}${s.position?` · ${posLabel(s.position)}`:''}</span>`:''}
       </td>
       <td style="text-align:center;font-size:12px;color:var(--text3)">${s.position?posLabel(s.position):'일반'}</td>
-      <td>${fmt(s.qty)}</td>
+      <td ondblclick="startInlineEdit(event,${origIdx},'qty')" style="cursor:text" title="더블클릭으로 수량 수정">${fmt(s.qty)}</td>
       <td style="color:var(--text3)">${fmt(s.qty)}</td>
-      <td>${fmt(s.avgPrice)}</td>
+      <td ondblclick="startInlineEdit(event,${origIdx},'avgPrice')" style="cursor:text" title="더블클릭으로 평단가 수정">${fmt(s.avgPrice)}</td>
       <td class="${curCls} ${highlightCls}" style="cursor:pointer" onclick="openPriceModal(${origIdx})" title="클릭 → 현재가 업데이트">
         ${s.currentPrice ? fmt(s.currentPrice) : '<span style="font-size:11px;text-decoration:underline dotted">미입력</span>'}
         ${(()=>{ if (!s.currentPrice || !s.avgPrice) return ''; const diff=s.currentPrice-s.avgPrice; const dp=diff/s.avgPrice*100; const dc=diff>0?'up':diff<0?'dn':'eq'; return `<div class="${dc}" style="font-size:10px;line-height:1.3">${diff>0?'+':''}${Math.round(diff).toLocaleString('ko-KR')} (${dp>0?'+':''}${dp.toFixed(2)}%)</div>`; })()}
@@ -4518,7 +4635,6 @@ function renderPortfolio() {
         <div style="display:flex;gap:4px;justify-content:center;flex-wrap:nowrap;">
           <button class="hts-action-btn btn-price"  onclick="openPriceModal(${origIdx})"  title="현재가 입력" style="display:inline-flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;flex-shrink:0"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> 현재가</button>
           <button class="hts-action-btn btn-target" onclick="openTargetModal(${origIdx})" title="목표가/손절가 설정" style="display:inline-flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> 목표</button>
-          <button class="hts-action-btn btn-sell"   onclick="openSellModal(${origIdx})"   title="매도 등록" style="display:inline-flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;flex-shrink:0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> 매도</button>
           <button class="hts-action-btn btn-edit"   onclick="openEditStockModal(${origIdx})" title="종목 정보 편집" style="display:inline-flex;align-items:center;gap:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> 편집</button>
           <button class="hts-action-btn btn-analysis" onclick="openAnalysisDrawer(${origIdx})" title="기업 분석" style="display:inline-flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;flex-shrink:0"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> 분석</button>
           <button class="hts-action-btn btn-delete" onclick="deleteStock(${origIdx})"     title="종목 삭제" style="display:inline-flex;align-items:center;gap:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> 삭제</button>
@@ -4888,8 +5004,9 @@ function openEditStockModal(idx) {
   const s = state.portfolio[idx];
   if (!s) return;
   document.getElementById('es_idx').value = idx;
-  document.getElementById('es_name').value = s.name || '';
-  document.getElementById('es_ticker').value = s.ticker || '';
+  // 종목명을 모달 제목으로 표시
+  const titleEl = document.getElementById('editModalStockName');
+  if (titleEl) titleEl.textContent = s.name || '종목 메모';
   document.getElementById('es_sector').value = s.sector || '';
   document.getElementById('es_pos').value = s.position || '';
   document.getElementById('es_avgPrice').value = s.avgPrice ? s.avgPrice.toLocaleString() : '';
@@ -4924,38 +5041,22 @@ function saveEditStock() {
   const s = state.portfolio[idx];
   if (!s) { closeEditStockModal(); return; }
 
-  const newName = document.getElementById('es_name').value.trim();
-  const newTicker = document.getElementById('es_ticker').value.trim();
   const newSector = document.getElementById('es_sector').value;
   const newPos = document.getElementById('es_pos').value;
   const newAvg = getNumOrNull('es_avgPrice');
   const newQty = parseInt(document.getElementById('es_qty').value);
   const newMemo = document.getElementById('es_memo').value.trim();
 
-  if (!newName) { alert('종목명은 필수입니다.'); return; }
-
-  const oldName = s.name;
-  s.name = newName;
-  if (newTicker) s.ticker = newTicker; else delete s.ticker;
   s.sector = newSector;
   s.position = newPos;
   if (newAvg && newAvg > 0) s.avgPrice = newAvg;
   if (!isNaN(newQty) && newQty > 0) s.qty = newQty;
   s.memo = newMemo;
 
-  // 종목명 변경 시 거래기록/투자일지도 함께 업데이트
-  if (oldName !== newName) {
-    state.trades.forEach(t => { if (t.name === oldName) t.name = newName; });
-    state.journals.forEach(j => { if (j.name === oldName) j.name = newName; });
-  }
-
   save();
   renderPortfolio();
-  updateDatalist('stockNameList');
-  updateDatalist('jStockList');
-  updateDatalist('tStockList');
   closeEditStockModal();
-  showToast(`✅ ${newName} 정보가 업데이트되었습니다.`);
+  showToast(`✅ ${s.name} 메모/정보가 업데이트되었습니다.`);
 }
 
 // ESC 키로 편집 모달 닫기
@@ -5800,6 +5901,20 @@ async function loadApiKeysUI() {
     el.textContent  = kisOk ? '✓ 등록됨' : '미등록';
     el.className    = 'api-key-status ' + (kisOk ? 'saved' : 'empty');
   }
+  // 토스증권 상태
+  const tossOk = await window.electronAPI.checkApiKey('toss');
+  const tossEl = document.getElementById('tossKeyStatus');
+  if (tossEl) {
+    tossEl.textContent = tossOk ? '✓ 등록됨' : '미등록';
+    tossEl.className   = 'api-key-status ' + (tossOk ? 'saved' : 'empty');
+  }
+  // 상태바: KIS 또는 토스 중 하나라도 연결되면 표시
+  if (!kisOk && tossOk) {
+    const dot = document.getElementById('apiStatusDot');
+    const label = document.getElementById('apiStatusLabel');
+    if (dot) dot.style.background = '#22c55e';
+    if (label) label.textContent = '토스 연결됨';
+  }
 }
 
 function toggleApiKeyFields(broker) {
@@ -5827,6 +5942,34 @@ function toggleApiKeyFields(broker) {
 
 async function saveApiKey(broker) {
   if (!window.electronAPI?.saveApiKey) return alert('Electron 환경에서만 사용 가능합니다.');
+  if (broker === 'toss') {
+    const idEl  = document.getElementById('tossClientId');
+    const secEl = document.getElementById('tossClientSecret');
+    const newId  = idEl?.value.trim()  || '';
+    const newSec = secEl?.value.trim() || '';
+    (async () => {
+      const existing = (await window.electronAPI.loadApiKey('toss')) || {};
+      const fields = {
+        clientId:     newId  || existing.clientId     || '',
+        clientSecret: newSec || existing.clientSecret || '',
+      };
+      if (!fields.clientId || !fields.clientSecret) {
+        alert('Client ID와 Client Secret을 모두 입력해주세요.');
+        return;
+      }
+      const result = await window.electronAPI.saveApiKey('toss', fields);
+      if (result?.ok) {
+        if (idEl)  { idEl.value  = ''; idEl.placeholder  = '●●●●●●●● (저장됨)'; }
+        if (secEl) { secEl.value = ''; secEl.placeholder = '●●●●●●●● (저장됨)'; }
+        toggleApiKeyFields('toss');
+        loadApiKeysUI();
+        showToast('✅ 토스증권 API 키 저장 완료');
+      } else {
+        alert('저장 실패: ' + (result?.error || '알 수 없는 오류'));
+      }
+    })();
+    return;
+  }
   if (broker === 'kis') {
     const keyEl    = document.getElementById('kisAppKey');
     const secretEl = document.getElementById('kisAppSecret');
@@ -5859,7 +6002,7 @@ async function saveApiKey(broker) {
 
 async function deleteApiKey(broker) {
   if (!window.electronAPI?.deleteApiKey) return;
-  const name = broker === 'kis' ? '한국투자증권 (KIS)' : broker;
+  const name = broker === 'kis' ? '한국투자증권 (KIS)' : broker === 'toss' ? '토스증권' : broker;
   const confirmed = await window.electronAPI.showConfirm(`${name} API 키를 삭제하시겠습니까?`);
   if (!confirmed) return;
   await window.electronAPI.deleteApiKey(broker);
@@ -5874,6 +6017,17 @@ async function deleteApiKey(broker) {
     const b = document.getElementById('kisToggleBtn');
     if (f) f.style.display = 'none';
     if (b) b.textContent = '▾ 입력 / 수정';
+  }
+  if (broker === 'toss') {
+    const id = document.getElementById('tossClientId');
+    const sc = document.getElementById('tossClientSecret');
+    if (id) { id.value = ''; id.placeholder = 'Client ID'; }
+    if (sc) { sc.value = ''; sc.placeholder = 'Client Secret'; }
+    const f2 = document.getElementById('tossKeyFields');
+    const b2 = document.getElementById('tossToggleBtn');
+    if (f2) f2.style.display = 'none';
+    if (b2) b2.textContent = '▾ 입력 / 수정';
+    _tossToken = null; _tossTokenExpiry = 0;
   }
   loadApiKeysUI();
 }
@@ -6811,12 +6965,26 @@ function _toggleCheck(stockKey, checkKey, val) {
         <button class="api-key-toggle-btn" id="kisToggleBtn" onclick="toggleApiKeyFields('kis')">▾ 입력 / 수정</button>
       </div>
 
-      <!-- 토스증권 (준비 중) -->
+      <!-- 토스증권 -->
       <div class="api-key-broker-block">
         <div class="api-key-broker-header">
-          <div class="api-key-broker-name" style="opacity:0.4;">🟣 토스증권</div>
-          <span class="api-key-status empty" style="opacity:0.4;">발급 대기 중</span>
+          <div class="api-key-broker-name">🟣 토스증권</div>
+          <span class="api-key-status empty" id="tossKeyStatus">미등록</span>
         </div>
+        <div id="tossKeyFields" style="display:none;">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">client_id = 앱키와 같은 개념입니다</div>
+          <div class="api-key-input-row">
+            <input class="api-key-input" id="tossClientId" type="password" placeholder="Client ID" autocomplete="off">
+          </div>
+          <div class="api-key-input-row">
+            <input class="api-key-input" id="tossClientSecret" type="password" placeholder="Client Secret" autocomplete="off">
+          </div>
+          <div class="api-key-actions">
+            <button class="btn btn-primary" style="flex:1;font-size:12px;padding:7px 0;" onclick="saveApiKey('toss')">저장</button>
+            <button class="btn btn-ghost" style="font-size:12px;padding:7px 12px;" onclick="deleteApiKey('toss')">삭제</button>
+          </div>
+        </div>
+        <button class="api-key-toggle-btn" id="tossToggleBtn" onclick="toggleApiKeyFields('toss')">▾ 입력 / 수정</button>
       </div>
     </div>
 
