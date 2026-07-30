@@ -3002,6 +3002,7 @@
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <input id="allStockSearch" type="text" placeholder="종목명·코드·업종 검색" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:12px;width:170px;" oninput="filterAndRenderAll()">
             <button onclick="loadAllStocks(true)" id="allStockRefreshBtn" style="padding:5px 10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;">🔄 새로고침</button>
+            <button onclick="fetchAllStockPagePrices()" id="allStockPriceBtn" title="현재 페이지 종목을 KIS/Yahoo로 실시간 조회" style="padding:5px 10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;">📡 시세 조회</button>
           </div>
         </div>
         <!-- 시장 탭: KOSPI / KOSDAQ / ETF -->
@@ -4832,6 +4833,63 @@ function filterAndRenderAll() {
   renderAllStockTable();
 }
 
+// 현재 페이지 종목 시세 on-demand 조회 (KIS → Yahoo Finance)
+async function fetchAllStockPagePrices() {
+  if (!window.electronAPI?.fetchQuote) {
+    showToast('Electron 환경에서만 시세 조회가 가능합니다.');
+    return;
+  }
+  const btn = document.getElementById('allStockPriceBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '조회 중...'; }
+
+  const data  = _allFiltered;
+  const start = (allStockPage - 1) * ALL_PER_PAGE;
+  const slice = data.slice(start, start + ALL_PER_PAGE);
+
+  // 최대 50개씩 순차 처리 (KIS rate limit 대응)
+  const MAX = 50;
+  const targets = slice.slice(0, MAX).filter(s => s.code && /^\d{6}$/.test(s.code));
+  let done = 0;
+  const statusEl = document.getElementById('allStockStatus');
+
+  for (const s of targets) {
+    try {
+      const q = await window.electronAPI.fetchQuote(s.code);
+      if (!q?.price) { done++; continue; }
+      // 테이블 행 업데이트
+      const rowId    = `asr-${s.code}`;
+      const priceEl  = document.getElementById(`${rowId}-price`);
+      const chgEl    = document.getElementById(`${rowId}-chg`);
+      const pctEl    = document.getElementById(`${rowId}-pct`);
+      if (!priceEl) { done++; continue; }
+      const chg    = q.prevClose ? (q.price - q.prevClose) : 0;
+      const chgPct = q.prevClose ? (chg / q.prevClose * 100) : 0;
+      const isUp   = chg >= 0;
+      const clsUp  = isUp ? 'pos' : 'neg';
+      priceEl.textContent = Math.round(q.price).toLocaleString();
+      priceEl.className   = clsUp;
+      if (chgEl) {
+        chgEl.textContent = chg === 0 ? '—' : `${isUp ? '▲' : '▼'} ${Math.abs(Math.round(chg)).toLocaleString()}`;
+        chgEl.className   = clsUp;
+      }
+      if (pctEl) {
+        pctEl.textContent = chg === 0 ? '0.00%' : `${isUp ? '+' : ''}${chgPct.toFixed(2)}%`;
+        pctEl.className   = clsUp;
+      }
+      // 캐시에도 반영
+      s.price = q.price;
+      if (q.prevClose) { s.change = chg; s.changePct = chgPct; }
+    } catch(_) {}
+    done++;
+    if (statusEl) statusEl.textContent = `시세 조회 중... ${done}/${targets.length}`;
+    // 짧은 딜레이 (KIS rate limit)
+    await new Promise(r => setTimeout(r, 120));
+  }
+
+  if (statusEl) statusEl.textContent = `📡 ${done}종목 시세 업데이트 완료`;
+  if (btn) { btn.disabled = false; btn.textContent = '📡 시세 조회'; }
+}
+
 function renderAllStockTable() {
   const bodyEl = document.getElementById('allStockBody');
   if (!bodyEl) return;
@@ -4843,22 +4901,23 @@ function renderAllStockTable() {
     bodyEl.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:30px;">검색 결과가 없습니다.</td></tr>`;
   } else {
     bodyEl.innerHTML = slice.map(s => {
-      const up      = (s.changePct || 0) >= 0;
-      const cls     = s.change === 0 ? '' : (up ? 'pos' : 'neg');
-      const arrow   = s.change === 0 ? '—' : (up ? '▲' : '▼') + ' ' + Math.abs(s.change || 0).toLocaleString();
-      const pctStr  = !s.changePct ? '0.00%' : (up ? '+' : '') + Number(s.changePct).toFixed(2) + '%';
-      const capStr  = s.marketCap > 0 ? Math.round(s.marketCap / 100000000).toLocaleString() : '-';
-      const volStr  = s.volume > 0 ? s.volume.toLocaleString() : '-';
+      const up       = (s.changePct || 0) >= 0;
+      const cls      = s.change === 0 ? '' : (up ? 'pos' : 'neg');
+      const arrow    = s.change === 0 ? '—' : (up ? '▲' : '▼') + ' ' + Math.abs(s.change || 0).toLocaleString();
+      const pctStr   = !s.changePct ? '0.00%' : (up ? '+' : '') + Number(s.changePct).toFixed(2) + '%';
+      const capStr   = s.marketCap > 0 ? Math.round(s.marketCap / 100000000).toLocaleString() : '-';
+      const volStr   = s.volume > 0 ? s.volume.toLocaleString() : '-';
       const priceStr = s.price > 0 ? s.price.toLocaleString() : '-';
       const safeCode = (s.code || '').replace(/'/g,'');
       const safeName = (s.name || '').replace(/'/g,'').replace(/"/g,'');
-      return `<tr style="cursor:pointer;" onclick="openAllStockPopup('${safeCode}','${safeName}')">
+      const rowId    = `asr-${safeCode}`;
+      return `<tr id="${rowId}" style="cursor:pointer;" onclick="openAllStockPopup('${safeCode}','${safeName}')">
         <td style="font-weight:600;white-space:nowrap;">${s.name || ''}</td>
         <td style="font-family:monospace;font-size:11px;color:var(--text3);">${s.code || ''}</td>
         <td style="font-size:11px;color:var(--text3);white-space:nowrap;">${s.industry || '-'}</td>
-        <td style="text-align:right;font-weight:600;">${priceStr}</td>
-        <td style="text-align:right;" class="${cls}">${arrow}</td>
-        <td style="text-align:right;font-weight:600;" class="${cls}">${pctStr}</td>
+        <td id="${rowId}-price" style="text-align:right;font-weight:600;">${priceStr}</td>
+        <td id="${rowId}-chg" style="text-align:right;" class="${cls}">${arrow}</td>
+        <td id="${rowId}-pct" style="text-align:right;font-weight:600;" class="${cls}">${pctStr}</td>
         <td style="text-align:right;font-size:11px;color:var(--text2);">${volStr}</td>
         <td style="text-align:right;font-size:11px;">${capStr}</td>
       </tr>`;
@@ -4886,7 +4945,7 @@ function renderAllStockTable() {
   paginEl.innerHTML = html;
 }
 
-// 종목명 클릭 → 기업 정보 팝업 (PER/PBR/EPS, 시총/상장주식수/상장일, 52주 최고·최저, 배당, 메모)
+// 종목명 클릭 → 기업 정보 팝업 (실시간 시세 + PER/PBR/EPS, 시총·상장주식수·상장일, 52주 최고·최저, 배당, 메모)
 async function openAllStockPopup(code, name) {
   const existing = document.getElementById('allStockDetailPopup');
   if (existing) existing.remove();
@@ -4902,16 +4961,28 @@ async function openAllStockPopup(code, name) {
   const memo     = getStockMemo(safeCode);
 
   popup.innerHTML = `
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px 22px 20px;width:440px;max-width:92vw;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 8px 40px rgba(0,0,0,.6);">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:20px 20px 18px;width:440px;max-width:92vw;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 8px 40px rgba(0,0,0,.6);">
       <button onclick="document.getElementById('allStockDetailPopup').remove()" style="position:absolute;top:10px;right:12px;background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:4px 6px;line-height:1;">✕</button>
-      <div style="font-size:16px;font-weight:700;margin-bottom:4px;">${safeName}</div>
-      <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">${safeCode} · ${_allMkt}</div>
-      <div id="asdpContent" style="font-size:12px;color:var(--text3);">기업 정보 불러오는 중...</div>
-      <div style="margin-top:16px;">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">메모</div>
-        <textarea id="asdpMemo" rows="3" style="width:100%;box-sizing:border-box;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-size:12px;resize:vertical;">${memo.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
+      <div style="font-size:16px;font-weight:700;margin-bottom:2px;">${safeName}</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">${safeCode} · ${_allMkt}</div>
+      <!-- 실시간 시세 섹션 -->
+      <div id="asdpPrice" style="background:var(--bg3);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <div>
+          <div id="asdpPriceVal" style="font-size:22px;font-weight:700;line-height:1.2;">조회 중...</div>
+          <div id="asdpPriceChg" style="font-size:12px;color:var(--text3);margin-top:3px;"></div>
+        </div>
+        <div style="text-align:right;">
+          <div id="asdpPriceSub" style="font-size:11px;color:var(--text3);line-height:1.8;"></div>
+          <div id="asdpPriceSrc" style="font-size:10px;color:var(--text3);margin-top:2px;"></div>
+        </div>
       </div>
-      <div style="display:flex;gap:6px;margin-top:12px;">
+      <!-- 기업 정보 -->
+      <div id="asdpContent" style="font-size:12px;color:var(--text3);">기업 정보 불러오는 중...</div>
+      <div style="margin-top:14px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:5px;">메모</div>
+        <textarea id="asdpMemo" rows="3" style="width:100%;box-sizing:border-box;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;resize:vertical;">${memo.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:10px;">
         <button onclick="allStockAddWatch('${safeCode}','${safeName}','${_allMkt}');document.getElementById('allStockDetailPopup').remove()" style="flex:1;padding:8px 4px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;">★ 관심</button>
         <button onclick="allStockBuy('${safeCode}','${safeName}');document.getElementById('allStockDetailPopup').remove()" style="flex:1;padding:8px 4px;background:#1b4f3c;color:#4caf81;border:1px solid #2d6a50;border-radius:6px;font-size:11px;cursor:pointer;">매수</button>
         <button onclick="allStockSell('${safeCode}','${safeName}');document.getElementById('allStockDetailPopup').remove()" style="flex:1;padding:8px 4px;background:#4a1c1c;color:#e57373;border:1px solid #6a2e2e;border-radius:6px;font-size:11px;cursor:pointer;">매도</button>
@@ -4925,15 +4996,64 @@ async function openAllStockPopup(code, name) {
     if (ta) ta.addEventListener('input', () => saveAllStockMemo(safeCode, ta.value));
   }, 0);
 
-  // 기업 상세 정보 비동기 로드
-  const content = document.getElementById('asdpContent');
+  const priceValEl = document.getElementById('asdpPriceVal');
+  const priceChgEl = document.getElementById('asdpPriceChg');
+  const priceSubEl = document.getElementById('asdpPriceSub');
+  const priceSrcEl = document.getElementById('asdpPriceSrc');
+  const content    = document.getElementById('asdpContent');
+
+  // (A) 실시간 시세 — KIS 우선 → Yahoo Finance fallback
+  if (window.electronAPI?.fetchQuote) {
+    window.electronAPI.fetchQuote(safeCode).then(q => {
+      if (!document.getElementById('allStockDetailPopup') || !priceValEl) return;
+      if (!q) {
+        priceValEl.textContent = '-'; priceValEl.style.color = 'var(--text3)'; return;
+      }
+      const chg    = q.prevClose ? (q.price - q.prevClose) : 0;
+      const chgPct = q.prevClose ? (chg / q.prevClose * 100) : 0;
+      const isUp   = chg >= 0;
+      priceValEl.textContent = Math.round(q.price).toLocaleString() + '원';
+      priceValEl.style.color = chg === 0 ? 'var(--text)' : (isUp ? 'var(--hts-up)' : 'var(--hts-dn)');
+      if (priceChgEl) {
+        priceChgEl.style.color = chg === 0 ? 'var(--text3)' : (isUp ? 'var(--hts-up)' : 'var(--hts-dn)');
+        priceChgEl.textContent = chg === 0 ? '전일 대비 보합'
+          : `${isUp?'+':''}${Math.round(chg).toLocaleString()} (${isUp?'+':''}${chgPct.toFixed(2)}%)`;
+      }
+      const subs = [];
+      if (q.openPrice)  subs.push(`시가 ${Math.round(q.openPrice).toLocaleString()}`);
+      if (q.prevClose)  subs.push(`전일 ${Math.round(q.prevClose).toLocaleString()}`);
+      if (priceSubEl)   priceSubEl.innerHTML = subs.join('<br>');
+      if (priceSrcEl)   priceSrcEl.textContent = q.source === 'KIS' ? '📡 KIS 실시간' : '📈 Yahoo Finance';
+    }).catch(() => {
+      if (priceValEl) { priceValEl.textContent = '-'; priceValEl.style.color = 'var(--text3)'; }
+    });
+  } else {
+    // Electron 미연결: Naver 전종목 캐시에서 가격 표시
+    const cached = (_allStockRaw[_allMkt] || []).find(s => s.code === safeCode);
+    if (cached?.price && priceValEl) {
+      const isUp = (cached.change || 0) >= 0;
+      priceValEl.textContent = Math.round(cached.price).toLocaleString() + '원';
+      priceValEl.style.color = 'var(--text)';
+      if (priceChgEl) {
+        priceChgEl.style.color = isUp ? 'var(--hts-up)' : 'var(--hts-dn)';
+        priceChgEl.textContent = cached.change !== 0
+          ? `${isUp ? '▲' : '▼'} ${Math.abs(cached.change || 0).toLocaleString()} (${(cached.changePct || 0).toFixed(2)}%)`
+          : '보합';
+      }
+      if (priceSrcEl) priceSrcEl.textContent = '📊 Naver 장마감가';
+    } else if (priceValEl) {
+      priceValEl.textContent = '-'; priceValEl.style.color = 'var(--text3)';
+    }
+  }
+
+  // (B) 기업 상세 정보
   if (!window.electronAPI?.fetchStockDetail) {
     if (content) content.textContent = 'Electron 환경에서만 기업 정보를 조회할 수 있습니다.';
     return;
   }
   try {
     const res = await window.electronAPI.fetchStockDetail(code);
-    if (!content) return;
+    if (!content || !document.getElementById('allStockDetailPopup')) return;
     if (!res?.ok) {
       content.innerHTML = `<span style="color:var(--hts-dn);">정보 조회 실패 — ${res?.error || ''}</span>`;
       return;
@@ -4943,17 +5063,17 @@ async function openAllStockPopup(code, name) {
     const fmts = (v, sfx='') => (v && v !== '0' && v !== '-') ? v + sfx : '-';
     const fmtC = v => { const n = parseInt(v||'0',10); return n > 0 ? Math.round(n/100000000).toLocaleString()+'억' : '-'; };
     content.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;">
-        <div><div style="font-size:10px;color:var(--text3);margin-bottom:3px;">PER</div><div style="font-size:14px;font-weight:600;">${fmts(d.per,'배')}</div></div>
-        <div><div style="font-size:10px;color:var(--text3);margin-bottom:3px;">PBR</div><div style="font-size:14px;font-weight:600;">${fmts(d.pbr,'배')}</div></div>
-        <div><div style="font-size:10px;color:var(--text3);margin-bottom:3px;">EPS</div><div style="font-size:14px;font-weight:600;">${fmt(d.eps)}</div></div>
-        <div><div style="font-size:10px;color:var(--text3);margin-bottom:3px;">시가총액</div><div style="font-size:14px;font-weight:600;">${fmtC(d.marketValue||d.marketCap)}</div></div>
-        <div><div style="font-size:10px;color:var(--text3);margin-bottom:3px;">상장주식수</div><div style="font-size:14px;font-weight:600;">${fmt(d.issuedShareCount)}</div></div>
-        <div><div style="font-size:10px;color:var(--text3);margin-bottom:3px;">상장일</div><div style="font-size:14px;font-weight:600;">${d.listingDate||d.ipoDate||'-'}</div></div>
-        <div><div style="font-size:10px;color:var(--text3);margin-bottom:3px;">52주 최고</div><div style="font-size:14px;font-weight:600;color:#e57373;">${fmt(d.week52High||d.highest52WeekPrice)}</div></div>
-        <div><div style="font-size:10px;color:var(--text3);margin-bottom:3px;">52주 최저</div><div style="font-size:14px;font-weight:600;color:#4caf81;">${fmt(d.week52Low||d.lowest52WeekPrice)}</div></div>
-        <div><div style="font-size:10px;color:var(--text3);margin-bottom:3px;">배당수익률</div><div style="font-size:14px;font-weight:600;">${fmts(d.dividendYield,'%')}</div></div>
-        <div><div style="font-size:10px;color:var(--text3);margin-bottom:3px;">주당 배당금</div><div style="font-size:14px;font-weight:600;">${fmt(d.dividend||d.dividendPerShare)}</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;">
+        <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">PER</div><div style="font-size:14px;font-weight:600;">${fmts(d.per,'배')}</div></div>
+        <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">PBR</div><div style="font-size:14px;font-weight:600;">${fmts(d.pbr,'배')}</div></div>
+        <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">EPS</div><div style="font-size:14px;font-weight:600;">${fmt(d.eps)}</div></div>
+        <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">시가총액</div><div style="font-size:14px;font-weight:600;">${fmtC(d.marketValue||d.marketCap)}</div></div>
+        <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">상장주식수</div><div style="font-size:14px;font-weight:600;">${fmt(d.issuedShareCount)}</div></div>
+        <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">상장일</div><div style="font-size:14px;font-weight:600;">${d.listingDate||d.ipoDate||'-'}</div></div>
+        <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">52주 최고</div><div style="font-size:14px;font-weight:600;color:#e57373;">${fmt(d.week52High||d.highest52WeekPrice)}</div></div>
+        <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">52주 최저</div><div style="font-size:14px;font-weight:600;color:#4caf81;">${fmt(d.week52Low||d.lowest52WeekPrice)}</div></div>
+        <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">배당수익률</div><div style="font-size:14px;font-weight:600;">${fmts(d.dividendYield,'%')}</div></div>
+        <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">주당 배당금</div><div style="font-size:14px;font-weight:600;">${fmt(d.dividend||d.dividendPerShare)}</div></div>
       </div>`;
   } catch(e) {
     if (content) content.innerHTML = `<span style="color:var(--hts-dn);">정보 조회 실패 — ${e.message}</span>`;
