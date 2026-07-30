@@ -309,6 +309,14 @@ ipcMain.handle('fetch-krx-stocks', async () => {
 const _naverStockCache = {};
 const NAVER_STOCK_TTL  = 60 * 60 * 1000; // 1시간
 
+const NAVER_MOBILE_UA = 'Mozilla/5.0 (Linux; Android 13; SM-S908B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36';
+const NAVER_HEADERS   = {
+  'User-Agent':      NAVER_MOBILE_UA,
+  'Accept':          'application/json, */*',
+  'Referer':         'https://m.stock.naver.com/',
+  'Accept-Language': 'ko-KR,ko;q=0.9',
+};
+
 async function fetchNaverStockList(market) {
   const MIN_CAP = 100_000_000_000; // 시총 1,000억 (원)
   const PAGE_SZ = 60;
@@ -322,11 +330,7 @@ async function fetchNaverStockList(market) {
 
     let body;
     try {
-      body = await httpsGet(url, 15000, {
-        'Accept':          'application/json, */*',
-        'Referer':         'https://m.stock.naver.com/',
-        'Accept-Language': 'ko-KR,ko;q=0.9',
-      });
+      body = await httpsGet(url, 20000, NAVER_HEADERS);
     } catch(e) {
       console.error(`[StockBook] 네이버 ${market} p${page} 요청 실패:`, e.message);
       break;
@@ -334,30 +338,42 @@ async function fetchNaverStockList(market) {
 
     let parsed;
     try { parsed = JSON.parse(body); }
-    catch(pe) { console.error(`[StockBook] 네이버 ${market} p${page} JSON 파싱 실패`); break; }
+    catch(pe) {
+      console.error(`[StockBook] 네이버 ${market} p${page} JSON 파싱 실패, 응답 첫200자:`, body?.slice(0,200));
+      break;
+    }
 
-    const items = parsed.stocks || parsed.etfs || parsed.etfItems || parsed.items || [];
-    if (!items.length) break;
+    // 가능한 배열 키 모두 시도
+    const items = parsed.stocks || parsed.etfs || parsed.etfItems || parsed.items
+               || parsed.list   || parsed.data  || [];
+    if (!items.length) {
+      console.warn(`[StockBook] 네이버 ${market} p${page} 종목 없음, 응답 키:`, Object.keys(parsed));
+      break;
+    }
 
     let reachedMin = false;
     for (const s of items) {
-      const cap = parseInt(s.marketValue || s.marketCap || s.marketCapitalization || '0', 10);
+      // 시총: 다양한 필드명 시도
+      const cap = parseInt(
+        s.marketValue || s.marketCap || s.marketCapitalization ||
+        s.totalMarketCap || s.marketAmount || '0', 10
+      );
       if (!isEtf && cap > 0 && cap < MIN_CAP) { reachedMin = true; break; }
       results.push({
-        code:      s.stockCode || s.etfCode || s.code || '',
-        name:      s.stockName || s.etfName || s.name || '',
-        industry:  s.industryGroupName || s.industryName || (s.industry && s.industry.name) || '',
+        code:      s.stockCode || s.itemCode || s.etfCode || s.code || s.reutersCode?.split('.')[0] || '',
+        name:      s.stockName || s.itemName || s.etfName || s.name || '',
+        industry:  s.industryGroupName || s.industryName || (s.industry?.name) || s.sector || '',
         market,
-        price:     parseInt(s.closePrice || s.currentPrice || '0', 10),
-        change:    parseInt(s.compareToPreviousClosePrice || s.priceChangeFromPreviousClose || '0', 10),
-        changePct: parseFloat(s.fluctuationsRatio || s.rateOfChange || '0'),
-        volume:    parseInt(s.accumulatedTradingVolume || s.tradingVolume || '0', 10),
+        price:     parseInt(s.closePrice || s.currentPrice || s.price || '0', 10),
+        change:    parseInt(s.compareToPreviousClosePrice || s.priceChange || s.change || '0', 10),
+        changePct: parseFloat(s.fluctuationsRatio || s.changeRate || s.rateOfChange || '0'),
+        volume:    parseInt(s.accumulatedTradingVolume || s.volume || s.tradingVolume || '0', 10),
         marketCap: cap,
       });
     }
     if (reachedMin) break;
 
-    const total = parsed.totalCount || parsed.total || 0;
+    const total = parsed.totalCount || parsed.total || parsed.stockListSize || 0;
     if (total > 0 && results.length >= total) break;
     if (items.length < PAGE_SZ) break; // 마지막 페이지
   }
@@ -790,41 +806,92 @@ ipcMain.handle('fetch-quote', async (_event, rawTicker) => {
   return null;
 });
 
-// ── IPC: 시장 지수 티커 일괄 조회 (CORS 우회 — main 프로세스에서 실행) ────────
+// ── IPC: 시장 지수 티커 일괄 조회 ──────────────────────────────────────────────
 ipcMain.handle('fetch-market-tickers', async () => {
-  const symbols = {
-    kospi:  '^KS11',
-    kosdaq: '^KQ11',
-    nasdaq: '^IXIC',
-    sp500:  '^GSPC',
-    dow:    '^DJI',
-    sox:    '^SOX',
-    usdkrw: 'KRW=X',
-    jpy:    'JPY=X',
-    nikkei: '^N225',
-    wti:    'CL=F',
+  const results = {};
+
+  // ① 코스피 / 코스닥 — 네이버 index API (더 안정적)
+  const naverIndexFetch = async (indexCode, key) => {
+    for (const tryUrl of [
+      `https://m.stock.naver.com/api/index/${indexCode}/basic`,
+      `https://m.stock.naver.com/api/index/${indexCode}/detail`,
+    ]) {
+      try {
+        const body   = await httpsGet(tryUrl, 12000, NAVER_HEADERS);
+        const parsed = JSON.parse(body);
+        // 네이버 index API 응답 구조 정규화
+        const price = parseFloat(
+          parsed.closePrice || parsed.currentValue || parsed.indexValue ||
+          parsed.price || parsed.nav || '0'
+        );
+        const prev = parseFloat(
+          parsed.openPrice || parsed.previousClosePrice || parsed.previousClose ||
+          (price - parseFloat(parsed.compareToPreviousClosePrice || parsed.change || '0')) || price
+        );
+        if (price > 0) {
+          results[key] = { regularMarketPrice: price, previousClose: prev, chartPreviousClose: prev };
+          return;
+        }
+      } catch(_) {}
+    }
   };
 
-  const fetchSym = async (sym) => {
+  // ② 미국 지수 / FX / 원자재 — Yahoo Finance v7 quote (v8보다 안정적)
+  const YF_SYMS = {
+    nasdaq: '^IXIC', sp500: '^GSPC', dow: '^DJI', sox: '^SOX',
+    usdkrw: 'KRW=X', jpy: 'JPY=X', nikkei: '^N225', wti: 'CL=F',
+  };
+  const yfFetch = async () => {
+    const symStr = Object.values(YF_SYMS).map(s => encodeURIComponent(s)).join(',');
     for (const host of ['query1', 'query2']) {
       try {
-        const body = await httpsGet(
-          `https://${host}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=2d`,
-          15000
+        const body   = await httpsGet(
+          `https://${host}.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=${symStr}`,
+          20000,
+          {
+            'Accept':          'application/json',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Referer':         'https://finance.yahoo.com/',
+          }
         );
-        const meta = JSON.parse(body)?.chart?.result?.[0]?.meta;
-        if (meta?.regularMarketPrice) return meta;
-      } catch (_) {}
+        const rows = JSON.parse(body)?.quoteResponse?.result || [];
+        for (const row of rows) {
+          const key = Object.entries(YF_SYMS).find(([,s]) => s === row.symbol)?.[0];
+          if (key && row.regularMarketPrice) {
+            results[key] = {
+              regularMarketPrice: row.regularMarketPrice,
+              previousClose:      row.regularMarketPreviousClose || row.regularMarketPrice,
+              chartPreviousClose: row.regularMarketPreviousClose || row.regularMarketPrice,
+            };
+          }
+        }
+        if (Object.keys(results).some(k => k !== 'kospi' && k !== 'kosdaq')) return;
+      } catch(_) {}
     }
-    return null;
+    // v7 실패 시 v8 차트 폴백
+    await Promise.all(
+      Object.entries(YF_SYMS).map(async ([key, sym]) => {
+        if (results[key]) return;
+        for (const host of ['query1', 'query2']) {
+          try {
+            const body = await httpsGet(
+              `https://${host}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=2d`,
+              15000
+            );
+            const meta = JSON.parse(body)?.chart?.result?.[0]?.meta;
+            if (meta?.regularMarketPrice) { results[key] = meta; return; }
+          } catch (_) {}
+        }
+      })
+    );
   };
 
-  const results = {};
-  await Promise.all(
-    Object.entries(symbols).map(async ([key, sym]) => {
-      results[key] = await fetchSym(sym);
-    })
-  );
+  await Promise.all([
+    naverIndexFetch('KOSPI',  'kospi'),
+    naverIndexFetch('KOSDAQ', 'kosdaq'),
+    yfFetch(),
+  ]);
+
   console.log('[StockBook] 지수 티커:', Object.entries(results).filter(([,v])=>v).map(([k])=>k).join(', '));
   return results;
 });
