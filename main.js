@@ -305,6 +305,123 @@ ipcMain.handle('fetch-krx-stocks', async () => {
   }
 });
 
+// ── 네이버 증권 전종목 데이터 (KOSPI / KOSDAQ / ETF) ─────────────────────────
+const _naverStockCache = {};
+const NAVER_STOCK_TTL  = 60 * 60 * 1000; // 1시간
+
+async function fetchNaverStockList(market) {
+  const MIN_CAP = 100_000_000_000; // 시총 1,000억 (원)
+  const PAGE_SZ = 60;
+  const isEtf   = market === 'ETF';
+  const results = [];
+
+  for (let page = 1; page <= 30; page++) {
+    const url = isEtf
+      ? `https://m.stock.naver.com/api/stock/etf/overview?page=${page}&pageSize=${PAGE_SZ}`
+      : `https://m.stock.naver.com/api/stocks/marketValue/${market}?page=${page}&pageSize=${PAGE_SZ}`;
+
+    let body;
+    try {
+      body = await httpsGet(url, 15000, {
+        'Accept':          'application/json, */*',
+        'Referer':         'https://m.stock.naver.com/',
+        'Accept-Language': 'ko-KR,ko;q=0.9',
+      });
+    } catch(e) {
+      console.error(`[StockBook] 네이버 ${market} p${page} 요청 실패:`, e.message);
+      break;
+    }
+
+    let parsed;
+    try { parsed = JSON.parse(body); }
+    catch(pe) { console.error(`[StockBook] 네이버 ${market} p${page} JSON 파싱 실패`); break; }
+
+    const items = parsed.stocks || parsed.etfs || parsed.etfItems || parsed.items || [];
+    if (!items.length) break;
+
+    let reachedMin = false;
+    for (const s of items) {
+      const cap = parseInt(s.marketValue || s.marketCap || s.marketCapitalization || '0', 10);
+      if (!isEtf && cap > 0 && cap < MIN_CAP) { reachedMin = true; break; }
+      results.push({
+        code:      s.stockCode || s.etfCode || s.code || '',
+        name:      s.stockName || s.etfName || s.name || '',
+        industry:  s.industryGroupName || s.industryName || (s.industry && s.industry.name) || '',
+        market,
+        price:     parseInt(s.closePrice || s.currentPrice || '0', 10),
+        change:    parseInt(s.compareToPreviousClosePrice || s.priceChangeFromPreviousClose || '0', 10),
+        changePct: parseFloat(s.fluctuationsRatio || s.rateOfChange || '0'),
+        volume:    parseInt(s.accumulatedTradingVolume || s.tradingVolume || '0', 10),
+        marketCap: cap,
+      });
+    }
+    if (reachedMin) break;
+
+    const total = parsed.totalCount || parsed.total || 0;
+    if (total > 0 && results.length >= total) break;
+    if (items.length < PAGE_SZ) break; // 마지막 페이지
+  }
+
+  return results;
+}
+
+ipcMain.handle('fetch-naver-stocks', async (event, market) => {
+  const cacheFile = path.join(app.getPath('userData'), `naver-stocks-${market}.json`);
+  const now       = Date.now();
+
+  // 메모리 캐시 유효 시 즉시 반환
+  if (_naverStockCache[market] && (now - _naverStockCache[market].ts) < NAVER_STOCK_TTL) {
+    return { ok: true, data: _naverStockCache[market].data, fromCache: true, cachedAt: _naverStockCache[market].ts };
+  }
+  // 파일 캐시 확인
+  if (fs.existsSync(cacheFile)) {
+    try {
+      const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+      if (cached.ts && (now - cached.ts) < NAVER_STOCK_TTL) {
+        _naverStockCache[market] = { data: cached.data, ts: cached.ts };
+        return { ok: true, data: cached.data, fromCache: true, cachedAt: cached.ts };
+      }
+    } catch(_) {}
+  }
+
+  try {
+    const data = await fetchNaverStockList(market);
+    if (!data.length) throw new Error(`${market} 종목 0건 — 네이버 API 응답 구조 확인 필요`);
+    const ts = Date.now();
+    _naverStockCache[market] = { data, ts };
+    try { fs.writeFileSync(cacheFile, JSON.stringify({ ts, data }), 'utf-8'); } catch(_) {}
+    console.log(`[StockBook] 네이버 ${market}: ${data.length}종목 로드 완료`);
+    return { ok: true, data, fromCache: false, cachedAt: ts };
+  } catch(e) {
+    console.error(`[StockBook] 네이버 ${market} 조회 실패:`, e.message);
+    // 만료 캐시 폴백
+    if (fs.existsSync(cacheFile)) {
+      try {
+        const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+        if (cached.data && cached.data.length) {
+          return { ok: true, data: cached.data, fromCache: true, stale: true, cachedAt: cached.ts };
+        }
+      } catch(_) {}
+    }
+    return { ok: false, error: e.message };
+  }
+});
+
+// 종목 상세 정보 (팝업: PER·PBR·EPS, 시총·상장주식수·상장일, 52주 최고·최저, 배당)
+ipcMain.handle('fetch-stock-detail', async (event, code) => {
+  try {
+    const body = await httpsGet(
+      `https://m.stock.naver.com/api/stock/${code}/basic`,
+      10000,
+      { 'Accept': 'application/json', 'Referer': 'https://m.stock.naver.com/' }
+    );
+    const data = JSON.parse(body);
+    return { ok: true, data };
+  } catch(e) {
+    return { ok: false, error: e.message };
+  }
+});
+
 // ── KIS API 시세 조회 ─────────────────────────────────────────────────────────
 // 토큰 캐시: 메모리 + 파일 영구 저장 (앱 재시작 후에도 유효한 토큰 재사용)
 let _kisToken         = null;

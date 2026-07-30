@@ -1,6 +1,6 @@
 # StockBook — 프로젝트 운영 지침서
 
-> 현재 버전: **v2.3.3** | Git: `https://github.com/mj94920/stockbook.git` (branch: main)
+> 현재 버전: **v2.4.0** | Git: `https://github.com/mj94920/stockbook.git` (branch: main)
 > GitHub Pages: `https://mj94920.github.io/stockbook/`
 
 ---
@@ -219,3 +219,4 @@ function getCredFile(broker) {
 | v2.3.1 | 크래시 수정 — f_date null 오류(→앱 초기화 중단·지수 미조회 연쇄 버그), mc_tbody null 오류(→복리계산기 월별테이블 HTML 복원), addStock f_date 옵셔널체이닝; 동시 토큰/approval_key 발급 방지 pending-promise 락(getKisToken·getKisApprovalKey); startRealtimePrices 중복실행 방지 _wsActive guard; 관리버튼 hover reveal (행 hover 시만 표시) + sticky 제거(데이터 열 가림 방지) |
 | v2.3.2 | 로그인 팝업 수정 — icon-192.png 깨짐 수정(main.js에서 temp 디렉터리에 복사, HTML의 img→inline SVG로 교체); 버튼 먹통 수정(inner div에 position:relative;z-index:1;transform:translateZ(0) 추가 → Electron GPU 합성 레이어 hit-test 버그 회피, settingsModal 동일 패턴); 외부 클릭 시 닫기(onclick 추가) |
 | v2.3.3 | 로그인 팝업 하단 버튼(건너뛰기·로그인) 먹통 수정 — body::after(배경 오브, filter:blur+animation)의 GPU 합성 레이어가 화면 하단 ~370px 영역에서 클릭을 가로채던 버그; 외부 loginModal div에 transform:translateZ(0) 추가로 전체 모달을 독립 합성 레이어로 승격하여 해결 |
+| v2.4.0 | loginModal 간소화 — "API 추가/저장" 성공 시 800ms 후 자동 닫기, 우상단 X버튼 추가(loginClose), 건너뛰기·로그인 버튼 제거; 전종목 탭 전면 재설계 — KRX OTP+CSV 탈피 → 네이버 모바일 증권 JSON API, KOSPI·KOSDAQ·ETF 3탭, 시총 1,000억 미만 제외, 8열(종목명·코드·업종·현재가·전일대비·등락률·거래량·시총), 종목명 클릭 → 기업정보 팝업(PER/PBR/EPS·시총·상장주식수·상장일·52주 최고·최저·배당) + 메모 칸, main.js fetchNaverStockList·fetch-naver-stocks·fetch-stock-detail 핸들러 추가, preload.js fetchNaverStocks·fetchStockDetail 노출 |

@@ -15,8 +15,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   checkApiKey:  (broker)         => ipcRenderer.invoke('check-api-key', broker),
   // 앱 버전 (package.json version 반환)
   getVersion: () => ipcRenderer.invoke('get-version'),
-  // KRX 전종목 데이터 조회 (KOSPI + KOSDAQ, 캐시 포함)
+  // KRX 전종목 데이터 조회 (KOSPI + KOSDAQ, 캐시 포함, 레거시 유지)
   fetchKrxStocks: () => ipcRenderer.invoke('fetch-krx-stocks'),
+  // 네이버 증권 전종목 조회 (KOSPI / KOSDAQ / ETF, 시총 1,000억 이상)
+  fetchNaverStocks: (market) => ipcRenderer.invoke('fetch-naver-stocks', market),
+  // 종목 상세 정보 (팝업: PER·PBR·EPS, 시총·상장주식수·상장일, 52주 최고·최저, 배당)
+  fetchStockDetail: (code) => ipcRenderer.invoke('fetch-stock-detail', code),
   // 시장 지수 티커 일괄 조회 (KOSPI·KOSDAQ·나스닥·S&P·DOW·SOX·환율·WTI 등)
   fetchMarketTickers: () => ipcRenderer.invoke('fetch-market-tickers'),
   // main 프로세스가 did-finish-load 후 파일 데이터를 직접 push하는 채널
