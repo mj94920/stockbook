@@ -7614,7 +7614,8 @@ function _toggleCheck(stockKey, checkKey, val) {
 </script>
 
 <!-- ─── 시작 로그인 팝업 ─── -->
-<div id="loginModal" onclick="if(event.target===this)loginProceed(false)" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.88);align-items:center;justify-content:center;">
+<!-- transform:translateZ(0) → 전체 모달을 독립 GPU 합성 레이어로 승격. body::after(filter:blur+animation)의 합성 레이어가 화면 하단을 커버하며 클릭을 가로채는 버그 회피 -->
+<div id="loginModal" onclick="if(event.target===this)loginProceed(false)" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.88);align-items:center;justify-content:center;transform:translateZ(0);">
   <!-- position:relative + z-index:1 + transform:translateZ(0) → Electron GPU 합성 레이어 hit-test 버그 회피 (settingsModal과 동일한 패턴) -->
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px 26px 22px;width:420px;max-width:92vw;box-shadow:0 8px 40px rgba(0,0,0,.6);position:relative;z-index:1;transform:translateZ(0);">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">

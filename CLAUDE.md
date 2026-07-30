@@ -1,6 +1,6 @@
 # StockBook — 프로젝트 운영 지침서
 
-> 현재 버전: **v2.3.2** | Git: `https://github.com/mj94920/stockbook.git` (branch: main)
+> 현재 버전: **v2.3.3** | Git: `https://github.com/mj94920/stockbook.git` (branch: main)
 > GitHub Pages: `https://mj94920.github.io/stockbook/`
 
 ---
@@ -218,3 +218,4 @@ function getCredFile(broker) {
 | v2.3.0 | KIS WebSocket 실시간 시세 연동 — H0STCNT0 TR, approval_key 발급, PINGPONG 핸드셰이크, 100ms 디바운스 렌더, 상태 배지 UI (연결중/ON/OFF/오류/KIS키없음), 앱 시작 시 자동 구독, ws 패키지 의존성 추가 |
 | v2.3.1 | 크래시 수정 — f_date null 오류(→앱 초기화 중단·지수 미조회 연쇄 버그), mc_tbody null 오류(→복리계산기 월별테이블 HTML 복원), addStock f_date 옵셔널체이닝; 동시 토큰/approval_key 발급 방지 pending-promise 락(getKisToken·getKisApprovalKey); startRealtimePrices 중복실행 방지 _wsActive guard; 관리버튼 hover reveal (행 hover 시만 표시) + sticky 제거(데이터 열 가림 방지) |
 | v2.3.2 | 로그인 팝업 수정 — icon-192.png 깨짐 수정(main.js에서 temp 디렉터리에 복사, HTML의 img→inline SVG로 교체); 버튼 먹통 수정(inner div에 position:relative;z-index:1;transform:translateZ(0) 추가 → Electron GPU 합성 레이어 hit-test 버그 회피, settingsModal 동일 패턴); 외부 클릭 시 닫기(onclick 추가) |
+| v2.3.3 | 로그인 팝업 하단 버튼(건너뛰기·로그인) 먹통 수정 — body::after(배경 오브, filter:blur+animation)의 GPU 합성 레이어가 화면 하단 ~370px 영역에서 클릭을 가로채던 버그; 외부 loginModal div에 transform:translateZ(0) 추가로 전체 모달을 독립 합성 레이어로 승격하여 해결 |
