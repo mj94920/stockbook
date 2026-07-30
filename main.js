@@ -353,21 +353,20 @@ async function fetchNaverStockList(market) {
 
     let reachedMin = false;
     for (const s of items) {
-      // 시총: 다양한 필드명 시도
-      const cap = parseInt(
-        s.marketValue || s.marketCap || s.marketCapitalization ||
-        s.totalMarketCap || s.marketAmount || '0', 10
-      );
+      // 시총: Raw 필드 우선 (원 단위), 없으면 문자열 쉼표 제거 후 억→원 환산
+      const cap = parseInt(s.marketValueRaw || '0', 10)
+        || (parseInt((s.marketValue || s.marketCap || s.marketCapitalization ||
+            s.totalMarketCap || s.marketAmount || '0').replace(/,/g, ''), 10) * 100_000_000);
       if (!isEtf && cap > 0 && cap < MIN_CAP) { reachedMin = true; break; }
       results.push({
         code:      s.stockCode || s.itemCode || s.etfCode || s.code || s.reutersCode?.split('.')[0] || '',
         name:      s.stockName || s.itemName || s.etfName || s.name || '',
         industry:  s.industryGroupName || s.industryName || (s.industry?.name) || s.sector || '',
         market,
-        price:     parseInt(s.closePrice || s.currentPrice || s.price || '0', 10),
-        change:    parseInt(s.compareToPreviousClosePrice || s.priceChange || s.change || '0', 10),
+        price:     parseInt(s.closePriceRaw || (s.closePrice || s.currentPrice || s.price || '0').replace(/,/g,''), 10),
+        change:    parseInt(s.compareToPreviousClosePriceRaw || (s.compareToPreviousClosePrice || s.priceChange || s.change || '0').replace(/,/g,''), 10),
         changePct: parseFloat(s.fluctuationsRatio || s.changeRate || s.rateOfChange || '0'),
-        volume:    parseInt(s.accumulatedTradingVolume || s.volume || s.tradingVolume || '0', 10),
+        volume:    parseInt(s.accumulatedTradingVolumeRaw || (s.accumulatedTradingVolume || s.volume || s.tradingVolume || '0').replace(/,/g,''), 10),
         marketCap: cap,
       });
     }
