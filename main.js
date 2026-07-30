@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, safeStorage } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, safeStorage, net } = require('electron');
 const path  = require('path');
 const fs    = require('fs');
 const https = require('https');
@@ -809,7 +809,7 @@ ipcMain.handle('fetch-quote', async (_event, rawTicker) => {
 ipcMain.handle('fetch-market-tickers', async () => {
   const results = {};
 
-  // ① 코스피 / 코스닥 — 네이버 index API (더 안정적)
+  // ① 코스피 / 코스닥 — 네이버 index API
   const naverIndexFetch = async (indexCode, key) => {
     for (const tryUrl of [
       `https://m.stock.naver.com/api/index/${indexCode}/basic`,
@@ -818,15 +818,11 @@ ipcMain.handle('fetch-market-tickers', async () => {
       try {
         const body   = await httpsGet(tryUrl, 12000, NAVER_HEADERS);
         const parsed = JSON.parse(body);
-        // 네이버 index API 응답 구조 정규화
-        const price = parseFloat(
-          parsed.closePrice || parsed.currentValue || parsed.indexValue ||
-          parsed.price || parsed.nav || '0'
-        );
-        const prev = parseFloat(
-          parsed.openPrice || parsed.previousClosePrice || parsed.previousClose ||
-          (price - parseFloat(parsed.compareToPreviousClosePrice || parsed.change || '0')) || price
-        );
+        // 쉼표 포함 문자열을 replace 후 파싱
+        const strip = v => parseFloat(String(v || '0').replace(/,/g, ''));
+        const price = strip(parsed.closePrice || parsed.currentValue || parsed.indexValue || parsed.price || '0');
+        const chg   = strip(parsed.compareToPreviousClosePrice || parsed.change || '0');
+        const prev  = price > 0 ? (price - chg) : 0;
         if (price > 0) {
           results[key] = { regularMarketPrice: price, previousClose: prev, chartPreviousClose: prev };
           return;
@@ -835,60 +831,60 @@ ipcMain.handle('fetch-market-tickers', async () => {
     }
   };
 
-  // ② 미국 지수 / FX / 원자재 — Yahoo Finance v7 quote (v8보다 안정적)
+  // ② 미국 지수 — Yahoo Finance (Electron net.fetch로 Chromium 쿠키 세션 사용)
   const YF_SYMS = {
-    nasdaq: '^IXIC', sp500: '^GSPC', dow: '^DJI', sox: '^SOX',
-    usdkrw: 'KRW=X', jpy: 'JPY=X', nikkei: '^N225', wti: 'CL=F',
+    nasdaq: '^IXIC', sp500: '^GSPC', dow: '^DJI', sox: '^SOX', nikkei: '^N225', wti: 'CL=F',
   };
   const yfFetch = async () => {
     const symStr = Object.values(YF_SYMS).map(s => encodeURIComponent(s)).join(',');
     for (const host of ['query1', 'query2']) {
       try {
-        const body   = await httpsGet(
-          `https://${host}.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=${symStr}`,
-          20000,
-          {
-            'Accept':          'application/json',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Referer':         'https://finance.yahoo.com/',
-          }
+        const res  = await net.fetch(
+          `https://${host}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent('^IXIC')}?interval=1d&range=1d`,
+          { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'application/json', 'Referer': 'https://finance.yahoo.com/' } }
         );
-        const rows = JSON.parse(body)?.quoteResponse?.result || [];
-        for (const row of rows) {
-          const key = Object.entries(YF_SYMS).find(([,s]) => s === row.symbol)?.[0];
-          if (key && row.regularMarketPrice) {
-            results[key] = {
-              regularMarketPrice: row.regularMarketPrice,
-              previousClose:      row.regularMarketPreviousClose || row.regularMarketPrice,
-              chartPreviousClose: row.regularMarketPreviousClose || row.regularMarketPrice,
-            };
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const meta = (await res.json())?.chart?.result?.[0]?.meta;
+        if (meta?.regularMarketPrice) {
+          // IXIC 성공 시 다른 심볼도 조회
+          const symRes = await net.fetch(
+            `https://${host}.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&symbols=${symStr}`,
+            { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'application/json', 'Referer': 'https://finance.yahoo.com/' } }
+          );
+          const rows = symRes.ok ? ((await symRes.json())?.quoteResponse?.result || []) : [];
+          for (const row of rows) {
+            const key = Object.entries(YF_SYMS).find(([,s]) => s === row.symbol)?.[0];
+            if (key && row.regularMarketPrice) {
+              results[key] = { regularMarketPrice: row.regularMarketPrice, previousClose: row.regularMarketPreviousClose || row.regularMarketPrice, chartPreviousClose: row.regularMarketPreviousClose || row.regularMarketPrice };
+            }
           }
+          if (!results.nasdaq && meta.regularMarketPrice) results.nasdaq = { regularMarketPrice: meta.regularMarketPrice, previousClose: meta.previousClose || meta.regularMarketPrice, chartPreviousClose: meta.previousClose || meta.regularMarketPrice };
+          return;
         }
-        if (Object.keys(results).some(k => k !== 'kospi' && k !== 'kosdaq')) return;
       } catch(_) {}
     }
-    // v7 실패 시 v8 차트 폴백
-    await Promise.all(
-      Object.entries(YF_SYMS).map(async ([key, sym]) => {
-        if (results[key]) return;
-        for (const host of ['query1', 'query2']) {
-          try {
-            const body = await httpsGet(
-              `https://${host}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=2d`,
-              15000
-            );
-            const meta = JSON.parse(body)?.chart?.result?.[0]?.meta;
-            if (meta?.regularMarketPrice) { results[key] = meta; return; }
-          } catch (_) {}
-        }
-      })
-    );
+  };
+
+  // ③ 환율 — exchangerate-api.com (무료, API 키 불필요)
+  const fxFetch = async () => {
+    try {
+      const res    = await net.fetch('https://api.exchangerate-api.com/v4/latest/USD', {
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data   = await res.json();
+      const krw    = data?.rates?.KRW;
+      const jpy    = data?.rates?.JPY;
+      if (krw) results.usdkrw  = { regularMarketPrice: krw,             previousClose: krw,             chartPreviousClose: krw };
+      if (jpy) results.jpy     = { regularMarketPrice: 100 / jpy * 100, previousClose: 100 / jpy * 100, chartPreviousClose: 100 / jpy * 100 };
+    } catch(_) {}
   };
 
   await Promise.all([
     naverIndexFetch('KOSPI',  'kospi'),
     naverIndexFetch('KOSDAQ', 'kosdaq'),
     yfFetch(),
+    fxFetch(),
   ]);
 
   console.log('[StockBook] 지수 티커:', Object.entries(results).filter(([,v])=>v).map(([k])=>k).join(', '));
