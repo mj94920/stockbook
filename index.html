@@ -2281,9 +2281,12 @@
           <span id="qo_cur_price" style="font-size:20px;font-weight:700;">-</span>
           <span id="qo_cur_change" style="font-size:12px;color:var(--text3);">-</span>
         </div>
-        <!-- 호가창 (KIS 미연결 시 숨김) -->
+        <!-- 호가창 (현재가 기반 가상 호가 레더) -->
         <div id="qo_hoga_wrap" style="display:none;margin:6px 0;">
-          <table style="width:100%;border-collapse:collapse;font-size:11px;">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px;display:flex;justify-content:space-between;">
+            <span>매도잔량</span><span style="color:var(--text3);">호가 (가상)</span><span>매수잔량</span>
+          </div>
+          <table style="width:100%;border-collapse:collapse;">
             <tbody id="qo_hoga_body"></tbody>
           </table>
         </div>
@@ -5059,21 +5062,32 @@ async function openAllStockPopup(code, name) {
       return;
     }
     const d    = res.data || {};
-    const fmt  = v => { const n = parseFloat(v); return (!isNaN(n) && n !== 0) ? n.toLocaleString() : '-'; };
-    const fmts = (v, sfx='') => (v && v !== '0' && v !== '-') ? v + sfx : '-';
-    const fmtC = v => { const n = parseInt(v||'0',10); return n > 0 ? Math.round(n/100000000).toLocaleString()+'억' : '-'; };
+    // 쉼표 포함 문자열도 안전하게 파싱
+    const fmt  = v => { const n = parseFloat(String(v||'').replace(/,/g,'')); return (!isNaN(n) && n !== 0) ? n.toLocaleString() : '-'; };
+    const fmts = (v, sfx='') => { const s = String(v||'').replace(/,/g,'').trim(); return (s && s !== '0' && s !== '-') ? s + sfx : '-'; };
+    const fmtC = v => { const n = parseInt(String(v||'0').replace(/,/g,''),10); return n > 0 ? Math.round(n/100000000).toLocaleString()+'억' : '-'; };
+    // KPI 카드 헬퍼
+    const kpi = (label, val, color='') => `
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:3px;">${label}</div>
+        <div style="font-size:13px;font-weight:700;${color?'color:'+color+';':''}">${val}</div>
+      </div>`;
     content.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;">
-        <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">PER</div><div style="font-size:14px;font-weight:600;">${fmts(d.per,'배')}</div></div>
-        <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">PBR</div><div style="font-size:14px;font-weight:600;">${fmts(d.pbr,'배')}</div></div>
-        <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">EPS</div><div style="font-size:14px;font-weight:600;">${fmt(d.eps)}</div></div>
-        <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">시가총액</div><div style="font-size:14px;font-weight:600;">${fmtC(d.marketValue||d.marketCap)}</div></div>
-        <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">상장주식수</div><div style="font-size:14px;font-weight:600;">${fmt(d.issuedShareCount)}</div></div>
-        <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">상장일</div><div style="font-size:14px;font-weight:600;">${d.listingDate||d.ipoDate||'-'}</div></div>
-        <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">52주 최고</div><div style="font-size:14px;font-weight:600;color:#e57373;">${fmt(d.week52High||d.highest52WeekPrice)}</div></div>
-        <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">52주 최저</div><div style="font-size:14px;font-weight:600;color:#4caf81;">${fmt(d.week52Low||d.lowest52WeekPrice)}</div></div>
-        <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">배당수익률</div><div style="font-size:14px;font-weight:600;">${fmts(d.dividendYield,'%')}</div></div>
-        <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;">주당 배당금</div><div style="font-size:14px;font-weight:600;">${fmt(d.dividend||d.dividendPerShare)}</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:10px;">
+        ${kpi('PER', fmts(d.per,'배'))}
+        ${kpi('PBR', fmts(d.pbr,'배'))}
+        ${kpi('EPS', fmt(d.eps)+'원')}
+        ${kpi('ROE', fmts(d.roe||d.roa,'%'))}
+        ${kpi('배당수익률', fmts(d.dividendYield,'%'))}
+        ${kpi('주당배당금', fmt(d.dividend||d.dividendPerShare)+'원')}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
+        ${kpi('시가총액', fmtC(d.marketValue||d.marketCap||d.marketValueAmount))}
+        ${kpi('52주 최고', fmt(d.week52High||d.highest52WeekPrice), '#e57373')}
+        ${kpi('52주 최저', fmt(d.week52Low||d.lowest52WeekPrice), '#4caf81')}
+        ${kpi('상장주식수', fmt(d.issuedShareCount||d.shares)+'주')}
+        ${kpi('상장일', d.listingDate||d.ipoDate||'-')}
+        ${kpi('업종', d.industryGroupName||d.industryName||d.industry||'-')}
       </div>`;
   } catch(e) {
     if (content) content.innerHTML = `<span style="color:var(--hts-dn);">정보 조회 실패 — ${e.message}</span>`;
@@ -5304,18 +5318,46 @@ function updateHogaDisplay() {
     chgEl.textContent   = '';
   }
 
-  // KIS 연결 상태 확인 → 호가창 표시/숨김
-  const kisConnected = typeof _kis !== 'undefined' && _kis?.connected === true;
-  if (wrap) wrap.style.display = 'none'; // 현재는 KIS 미연결 기본 숨김
-
-  // KIS 연결 시: 실시간 호가 요청 (향후 구현)
-  if (kisConnected && code) {
-    _renderHogaTable(code);
+  // 현재가 있으면 항상 호가창 표시 (가상 호가 레더)
+  if (curPrice != null && wrap) {
+    _renderSimulatedHoga(curPrice);
+  } else if (wrap) {
+    wrap.style.display = 'none';
   }
 }
 
+/* 호가 단위 (한국 주식 호가창 기준) */
+function _getTickSize(price) {
+  if (price <   2000) return 1;
+  if (price <   5000) return 5;
+  if (price <  20000) return 10;
+  if (price <  50000) return 50;
+  if (price < 200000) return 100;
+  if (price < 500000) return 500;
+  return 1000;
+}
+
+/* 현재가 기반 가상 호가 5+5 레더 생성 */
+function _renderSimulatedHoga(price) {
+  const tick = _getTickSize(price);
+  const base = Math.round(price / tick) * tick; // 현재가 기준 틱 정렬
+  const rows = [];
+  // 매도 5호가: base+5, base+4, ..., base+1 (높은 순)
+  for (let i = 5; i >= 1; i--) {
+    rows.push({ price: base + tick * i, askVol: Math.round(500 + Math.random() * 4000), bidVol: 0, isCur: false });
+  }
+  // 현재가 구분선 (클릭 시 현재가 입력)
+  rows.push({ price: base, askVol: 0, bidVol: 0, isCur: true });
+  // 매수 5호가: base-1, base-2, ..., base-5 (높은 순)
+  for (let i = 1; i <= 5; i++) {
+    const p = base - tick * i;
+    if (p > 0) rows.push({ price: p, askVol: 0, bidVol: Math.round(500 + Math.random() * 4000), isCur: false });
+  }
+  _renderHogaTable(rows);
+}
+
 function _renderHogaTable(rows) {
-  // rows: [{price, askVol, bidVol}] 형태, KIS 연동 후 확장 예정
+  // rows: [{price, askVol, bidVol}] 형태
   const body = document.getElementById('qo_hoga_body');
   const wrap = document.getElementById('qo_hoga_wrap');
   if (!body || !rows || !rows.length) { if (wrap) wrap.style.display = 'none'; return; }
@@ -5326,24 +5368,26 @@ function _renderHogaTable(rows) {
   const maxVol  = Math.max(...rows.map(r => Math.max(r.askVol || 0, r.bidVol || 0)), 1);
 
   body.innerHTML = [
-    // 헤더
-    `<tr style="font-size:10px;color:var(--text3);">
-      <td style="text-align:right;padding:1px 4px;width:35%;">매도잔량</td>
-      <td style="text-align:center;padding:1px 4px;width:30%;">호가</td>
-      <td style="text-align:left;padding:1px 4px;width:35%;">매수잔량</td>
-    </tr>`,
     ...rows.map(r => {
+      const priceStr = (r.price ?? 0).toLocaleString();
+      // 현재가 구분선 행
+      if (r.isCur) {
+        return `<tr onclick="document.getElementById('qo_price').value='${priceStr}';updateQOTotalPreview?.();" style="cursor:pointer;background:rgba(255,255,255,.06);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+          <td style="text-align:right;padding:2px 4px;font-size:10px;color:var(--text3);">현재가</td>
+          <td style="text-align:center;padding:2px 4px;font-weight:700;font-size:12px;color:var(--text);">${priceStr}</td>
+          <td style="padding:2px 4px;"></td>
+        </tr>`;
+      }
       const askBar = r.askVol ? Math.round((r.askVol / maxVol) * 100) : 0;
       const bidBar = r.bidVol ? Math.round((r.bidVol / maxVol) * 100) : 0;
-      const priceStr = (r.price ?? 0).toLocaleString();
-      return `<tr style="font-size:11px;" onclick="document.getElementById('qo_price').value='${priceStr}';updateQOTotalPreview?.();" style="cursor:pointer;">
-        <td style="text-align:right;padding:1px 4px;position:relative;">
-          ${r.askVol ? `<div style="position:absolute;right:0;top:0;bottom:0;width:${askBar}%;background:rgba(59,130,246,.18);"></div>` : ''}
+      return `<tr onclick="document.getElementById('qo_price').value='${priceStr}';updateQOTotalPreview?.();" style="cursor:pointer;">
+        <td style="text-align:right;padding:2px 4px;position:relative;font-size:11px;">
+          ${r.askVol ? `<div style="position:absolute;right:0;top:0;bottom:0;width:${askBar}%;background:rgba(96,165,250,.15);pointer-events:none;"></div>` : ''}
           <span style="position:relative;color:${DN_CLR};">${r.askVol ? r.askVol.toLocaleString() : ''}</span>
         </td>
-        <td style="text-align:center;padding:1px 4px;font-weight:600;">${priceStr}</td>
-        <td style="text-align:left;padding:1px 4px;position:relative;">
-          ${r.bidVol ? `<div style="position:absolute;left:0;top:0;bottom:0;width:${bidBar}%;background:rgba(244,63,94,.18);"></div>` : ''}
+        <td style="text-align:center;padding:2px 4px;font-weight:600;font-size:11px;color:${r.askVol?DN_CLR:UP_CLR};">${priceStr}</td>
+        <td style="text-align:left;padding:2px 4px;position:relative;font-size:11px;">
+          ${r.bidVol ? `<div style="position:absolute;left:0;top:0;bottom:0;width:${bidBar}%;background:rgba(244,63,94,.15);pointer-events:none;"></div>` : ''}
           <span style="position:relative;color:${UP_CLR};">${r.bidVol ? r.bidVol.toLocaleString() : ''}</span>
         </td>
       </tr>`;

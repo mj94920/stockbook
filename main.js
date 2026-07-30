@@ -425,12 +425,43 @@ ipcMain.handle('fetch-naver-stocks', async (event, market) => {
 // 종목 상세 정보 (팝업: PER·PBR·EPS, 시총·상장주식수·상장일, 52주 최고·최저, 배당)
 ipcMain.handle('fetch-stock-detail', async (event, code) => {
   try {
-    const body = await httpsGet(
-      `https://m.stock.naver.com/api/stock/${code}/basic`,
-      10000,
-      NAVER_HEADERS
-    );
-    const data = JSON.parse(body);
+    const base = `https://m.stock.naver.com/api/stock/${code.trim()}`;
+    const [basicRes, annualRes] = await Promise.allSettled([
+      httpsGet(`${base}/basic`,           10000, NAVER_HEADERS),
+      httpsGet(`${base}/finance/annual`,  10000, NAVER_HEADERS),
+    ]);
+
+    const data = basicRes.status === 'fulfilled' ? JSON.parse(basicRes.value) : {};
+
+    // annual 데이터에서 재무 지표 추출 (basic에 없는 경우 보완)
+    if (annualRes.status === 'fulfilled') {
+      try {
+        const ann      = JSON.parse(annualRes.value);
+        const rowList  = ann?.financeInfo?.rowList  || [];
+        const titleList= ann?.financeInfo?.trTitleList || [];
+        // 컨센서스 제외 실제 연도 중 가장 최근 key
+        const realYears = titleList.filter(t => t.isConsensus === 'N');
+        const latestKey = realYears[realYears.length - 1]?.key;
+        const getVal = name => {
+          const row = rowList.find(r => r.title === name);
+          const v   = row?.columns?.[latestKey]?.value;
+          return v ? v.replace(/,/g, '') : null;
+        };
+        // basic에 없거나 '0'인 경우에만 annual로 보완
+        const setIfMissing = (field, annVal) => {
+          if (annVal && (!data[field] || data[field] === '0' || data[field] === '-')) data[field] = annVal;
+        };
+        setIfMissing('per',           getVal('PER'));
+        setIfMissing('pbr',           getVal('PBR'));
+        setIfMissing('eps',           getVal('EPS'));
+        setIfMissing('bps',           getVal('BPS'));
+        setIfMissing('roe',           getVal('ROE'));
+        setIfMissing('dividendYield', getVal('배당수익률'));
+        setIfMissing('dividend',      getVal('주당배당금'));
+        setIfMissing('operatingMargin', getVal('영업이익률'));
+      } catch(_) {}
+    }
+
     return { ok: true, data };
   } catch(e) {
     return { ok: false, error: e.message };
@@ -831,8 +862,11 @@ ipcMain.handle('fetch-market-tickers', async () => {
     }
   };
 
-  // ② 미국 지수 — Yahoo Finance (Electron net.fetch로 Chromium 쿠키 세션 사용)
+  // ② 미국+한국 지수 — Yahoo Finance (Electron net.fetch로 Chromium 쿠키 세션 사용)
+  // KOSPI/KOSDAQ는 Naver가 우선이고, 실패 시 Yahoo ^KS11/^KQ11로 보완
   const YF_SYMS = {
+    kospi:  '^KS11',  // 코스피 폴백
+    kosdaq: '^KQ11',  // 코스닥 폴백
     nasdaq: '^IXIC', sp500: '^GSPC', dow: '^DJI', sox: '^SOX', nikkei: '^N225', wti: 'CL=F',
   };
   const yfFetch = async () => {
@@ -846,7 +880,7 @@ ipcMain.handle('fetch-market-tickers', async () => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const meta = (await res.json())?.chart?.result?.[0]?.meta;
         if (meta?.regularMarketPrice) {
-          // IXIC 성공 시 다른 심볼도 조회
+          // IXIC 성공 시 전체 심볼 v7 quote로 일괄 조회
           const symRes = await net.fetch(
             `https://${host}.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&symbols=${symStr}`,
             { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'application/json', 'Referer': 'https://finance.yahoo.com/' } }
@@ -854,7 +888,8 @@ ipcMain.handle('fetch-market-tickers', async () => {
           const rows = symRes.ok ? ((await symRes.json())?.quoteResponse?.result || []) : [];
           for (const row of rows) {
             const key = Object.entries(YF_SYMS).find(([,s]) => s === row.symbol)?.[0];
-            if (key && row.regularMarketPrice) {
+            if (key && row.regularMarketPrice && !results[key]) {
+              // Naver가 이미 채운 kospi/kosdaq는 덮어쓰지 않음
               results[key] = { regularMarketPrice: row.regularMarketPrice, previousClose: row.regularMarketPreviousClose || row.regularMarketPrice, chartPreviousClose: row.regularMarketPreviousClose || row.regularMarketPrice };
             }
           }
