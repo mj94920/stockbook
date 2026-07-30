@@ -814,6 +814,17 @@
     background: rgba(14,165,233,0.08);
   }
 
+  /* ── 관리 버튼: 행 hover 시에만 표시 ── */
+  .portfolio-table tbody tr .hts-action-btn {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease;
+  }
+  .portfolio-table tbody tr:hover .hts-action-btn {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   /* ── ANALYSIS DRAWER ── */
   .analysis-drawer-overlay {
     display: none;
@@ -945,21 +956,11 @@
     .analysis-metric-grid { grid-template-columns: repeat(2, 1fr); }
   }
 
-  /* 테이블 액션열 Sticky */
+  /* 테이블 액션열 — 호버 시만 표시, sticky 제거(데이터 열 가림 방지) */
   .portfolio-table th.col-action,
   .portfolio-table td.col-action {
-    position: sticky;
-    right: 0;
-    background: var(--card-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.25);
-    z-index: 1;
-    min-width: 230px;  /* 아이콘 7개 × ~28px + gap */
-  }
-  body.light-mode .portfolio-table th.col-action,
-  body.light-mode .portfolio-table td.col-action {
-    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.03);
+    min-width: 210px;
+    white-space: nowrap;
   }
 
   /* ── MODAL ── */
@@ -2347,6 +2348,21 @@
               <tr><td style="padding:5px 0;color:var(--text2)">연환산</td><td id="mc_annualRoi" style="text-align:right;color:var(--text3)"></td></tr>
             </table>
           </div>
+          <!-- 월별 복리 진행 테이블 -->
+          <div style="max-height:220px;overflow-y:auto;margin-top:8px;border-radius:8px;border:1px solid var(--border);">
+            <table style="width:100%;border-collapse:collapse;font-size:11px;">
+              <thead>
+                <tr style="background:var(--bg3);position:sticky;top:0;color:var(--text3);font-size:10px;text-align:right;">
+                  <th style="text-align:left;padding:4px 8px;font-weight:600">기간</th>
+                  <th style="padding:4px 8px;font-weight:600">목표잔액</th>
+                  <th style="padding:4px 8px;font-weight:600">실적</th>
+                  <th style="padding:4px 8px;font-weight:600">수익률</th>
+                  <th style="padding:4px 8px;font-weight:600">달성</th>
+                </tr>
+              </thead>
+              <tbody id="mc_tbody"></tbody>
+            </table>
+          </div>
         </div>
         <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
           <button class="btn btn-primary btn-sm" onclick="calcMonthlyCompound()">계산</button>
@@ -3530,6 +3546,7 @@ function handleRealtimePrice({ ticker, price, change, changePct }) {
 
 async function startRealtimePrices() {
   if (!window.electronAPI?.startRealtimePrice) return;
+  if (_wsActive) return; // 이미 연결 중이거나 연결됨 → 중복 실행 방지
   // 6자리 숫자 티커를 가진 종목만 구독 (국내주식)
   const tickers = state.portfolio.map(s => s.ticker).filter(t => t && /^\d{6}$/.test(t));
   if (!tickers.length) { setWsStatusUI('disconnected'); return; }
@@ -3699,7 +3716,7 @@ function _renderAll() {
   if (mc.months)    { const el = document.getElementById('mc_months');    if (el) el.value = mc.months; }
   if (mc.add)       { const el = document.getElementById('mc_add');       if (el) el.value = Number(mc.add).toLocaleString('ko-KR'); }
   if (mc.startDate) { const el = document.getElementById('mc_startDate'); if (el) el.value = mc.startDate; }
-  if (mc.principal || mc.rate || mc.months) calcMonthlyCompound();
+  if (mc.principal || mc.rate || mc.months) { try { calcMonthlyCompound(); } catch(e) { console.warn('[_renderAll] calcMonthlyCompound 오류:', e.message); } }
   // 현재 활성 서브탭 복원 (재접속·push-state 이후에도 탭 상태 유지)
   try { switchSubTab(currentSubTab); } catch(e) {}
 }
@@ -3974,14 +3991,16 @@ function calcMonthlyCompound() {
   document.getElementById('mc_annualRoi').textContent = annualRoi + '%';
 
   const tbody = document.getElementById('mc_tbody');
-  tbody.innerHTML = rows.map(row => `
-    <tr style="${row.isCurrent ? 'background:rgba(21,87,176,0.05);font-weight:600;' : ''}">
-      <td style="padding:5px 0">${row.label}${row.isCurrent ? ' <span style="font-size:10px;color:var(--accent)">◀현재</span>' : ''}</td>
-      <td style="text-align:right;color:var(--text2)">${Math.round(row.targetBalance).toLocaleString('ko-KR')}원</td>
-      ${row.actualCell}
-      ${row.returnCell}
-      ${row.achieveCell}
-    </tr>`).join('');
+  if (tbody) {
+    tbody.innerHTML = rows.map(row => `
+      <tr style="${row.isCurrent ? 'background:rgba(21,87,176,0.05);font-weight:600;' : ''}">
+        <td style="padding:5px 0">${row.label}${row.isCurrent ? ' <span style="font-size:10px;color:var(--accent)">◀현재</span>' : ''}</td>
+        <td style="text-align:right;color:var(--text2)">${Math.round(row.targetBalance).toLocaleString('ko-KR')}원</td>
+        ${row.actualCell}
+        ${row.returnCell}
+        ${row.achieveCell}
+      </tr>`).join('');
+  }
 
   document.getElementById('mc_result').style.display = 'block';
   // 시작일이 있을 때만 실적 기록 버튼 표시
@@ -5149,7 +5168,7 @@ function addStock() {
   const qty = parseInt(document.getElementById('f_qty').value);
   const pos = document.getElementById('f_pos').value;
   const curPrice = getNumOrNull('f_current');
-  const date = document.getElementById('f_date').value || today();
+  const date = document.getElementById('f_date')?.value || today();
   const tradeType = document.getElementById('f_tradeType').value || 'cash';
   const target1 = getNumOrNull('f_target1');
   const target2 = getNumOrNull('f_target2');
@@ -6698,8 +6717,8 @@ initTheme();
 load();
 loadApiKeysUI(); // 상단바 API 상태 인디케이터 초기화
 document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ko-KR', {year:'numeric',month:'long',day:'numeric',weekday:'short'});
-document.getElementById('f_date').value = today();
-document.getElementById('j_buyDate').value = today();
+{ const el = document.getElementById('f_date');    if (el) el.value = today(); }
+{ const el = document.getElementById('j_buyDate'); if (el) el.value = today(); }
 renderPortfolio();
 // 시작 시 항상 종합 탭을 기본으로 표시
 switchSubTab('main');

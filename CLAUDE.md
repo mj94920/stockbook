@@ -1,6 +1,6 @@
 # StockBook — 프로젝트 운영 지침서
 
-> 현재 버전: **v2.3.0** | Git: `https://github.com/mj94920/stockbook.git` (branch: main)
+> 현재 버전: **v2.3.1** | Git: `https://github.com/mj94920/stockbook.git` (branch: main)
 > GitHub Pages: `https://mj94920.github.io/stockbook/`
 
 ---
@@ -216,3 +216,4 @@ function getCredFile(broker) {
 | v2.2.8 | KIS 토큰 파일 캐싱 추가 (kis-token-cache.json) — 앱 재시작 후에도 유효한 토큰 재사용, 하루 1회 이상 재발급 방지 |
 | v2.2.9 | HTS 방식 주문 연동 — 액션버튼 아이콘 전용(텍스트 제거), 매수↑/매도↓ 버튼 추가(주문창 자동 세팅), 종목명 클릭→기업정보 탭 자동 연동, selectStockForQuickOrder/selectStockForCorpInfo 함수 추가 |
 | v2.3.0 | KIS WebSocket 실시간 시세 연동 — H0STCNT0 TR, approval_key 발급, PINGPONG 핸드셰이크, 100ms 디바운스 렌더, 상태 배지 UI (연결중/ON/OFF/오류/KIS키없음), 앱 시작 시 자동 구독, ws 패키지 의존성 추가 |
+| v2.3.1 | 크래시 수정 — f_date null 오류(→앱 초기화 중단·지수 미조회 연쇄 버그), mc_tbody null 오류(→복리계산기 월별테이블 HTML 복원), addStock f_date 옵셔널체이닝; 동시 토큰/approval_key 발급 방지 pending-promise 락(getKisToken·getKisApprovalKey); startRealtimePrices 중복실행 방지 _wsActive guard; 관리버튼 hover reveal (행 hover 시만 표시) + sticky 제거(데이터 열 가림 방지) |

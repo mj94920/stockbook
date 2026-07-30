@@ -307,8 +307,9 @@ ipcMain.handle('fetch-krx-stocks', async () => {
 
 // ── KIS API 시세 조회 ─────────────────────────────────────────────────────────
 // 토큰 캐시: 메모리 + 파일 영구 저장 (앱 재시작 후에도 유효한 토큰 재사용)
-let _kisToken      = null;
-let _kisTokenExpiry = 0;
+let _kisToken         = null;
+let _kisTokenExpiry   = 0;
+let _kisTokenPending  = null;  // 동시 토큰 발급 방지
 
 function getKisTokenCacheFile() {
   return path.join(app.getPath('userData'), 'kis-token-cache.json');
@@ -339,33 +340,40 @@ loadKisTokenCache();
 async function getKisToken() {
   // 메모리 캐시 유효하면 바로 반환
   if (_kisToken && Date.now() < _kisTokenExpiry) return _kisToken;
-  // 저장된 API 키 로드
-  const credFile = getCredFile('kis');
-  if (!fs.existsSync(credFile)) return null;
-  let creds;
-  try {
-    creds = JSON.parse(safeStorage.decryptString(fs.readFileSync(credFile)));
-  } catch (_) { return null; }
-  if (!creds?.appKey || !creds?.appSecret) return null;
-  // 토큰 발급 (하루 1회 제한 — 캐시 미스 시에만 호출됨)
-  try {
-    const res = JSON.parse(await httpsPost(
-      'https://openapi.koreainvestment.com:9443/oauth2/tokenP',
-      { grant_type: 'client_credentials', appkey: creds.appKey, appsecret: creds.appSecret }
-    ));
-    if (!res.access_token) return null;
-    // 만료 30분 전에 갱신 (expires_in은 초 단위, 기본 86400)
-    const expiry    = Date.now() + ((res.expires_in || 86400) - 1800) * 1000;
-    _kisToken       = { token: res.access_token, appKey: creds.appKey, appSecret: creds.appSecret };
-    _kisTokenExpiry = expiry;
-    // 파일에도 저장 → 앱 재시작 후에도 재발급 없이 재사용
-    saveKisTokenCache(res.access_token, creds.appKey, creds.appSecret, expiry);
-    console.log('[StockBook] KIS 토큰 신규 발급 — 만료:', new Date(expiry).toLocaleTimeString());
-    return _kisToken;
-  } catch (e) {
-    console.error('[StockBook] KIS 토큰 발급 실패:', e.message);
-    return null;
-  }
+  // 동시 요청이 이미 진행 중이면 같은 promise 반환 (중복 발급 방지)
+  if (_kisTokenPending) return _kisTokenPending;
+  _kisTokenPending = (async () => {
+    try {
+      // 저장된 API 키 로드
+      const credFile = getCredFile('kis');
+      if (!fs.existsSync(credFile)) return null;
+      let creds;
+      try {
+        creds = JSON.parse(safeStorage.decryptString(fs.readFileSync(credFile)));
+      } catch (_) { return null; }
+      if (!creds?.appKey || !creds?.appSecret) return null;
+      // 토큰 발급 (하루 1회 제한 — 캐시 미스 시에만 호출됨)
+      const res = JSON.parse(await httpsPost(
+        'https://openapi.koreainvestment.com:9443/oauth2/tokenP',
+        { grant_type: 'client_credentials', appkey: creds.appKey, appsecret: creds.appSecret }
+      ));
+      if (!res.access_token) return null;
+      // 만료 30분 전에 갱신 (expires_in은 초 단위, 기본 86400)
+      const expiry    = Date.now() + ((res.expires_in || 86400) - 1800) * 1000;
+      _kisToken       = { token: res.access_token, appKey: creds.appKey, appSecret: creds.appSecret };
+      _kisTokenExpiry = expiry;
+      // 파일에도 저장 → 앱 재시작 후에도 재발급 없이 재사용
+      saveKisTokenCache(res.access_token, creds.appKey, creds.appSecret, expiry);
+      console.log('[StockBook] KIS 토큰 신규 발급 — 만료:', new Date(expiry).toLocaleTimeString());
+      return _kisToken;
+    } catch (e) {
+      console.error('[StockBook] KIS 토큰 발급 실패:', e.message);
+      return null;
+    } finally {
+      _kisTokenPending = null;
+    }
+  })();
+  return _kisTokenPending;
 }
 
 // ── KIS WebSocket 실시간 시세 ──────────────────────────────────────────────
@@ -376,32 +384,40 @@ let _kisWsReconnectTimer    = null;
 let _kisWsSubscribedTickers = [];
 let _kisApprovalKey         = null;
 let _kisApprovalKeyExpiry   = 0;
+let _kisApprovalKeyPending  = null;  // 동시 approval_key 발급 방지
 const KIS_WS_URL            = 'ws://ops.koreainvestment.com:21000';
 
 // WebSocket용 Approval Key (access_token과 별도 발급)
 async function getKisApprovalKey() {
   if (_kisApprovalKey && Date.now() < _kisApprovalKeyExpiry) return _kisApprovalKey;
-  const credFile = getCredFile('kis');
-  if (!fs.existsSync(credFile)) return null;
-  let creds;
-  try {
-    creds = JSON.parse(safeStorage.decryptString(fs.readFileSync(credFile)));
-  } catch (_) { return null; }
-  if (!creds?.appKey || !creds?.appSecret) return null;
-  try {
-    const res = JSON.parse(await httpsPost(
-      'https://openapi.koreainvestment.com:9443/oauth2/Approval',
-      { grant_type: 'client_credentials', appkey: creds.appKey, secretkey: creds.appSecret }
-    ));
-    if (!res.approval_key) { console.error('[StockBook] KIS approval_key 없음:', JSON.stringify(res).slice(0,200)); return null; }
-    _kisApprovalKey       = res.approval_key;
-    _kisApprovalKeyExpiry = Date.now() + 23 * 3600 * 1000; // 23시간
-    console.log('[StockBook] KIS WebSocket approval_key 발급 완료');
-    return _kisApprovalKey;
-  } catch (e) {
-    console.error('[StockBook] KIS approval_key 발급 실패:', e.message);
-    return null;
-  }
+  // 동시 요청 방지 — 이미 발급 중이면 같은 promise 반환
+  if (_kisApprovalKeyPending) return _kisApprovalKeyPending;
+  _kisApprovalKeyPending = (async () => {
+    try {
+      const credFile = getCredFile('kis');
+      if (!fs.existsSync(credFile)) return null;
+      let creds;
+      try {
+        creds = JSON.parse(safeStorage.decryptString(fs.readFileSync(credFile)));
+      } catch (_) { return null; }
+      if (!creds?.appKey || !creds?.appSecret) return null;
+      const res = JSON.parse(await httpsPost(
+        'https://openapi.koreainvestment.com:9443/oauth2/Approval',
+        { grant_type: 'client_credentials', appkey: creds.appKey, secretkey: creds.appSecret }
+      ));
+      if (!res.approval_key) { console.error('[StockBook] KIS approval_key 없음:', JSON.stringify(res).slice(0,200)); return null; }
+      _kisApprovalKey       = res.approval_key;
+      _kisApprovalKeyExpiry = Date.now() + 23 * 3600 * 1000; // 23시간
+      console.log('[StockBook] KIS WebSocket approval_key 발급 완료');
+      return _kisApprovalKey;
+    } catch (e) {
+      console.error('[StockBook] KIS approval_key 발급 실패:', e.message);
+      return null;
+    } finally {
+      _kisApprovalKeyPending = null;
+    }
+  })();
+  return _kisApprovalKeyPending;
 }
 
 function stopKisWebSocket() {
