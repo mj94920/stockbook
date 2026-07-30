@@ -429,7 +429,7 @@ ipcMain.handle('fetch-stock-detail', async (event, code) => {
     const body = await httpsGet(
       `https://m.stock.naver.com/api/stock/${code}/basic`,
       10000,
-      { 'Accept': 'application/json', 'Referer': 'https://m.stock.naver.com/' }
+      NAVER_HEADERS
     );
     const data = JSON.parse(body);
     return { ok: true, data };
@@ -902,8 +902,8 @@ ipcMain.handle('fetch-naver-finance', async (_event, code) => {
   const base = `https://m.stock.naver.com/api/stock/${code.trim()}`;
   try {
     const [annualBody, summaryBody] = await Promise.all([
-      httpsGet(`${base}/finance/annual`),
-      httpsGet(`${base}/finance/summary`),
+      httpsGet(`${base}/finance/annual`,  10000, NAVER_HEADERS),
+      httpsGet(`${base}/finance/summary`, 10000, NAVER_HEADERS),
     ]);
     return {
       annual:  JSON.parse(annualBody),
