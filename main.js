@@ -847,6 +847,8 @@ function createWindow() {
   try { fs.copyFileSync(srcHtml, tmpHtml); } catch (e) {
     console.error('[StockBook] HTML 복사 실패:', e);
   }
+  // icon-192.png도 임시 디렉터리에 복사 (HTML의 ./icon-192.png 상대경로 참조를 위해)
+  try { fs.copyFileSync(path.join(__dirname, 'icon-192.png'), path.join(app.getPath('temp'), 'icon-192.png')); } catch (e) { /* 무시 */ }
 
   win = new BrowserWindow({
     width:     1440,
