@@ -5101,7 +5101,7 @@ function getStockMemo(code) {
 function saveAllStockMemo(code, text) {
   if (!state.stockMemos) state.stockMemos = {};
   state.stockMemos[code] = text;
-  saveState();
+  save();
 }
 
 function allStockAddWatch(code, name, market) {
@@ -5110,7 +5110,7 @@ function allStockAddWatch(code, name, market) {
     showToast(`${name}은(는) 이미 관심종목에 있습니다.`); return;
   }
   state.watchlist.push({ ticker: code, name, market: market || 'KOSPI', addedAt: Date.now() });
-  saveState();
+  save();
   showToast(`★ ${name}(${code}) 관심종목 추가`);
 }
 function allStockOpenChart(code, name) {
@@ -7219,7 +7219,7 @@ function loginProceed(doLogin) {
 function loginClose() {
   const autoEl = document.getElementById('loginAutoCheck');
   state.autoLogin = !!(autoEl?.checked);
-  saveState();
+  save();
   const modal = document.getElementById('loginModal');
   if (modal) modal.style.display = 'none';
 }
@@ -7781,7 +7781,7 @@ function addWatchlistItem() {
   }
   const isCode = /^\d{6}$/.test(raw);
   state.watchlist.push({ ticker: isCode ? raw : '', name: isCode ? '' : raw, price: null, change: null, addedAt: Date.now() });
-  saveState();
+  save();
   if (inp) inp.value = '';
   renderWatchlist();
   refreshWatchlist();
@@ -7790,7 +7790,7 @@ function addWatchlistItem() {
 function removeWatchlistItem(idx) {
   if (!state.watchlist) state.watchlist = [];
   state.watchlist.splice(idx, 1);
-  saveState();
+  save();
   renderWatchlist();
 }
 
@@ -7802,7 +7802,7 @@ function renderWatchlist() {
     const legacy = (() => { try { return JSON.parse(localStorage.getItem('sb_watchlist_v1') || '[]'); } catch { return []; } })();
     if (legacy.length > 0) {
       state.watchlist = legacy;
-      saveState();
+      save();
       localStorage.removeItem('sb_watchlist_v1'); // 마이그레이션 후 삭제
     }
   }
@@ -7875,7 +7875,7 @@ async function refreshWatchlist() {
     } catch(e) {}
     list[i] = w;
   }
-  saveState(); // localStorage 아닌 state 저장
+  save(); // localStorage 아닌 state 저장
   renderWatchlist();
 }
 
