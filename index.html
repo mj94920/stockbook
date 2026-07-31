@@ -1446,6 +1446,39 @@
   ::-webkit-scrollbar-thumb:hover {
     background: var(--text3);
   }
+  /* 수평 스크롤바: 창 폭이 좁아질 때 눈에 띄도록 강조 */
+  ::-webkit-scrollbar:horizontal {
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track:horizontal {
+    background: var(--bg2);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:horizontal {
+    background: rgba(99,102,241,0.35);
+    border-radius: 4px;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:horizontal:hover {
+    background: rgba(99,102,241,0.65);
+    border: 1px solid transparent;
+    background-clip: padding-box;
+  }
+  /* 라이트 모드: 수평 스크롤바 트랙 더 밝게 */
+  body.light-mode ::-webkit-scrollbar-track:horizontal {
+    background: #e5e7eb;
+  }
+  body.light-mode ::-webkit-scrollbar-thumb:horizontal {
+    background: rgba(79,70,229,0.30);
+    border: 1px solid transparent;
+    background-clip: padding-box;
+  }
+  body.light-mode ::-webkit-scrollbar-thumb:horizontal:hover {
+    background: rgba(79,70,229,0.55);
+    border: 1px solid transparent;
+    background-clip: padding-box;
+  }
 
   /* ── RESPONSIVE ── */
   @media (max-width: 1100px) {
@@ -4383,12 +4416,15 @@ function switchSubTab(name) {
     if (panel) panel.style.display = 'block';
   }
 
+  // 전종목 탭이 아닐 경우 자동 갱신 타이머 중지
+  if (name !== 'allstock') _stopAllStockAutoRefresh();
+
   // 탭별 렌더 함수
   if (name === 'journal')   { renderJournals(); updateJournalDatalist(); }
   if (name === 'trades')    renderTrades();
   if (name === 'watchlist') renderWatchlist();
   if (name === 'theme')     renderThemeTab();
-  if (name === 'allstock')  renderAllStockTab();
+  if (name === 'allstock')  { renderAllStockTab(); _startAllStockAutoRefresh(); } // 탭 진입 시 자동 갱신 시작
   if (name === 'news')      renderNewsPortfolioLinks();
 }
 
@@ -4784,11 +4820,38 @@ function showThemeStocks(theme, btn) {
 }
 
 // ── 전종목 탭 (네이버 증권 API — KOSPI / KOSDAQ / ETF) ───────────────────────
-let _allMkt      = 'KOSPI'; // 현재 선택 시장
-let _allStockRaw = {};      // { KOSPI: [...], KOSDAQ: [...], ETF: [...] }
-let _allFiltered = [];
+let _allMkt          = 'KOSPI'; // 현재 선택 시장
+let _allStockRaw     = {};      // { KOSPI: [...], KOSDAQ: [...], ETF: [...] }
+let _allFiltered     = [];
+let _allPrevPrices   = {};      // 자동 갱신 깜빡임용: { code: price }
 let allStockPage = 1;
 const ALL_PER_PAGE = 100;
+
+/* 전종목 자동 갱신 타이머 (60초 주기, 탭 활성 중에만 동작) */
+let _allStockAutoRefreshTimer = null;
+
+function _startAllStockAutoRefresh() {
+  _stopAllStockAutoRefresh();
+  _allStockAutoRefreshTimer = setInterval(async () => {
+    // 전종목 탭이 보이는 상태인지 확인
+    const panel = document.getElementById('stab-allstock');
+    if (!panel || panel.style.display === 'none') { _stopAllStockAutoRefresh(); return; }
+    if (!window.electronAPI?.fetchNaverStocks) return;
+    try {
+      const result = await window.electronAPI.fetchNaverStocks(_allMkt);
+      if (!result?.ok || !result.data) return;
+      _allStockRaw[_allMkt] = result.data; // 캐시 업데이트 (로딩 UI 없이)
+      const statusEl = document.getElementById('allStockStatus');
+      const ts = new Date().toLocaleTimeString('ko-KR');
+      if (statusEl) statusEl.textContent = `자동갱신 ${ts}`;
+      filterAndRenderAll(); // 테이블 재렌더 → 포트폴리오 外 종목도 최신가 반영 → 깜빡임 자연스럽게 동작
+    } catch(e) { /* silent — 실패해도 무시 */ }
+  }, 60000); // 60초 주기
+}
+
+function _stopAllStockAutoRefresh() {
+  if (_allStockAutoRefreshTimer) { clearInterval(_allStockAutoRefreshTimer); _allStockAutoRefreshTimer = null; }
+}
 
 function renderAllStockTab() {
   switchAllMarket(_allMkt || 'KOSPI');
@@ -4932,6 +4995,17 @@ function renderAllStockTable() {
   const start = (allStockPage - 1) * ALL_PER_PAGE;
   const slice = data.slice(start, start + ALL_PER_PAGE);
 
+  // 자동 갱신 깜빡임: 렌더 전에 현재 가격을 이전 가격으로 기록
+  const changedCodes = {}; // { code: 'up' | 'down' }
+  slice.forEach(s => {
+    if (!s.code || !s.price) return;
+    const prev = _allPrevPrices[s.code];
+    if (prev != null && prev !== s.price) {
+      changedCodes[s.code] = s.price > prev ? 'up' : 'down';
+    }
+    _allPrevPrices[s.code] = s.price;
+  });
+
   if (!slice.length) {
     bodyEl.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:30px;">검색 결과가 없습니다.</td></tr>`;
   } else {
@@ -4957,6 +5031,15 @@ function renderAllStockTable() {
         <td style="text-align:right;font-size:11px;">${capStr}</td>
       </tr>`;
     }).join('');
+
+    // 가격 변동 행 깜빡임 적용 (자동 갱신 후)
+    Object.entries(changedCodes).forEach(([code, dir]) => {
+      const row = document.getElementById(`asr-${code}`);
+      if (!row) return;
+      const cls = dir === 'up' ? 'highlight-up' : 'highlight-down';
+      row.classList.add(cls);
+      setTimeout(() => row.classList.remove(cls), 800);
+    });
   }
 
   // 페이지네이션
@@ -5355,6 +5438,7 @@ function updateHogaDisplay() {
     _renderSimulatedHoga(curPrice);
   } else if (wrap) {
     wrap.style.display = 'none';
+    _stopHogaAutoRefresh(); // 호가창 숨김 시 타이머 정리
   }
 }
 
@@ -5369,8 +5453,26 @@ function _getTickSize(price) {
   return 1000;
 }
 
+/* 호가창 자동 갱신 타이머 */
+let _hogaRefreshTimer = null;
+let _hogaCurrentPrice = null;
+
+function _startHogaAutoRefresh(price) {
+  _hogaCurrentPrice = price;
+  if (_hogaRefreshTimer) { clearInterval(_hogaRefreshTimer); _hogaRefreshTimer = null; }
+  _hogaRefreshTimer = setInterval(() => {
+    const wrap = document.getElementById('qo_hoga_wrap');
+    if (!wrap || wrap.style.display === 'none') { _stopHogaAutoRefresh(); return; }
+    if (_hogaCurrentPrice) _renderSimulatedHoga(_hogaCurrentPrice, true);
+  }, 2000); // 2초마다 잔량 갱신 (메모리 부담 없음 — 11개 DOM 셀 업데이트만)
+}
+
+function _stopHogaAutoRefresh() {
+  if (_hogaRefreshTimer) { clearInterval(_hogaRefreshTimer); _hogaRefreshTimer = null; }
+}
+
 /* 현재가 기반 가상 호가 5+5 레더 생성 */
-function _renderSimulatedHoga(price) {
+function _renderSimulatedHoga(price, isAutoRefresh = false) {
   const tick = _getTickSize(price);
   const base = Math.round(price / tick) * tick; // 현재가 기준 틱 정렬
   const rows = [];
@@ -5386,6 +5488,8 @@ function _renderSimulatedHoga(price) {
     if (p > 0) rows.push({ price: p, askVol: 0, bidVol: Math.round(500 + Math.random() * 4000), isCur: false });
   }
   _renderHogaTable(rows);
+  // 최초 렌더 시에만 자동 갱신 타이머 시작
+  if (!isAutoRefresh) _startHogaAutoRefresh(price);
 }
 
 function _renderHogaTable(rows) {
