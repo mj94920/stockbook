@@ -2282,11 +2282,15 @@
           <span id="qo_cur_change" style="font-size:12px;color:var(--text3);">-</span>
         </div>
         <!-- 호가창 (현재가 기반 가상 호가 레더) -->
-        <div id="qo_hoga_wrap" style="display:none;margin:6px 0;">
-          <div style="font-size:10px;color:var(--text3);margin-bottom:3px;display:flex;justify-content:space-between;">
-            <span>매도잔량</span><span style="color:var(--text3);">호가 (가상)</span><span>매수잔량</span>
-          </div>
+        <div id="qo_hoga_wrap" style="display:none;margin:4px 0 8px;border:1px solid var(--border);border-radius:7px;overflow:hidden;">
           <table style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr style="background:var(--bg3);border-bottom:1px solid var(--border);">
+                <th style="text-align:right;padding:3px 6px;font-size:10px;font-weight:500;color:var(--hts-dn);width:35%;">매도잔량</th>
+                <th style="text-align:center;padding:3px 4px;font-size:10px;font-weight:500;color:var(--text3);width:30%;">호가 (가상)</th>
+                <th style="text-align:left;padding:3px 6px;font-size:10px;font-weight:500;color:var(--hts-up);width:35%;">매수잔량</th>
+              </tr>
+            </thead>
             <tbody id="qo_hoga_body"></tbody>
           </table>
         </div>
@@ -3615,8 +3619,36 @@ function setWsStatusUI(status) {
 function handleRealtimePrice({ ticker, price, change, changePct }) {
   const s = state.portfolio.find(p => p.ticker === ticker);
   if (!s || !price) return;
-  prevPricesMap[s.name] = s.currentPrice;  // 플래시 애니메이션용
+  const prevPrice = s.currentPrice;
+  prevPricesMap[s.name] = prevPrice;  // 보유종목 플래시 애니메이션용
   s.currentPrice = price;
+
+  // ── 전종목 테이블 직접 업데이트 (현재 페이지에 있을 때 실시간 깜빡임) ──
+  const rowId = `asr-${ticker}`;
+  const rowEl = document.getElementById(rowId);
+  if (rowEl) {
+    const priceEl = document.getElementById(`${rowId}-price`);
+    const chgEl   = document.getElementById(`${rowId}-chg`);
+    const pctEl   = document.getElementById(`${rowId}-pct`);
+    const isUp    = (change ?? 0) >= 0;
+    const clsName = (change == null || change === 0) ? '' : (isUp ? 'pos' : 'neg');
+    if (priceEl) { priceEl.textContent = Math.round(price).toLocaleString(); priceEl.className = clsName; }
+    if (chgEl && change != null) {
+      chgEl.textContent = change === 0 ? '—' : `${isUp ? '▲' : '▼'} ${Math.abs(Math.round(change)).toLocaleString()}`;
+      chgEl.className = clsName;
+    }
+    if (pctEl && changePct != null) {
+      pctEl.textContent = changePct === 0 ? '0.00%' : `${isUp ? '+' : ''}${Number(changePct).toFixed(2)}%`;
+      pctEl.className = clsName;
+    }
+    // 가격 변동 시 행 깜빡임 (보유종목과 동일한 highlight 애니메이션)
+    if (prevPrice && price !== prevPrice) {
+      const flashCls = price > prevPrice ? 'highlight-up' : 'highlight-down';
+      rowEl.classList.add(flashCls);
+      setTimeout(() => rowEl.classList.remove(flashCls), 800);
+    }
+  }
+
   // 100ms 디바운스 → 여러 종목이 동시에 오면 한 번만 렌더
   clearTimeout(_rtDebounce);
   _rtDebounce = setTimeout(() => {
@@ -5357,42 +5389,48 @@ function _renderSimulatedHoga(price) {
 }
 
 function _renderHogaTable(rows) {
-  // rows: [{price, askVol, bidVol}] 형태
+  // rows: [{price, askVol, bidVol, isCur}] — 매도(ask) 위→아래, 현재가, 매수(bid) 위→아래
   const body = document.getElementById('qo_hoga_body');
   const wrap = document.getElementById('qo_hoga_wrap');
   if (!body || !rows || !rows.length) { if (wrap) wrap.style.display = 'none'; return; }
   wrap.style.display = 'block';
 
-  const UP_CLR  = 'var(--hts-up)';
-  const DN_CLR  = 'var(--hts-dn)';
-  const maxVol  = Math.max(...rows.map(r => Math.max(r.askVol || 0, r.bidVol || 0)), 1);
+  const ASK_CLR  = 'var(--hts-dn)'; // 파랑: 매도호가 (한국 HTS 기준)
+  const BID_CLR  = 'var(--hts-up)'; // 빨강: 매수호가
+  const maxVol   = Math.max(...rows.map(r => Math.max(r.askVol || 0, r.bidVol || 0)), 1);
 
-  body.innerHTML = [
-    ...rows.map(r => {
-      const priceStr = (r.price ?? 0).toLocaleString();
-      // 현재가 구분선 행
-      if (r.isCur) {
-        return `<tr onclick="document.getElementById('qo_price').value='${priceStr}';updateQOTotalPreview?.();" style="cursor:pointer;background:rgba(255,255,255,.06);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
-          <td style="text-align:right;padding:2px 4px;font-size:10px;color:var(--text3);">현재가</td>
-          <td style="text-align:center;padding:2px 4px;font-weight:700;font-size:12px;color:var(--text);">${priceStr}</td>
-          <td style="padding:2px 4px;"></td>
-        </tr>`;
-      }
-      const askBar = r.askVol ? Math.round((r.askVol / maxVol) * 100) : 0;
-      const bidBar = r.bidVol ? Math.round((r.bidVol / maxVol) * 100) : 0;
-      return `<tr onclick="document.getElementById('qo_price').value='${priceStr}';updateQOTotalPreview?.();" style="cursor:pointer;">
-        <td style="text-align:right;padding:2px 4px;position:relative;font-size:11px;">
-          ${r.askVol ? `<div style="position:absolute;right:0;top:0;bottom:0;width:${askBar}%;background:rgba(96,165,250,.15);pointer-events:none;"></div>` : ''}
-          <span style="position:relative;color:${DN_CLR};">${r.askVol ? r.askVol.toLocaleString() : ''}</span>
-        </td>
-        <td style="text-align:center;padding:2px 4px;font-weight:600;font-size:11px;color:${r.askVol?DN_CLR:UP_CLR};">${priceStr}</td>
-        <td style="text-align:left;padding:2px 4px;position:relative;font-size:11px;">
-          ${r.bidVol ? `<div style="position:absolute;left:0;top:0;bottom:0;width:${bidBar}%;background:rgba(244,63,94,.15);pointer-events:none;"></div>` : ''}
-          <span style="position:relative;color:${UP_CLR};">${r.bidVol ? r.bidVol.toLocaleString() : ''}</span>
-        </td>
+  body.innerHTML = rows.map(r => {
+    const priceStr = (r.price ?? 0).toLocaleString();
+    const clickAct = `document.getElementById('qo_price').value='${priceStr}';updateQOTotalPreview?.();`;
+
+    // ── 현재가 구분선 행 ──
+    if (r.isCur) {
+      return `<tr onclick="${clickAct}" style="cursor:pointer;background:rgba(255,215,0,0.1);border-top:2px solid rgba(255,215,0,0.4);border-bottom:2px solid rgba(255,215,0,0.4);">
+        <td style="text-align:right;padding:3px 6px;font-size:10px;color:var(--text3);width:35%;">현재가▶</td>
+        <td style="text-align:center;padding:3px 4px;font-weight:700;font-size:13px;color:var(--text);width:30%;">${priceStr}</td>
+        <td style="padding:3px 6px;width:35%;"></td>
       </tr>`;
-    })
-  ].join('');
+    }
+
+    const isAsk = (r.askVol || 0) > 0;
+    const vol   = isAsk ? r.askVol : r.bidVol;
+    const volPct = Math.round((vol / maxVol) * 80); // 최대 80% 폭
+    const rowBg  = isAsk ? 'rgba(59,130,246,0.06)' : 'rgba(244,63,94,0.06)';
+    const barBg  = isAsk ? 'rgba(59,130,246,0.2)'  : 'rgba(244,63,94,0.2)';
+    const clr    = isAsk ? ASK_CLR : BID_CLR;
+
+    return `<tr onclick="${clickAct}" style="cursor:pointer;background:${rowBg};border-bottom:1px solid rgba(128,128,128,0.07);" onmouseover="this.style.opacity='.75'" onmouseout="this.style.opacity='1'">
+      <td style="text-align:right;padding:2px 6px;position:relative;font-size:11px;height:20px;width:35%;">
+        ${isAsk ? `<div style="position:absolute;right:0;top:1px;bottom:1px;width:${volPct}%;background:${barBg};pointer-events:none;border-radius:2px 0 0 2px;"></div>` : ''}
+        <span style="position:relative;color:${clr};font-variant-numeric:tabular-nums;">${isAsk ? vol.toLocaleString() : ''}</span>
+      </td>
+      <td style="text-align:center;padding:2px 4px;font-weight:700;font-size:11px;color:${clr};width:30%;font-variant-numeric:tabular-nums;">${priceStr}</td>
+      <td style="text-align:left;padding:2px 6px;position:relative;font-size:11px;width:35%;">
+        ${!isAsk ? `<div style="position:absolute;left:0;top:1px;bottom:1px;width:${volPct}%;background:${barBg};pointer-events:none;border-radius:0 2px 2px 0;"></div>` : ''}
+        <span style="position:relative;color:${clr};font-variant-numeric:tabular-nums;">${!isAsk ? vol.toLocaleString() : ''}</span>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 function submitQuickOrder() {
@@ -5728,7 +5766,7 @@ function renderPortfolio() {
       <span style="margin-right:8px;color:var(--text3)">목표/손절:</span>${tgtParts.join('<span style="color:var(--border);margin:0 6px">│</span>')}
     </td></tr>` : '';
     return `<tr>
-      <td class="name-cell" onclick="selectStockForCorpInfo(${origIdx})" style="cursor:pointer" title="클릭: 기업정보 조회">
+      <td class="name-cell" onclick="openAnalysisDrawer(${origIdx})" style="cursor:pointer" title="클릭: AI 기업분석">
         <strong>${s.name}</strong>${s.ticker?`<span class="ticker">${s.ticker}</span>`:''}
         ${s.tradeType==='credit'?`<span class="badge" style="background:rgba(107,33,168,0.12);color:#7c3aed;border:1px solid rgba(107,33,168,0.25);font-size:10px;padding:1px 5px;margin-left:3px;">신용</span>`:''}
         ${(()=>{const bc=state.trades.filter(t=>t.name===s.name&&t.type==='buy').length;return bc>1?`<span class="badge badge-mid" style="font-size:10px;padding:1px 5px;margin-left:4px;">추매 ${bc-1}회</span>`:'';})()}
@@ -7207,6 +7245,11 @@ async function loginSaveKey() {
   if (result?.ok) {
     if (statusEl) { statusEl.textContent = '✅ 저장 완료'; }
     if (typeof loadApiKeysUI === 'function') loadApiKeysUI();
+    // KIS 키 저장 후 실시간 시세 자동 시작
+    // 토큰은 메모리+파일 캐시 우선 사용 → 유효 토큰 있으면 재발급 없음 (과다 발급 방지)
+    if (broker === 'kis' && typeof startRealtimePrices === 'function') {
+      setTimeout(() => startRealtimePrices(), 1000);
+    }
     setTimeout(() => loginClose(), 800); // 저장 성공 후 800ms 뒤 자동 닫기
   } else {
     alert('저장 실패: ' + (result?.error || '알 수 없는 오류'));
