@@ -1995,99 +1995,107 @@
     padding: 0 !important;
     overflow: hidden !important;
     display: flex !important;
-    flex-direction: column !important;
-    height: calc(100vh - 106px) !important; /* 상단 헤더 높이 제외 */
+    flex-direction: row !important;
+    height: calc(100vh - 106px) !important;
   }
 
-  /* ── 메뉴바 (직접 노출 버튼) ─────────────────────────── */
-  .mdi-menubar {
+  /* ── 좌측 사이드바 ──────────────────────────────────── */
+  .mdi-sidebar {
+    width: 160px;
+    min-width: 160px;
+    background: #080d18;
+    border-right: 1px solid #1a2840;
     display: flex;
-    align-items: center;
-    height: 32px;
-    min-height: 32px;
-    background: #0a0f1a;
-    border-bottom: 1px solid #1a2840;
-    padding: 0 8px;
+    flex-direction: column;
     flex-shrink: 0;
     z-index: 9999;
-    gap: 0;
-    overflow-x: auto;
+    overflow: hidden;
+    transition: width 0.2s ease, min-width 0.2s ease;
+    user-select: none;
+  }
+  .mdi-sidebar.sb-collapsed { width: 44px; min-width: 44px; }
+  .mdi-sidebar.sb-collapsed .mdi-sb-label,
+  .mdi-sidebar.sb-collapsed .mdi-sb-brand,
+  .mdi-sidebar.sb-collapsed .mdi-sb-section-label { display: none; }
+  .mdi-sidebar.sb-collapsed .mdi-sb-toggle-icon { content: '▶'; }
+
+  /* 헤더 */
+  .mdi-sb-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 10px 10px;
+    border-bottom: 1px solid #1a2840;
+    color: #e0eaf5; font-weight: 700; font-size: 13px;
+    min-height: 42px; flex-shrink: 0;
+  }
+  .mdi-sb-logo {
+    width: 24px; height: 24px; min-width: 24px;
+    background: #2563eb; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 900; color: #fff;
+    letter-spacing: -0.5px;
+  }
+  .mdi-sb-brand { font-size: 13px; white-space: nowrap; }
+
+  /* 섹션 레이블 */
+  .mdi-sb-section-label {
+    font-size: 10px; font-weight: 600; letter-spacing: .08em;
+    color: #3a5070; padding: 10px 12px 3px;
+    white-space: nowrap; text-transform: uppercase;
+  }
+
+  /* 패널 버튼 */
+  .mdi-sb-btn {
+    display: flex; align-items: center; gap: 9px;
+    padding: 0 0 0 10px;
+    height: 36px; min-height: 36px;
+    background: none; border: none; border-left: 2px solid transparent;
+    color: #4a6888; font-size: 12.5px; font-family: inherit;
+    cursor: pointer; text-align: left; white-space: nowrap;
+    transition: all 0.12s; width: 100%;
+  }
+  .mdi-sb-btn:hover { background: #0d1a2e; color: #b0c8e0; border-left-color: #2a3d55; }
+  .mdi-sb-btn-active { color: #d0e4f5; border-left-color: #2563eb; background: #0c1628; }
+  .mdi-sb-btn-active:hover { background: #0f1e36; border-left-color: #3b82f6; }
+  .mdi-sb-util { color: #35506a; font-size: 12px; }
+  .mdi-sb-util:hover { color: #8aabb0; }
+  .mdi-sb-icon { font-size: 14px; min-width: 20px; text-align: center; }
+
+  /* 구분선 + 여백 */
+  .mdi-sb-sep { height: 1px; background: #1a2840; margin: 6px 10px; flex-shrink: 0; }
+  .mdi-sb-spacer { flex: 1; }
+
+  /* 토글 버튼 */
+  .mdi-sb-toggle {
+    display: flex; align-items: center; justify-content: center;
+    height: 36px; width: 100%;
+    background: none; border: none; border-top: 1px solid #1a2840;
+    color: #3a5070; cursor: pointer; font-size: 13px;
+    transition: all 0.12s; flex-shrink: 0;
+  }
+  .mdi-sb-toggle:hover { background: #0d1a2e; color: #7090b0; }
+
+  /* ── 패널 내부 탭바 ──────────────────────────────────── */
+  .mdi-ptab-bar {
+    display: flex; align-items: center;
+    background: #06090f; border-bottom: 1px solid #1a2840;
+    padding: 0 4px; gap: 0; flex-shrink: 0; overflow-x: auto;
     scrollbar-width: none;
   }
-  .mdi-menubar::-webkit-scrollbar { display: none; }
-  .mdi-nav {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    flex: 1;
+  .mdi-ptab-bar::-webkit-scrollbar { display: none; }
+  .mdi-ptab {
+    padding: 5px 10px; background: none;
+    border: none; border-bottom: 2px solid transparent;
+    color: #3a5070; font-size: 11px; font-family: inherit;
+    cursor: pointer; white-space: nowrap; transition: all 0.1s;
   }
-  .mdi-nav-sep {
-    width: 1px;
-    height: 16px;
-    background: #1a2840;
-    margin: 0 3px;
-    flex-shrink: 0;
-  }
+  .mdi-ptab:hover { color: #8aabb0; }
+  .mdi-ptab.active { color: #c8d8e8; border-bottom-color: #2563eb; font-weight: 600; }
 
-  /* 패널 토글 버튼 */
-  .mdi-panel-btn {
-    padding: 3px 10px;
-    background: none;
-    border: 1px solid transparent;
-    border-radius: 3px;
-    color: #5a7090;
-    font-size: 11.5px;
-    font-family: inherit;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.1s;
-    letter-spacing: 0.01em;
-  }
-  .mdi-panel-btn:hover {
-    color: #c8d8e8;
-    background: #12203a;
-    border-color: #1a2840;
-  }
-  .mdi-panel-btn-active {
-    color: #e0eaf5;
-    background: #152540;
-    border-color: #2563eb;
-    font-weight: 600;
-  }
-  .mdi-panel-btn-active:hover {
-    background: #1a2d50;
-    border-color: #3b82f6;
-  }
+  .mdi-ptab-pane { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: auto; }
 
-  /* 기본배치 버튼 */
-  .mdi-layout-btn {
-    padding: 3px 8px;
-    background: none;
-    border: 1px solid #1a2840;
-    border-radius: 3px;
-    color: #4a6080;
-    font-size: 11px;
-    font-family: inherit;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.1s;
-  }
-  .mdi-layout-btn:hover { color: #9eb3cc; border-color: #2a3d55; }
-
-  /* ── 8방향 리사이즈 핸들 ─────────────────────────────── */
-  .mdi-rz { position:absolute; z-index:10; }
-  /* 모서리 핸들 */
-  .mdi-rz-se { right:-3px; bottom:-3px; width:8px; height:8px; cursor:nwse-resize; background:#2563eb; border-radius:1px; }
-  .mdi-rz-sw { left:-3px;  bottom:-3px; width:8px; height:8px; cursor:nesw-resize; background:#2563eb; border-radius:1px; }
-  .mdi-rz-ne { right:-3px; top:-3px;    width:8px; height:8px; cursor:nesw-resize; background:#2563eb; border-radius:1px; }
-  .mdi-rz-nw { left:-3px;  top:-3px;    width:8px; height:8px; cursor:nwse-resize; background:#2563eb; border-radius:1px; }
-  /* 엣지 핸들 */
-  .mdi-rz-n  { left:8px; right:8px; top:-3px;    height:6px; cursor:ns-resize; }
-  .mdi-rz-s  { left:8px; right:8px; bottom:-3px; height:6px; cursor:ns-resize; }
-  .mdi-rz-e  { top:8px; bottom:8px; right:-3px;  width:6px;  cursor:ew-resize; }
-  .mdi-rz-w  { top:8px; bottom:8px; left:-3px;   width:6px;  cursor:ew-resize; }
-  .mdi-rz:hover { background:rgba(59,130,246,.35); }
-  .mdi-rz-se:hover,.mdi-rz-sw:hover,.mdi-rz-ne:hover,.mdi-rz-nw:hover { background:#3b82f6; }
+  /* 예수금 탭 잔고 행 */
+  .bal-row { display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid #0d1525; }
+  .bal-val { color:#e0eaf5; font-weight:600; font-size:12px; }
 
 
     /* ── MDI 워크스페이스 ─────────────────────────────── */
@@ -2110,7 +2118,7 @@
     box-shadow: 0 2px 10px rgba(0,0,0,.5);
     min-width: 160px;
     min-height: 36px;
-    overflow: hidden;
+    overflow: visible;
     box-sizing: border-box;
   }
   .mdi-panel.mdi-focused {
@@ -2294,25 +2302,62 @@
 <!-- ========== KAIROS-STYLE MDI (STATIC PANELS) proto-spinoff-2.6.6 ========== -->
 <div class="content mdi-content">
 
-<div class="mdi-menubar" id="mdiMenubar">
-  <nav class="mdi-nav" id="mdiNav">
+<aside class="mdi-sidebar" id="mdiSidebar">
 
-    <button class="mdi-panel-btn mdi-panel-btn-active" data-pid="watchlist" onclick="window._MDI.toggle('watchlist')">★ 관심종목</button>
-    <button class="mdi-panel-btn mdi-panel-btn-active" data-pid="portfolio" onclick="window._MDI.toggle('portfolio')">포트폴리오</button>
-    <button class="mdi-panel-btn mdi-panel-btn-active" data-pid="trading"   onclick="window._MDI.toggle('trading')">주문/호가</button>
-    <span class="mdi-nav-sep"></span>
-    <button class="mdi-panel-btn" data-pid="allstock"  onclick="window._MDI.toggle('allstock')">전종목</button>
-    <button class="mdi-panel-btn" data-pid="theme"     onclick="window._MDI.toggle('theme')">테마별</button>
-    <span class="mdi-nav-sep"></span>
-    <button class="mdi-panel-btn mdi-panel-btn-active" data-pid="trades"    onclick="window._MDI.toggle('trades')">거래기록</button>
-    <button class="mdi-panel-btn" data-pid="news"      onclick="window._MDI.toggle('news')">뉴스·시황</button>
-    <button class="mdi-panel-btn" data-pid="journal"   onclick="window._MDI.toggle('journal')">투자일지</button>
-    <button class="mdi-panel-btn" data-pid="realized"  onclick="window._MDI.toggle('realized')">실현손익</button>
-    <span class="mdi-nav-sep"></span>
-    <button class="mdi-layout-btn" onclick="window._MDI.resetLayout()" title="기본 배치로 복구">↺ 기본배치</button>
+  <div class="mdi-sb-header">
+    <span class="mdi-sb-logo">SB</span>
+    <span class="mdi-sb-brand">Stock Book</span>
+  </div>
 
-  </nav>
-</div>
+  <div class="mdi-sb-section-label">투자패널</div>
+
+  <button class="mdi-sb-btn mdi-sb-btn-active" data-pid="watchlist"
+          onclick="window._MDI.toggle('watchlist')" title="종목탐색">
+    <span class="mdi-sb-icon">★</span>
+    <span class="mdi-sb-label">종목탐색</span>
+  </button>
+  <button class="mdi-sb-btn mdi-sb-btn-active" data-pid="portfolio"
+          onclick="window._MDI.toggle('portfolio')" title="포트폴리오">
+    <span class="mdi-sb-icon">📊</span>
+    <span class="mdi-sb-label">포트폴리오</span>
+  </button>
+  <button class="mdi-sb-btn mdi-sb-btn-active" data-pid="trading"
+          onclick="window._MDI.toggle('trading')" title="종합잔고">
+    <span class="mdi-sb-icon">💰</span>
+    <span class="mdi-sb-label">종합잔고</span>
+  </button>
+
+  <div class="mdi-sb-sep"></div>
+  <div class="mdi-sb-section-label">정보</div>
+
+  <button class="mdi-sb-btn" data-pid="news"
+          onclick="window._MDI.toggle('news')" title="뉴스·시황">
+    <span class="mdi-sb-icon">📰</span>
+    <span class="mdi-sb-label">뉴스·시황</span>
+  </button>
+  <button class="mdi-sb-btn" data-pid="journal"
+          onclick="window._MDI.toggle('journal')" title="투자일지">
+    <span class="mdi-sb-icon">📒</span>
+    <span class="mdi-sb-label">투자일지</span>
+  </button>
+
+  <div class="mdi-sb-spacer"></div>
+
+  <button class="mdi-sb-btn mdi-sb-util" onclick="if(typeof showSettingsModal==='function')showSettingsModal()" title="환경설정">
+    <span class="mdi-sb-icon">⚙</span>
+    <span class="mdi-sb-label">환경설정</span>
+  </button>
+  <button class="mdi-sb-btn mdi-sb-util" onclick="if(typeof maybeShowLoginModal==='function')maybeShowLoginModal()" title="로그인">
+    <span class="mdi-sb-icon">🔐</span>
+    <span class="mdi-sb-label">로그인</span>
+  </button>
+
+  <button class="mdi-sb-toggle" id="mdiSbToggle"
+          onclick="window._MDI && window._MDI.toggleSidebar()" title="사이드바 접기/펼치기">
+    <span class="mdi-sb-toggle-icon">◀</span>
+  </button>
+
+</aside>
 
 </div>
 
@@ -2323,7 +2368,7 @@
          style="left:0;top:0;width:220px;height:600px;z-index:101">
       <div class="mdi-tb">
         <span class="mdi-tb-icon">★</span>
-        <span class="mdi-tb-title">관심종목</span>
+        <span class="mdi-tb-title">종목탐색</span>
         <div class="mdi-tb-btns">
           <button class="mdi-tb-btn mdi-btn-min"  onclick="window._MDI.minimize('watchlist')" title="최소화">─</button>
           <button class="mdi-tb-btn mdi-btn-max"  onclick="window._MDI.maximize('watchlist')" title="최대화/복구">□</button>
@@ -2331,6 +2376,12 @@
         </div>
       </div>
       <div class="mdi-body" id="mdi-body-watchlist">
+  <div class="mdi-ptab-bar">
+    <button class="mdi-ptab active" onclick="window._MDIPanelTab('watchlist','wl')">★ 관심종목</button>
+    <button class="mdi-ptab" onclick="window._MDIPanelTab('watchlist','as')">전종목</button>
+    <button class="mdi-ptab" onclick="window._MDIPanelTab('watchlist','tm')">테마별</button>
+  </div>
+  <div class="mdi-ptab-pane" id="mdi-ptc-watchlist-wl" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto">
 
       <div class="card" style="margin-bottom:12px;">
         <div class="card-title" style="margin-bottom:10px;">
@@ -2356,6 +2407,66 @@
         </div>
       </div>
     </div>
+  <div class="mdi-ptab-pane" id="mdi-ptc-watchlist-as" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
+
+      <div class="card" style="max-width:1300px;margin:0 auto;">
+        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <span style="display:flex;align-items:center;gap:6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            전종목 조회
+            <span id="allStockCount" style="font-size:11px;color:var(--text3);font-weight:400;"></span>
+          </span>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input id="allStockSearch" type="text" placeholder="종목명·코드·업종 검색" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:12px;width:170px;" oninput="filterAndRenderAll()">
+            <button onclick="loadAllStocks(true)" id="allStockRefreshBtn" style="padding:5px 10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;">🔄 새로고침</button>
+            <button onclick="fetchAllStockPagePrices()" id="allStockPriceBtn" title="현재 페이지 종목을 KIS/Yahoo로 실시간 조회" style="padding:5px 10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;">📡 시세 조회</button>
+          </div>
+        </div>
+        <!-- 시장 탭: KOSPI / KOSDAQ / ETF -->
+        <div style="display:flex;gap:0;margin-bottom:10px;border-bottom:1px solid var(--border);">
+          <button id="allMktTab-KOSPI"  onclick="switchAllMarket('KOSPI')"  style="padding:7px 18px;background:none;border:none;border-bottom:2px solid var(--accent);color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;">KOSPI</button>
+          <button id="allMktTab-KOSDAQ" onclick="switchAllMarket('KOSDAQ')" style="padding:7px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:13px;font-weight:400;cursor:pointer;">KOSDAQ</button>
+          <button id="allMktTab-ETF"    onclick="switchAllMarket('ETF')"    style="padding:7px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:13px;font-weight:400;cursor:pointer;">ETF</button>
+        </div>
+        <div id="allStockStatus" style="font-size:11px;color:var(--text3);margin-bottom:6px;min-height:16px;"></div>
+        <div style="overflow-x:auto;">
+          <table class="hts-table" id="allStockTable" style="min-width:700px;">
+            <thead>
+              <tr>
+                <th>종목명</th><th>코드</th><th>업종</th>
+                <th style="text-align:right;">현재가</th>
+                <th style="text-align:right;">전일대비</th>
+                <th style="text-align:right;">등락률</th>
+                <th style="text-align:right;">거래량</th>
+                <th style="text-align:right;">시총(억)</th>
+              </tr>
+            </thead>
+            <tbody id="allStockBody">
+              <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:48px 20px;">
+                시장 탭을 선택하면 자동으로 불러옵니다
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;justify-content:center;align-items:center;gap:4px;margin-top:12px;flex-wrap:wrap;" id="allStockPagination"></div>
+      </div>
+    </div>
+  <div class="mdi-ptab-pane" id="mdi-ptc-watchlist-tm" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
+
+      <div class="card" style="max-width:860px;margin:0 auto;">
+        <div class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          테마별 종목
+        </div>
+        <div id="themeList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;"></div>
+        <div id="themeStockTable">
+          <div style="color:var(--text3);font-size:13px;text-align:center;padding:40px 0;">
+            왼쪽에서 테마를 선택하면 해당 종목이 표시됩니다.
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
       </div>
       <div class="mdi-rz mdi-rz-n"  title="위 크기조절"></div>
       <div class="mdi-rz mdi-rz-s"  title="아래 크기조절"></div>
@@ -2473,8 +2584,8 @@
     <div id="mdi-panel-trading" class="mdi-panel" data-pid="trading" data-mdi-state="open"
          style="left:828px;top:0;width:400px;height:600px;z-index:103">
       <div class="mdi-tb">
-        <span class="mdi-tb-icon">📈</span>
-        <span class="mdi-tb-title">주문/호가</span>
+        <span class="mdi-tb-icon">💰</span>
+        <span class="mdi-tb-title">종합잔고</span>
         <div class="mdi-tb-btns">
           <button class="mdi-tb-btn mdi-btn-min"  onclick="window._MDI.minimize('trading')" title="최소화">─</button>
           <button class="mdi-tb-btn mdi-btn-max"  onclick="window._MDI.maximize('trading')" title="최대화/복구">□</button>
@@ -2482,6 +2593,13 @@
         </div>
       </div>
       <div class="mdi-body" id="mdi-body-trading">
+  <div class="mdi-ptab-bar">
+    <button class="mdi-ptab active" onclick="window._MDIPanelTab('trading','ord')">주문/호가</button>
+    <button class="mdi-ptab" onclick="window._MDIPanelTab('trading','trd')">거래내역</button>
+    <button class="mdi-ptab" onclick="window._MDIPanelTab('trading','rlz')">실현손익</button>
+    <button class="mdi-ptab" onclick="window._MDIPanelTab('trading','bal')">예수금</button>
+  </div>
+  <div class="mdi-ptab-pane" id="mdi-ptc-trading-ord" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto">
 <!-- ========== 종합탭 우측 미니탭 래퍼 ========== -->
     <div id="main-right-wrapper">
       <div class="right-mini-tabs">
@@ -2847,133 +2965,7 @@
 
     </div><!-- /main-right-wrapper -->
       </div>
-      <div class="mdi-rz mdi-rz-n"  title="위 크기조절"></div>
-      <div class="mdi-rz mdi-rz-s"  title="아래 크기조절"></div>
-      <div class="mdi-rz mdi-rz-e"  title="오른쪽 크기조절"></div>
-      <div class="mdi-rz mdi-rz-w"  title="왼쪽 크기조절"></div>
-      <div class="mdi-rz mdi-rz-ne" title="우상단 크기조절"></div>
-      <div class="mdi-rz mdi-rz-nw" title="좌상단 크기조절"></div>
-      <div class="mdi-rz mdi-rz-se" title="우하단 크기조절"></div>
-      <div class="mdi-rz mdi-rz-sw" title="좌하단 크기조절"></div>
-    </div>
-    <!-- ─ MDI 패널: allstock ─ -->
-    <div id="mdi-panel-allstock" class="mdi-panel" data-pid="allstock" data-mdi-state="closed"
-         style="left:224px;top:0;width:600px;height:600px;display:none;display:none;z-index:104">
-      <div class="mdi-tb">
-        <span class="mdi-tb-icon">📋</span>
-        <span class="mdi-tb-title">전종목시세</span>
-        <div class="mdi-tb-btns">
-          <button class="mdi-tb-btn mdi-btn-min"  onclick="window._MDI.minimize('allstock')" title="최소화">─</button>
-          <button class="mdi-tb-btn mdi-btn-max"  onclick="window._MDI.maximize('allstock')" title="최대화/복구">□</button>
-          <button class="mdi-tb-btn mdi-btn-close" onclick="window._MDI.close('allstock')"  title="닫기">✕</button>
-        </div>
-      </div>
-      <div class="mdi-body" id="mdi-body-allstock">
-
-      <div class="card" style="max-width:1300px;margin:0 auto;">
-        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-          <span style="display:flex;align-items:center;gap:6px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-            전종목 조회
-            <span id="allStockCount" style="font-size:11px;color:var(--text3);font-weight:400;"></span>
-          </span>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <input id="allStockSearch" type="text" placeholder="종목명·코드·업종 검색" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:12px;width:170px;" oninput="filterAndRenderAll()">
-            <button onclick="loadAllStocks(true)" id="allStockRefreshBtn" style="padding:5px 10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;">🔄 새로고침</button>
-            <button onclick="fetchAllStockPagePrices()" id="allStockPriceBtn" title="현재 페이지 종목을 KIS/Yahoo로 실시간 조회" style="padding:5px 10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;">📡 시세 조회</button>
-          </div>
-        </div>
-        <!-- 시장 탭: KOSPI / KOSDAQ / ETF -->
-        <div style="display:flex;gap:0;margin-bottom:10px;border-bottom:1px solid var(--border);">
-          <button id="allMktTab-KOSPI"  onclick="switchAllMarket('KOSPI')"  style="padding:7px 18px;background:none;border:none;border-bottom:2px solid var(--accent);color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;">KOSPI</button>
-          <button id="allMktTab-KOSDAQ" onclick="switchAllMarket('KOSDAQ')" style="padding:7px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:13px;font-weight:400;cursor:pointer;">KOSDAQ</button>
-          <button id="allMktTab-ETF"    onclick="switchAllMarket('ETF')"    style="padding:7px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:13px;font-weight:400;cursor:pointer;">ETF</button>
-        </div>
-        <div id="allStockStatus" style="font-size:11px;color:var(--text3);margin-bottom:6px;min-height:16px;"></div>
-        <div style="overflow-x:auto;">
-          <table class="hts-table" id="allStockTable" style="min-width:700px;">
-            <thead>
-              <tr>
-                <th>종목명</th><th>코드</th><th>업종</th>
-                <th style="text-align:right;">현재가</th>
-                <th style="text-align:right;">전일대비</th>
-                <th style="text-align:right;">등락률</th>
-                <th style="text-align:right;">거래량</th>
-                <th style="text-align:right;">시총(억)</th>
-              </tr>
-            </thead>
-            <tbody id="allStockBody">
-              <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:48px 20px;">
-                시장 탭을 선택하면 자동으로 불러옵니다
-              </td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div style="display:flex;justify-content:center;align-items:center;gap:4px;margin-top:12px;flex-wrap:wrap;" id="allStockPagination"></div>
-      </div>
-    </div>
-    </div>
-      </div>
-      <div class="mdi-rz mdi-rz-n"  title="위 크기조절"></div>
-      <div class="mdi-rz mdi-rz-s"  title="아래 크기조절"></div>
-      <div class="mdi-rz mdi-rz-e"  title="오른쪽 크기조절"></div>
-      <div class="mdi-rz mdi-rz-w"  title="왼쪽 크기조절"></div>
-      <div class="mdi-rz mdi-rz-ne" title="우상단 크기조절"></div>
-      <div class="mdi-rz mdi-rz-nw" title="좌상단 크기조절"></div>
-      <div class="mdi-rz mdi-rz-se" title="우하단 크기조절"></div>
-      <div class="mdi-rz mdi-rz-sw" title="좌하단 크기조절"></div>
-    </div>
-    <!-- ─ MDI 패널: theme ─ -->
-    <div id="mdi-panel-theme" class="mdi-panel" data-pid="theme" data-mdi-state="closed"
-         style="left:224px;top:0;width:600px;height:600px;display:none;display:none;z-index:105">
-      <div class="mdi-tb">
-        <span class="mdi-tb-icon">🏷</span>
-        <span class="mdi-tb-title">테마별</span>
-        <div class="mdi-tb-btns">
-          <button class="mdi-tb-btn mdi-btn-min"  onclick="window._MDI.minimize('theme')" title="최소화">─</button>
-          <button class="mdi-tb-btn mdi-btn-max"  onclick="window._MDI.maximize('theme')" title="최대화/복구">□</button>
-          <button class="mdi-tb-btn mdi-btn-close" onclick="window._MDI.close('theme')"  title="닫기">✕</button>
-        </div>
-      </div>
-      <div class="mdi-body" id="mdi-body-theme">
-
-      <div class="card" style="max-width:860px;margin:0 auto;">
-        <div class="card-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-          테마별 종목
-        </div>
-        <div id="themeList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;"></div>
-        <div id="themeStockTable">
-          <div style="color:var(--text3);font-size:13px;text-align:center;padding:40px 0;">
-            왼쪽에서 테마를 선택하면 해당 종목이 표시됩니다.
-          </div>
-        </div>
-      </div>
-    </div>
-    </div>
-      </div>
-      <div class="mdi-rz mdi-rz-n"  title="위 크기조절"></div>
-      <div class="mdi-rz mdi-rz-s"  title="아래 크기조절"></div>
-      <div class="mdi-rz mdi-rz-e"  title="오른쪽 크기조절"></div>
-      <div class="mdi-rz mdi-rz-w"  title="왼쪽 크기조절"></div>
-      <div class="mdi-rz mdi-rz-ne" title="우상단 크기조절"></div>
-      <div class="mdi-rz mdi-rz-nw" title="좌상단 크기조절"></div>
-      <div class="mdi-rz mdi-rz-se" title="우하단 크기조절"></div>
-      <div class="mdi-rz mdi-rz-sw" title="좌하단 크기조절"></div>
-    </div>
-    <!-- ─ MDI 패널: trades ─ -->
-    <div id="mdi-panel-trades" class="mdi-panel" data-pid="trades" data-mdi-state="open"
-         style="left:224px;top:404px;width:600px;height:200px;z-index:106">
-      <div class="mdi-tb">
-        <span class="mdi-tb-icon">📄</span>
-        <span class="mdi-tb-title">거래기록</span>
-        <div class="mdi-tb-btns">
-          <button class="mdi-tb-btn mdi-btn-min"  onclick="window._MDI.minimize('trades')" title="최소화">─</button>
-          <button class="mdi-tb-btn mdi-btn-max"  onclick="window._MDI.maximize('trades')" title="최대화/복구">□</button>
-          <button class="mdi-tb-btn mdi-btn-close" onclick="window._MDI.close('trades')"  title="닫기">✕</button>
-        </div>
-      </div>
-      <div class="mdi-body" id="mdi-body-trades">
+  <div class="mdi-ptab-pane" id="mdi-ptc-trading-trd" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
 
       <div class="card">
     <div class="section-row">
@@ -3016,8 +3008,102 @@
   </div>
   <datalist id="tStockList"></datalist>
     </div>
-    </div>
+  <div class="mdi-ptab-pane" id="mdi-ptc-trading-rlz" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
+
+  <!-- 실현손익 요약 카드 -->
+  <div class="card" style="margin-bottom:12px;">
+    <div class="section-row">
+      <div class="section-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> 실현손익 요약</div>
+      <div style="display:flex;gap:6px;">
+        <select id="realizedYear" onchange="renderRealizedTab()" style="padding:5px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;">
+          <option value="all">전체</option>
+        </select>
       </div>
+    </div>
+    <div id="realizedSummary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px;">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">총 매도 횟수</div>
+        <div id="rs_count" style="font-size:20px;font-weight:700;">-</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">실현 손익 합계</div>
+        <div id="rs_total" style="font-size:18px;font-weight:700;">-</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">평균 수익률</div>
+        <div id="rs_avg" style="font-size:18px;font-weight:700;">-</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 매도 거래 목록 -->
+  <div class="card">
+    <div class="section-row">
+      <div class="section-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> 매도 거래 내역</div>
+      <input type="text" placeholder="종목 검색..." id="realizedSearch" oninput="renderRealizedTab()"
+        style="padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;width:140px;outline:none;">
+    </div>
+    <div style="overflow-x:auto;margin-top:10px;">
+      <table class="hts-table" style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr>
+            <th>날짜</th>
+            <th>종목</th>
+            <th style="text-align:right">매수가</th>
+            <th style="text-align:right">매도가</th>
+            <th style="text-align:right">수량</th>
+            <th style="text-align:right">실현손익</th>
+            <th style="text-align:right">수익률</th>
+            <th>비고</th>
+          </tr>
+        </thead>
+        <tbody id="realizedBody"></tbody>
+      </table>
+    </div>
+    <div id="realizedEmpty" class="empty-state" style="display:none;">매도 기록이 없습니다</div>
+  </div>
+</div>
+  <div class="mdi-ptab-pane" id="mdi-ptc-trading-bal" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
+  <div style="padding:12px 8px;color:#9eb3cc;font-size:12px">
+    <div class="bal-row"><span>예수금</span><span id="balCash" class="bal-val">-</span></div>
+    <div class="bal-row"><span>주문가능금액</span><span id="balOrderable" class="bal-val">-</span></div>
+    <div class="bal-row"><span>D+2예수금</span><span id="balD2" class="bal-val">-</span></div>
+    <div class="bal-row" style="margin-top:8px;border-top:1px solid #1a2840;padding-top:8px"><span>총평가금액</span><span id="balTotal" class="bal-val">-</span></div>
+    <div class="bal-row"><span>총손익</span><span id="balPnl" class="bal-val">-</span></div>
+    <button onclick="fetchBalanceInfo && fetchBalanceInfo()" style="margin-top:10px;width:100%;padding:5px;background:#1a2840;border:1px solid #2563eb;color:#9eb3cc;border-radius:3px;cursor:pointer;font-size:11px">🔄 잔고 조회</button>
+  </div>
+</div>
+</div>
+      <div class="mdi-rz mdi-rz-n"  title="위 크기조절"></div>
+      <div class="mdi-rz mdi-rz-s"  title="아래 크기조절"></div>
+      <div class="mdi-rz mdi-rz-e"  title="오른쪽 크기조절"></div>
+      <div class="mdi-rz mdi-rz-w"  title="왼쪽 크기조절"></div>
+      <div class="mdi-rz mdi-rz-ne" title="우상단 크기조절"></div>
+      <div class="mdi-rz mdi-rz-nw" title="좌상단 크기조절"></div>
+      <div class="mdi-rz mdi-rz-se" title="우하단 크기조절"></div>
+      <div class="mdi-rz mdi-rz-sw" title="좌하단 크기조절"></div>
+    </div>
+    <!-- ─ MDI 패널: allstock ─ --></div>
+      <div class="mdi-rz mdi-rz-n"  title="위 크기조절"></div>
+      <div class="mdi-rz mdi-rz-s"  title="아래 크기조절"></div>
+      <div class="mdi-rz mdi-rz-e"  title="오른쪽 크기조절"></div>
+      <div class="mdi-rz mdi-rz-w"  title="왼쪽 크기조절"></div>
+      <div class="mdi-rz mdi-rz-ne" title="우상단 크기조절"></div>
+      <div class="mdi-rz mdi-rz-nw" title="좌상단 크기조절"></div>
+      <div class="mdi-rz mdi-rz-se" title="우하단 크기조절"></div>
+      <div class="mdi-rz mdi-rz-sw" title="좌하단 크기조절"></div>
+    </div>
+    <!-- ─ MDI 패널: theme ─ --></div>
+      <div class="mdi-rz mdi-rz-n"  title="위 크기조절"></div>
+      <div class="mdi-rz mdi-rz-s"  title="아래 크기조절"></div>
+      <div class="mdi-rz mdi-rz-e"  title="오른쪽 크기조절"></div>
+      <div class="mdi-rz mdi-rz-w"  title="왼쪽 크기조절"></div>
+      <div class="mdi-rz mdi-rz-ne" title="우상단 크기조절"></div>
+      <div class="mdi-rz mdi-rz-nw" title="좌상단 크기조절"></div>
+      <div class="mdi-rz mdi-rz-se" title="우하단 크기조절"></div>
+      <div class="mdi-rz mdi-rz-sw" title="좌하단 크기조절"></div>
+    </div>
+    <!-- ─ MDI 패널: trades ─ --></div>
       <div class="mdi-rz mdi-rz-n"  title="위 크기조절"></div>
       <div class="mdi-rz mdi-rz-s"  title="아래 크기조절"></div>
       <div class="mdi-rz mdi-rz-e"  title="오른쪽 크기조절"></div>
@@ -3385,75 +3471,7 @@
       <div class="mdi-rz mdi-rz-se" title="우하단 크기조절"></div>
       <div class="mdi-rz mdi-rz-sw" title="좌하단 크기조절"></div>
     </div>
-    <!-- ─ MDI 패널: realized ─ -->
-    <div id="mdi-panel-realized" class="mdi-panel" data-pid="realized" data-mdi-state="closed"
-         style="left:250px;top:60px;width:740px;height:460px;display:none;display:none;z-index:109">
-      <div class="mdi-tb">
-        <span class="mdi-tb-icon">💰</span>
-        <span class="mdi-tb-title">실현손익</span>
-        <div class="mdi-tb-btns">
-          <button class="mdi-tb-btn mdi-btn-min"  onclick="window._MDI.minimize('realized')" title="최소화">─</button>
-          <button class="mdi-tb-btn mdi-btn-max"  onclick="window._MDI.maximize('realized')" title="최대화/복구">□</button>
-          <button class="mdi-tb-btn mdi-btn-close" onclick="window._MDI.close('realized')"  title="닫기">✕</button>
-        </div>
-      </div>
-      <div class="mdi-body" id="mdi-body-realized">
-
-  <!-- 실현손익 요약 카드 -->
-  <div class="card" style="margin-bottom:12px;">
-    <div class="section-row">
-      <div class="section-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> 실현손익 요약</div>
-      <div style="display:flex;gap:6px;">
-        <select id="realizedYear" onchange="renderRealizedTab()" style="padding:5px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;">
-          <option value="all">전체</option>
-        </select>
-      </div>
-    </div>
-    <div id="realizedSummary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px;">
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">총 매도 횟수</div>
-        <div id="rs_count" style="font-size:20px;font-weight:700;">-</div>
-      </div>
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">실현 손익 합계</div>
-        <div id="rs_total" style="font-size:18px;font-weight:700;">-</div>
-      </div>
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">평균 수익률</div>
-        <div id="rs_avg" style="font-size:18px;font-weight:700;">-</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 매도 거래 목록 -->
-  <div class="card">
-    <div class="section-row">
-      <div class="section-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> 매도 거래 내역</div>
-      <input type="text" placeholder="종목 검색..." id="realizedSearch" oninput="renderRealizedTab()"
-        style="padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;width:140px;outline:none;">
-    </div>
-    <div style="overflow-x:auto;margin-top:10px;">
-      <table class="hts-table" style="width:100%;border-collapse:collapse;font-size:13px;">
-        <thead>
-          <tr>
-            <th>날짜</th>
-            <th>종목</th>
-            <th style="text-align:right">매수가</th>
-            <th style="text-align:right">매도가</th>
-            <th style="text-align:right">수량</th>
-            <th style="text-align:right">실현손익</th>
-            <th style="text-align:right">수익률</th>
-            <th>비고</th>
-          </tr>
-        </thead>
-        <tbody id="realizedBody"></tbody>
-      </table>
-    </div>
-    <div id="realizedEmpty" class="empty-state" style="display:none;">매도 기록이 없습니다</div>
-  </div>
-</div>
-    </div>
-      </div>
+    <!-- ─ MDI 패널: realized ─ --></div>
       <div class="mdi-rz mdi-rz-n"  title="위 크기조절"></div>
       <div class="mdi-rz mdi-rz-s"  title="아래 크기조절"></div>
       <div class="mdi-rz mdi-rz-e"  title="오른쪽 크기조절"></div>
@@ -8875,27 +8893,21 @@ function _toggleCheck(stockKey, checkKey, val) {
   window._MDI = {
     topZ: 110,
     prevPos: {},   // pid -> {x,y,w,h}
-    OPEN_DEFAULT: ['watchlist','portfolio','trading','trades'],
+    OPEN_DEFAULT: ['watchlist','portfolio','trading'],
 
     // ── 기본 레이아웃 계산 ─────────────────────────────────────────────
     _layout() {
       const ws = document.getElementById('mdiWorkspace');
       const W = (ws && ws.offsetWidth  > 50) ? ws.offsetWidth  : Math.max(900, window.innerWidth  - 20);
       const H = (ws && ws.offsetHeight > 50) ? ws.offsetHeight : Math.max(500, window.innerHeight - 140);
-      const lw = 220, rw = 402;
+      const lw = 280, rw = 440;
       const mw = Math.max(200, W - lw - rw - 6);
-      const dh = Math.min(300, Math.floor(H * 0.36));
-      const mh = Math.max(150, H - dh - 4);
       return {
-        watchlist: { x:0,        y:0,      w:lw,  h:H,  open:true  },
-        portfolio: { x:lw+3,     y:0,      w:mw,  h:mh, open:true  },
-        trading:   { x:lw+mw+6,  y:0,      w:rw,  h:H,  open:true  },
-        allstock:  { x:lw+3,     y:0,      w:mw,  h:H,  open:false },
-        theme:     { x:lw+3,     y:0,      w:mw,  h:H,  open:false },
-        trades:    { x:lw+3,     y:mh+4,   w:mw,  h:dh, open:true  },
-        news:      { x:lw+3,     y:60,     w:700, h:460, open:false },
-        journal:   { x:lw+3,     y:50,     w:800, h:520, open:false },
-        realized:  { x:lw+3,     y:60,     w:740, h:460, open:false },
+        watchlist: { x:0,       y:0,  w:lw,  h:H,   open:true  },
+        portfolio: { x:lw+3,    y:0,  w:mw,  h:H,   open:true  },
+        trading:   { x:lw+mw+6, y:0,  w:rw,  h:H,   open:true  },
+        news:      { x:lw+3,    y:60, w:700, h:460,  open:false },
+        journal:   { x:lw+3,    y:50, w:800, h:520,  open:false },
       };
     },
 
@@ -9044,6 +9056,17 @@ function _toggleCheck(stockKey, checkKey, val) {
       });
     },
 
+    // ── 사이드바 접기/펼치기 ─────────────────────────────────────────────────
+    toggleSidebar() {
+      const sb  = document.getElementById('mdiSidebar');
+      const btn = document.querySelector('.mdi-sb-toggle-icon');
+      if (!sb) return;
+      sb.classList.toggle('sb-collapsed');
+      const col = sb.classList.contains('sb-collapsed');
+      if (btn) btn.textContent = col ? '▶' : '◀';
+      setTimeout(() => this.resetLayout(), 220);
+    },
+
     // ── Z 순서 ──────────────────────────────────────────────────────────
     _front(pid) {
       const el = document.getElementById('mdi-panel-' + pid);
@@ -9055,15 +9078,15 @@ function _toggleCheck(stockKey, checkKey, val) {
 
     // ── 메뉴버튼 active 동기화 ──────────────────────────────────────────
     _syncBtn(pid) {
-      const btn = document.querySelector(`.mdi-panel-btn[data-pid="${pid}"]`);
-      const el  = document.getElementById('mdi-panel-' + pid);
-      if (btn && el) btn.classList.toggle('mdi-panel-btn-active', el.dataset.mdiState !== 'closed');
+      const el = document.getElementById('mdi-panel-' + pid);
+      const isOpen = el && el.dataset.mdiState !== 'closed';
+      // 사이드바 버튼 동기화
+      document.querySelectorAll('.mdi-sb-btn[data-pid="'+pid+'"]').forEach(btn => {
+        btn.classList.toggle('mdi-sb-btn-active', isOpen);
+      });
     },
     _syncAllBtns() {
-      document.querySelectorAll('.mdi-panel-btn[data-pid]').forEach(btn => {
-        const pid = btn.dataset.pid;
-        this._syncBtn(pid);
-      });
+      ['watchlist','portfolio','trading','news','journal'].forEach(pid => this._syncBtn(pid));
     },
 
     // ── 드래그 (delta 방식: workspace 좌표계) ───────────────────────────
@@ -9165,23 +9188,58 @@ function _toggleCheck(stockKey, checkKey, val) {
   // ── 전역 헬퍼 ─────────────────────────────────────────────────────────
   function mdiResetLayout()  { window._MDI && window._MDI.resetLayout(); }
 
-  // ── 구버전 호환 stubs ─────────────────────────────────────────────────
+
+  // ── 패널 내부 탭 전환 ─────────────────────────────────────────────────────
+  window._MDIPanelTab = function(panelId, tabKey) {
+    // 모든 pane 숨기기
+    const body = document.getElementById('mdi-body-' + panelId);
+    if (!body) return;
+    body.querySelectorAll('.mdi-ptab-pane').forEach(p => { p.style.display = 'none'; });
+    // 선택 pane 표시
+    const target = document.getElementById('mdi-ptc-' + panelId + '-' + tabKey);
+    if (target) {
+      target.style.display = '';
+      target.style.flexDirection = 'column';
+      target.style.flex = '1';
+      target.style.minHeight = '0';
+    }
+    // 탭 버튼 active
+    body.querySelectorAll('.mdi-ptab').forEach(b => b.classList.remove('active'));
+    body.querySelectorAll('.mdi-ptab').forEach(b => {
+      if (b.getAttribute('onclick') && b.getAttribute('onclick').includes("'" + tabKey + "'"))
+        b.classList.add('active');
+    });
+    // 렌더 트리거
+    try {
+      if (panelId === 'watchlist') {
+        if (tabKey === 'wl') renderWatchlist && renderWatchlist();
+        if (tabKey === 'as') { renderAllStockTab && renderAllStockTab(); _startAllStockAutoRefresh && _startAllStockAutoRefresh(); }
+        if (tabKey === 'tm') renderThemeTab && renderThemeTab();
+      }
+      if (panelId === 'trading') {
+        if (tabKey === 'trd') renderTrades && renderTrades();
+        if (tabKey === 'rlz') renderRealizedTab && renderRealizedTab();
+      }
+    } catch(e) {}
+  };
+
+    // ── 구버전 호환 stubs ─────────────────────────────────────────────────
   function switchSubTab(name) {
     if (!window._MDI) return;
-    if (name==='main'||name==='portfolio') _MDI.open('portfolio');
-    else if (name==='allstock')  _MDI.open('allstock');
-    else if (name==='theme')     _MDI.open('theme');
-    else if (name==='news')      _MDI.open('news');
-    else if (name==='journal')   _MDI.open('journal');
-    else if (name==='trades')    _MDI.open('trades');
-    else if (name==='add')       _MDI.open('realized');
-    else if (name==='watchlist') _MDI.open('watchlist');
-    else if (name==='trading')   _MDI.open('trading');
+    if (name==='main'||name==='portfolio') { _MDI.open('portfolio'); }
+    else if (name==='allstock')  { _MDIPanelTab('watchlist','as');  _MDI.open('watchlist'); }
+    else if (name==='theme')     { _MDIPanelTab('watchlist','tm');  _MDI.open('watchlist'); }
+    else if (name==='news')      { _MDI.open('news'); }
+    else if (name==='journal')   { _MDI.open('journal'); }
+    else if (name==='trades')    { _MDIPanelTab('trading','trd');   _MDI.open('trading'); }
+    else if (name==='add')       { _MDIPanelTab('trading','rlz');   _MDI.open('trading'); }
+    else if (name==='watchlist') { _MDI.open('watchlist'); }
+    else if (name==='trading')   { _MDI.open('trading'); }
   }
   function switchMainPanel(n) { switchSubTab(n); }
   function switchDock(n)      { switchSubTab(n); }
-  function toggleDock()       { window._MDI && _MDI.toggle('trades'); }
-  function toggleSidebar()    { window._MDI && _MDI.toggle('watchlist'); }
+  function toggleDock()       { window._MDI && _MDIPanelTab('trading','trd'), _MDI.open('trading'); }
+  function toggleSidebar()    { window._MDI && _MDI.toggleSidebar(); }
 
 </script>
 
