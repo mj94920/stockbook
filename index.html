@@ -1999,102 +1999,82 @@
     height: calc(100vh - 106px) !important; /* 상단 헤더 높이 제외 */
   }
 
-  /* ── 드롭다운 메뉴바 ───────────────────────────────── */
+  /* ── 메뉴바 (직접 노출 버튼) ─────────────────────────── */
   .mdi-menubar {
     display: flex;
     align-items: center;
-    height: 28px;
-    min-height: 28px;
-    background: #0e1520;
-    border-bottom: 1px solid #1e2d45;
-    padding: 0;
+    height: 32px;
+    min-height: 32px;
+    background: #0a0f1a;
+    border-bottom: 1px solid #1a2840;
+    padding: 0 8px;
     flex-shrink: 0;
-    position: relative;
     z-index: 9999;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
+  .mdi-menubar::-webkit-scrollbar { display: none; }
   .mdi-nav {
     display: flex;
-    align-items: stretch;
-    height: 100%;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
   }
-  .mdi-menu-spacer { flex: 1; }
+  .mdi-nav-sep {
+    width: 1px;
+    height: 16px;
+    background: #1a2840;
+    margin: 0 3px;
+    flex-shrink: 0;
+  }
 
-  /* 메뉴 아이템 (드롭다운 포함) */
-  .mdi-menu-item {
-    position: relative;
-    display: flex;
-    align-items: stretch;
-  }
-  .mdi-menu-trigger {
+  /* 패널 토글 버튼 */
+  .mdi-panel-btn {
+    padding: 3px 10px;
     background: none;
-    border: none;
-    color: #9eb3cc;
-    font-size: 12px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    color: #5a7090;
+    font-size: 11.5px;
     font-family: inherit;
-    padding: 0 12px;
     cursor: pointer;
-    height: 100%;
     white-space: nowrap;
-    transition: background 0.1s, color 0.1s;
-    letter-spacing: 0.02em;
+    transition: all 0.1s;
+    letter-spacing: 0.01em;
   }
-  .mdi-menu-trigger:hover,
-  .mdi-menu-item.mdi-open .mdi-menu-trigger {
-    background: #172032;
-    color: #e8edf2;
+  .mdi-panel-btn:hover {
+    color: #c8d8e8;
+    background: #12203a;
+    border-color: #1a2840;
   }
-
-  /* 서브메뉴 (드롭다운) */
-  .mdi-submenu {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    min-width: 180px;
-    background: #0e1520;
-    border: 1px solid #1e2d45;
-    border-top: none;
-    box-shadow: 0 6px 20px rgba(0,0,0,.7);
-    z-index: 10000;
-    padding: 4px 0;
-  }
-  .mdi-menu-item.mdi-open .mdi-submenu,
-  .mdi-menu-item:hover .mdi-submenu {
-    display: block;
-  }
-  .mdi-sub-section {
-    padding: 6px 12px 3px;
-    font-size: 10px;
-    color: #4a6080;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+  .mdi-panel-btn-active {
+    color: #e0eaf5;
+    background: #152540;
+    border-color: #2563eb;
     font-weight: 600;
   }
-  .mdi-sub-sep {
-    height: 1px;
-    background: #1e2d45;
-    margin: 4px 8px;
-  }
-  .mdi-sub-item {
-    display: block;
-    width: 100%;
-    text-align: left;
-    background: none;
-    border: none;
-    color: #9eb3cc;
-    font-size: 12px;
-    font-family: inherit;
-    padding: 5px 16px;
-    cursor: pointer;
-    transition: background 0.1s, color 0.1s;
-    white-space: nowrap;
-  }
-  .mdi-sub-item:hover {
-    background: #172032;
-    color: #e8edf2;
+  .mdi-panel-btn-active:hover {
+    background: #1a2d50;
+    border-color: #3b82f6;
   }
 
-  /* ── MDI 워크스페이스 ─────────────────────────────── */
+  /* 기본배치 버튼 */
+  .mdi-layout-btn {
+    padding: 3px 8px;
+    background: none;
+    border: 1px solid #1a2840;
+    border-radius: 3px;
+    color: #4a6080;
+    font-size: 11px;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.1s;
+  }
+  .mdi-layout-btn:hover { color: #9eb3cc; border-color: #2a3d55; }
+
+    /* ── MDI 워크스페이스 ─────────────────────────────── */
   .mdi-workspace {
     position: relative;
     flex: 1;
@@ -2316,39 +2296,23 @@
 <div class="mdi-menubar" id="mdiMenubar">
   <nav class="mdi-nav" id="mdiNav">
 
-    <div class="mdi-menu-item">
-      <button class="mdi-menu-trigger" tabindex="0">화면</button>
-      <div class="mdi-submenu">
-        <div class="mdi-sub-section">포트폴리오</div>
-        <button class="mdi-sub-item" onclick="_MDI.toggle('watchlist');closeMdiMenu()">★ 관심종목</button>
-        <button class="mdi-sub-item" onclick="_MDI.toggle('portfolio');closeMdiMenu()">📊 포트폴리오</button>
-        <div class="mdi-sub-sep"></div>
-        <div class="mdi-sub-section">시세·분석</div>
-        <button class="mdi-sub-item" onclick="_MDI.toggle('allstock');closeMdiMenu()">📋 전종목 시세</button>
-        <button class="mdi-sub-item" onclick="_MDI.toggle('theme');closeMdiMenu()">🏷 테마별</button>
-        <div class="mdi-sub-sep"></div>
-        <div class="mdi-sub-section">매매·기록</div>
-        <button class="mdi-sub-item" onclick="_MDI.toggle('trading');closeMdiMenu()">📈 주문/호가</button>
-        <button class="mdi-sub-item" onclick="_MDI.toggle('trades');closeMdiMenu()">📄 거래기록</button>
-        <button class="mdi-sub-item" onclick="_MDI.toggle('realized');closeMdiMenu()">💰 실현손익</button>
-        <div class="mdi-sub-sep"></div>
-        <div class="mdi-sub-section">정보</div>
-        <button class="mdi-sub-item" onclick="_MDI.toggle('news');closeMdiMenu()">📰 뉴스·시황</button>
-        <button class="mdi-sub-item" onclick="_MDI.toggle('journal');closeMdiMenu()">📒 투자일지</button>
-      </div>
-    </div>
-
-    <div class="mdi-menu-item">
-      <button class="mdi-menu-trigger" tabindex="0">배치</button>
-      <div class="mdi-submenu">
-        <button class="mdi-sub-item" onclick="mdiResetLayout();closeMdiMenu()">🔄 기본 배치</button>
-        <button class="mdi-sub-item" onclick="_MDI.minimizeAll();closeMdiMenu()">─ 전체 최소화</button>
-        <button class="mdi-sub-item" onclick="_MDI.restoreAll();closeMdiMenu()">□ 전체 복구</button>
-      </div>
-    </div>
+    <button class="mdi-panel-btn mdi-panel-btn-active" data-pid="watchlist" onclick="window._MDI.toggle('watchlist')">★ 관심종목</button>
+    <button class="mdi-panel-btn mdi-panel-btn-active" data-pid="portfolio" onclick="window._MDI.toggle('portfolio')">포트폴리오</button>
+    <button class="mdi-panel-btn mdi-panel-btn-active" data-pid="trading"   onclick="window._MDI.toggle('trading')">주문/호가</button>
+    <span class="mdi-nav-sep"></span>
+    <button class="mdi-panel-btn" data-pid="allstock"  onclick="window._MDI.toggle('allstock')">전종목</button>
+    <button class="mdi-panel-btn" data-pid="theme"     onclick="window._MDI.toggle('theme')">테마별</button>
+    <span class="mdi-nav-sep"></span>
+    <button class="mdi-panel-btn mdi-panel-btn-active" data-pid="trades"    onclick="window._MDI.toggle('trades')">거래기록</button>
+    <button class="mdi-panel-btn" data-pid="news"      onclick="window._MDI.toggle('news')">뉴스·시황</button>
+    <button class="mdi-panel-btn" data-pid="journal"   onclick="window._MDI.toggle('journal')">투자일지</button>
+    <button class="mdi-panel-btn" data-pid="realized"  onclick="window._MDI.toggle('realized')">실현손익</button>
+    <span class="mdi-nav-sep"></span>
+    <button class="mdi-layout-btn" onclick="window._MDI.resetLayout()" title="기본 배치로 복구">↺ 기본배치</button>
 
   </nav>
-  <div class="mdi-menu-spacer"></div>
+</div>
+
 </div>
 
 <div class="mdi-workspace" id="mdiWorkspace">
@@ -2360,9 +2324,9 @@
         <span class="mdi-tb-icon">★</span>
         <span class="mdi-tb-title">관심종목</span>
         <div class="mdi-tb-btns">
-          <button class="mdi-tb-btn mdi-btn-min"  onclick="_MDI.minimize('watchlist')" title="최소화">─</button>
-          <button class="mdi-tb-btn mdi-btn-max"  onclick="_MDI.maximize('watchlist')" title="최대화/복구">□</button>
-          <button class="mdi-tb-btn mdi-btn-close" onclick="_MDI.close('watchlist')"  title="닫기">✕</button>
+          <button class="mdi-tb-btn mdi-btn-min"  onclick="window._MDI.minimize('watchlist')" title="최소화">─</button>
+          <button class="mdi-tb-btn mdi-btn-max"  onclick="window._MDI.maximize('watchlist')" title="최대화/복구">□</button>
+          <button class="mdi-tb-btn mdi-btn-close" onclick="window._MDI.close('watchlist')"  title="닫기">✕</button>
         </div>
       </div>
       <div class="mdi-body" id="mdi-body-watchlist">
@@ -2401,9 +2365,9 @@
         <span class="mdi-tb-icon">📊</span>
         <span class="mdi-tb-title">포트폴리오</span>
         <div class="mdi-tb-btns">
-          <button class="mdi-tb-btn mdi-btn-min"  onclick="_MDI.minimize('portfolio')" title="최소화">─</button>
-          <button class="mdi-tb-btn mdi-btn-max"  onclick="_MDI.maximize('portfolio')" title="최대화/복구">□</button>
-          <button class="mdi-tb-btn mdi-btn-close" onclick="_MDI.close('portfolio')"  title="닫기">✕</button>
+          <button class="mdi-tb-btn mdi-btn-min"  onclick="window._MDI.minimize('portfolio')" title="최소화">─</button>
+          <button class="mdi-tb-btn mdi-btn-max"  onclick="window._MDI.maximize('portfolio')" title="최대화/복구">□</button>
+          <button class="mdi-tb-btn mdi-btn-close" onclick="window._MDI.close('portfolio')"  title="닫기">✕</button>
         </div>
       </div>
       <div class="mdi-body" id="mdi-body-portfolio">
@@ -2497,9 +2461,9 @@
         <span class="mdi-tb-icon">📈</span>
         <span class="mdi-tb-title">주문/호가</span>
         <div class="mdi-tb-btns">
-          <button class="mdi-tb-btn mdi-btn-min"  onclick="_MDI.minimize('trading')" title="최소화">─</button>
-          <button class="mdi-tb-btn mdi-btn-max"  onclick="_MDI.maximize('trading')" title="최대화/복구">□</button>
-          <button class="mdi-tb-btn mdi-btn-close" onclick="_MDI.close('trading')"  title="닫기">✕</button>
+          <button class="mdi-tb-btn mdi-btn-min"  onclick="window._MDI.minimize('trading')" title="최소화">─</button>
+          <button class="mdi-tb-btn mdi-btn-max"  onclick="window._MDI.maximize('trading')" title="최대화/복구">□</button>
+          <button class="mdi-tb-btn mdi-btn-close" onclick="window._MDI.close('trading')"  title="닫기">✕</button>
         </div>
       </div>
       <div class="mdi-body" id="mdi-body-trading">
@@ -2877,9 +2841,9 @@
         <span class="mdi-tb-icon">📋</span>
         <span class="mdi-tb-title">전종목시세</span>
         <div class="mdi-tb-btns">
-          <button class="mdi-tb-btn mdi-btn-min"  onclick="_MDI.minimize('allstock')" title="최소화">─</button>
-          <button class="mdi-tb-btn mdi-btn-max"  onclick="_MDI.maximize('allstock')" title="최대화/복구">□</button>
-          <button class="mdi-tb-btn mdi-btn-close" onclick="_MDI.close('allstock')"  title="닫기">✕</button>
+          <button class="mdi-tb-btn mdi-btn-min"  onclick="window._MDI.minimize('allstock')" title="최소화">─</button>
+          <button class="mdi-tb-btn mdi-btn-max"  onclick="window._MDI.maximize('allstock')" title="최대화/복구">□</button>
+          <button class="mdi-tb-btn mdi-btn-close" onclick="window._MDI.close('allstock')"  title="닫기">✕</button>
         </div>
       </div>
       <div class="mdi-body" id="mdi-body-allstock">
@@ -2937,9 +2901,9 @@
         <span class="mdi-tb-icon">🏷</span>
         <span class="mdi-tb-title">테마별</span>
         <div class="mdi-tb-btns">
-          <button class="mdi-tb-btn mdi-btn-min"  onclick="_MDI.minimize('theme')" title="최소화">─</button>
-          <button class="mdi-tb-btn mdi-btn-max"  onclick="_MDI.maximize('theme')" title="최대화/복구">□</button>
-          <button class="mdi-tb-btn mdi-btn-close" onclick="_MDI.close('theme')"  title="닫기">✕</button>
+          <button class="mdi-tb-btn mdi-btn-min"  onclick="window._MDI.minimize('theme')" title="최소화">─</button>
+          <button class="mdi-tb-btn mdi-btn-max"  onclick="window._MDI.maximize('theme')" title="최대화/복구">□</button>
+          <button class="mdi-tb-btn mdi-btn-close" onclick="window._MDI.close('theme')"  title="닫기">✕</button>
         </div>
       </div>
       <div class="mdi-body" id="mdi-body-theme">
@@ -2968,9 +2932,9 @@
         <span class="mdi-tb-icon">📄</span>
         <span class="mdi-tb-title">거래기록</span>
         <div class="mdi-tb-btns">
-          <button class="mdi-tb-btn mdi-btn-min"  onclick="_MDI.minimize('trades')" title="최소화">─</button>
-          <button class="mdi-tb-btn mdi-btn-max"  onclick="_MDI.maximize('trades')" title="최대화/복구">□</button>
-          <button class="mdi-tb-btn mdi-btn-close" onclick="_MDI.close('trades')"  title="닫기">✕</button>
+          <button class="mdi-tb-btn mdi-btn-min"  onclick="window._MDI.minimize('trades')" title="최소화">─</button>
+          <button class="mdi-tb-btn mdi-btn-max"  onclick="window._MDI.maximize('trades')" title="최대화/복구">□</button>
+          <button class="mdi-tb-btn mdi-btn-close" onclick="window._MDI.close('trades')"  title="닫기">✕</button>
         </div>
       </div>
       <div class="mdi-body" id="mdi-body-trades">
@@ -3027,9 +2991,9 @@
         <span class="mdi-tb-icon">📰</span>
         <span class="mdi-tb-title">뉴스·시황</span>
         <div class="mdi-tb-btns">
-          <button class="mdi-tb-btn mdi-btn-min"  onclick="_MDI.minimize('news')" title="최소화">─</button>
-          <button class="mdi-tb-btn mdi-btn-max"  onclick="_MDI.maximize('news')" title="최대화/복구">□</button>
-          <button class="mdi-tb-btn mdi-btn-close" onclick="_MDI.close('news')"  title="닫기">✕</button>
+          <button class="mdi-tb-btn mdi-btn-min"  onclick="window._MDI.minimize('news')" title="최소화">─</button>
+          <button class="mdi-tb-btn mdi-btn-max"  onclick="window._MDI.maximize('news')" title="최대화/복구">□</button>
+          <button class="mdi-tb-btn mdi-btn-close" onclick="window._MDI.close('news')"  title="닫기">✕</button>
         </div>
       </div>
       <div class="mdi-body" id="mdi-body-news">
@@ -3178,9 +3142,9 @@
         <span class="mdi-tb-icon">📒</span>
         <span class="mdi-tb-title">투자일지</span>
         <div class="mdi-tb-btns">
-          <button class="mdi-tb-btn mdi-btn-min"  onclick="_MDI.minimize('journal')" title="최소화">─</button>
-          <button class="mdi-tb-btn mdi-btn-max"  onclick="_MDI.maximize('journal')" title="최대화/복구">□</button>
-          <button class="mdi-tb-btn mdi-btn-close" onclick="_MDI.close('journal')"  title="닫기">✕</button>
+          <button class="mdi-tb-btn mdi-btn-min"  onclick="window._MDI.minimize('journal')" title="최소화">─</button>
+          <button class="mdi-tb-btn mdi-btn-max"  onclick="window._MDI.maximize('journal')" title="최대화/복구">□</button>
+          <button class="mdi-tb-btn mdi-btn-close" onclick="window._MDI.close('journal')"  title="닫기">✕</button>
         </div>
       </div>
       <div class="mdi-body" id="mdi-body-journal">
@@ -3371,9 +3335,9 @@
         <span class="mdi-tb-icon">💰</span>
         <span class="mdi-tb-title">실현손익</span>
         <div class="mdi-tb-btns">
-          <button class="mdi-tb-btn mdi-btn-min"  onclick="_MDI.minimize('realized')" title="최소화">─</button>
-          <button class="mdi-tb-btn mdi-btn-max"  onclick="_MDI.maximize('realized')" title="최대화/복구">□</button>
-          <button class="mdi-tb-btn mdi-btn-close" onclick="_MDI.close('realized')"  title="닫기">✕</button>
+          <button class="mdi-tb-btn mdi-btn-min"  onclick="window._MDI.minimize('realized')" title="최소화">─</button>
+          <button class="mdi-tb-btn mdi-btn-max"  onclick="window._MDI.maximize('realized')" title="최대화/복구">□</button>
+          <button class="mdi-tb-btn mdi-btn-close" onclick="window._MDI.close('realized')"  title="닫기">✕</button>
         </div>
       </div>
       <div class="mdi-body" id="mdi-body-realized">
@@ -4741,6 +4705,8 @@ function switchTab(name) {
   if (name === 'news') renderNewsPortfolioLinks();
 }
 function switchSubTab(name) {
+  // ← MDI 전환 후 이 구버전 함수는 더 이상 사용되지 않음 (하위 호환 stub으로 교체됨)
+  return;
   currentSubTab = name;
   const isMobile = window.innerWidth <= 1100;
   const htsLeft   = document.querySelector('.hts-left');
@@ -8840,18 +8806,18 @@ function _toggleCheck(stockKey, checkKey, val) {
 
 
   // ═══════════════════════════════════════════════════════
-  //  MDI 정적 패널 매니저  proto-spinoff-2.6.6
+  //  MDI 정적 패널 매니저  proto-spinoff-2.6.6  (fix: window scope + delta drag)
   // ═══════════════════════════════════════════════════════
-  const _MDI = {
+  window._MDI = {
     topZ: 110,
     prevPos: {},   // pid -> {x,y,w,h}
-    minH: 26,      // 최소화 시 높이
+    OPEN_DEFAULT: ['watchlist','portfolio','trading','trades'],
 
-    // 기본 레이아웃 계산
+    // ── 기본 레이아웃 계산 ─────────────────────────────────────────────
     _layout() {
       const ws = document.getElementById('mdiWorkspace');
-      const W = ws ? ws.offsetWidth  : window.innerWidth;
-      const H = ws ? ws.offsetHeight : (window.innerHeight - 140);
+      const W = ws ? ws.offsetWidth  : Math.max(800, window.innerWidth);
+      const H = ws ? ws.offsetHeight : Math.max(400, window.innerHeight - 140);
       const lw = 220, rw = 402;
       const mw = Math.max(200, W - lw - rw - 6);
       const dh = Math.min(300, Math.floor(H * 0.36));
@@ -8869,7 +8835,7 @@ function _toggleCheck(stockKey, checkKey, val) {
       };
     },
 
-    // 초기화: 이벤트 핸들러만 등록 (패널은 이미 DOM에 있음)
+    // ── 초기화: 이벤트 핸들러 등록 + 기본배치 ─────────────────────────
     init() {
       document.querySelectorAll('.mdi-panel').forEach(panel => {
         const pid = panel.dataset.pid;
@@ -8880,11 +8846,12 @@ function _toggleCheck(stockKey, checkKey, val) {
         if (rz) this._resize(panel, rz);
         panel.addEventListener('mousedown', () => this._front(pid), true);
       });
-      // 기본배치 적용 (window 크기 기반)
       this.resetLayout();
+      // 메뉴버튼 초기 active 상태 동기화
+      this._syncAllBtns();
     },
 
-    // 패널 열기
+    // ── 열기 ────────────────────────────────────────────────────────────
     open(pid) {
       const el = document.getElementById('mdi-panel-' + pid);
       if (!el) return;
@@ -8893,78 +8860,112 @@ function _toggleCheck(stockKey, checkKey, val) {
       el.style.display = '';
       el.dataset.mdiState = 'open';
       if (body) body.style.display = '';
-      if (rz)   rz.style.display = '';
+      if (rz)   rz.style.display   = '';
       // 최소화 상태였으면 이전 높이 복구
-      if (this.prevPos[pid]?.h) el.style.height = this.prevPos[pid].h + 'px';
+      const ph = this.prevPos[pid] && this.prevPos[pid].h;
+      if (ph) el.style.height = ph + 'px';
       this._front(pid);
-      // 렌더 트리거
       this._render(pid);
+      this._syncBtn(pid);
     },
 
-    // 패널 닫기
+    // ── 닫기 ────────────────────────────────────────────────────────────
     close(pid) {
       const el = document.getElementById('mdi-panel-' + pid);
       if (!el) return;
       el.style.display = 'none';
       el.dataset.mdiState = 'closed';
-      if (pid === 'allstock') try { _stopAllStockAutoRefresh?.(); } catch(e) {}
+      if (pid === 'allstock') try { _stopAllStockAutoRefresh && _stopAllStockAutoRefresh(); } catch(e) {}
+      this._syncBtn(pid);
     },
 
-    // 토글
+    // ── 토글 ────────────────────────────────────────────────────────────
     toggle(pid) {
       const el = document.getElementById('mdi-panel-' + pid);
       if (!el) return;
-      const s = el.dataset.mdiState;
-      if (s === 'closed') this.open(pid);
+      if (el.dataset.mdiState === 'closed') this.open(pid);
       else this.close(pid);
     },
 
-    // 최소화 / 복구 (타이틀바만 남김)
+    // ── 최소화 / 복구 ───────────────────────────────────────────────────
     minimize(pid) {
-      const el = document.getElementById('mdi-panel-' + pid);
+      const el   = document.getElementById('mdi-panel-' + pid);
       const body = document.getElementById('mdi-body-' + pid);
-      const rz = el?.querySelector('.mdi-resize-se');
+      const rz   = el && el.querySelector('.mdi-resize-se');
       if (!el || !body) return;
       if (el.dataset.mdiState === 'minimized') {
-        const ph = this.prevPos[pid]?.h;
-        el.style.height = (ph || 300) + 'px';
+        const ph = this.prevPos[pid] && this.prevPos[pid].h;
+        el.style.height  = (ph || 300) + 'px';
         body.style.display = '';
         if (rz) rz.style.display = '';
         el.dataset.mdiState = 'open';
       } else {
-        this.prevPos[pid] = { ...this.prevPos[pid], h: el.offsetHeight };
+        if (!this.prevPos[pid]) this.prevPos[pid] = {};
+        this.prevPos[pid].h = el.offsetHeight;
         body.style.display = 'none';
         if (rz) rz.style.display = 'none';
-        el.style.height = this.minH + 'px';
+        el.style.height = '26px';
         el.dataset.mdiState = 'minimized';
       }
     },
 
-    // 최대화 / 복구
+    // ── 최대화 / 복구 ───────────────────────────────────────────────────
     maximize(pid) {
       const el = document.getElementById('mdi-panel-' + pid);
       const ws = document.getElementById('mdiWorkspace');
       if (!el || !ws) return;
       if (el.dataset.mdiState === 'maximized') {
         const pp = this.prevPos[pid];
-        if (pp) {
-          el.style.left   = pp.x + 'px';
-          el.style.top    = pp.y + 'px';
-          el.style.width  = pp.w + 'px';
-          el.style.height = pp.h + 'px';
-        }
+        if (pp) { el.style.left=pp.x+'px'; el.style.top=pp.y+'px'; el.style.width=pp.w+'px'; el.style.height=pp.h+'px'; }
         el.dataset.mdiState = 'open';
       } else {
-        this.prevPos[pid] = { x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight };
-        el.style.left = '0'; el.style.top = '0';
-        el.style.width  = ws.offsetWidth  + 'px';
-        el.style.height = ws.offsetHeight + 'px';
+        if (!this.prevPos[pid]) this.prevPos[pid] = {};
+        Object.assign(this.prevPos[pid], { x:el.offsetLeft, y:el.offsetTop, w:el.offsetWidth, h:el.offsetHeight });
+        el.style.left='0'; el.style.top='0';
+        el.style.width=ws.offsetWidth+'px'; el.style.height=ws.offsetHeight+'px';
         el.dataset.mdiState = 'maximized';
       }
       this._front(pid);
     },
 
-    // Z 순서
+    // ── 기본배치 ────────────────────────────────────────────────────────
+    resetLayout() {
+      const layout = this._layout();
+      Object.entries(layout).forEach(([pid, l]) => {
+        const el   = document.getElementById('mdi-panel-' + pid);
+        const body = document.getElementById('mdi-body-' + pid);
+        const rz   = el && el.querySelector('.mdi-resize-se');
+        if (!el) return;
+        el.style.left=l.x+'px'; el.style.top=l.y+'px';
+        el.style.width=l.w+'px'; el.style.height=l.h+'px';
+        el.style.display = l.open ? '' : 'none';
+        el.dataset.mdiState = l.open ? 'open' : 'closed';
+        if (body) body.style.display = '';
+        if (rz)   rz.style.display   = '';
+        if (this.prevPos[pid]) delete this.prevPos[pid];
+      });
+      document.querySelectorAll('.mdi-panel').forEach((el, i) => {
+        el.style.zIndex = 101 + i;
+        el.classList.remove('mdi-focused');
+      });
+      this.topZ = 101 + document.querySelectorAll('.mdi-panel').length;
+      this._syncAllBtns();
+    },
+
+    // ── 전체 최소화 / 복구 ──────────────────────────────────────────────
+    minimizeAll() {
+      document.querySelectorAll('.mdi-panel').forEach(el => {
+        if (el.style.display !== 'none' && el.dataset.mdiState !== 'minimized')
+          this.minimize(el.dataset.pid);
+      });
+    },
+    restoreAll() {
+      document.querySelectorAll('.mdi-panel').forEach(el => {
+        if (el.dataset.mdiState === 'minimized') this.minimize(el.dataset.pid);
+      });
+    },
+
+    // ── Z 순서 ──────────────────────────────────────────────────────────
     _front(pid) {
       const el = document.getElementById('mdi-panel-' + pid);
       if (!el) return;
@@ -8973,144 +8974,112 @@ function _toggleCheck(stockKey, checkKey, val) {
       el.style.zIndex = ++this.topZ;
     },
 
-    // 기본 배치 복구
-    resetLayout() {
-      const layout = this._layout();
-      Object.entries(layout).forEach(([pid, l]) => {
-        const el = document.getElementById('mdi-panel-' + pid);
-        const body = document.getElementById('mdi-body-' + pid);
-        const rz = el?.querySelector('.mdi-resize-se');
-        if (!el) return;
-        el.style.left   = l.x + 'px';
-        el.style.top    = l.y + 'px';
-        el.style.width  = l.w + 'px';
-        el.style.height = l.h + 'px';
-        el.style.display = l.open ? '' : 'none';
-        el.dataset.mdiState = l.open ? 'open' : 'closed';
-        if (body) body.style.display = '';
-        if (rz)   rz.style.display = '';
-        delete this.prevPos[pid];
-      });
-      document.querySelectorAll('.mdi-panel').forEach((el, i) => {
-        el.style.zIndex = 101 + i;
-        el.classList.remove('mdi-focused');
-      });
-      this.topZ = 101 + document.querySelectorAll('.mdi-panel').length;
+    // ── 메뉴버튼 active 동기화 ──────────────────────────────────────────
+    _syncBtn(pid) {
+      const btn = document.querySelector(`.mdi-panel-btn[data-pid="${pid}"]`);
+      const el  = document.getElementById('mdi-panel-' + pid);
+      if (btn && el) btn.classList.toggle('mdi-panel-btn-active', el.dataset.mdiState !== 'closed');
     },
-
-    // 전체 최소화
-    minimizeAll() {
-      document.querySelectorAll('.mdi-panel').forEach(el => {
-        if (el.style.display !== 'none') this.minimize(el.dataset.pid);
+    _syncAllBtns() {
+      document.querySelectorAll('.mdi-panel-btn[data-pid]').forEach(btn => {
+        const pid = btn.dataset.pid;
+        this._syncBtn(pid);
       });
     },
 
-    // 전체 복구
-    restoreAll() {
-      document.querySelectorAll('.mdi-panel').forEach(el => {
-        const pid = el.dataset.pid;
-        if (!pid) return;
-        if (el.dataset.mdiState === 'minimized') this.minimize(pid); // 토글
-      });
-    },
-
-    // 드래그 핸들러
+    // ── 드래그 (delta 방식: workspace 좌표계) ───────────────────────────
     _drag(panel, tb) {
-      tb.addEventListener('mousedown', e => {
-        if (e.target.closest('.mdi-tb-btns')) return;
+      tb.addEventListener('mousedown', ev => {
+        if (ev.target.closest('.mdi-tb-btns')) return;
         if (panel.dataset.mdiState === 'maximized') return;
-        const ox = e.clientX - panel.offsetLeft;
-        const oy = e.clientY - panel.offsetTop;
+        const startX   = ev.clientX;
+        const startY   = ev.clientY;
+        const startLeft = panel.offsetLeft;
+        const startTop  = panel.offsetTop;
         const ws = panel.parentElement;
-        const maxX = ws ? ws.offsetWidth - 40  : 9999;
-        const maxY = ws ? ws.offsetHeight - 26 : 9999;
+        const maxX = ws ? ws.offsetWidth  - 40  : 99999;
+        const maxY = ws ? ws.offsetHeight - 26 : 99999;
         const move = e => {
-          panel.style.left = Math.max(0, Math.min(maxX, e.clientX - ox)) + 'px';
-          panel.style.top  = Math.max(0, Math.min(maxY, e.clientY - oy)) + 'px';
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          panel.style.left = Math.max(0, Math.min(maxX, startLeft + dx)) + 'px';
+          panel.style.top  = Math.max(0, Math.min(maxY, startTop  + dy)) + 'px';
         };
         const up = () => {
           document.removeEventListener('mousemove', move);
-          document.removeEventListener('mouseup', up);
+          document.removeEventListener('mouseup',   up);
         };
         document.addEventListener('mousemove', move);
-        document.addEventListener('mouseup', up);
-        e.preventDefault();
+        document.addEventListener('mouseup',   up);
+        ev.preventDefault();
       });
     },
 
-    // 리사이즈 핸들러
+    // ── 리사이즈 (delta 방식) ────────────────────────────────────────────
     _resize(panel, rz) {
-      rz.addEventListener('mousedown', e => {
-        const ox = e.clientX - panel.offsetWidth;
-        const oy = e.clientY - panel.offsetHeight;
+      rz.addEventListener('mousedown', ev => {
+        const startX = ev.clientX;
+        const startY = ev.clientY;
+        const startW = panel.offsetWidth;
+        const startH = panel.offsetHeight;
         const move = e => {
-          panel.style.width  = Math.max(160, e.clientX - ox) + 'px';
-          panel.style.height = Math.max(this.minH, e.clientY - oy) + 'px';
+          panel.style.width  = Math.max(160, startW + (e.clientX - startX)) + 'px';
+          panel.style.height = Math.max(26,  startH + (e.clientY - startY)) + 'px';
         };
         const up = () => {
           document.removeEventListener('mousemove', move);
-          document.removeEventListener('mouseup', up);
+          document.removeEventListener('mouseup',   up);
         };
         document.addEventListener('mousemove', move);
-        document.addEventListener('mouseup', up);
-        e.preventDefault();
+        document.addEventListener('mouseup',   up);
+        ev.preventDefault();
       });
     },
 
-    // 패널별 렌더 트리거
+    // ── 패널별 렌더 트리거 ───────────────────────────────────────────────
     _render(pid) {
       try {
-        if (pid === 'portfolio') renderPortfolio?.();
-        if (pid === 'trades')    renderTrades?.();
-        if (pid === 'journal')   { renderJournals?.(); updateJournalDatalist?.(); }
-        if (pid === 'news')      renderNewsPortfolioLinks?.();
-        if (pid === 'realized')  renderRealizedTab?.();
-        if (pid === 'allstock')  { renderAllStockTab?.(); _startAllStockAutoRefresh?.(); }
-        if (pid === 'theme')     renderThemeTab?.();
-        if (pid === 'watchlist') renderWatchlist?.();
+        if (pid==='portfolio') renderPortfolio && renderPortfolio();
+        if (pid==='trades')    renderTrades    && renderTrades();
+        if (pid==='journal')   { renderJournals && renderJournals(); updateJournalDatalist && updateJournalDatalist(); }
+        if (pid==='news')      renderNewsPortfolioLinks && renderNewsPortfolioLinks();
+        if (pid==='realized')  renderRealizedTab  && renderRealizedTab();
+        if (pid==='allstock')  { renderAllStockTab && renderAllStockTab(); _startAllStockAutoRefresh && _startAllStockAutoRefresh(); }
+        if (pid==='theme')     renderThemeTab  && renderThemeTab();
+        if (pid==='watchlist') renderWatchlist && renderWatchlist();
       } catch(e) {}
     },
   };
 
-  // ── 전역 함수 ────────────────────────────────────────────
-  function mdiResetLayout() { _MDI.resetLayout(); }
-  function closeMdiMenu() {
-    document.querySelectorAll('.mdi-menu-item').forEach(el => el.classList.remove('mdi-open'));
-  }
+  // ── DOM 준비 후 초기화 ─────────────────────────────────────────────────
+  (function() {
+    function doInit() { window._MDI && window._MDI.init(); }
+    if (document.readyState === 'loading')
+      document.addEventListener('DOMContentLoaded', doInit);
+    else
+      doInit();
+  })();
 
-  // 드롭다운 클릭 토글 (hover로도 동작하지만 클릭도 지원)
-  document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.mdi-menu-trigger').forEach(btn => {
-      btn.addEventListener('click', function(e) {
-        const item = this.closest('.mdi-menu-item');
-        const wasOpen = item.classList.contains('mdi-open');
-        closeMdiMenu();
-        if (!wasOpen) item.classList.add('mdi-open');
-        e.stopPropagation();
-      });
-    });
-    document.addEventListener('click', closeMdiMenu);
+  // ── 전역 헬퍼 ─────────────────────────────────────────────────────────
+  function mdiResetLayout()  { window._MDI && window._MDI.resetLayout(); }
 
-    // MDI 초기화 (이벤트 핸들러 등록 + 기본배치)
-    _MDI.init();
-  });
-
-  // ── 구버전 호환 stubs ────────────────────────────────────
+  // ── 구버전 호환 stubs ─────────────────────────────────────────────────
   function switchSubTab(name) {
-    if (name === 'main' || name === 'portfolio') _MDI.open('portfolio');
-    else if (name === 'allstock') _MDI.open('allstock');
-    else if (name === 'theme')    _MDI.open('theme');
-    else if (name === 'news')     _MDI.open('news');
-    else if (name === 'journal')  _MDI.open('journal');
-    else if (name === 'trades')   _MDI.open('trades');
-    else if (name === 'add')      _MDI.open('realized');
-    else if (name === 'watchlist') _MDI.open('watchlist');
-    else if (name === 'trading')  _MDI.open('trading');
+    if (!window._MDI) return;
+    if (name==='main'||name==='portfolio') _MDI.open('portfolio');
+    else if (name==='allstock')  _MDI.open('allstock');
+    else if (name==='theme')     _MDI.open('theme');
+    else if (name==='news')      _MDI.open('news');
+    else if (name==='journal')   _MDI.open('journal');
+    else if (name==='trades')    _MDI.open('trades');
+    else if (name==='add')       _MDI.open('realized');
+    else if (name==='watchlist') _MDI.open('watchlist');
+    else if (name==='trading')   _MDI.open('trading');
   }
   function switchMainPanel(n) { switchSubTab(n); }
   function switchDock(n)      { switchSubTab(n); }
-  function toggleDock()       { _MDI.toggle('trades'); }
-  function toggleSidebar()    { _MDI.toggle('watchlist'); }
+  function toggleDock()       { window._MDI && _MDI.toggle('trades'); }
+  function toggleSidebar()    { window._MDI && _MDI.toggle('watchlist'); }
 
 </script>
 
