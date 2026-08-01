@@ -1986,172 +1986,153 @@
   .calc-collapsible { overflow: hidden; transition: max-height 0.25s ease; max-height: 0; }
   .calc-collapsible.open { max-height: 2000px; }
 
-  /* ═══════════════════════════════════════════════════════
-     PANEL LAYOUT  proto-spinoff-2.6.6
+    /* ═══════════════════════════════════════════════════════
+     MDI LAYOUT  proto-spinoff-2.6.6  (KAIROS-style)
      ═══════════════════════════════════════════════════════ */
-  .panel-layout-content {
+  .mdi-content {
     padding: 0 !important;
     overflow: hidden !important;
     display: flex;
     flex-direction: column;
     height: calc(100vh - 106px);
   }
-  .panel-grid {
-    display: grid;
-    grid-template-columns: 220px 1fr 380px;
-    flex: 1;
-    overflow: hidden;
-    min-height: 0;
-  }
-  /* ① 사이드바 */
-  .panel-sidebar {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border-right: 1px solid var(--border);
-    background: var(--bg);
-    transition: width 0.2s ease;
-  }
-  .sidebar-hdr {
+
+  /* 패널 메뉴바 */
+  .mdi-menubar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--border);
     background: var(--bg2);
-    font-size: 13px;
-    font-weight: 600;
+    border-bottom: 2px solid var(--border);
+    padding: 0 8px;
+    height: 34px;
     flex-shrink: 0;
-    gap: 6px;
-    user-select: none;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
-  .sidebar-pin-btn {
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    color: var(--text3);
-    font-size: 11px;
-    cursor: pointer;
-    padding: 2px 8px;
-    line-height: 1.5;
-    flex-shrink: 0;
-    font-family: inherit;
-    transition: color 0.15s, border-color 0.15s;
-  }
-  .sidebar-pin-btn:hover { color: var(--accent); border-color: var(--accent); }
-  .sidebar-body { flex: 1; overflow-y: auto; padding: 8px; }
-  /* ② 메인 */
-  .panel-main { display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
-  .pmain-tabbar {
-    display: flex;
-    background: var(--bg2);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .pmain-tab {
-    padding: 10px 16px;
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: var(--text3);
-    font-size: 13px;
-    font-weight: 400;
-    cursor: pointer;
-    transition: color 0.15s, border-color 0.15s;
-    font-family: inherit;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    white-space: nowrap;
-  }
-  .pmain-tab:hover { color: var(--text); }
-  .pmain-tab.active { border-bottom-color: var(--accent); color: var(--accent); font-weight: 700; }
-  .pmain-panel { flex: 1; overflow-y: auto; padding: 12px; min-height: 0; }
-  /* ③ 트레이딩 */
-  .panel-trading {
-    overflow-y: auto;
-    border-left: 1px solid var(--border);
-    background: var(--bg);
-    min-width: 0;
-  }
-  /* ④ 하단 독 */
-  .panel-dock {
-    border-top: 2px solid var(--border);
-    background: var(--bg);
-    height: 270px;
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    transition: height 0.2s ease;
-    overflow: hidden;
-  }
-  .panel-dock.collapsed { height: 36px; }
-  .dock-tabbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--bg2);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-    height: 36px;
-    padding-right: 8px;
-  }
-  .dock-tab {
-    padding: 0 14px;
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: var(--text3);
-    font-size: 12px;
-    font-weight: 400;
-    cursor: pointer;
-    height: 36px;
-    font-family: inherit;
-    transition: color 0.15s, border-color 0.15s;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
-  }
-  .dock-tab:hover { color: var(--text); }
-  .dock-tab.active { border-bottom-color: var(--accent); color: var(--accent); font-weight: 700; }
-  .dock-toggle {
-    padding: 4px 10px;
+  .mdi-menubar::-webkit-scrollbar { display: none; }
+  .mdi-menu-panels { display: flex; align-items: center; gap: 2px; flex: 1; }
+  .mdi-sep { width: 1px; height: 18px; background: var(--border); margin: 0 3px; flex-shrink: 0; }
+  .mdi-menu-right { display: flex; align-items: center; margin-left: 8px; }
+  .mdi-btn {
+    padding: 3px 10px;
     background: var(--bg3);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 3px;
+    color: var(--text3);
+    font-size: 11.5px;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: all 0.12s;
+    line-height: 1.4;
+  }
+  .mdi-btn:hover { color: var(--text); border-color: var(--text3); }
+  .mdi-btn.mdi-active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+  }
+  .mdi-reset-btn {
+    padding: 3px 8px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 3px;
     color: var(--text3);
     font-size: 11px;
     cursor: pointer;
     font-family: inherit;
-    flex-shrink: 0;
     white-space: nowrap;
-    transition: color 0.15s, border-color 0.15s;
   }
-  .dock-toggle:hover { color: var(--text); border-color: var(--text3); }
-  .dock-body { flex: 1; overflow-y: auto; min-height: 0; }
-  .dock-panel { padding: 10px 12px; }
-  /* FAB (사이드바 접힌 경우) */
-  .sidebar-expand-fab {
-    position: fixed;
-    left: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 200;
-    background: var(--bg2);
+  .mdi-reset-btn:hover { color: var(--text); border-color: var(--text3); }
+
+  /* MDI 워크스페이스 */
+  .mdi-workspace {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+    background: #080b11;
+    min-height: 0;
+  }
+
+  /* 플로팅 패널 */
+  .mdi-panel {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px 6px;
-    cursor: pointer;
-    color: var(--text3);
-    font-size: 10px;
-    line-height: 1.5;
-    text-align: center;
-    display: none;
-    font-family: inherit;
-    transition: color 0.15s, border-color 0.15s;
+    border-radius: 3px;
+    box-shadow: 0 3px 12px rgba(0,0,0,.55);
+    min-width: 160px;
+    min-height: 56px;
+    overflow: hidden;
+    box-sizing: border-box;
   }
-  .sidebar-expand-fab:hover { color: var(--accent); border-color: var(--accent); }
+  .mdi-panel.mdi-focused { border-color: var(--accent); box-shadow: 0 4px 20px rgba(0,0,0,.7); }
+
+  /* 타이틀바 */
+  .mdi-tb {
+    display: flex;
+    align-items: center;
+    height: 26px;
+    min-height: 26px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    cursor: move;
+    user-select: none;
+    flex-shrink: 0;
+    padding: 0 3px 0 8px;
+    gap: 4px;
+  }
+  .mdi-panel.mdi-focused .mdi-tb { background: #1a2233; border-bottom-color: var(--accent); }
+  .mdi-tb-title {
+    flex: 1;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .mdi-tb-btns { display: flex; align-items: center; gap: 1px; }
+  .mdi-tb-btn {
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    background: none; border: none; border-radius: 2px;
+    color: var(--text3); cursor: pointer; padding: 0;
+    font-family: inherit; font-size: 13px; line-height: 1;
+    transition: background 0.1s, color 0.1s;
+  }
+  .mdi-tb-btn:hover { background: rgba(255,255,255,.1); color: var(--text); }
+  .mdi-btn-close:hover { background: #c53030 !important; color: #fff !important; }
+
+  /* 패널 바디 */
+  .mdi-body {
+    flex: 1;
+    overflow: auto;
+    min-height: 0;
+  }
+
+  /* SE 리사이즈 핸들 */
+  .mdi-resize-se {
+    position: absolute;
+    right: 0; bottom: 0;
+    width: 14px; height: 14px;
+    cursor: se-resize;
+    z-index: 1;
+  }
+  .mdi-resize-se::after {
+    content: '';
+    position: absolute;
+    right: 3px; bottom: 3px;
+    width: 6px; height: 6px;
+    border-right: 2px solid var(--border);
+    border-bottom: 2px solid var(--border);
+    opacity: 0.5;
+  }
+  .mdi-resize-se:hover::after { opacity: 1; border-color: var(--accent); }
 
   </style>
 </head>
@@ -2275,21 +2256,32 @@
 </div>
 
 
-<!-- ========== 패널 레이아웃 (proto-spinoff-2.6.6) ========== -->
-<div class="content panel-layout-content">
+<!-- ========== KAIROS-STYLE MDI LAYOUT (proto-spinoff-2.6.6) ========== -->
+<div class="content mdi-content">
 
-<!-- 사이드바 접힘 FAB -->
-<button class="sidebar-expand-fab" id="sidebarFab" onclick="toggleSidebar()" title="관심종목 펼치기">&#11088;<br>관<br>심</button>
+<div class="mdi-menubar" id="mdiMenubar">
+  <div class="mdi-menu-panels">
+    <button class="mdi-btn mdi-active" data-pid="watchlist" onclick="mdiToggle('watchlist')">★ 관심종목</button>
+    <button class="mdi-btn mdi-active" data-pid="portfolio" onclick="mdiToggle('portfolio')">포트폴리오</button>
+    <button class="mdi-btn mdi-active" data-pid="trading"   onclick="mdiToggle('trading')">주문/호가</button>
+    <span class="mdi-sep"></span>
+    <button class="mdi-btn"            data-pid="allstock"  onclick="mdiToggle('allstock')">전종목</button>
+    <button class="mdi-btn"            data-pid="theme"     onclick="mdiToggle('theme')">테마별</button>
+    <span class="mdi-sep"></span>
+    <button class="mdi-btn mdi-active" data-pid="trades"    onclick="mdiToggle('trades')">거래기록</button>
+    <button class="mdi-btn"            data-pid="news"      onclick="mdiToggle('news')">뉴스·시황</button>
+    <button class="mdi-btn"            data-pid="journal"   onclick="mdiToggle('journal')">투자일지</button>
+    <button class="mdi-btn"            data-pid="realized"  onclick="mdiToggle('realized')">실현손익</button>
+  </div>
+  <div class="mdi-menu-right">
+    <button class="mdi-reset-btn" onclick="mdiResetLayout()" title="기본 배치">기본배치</button>
+  </div>
+</div>
 
-<div class="panel-grid" id="panelGrid">
+<div class="mdi-workspace" id="mdiWorkspace"></div>
 
-  <!-- ① 좌: 관심종목 사이드바 (항상 표시) -->
-  <aside class="panel-sidebar" id="panelSidebar">
-    <div class="sidebar-hdr">
-      <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 관심종목</span>
-      <button class="sidebar-pin-btn" id="sidebarToggleBtn" onclick="toggleSidebar()" title="접기">&#9664;</button>
-    </div>
-    <div class="sidebar-body">
+<div id="mdi-store" style="display:none">
+  <div id="fpc-watchlist">
 
       <div class="card" style="margin-bottom:12px;">
         <div class="card-title" style="margin-bottom:10px;">
@@ -2315,19 +2307,9 @@
         </div>
       </div>
     </div>
-    </div>
-  </aside>
-
-  <!-- ② 중: 메인 패널 -->
-  <main class="panel-main" id="panelMain">
-    <div class="pmain-tabbar">
-      <button class="pmain-tab active" data-panel="portfolio" onclick="switchMainPanel('portfolio')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> 총괄 포트폴리오</button>
-      <button class="pmain-tab" data-panel="allstock" onclick="switchMainPanel('allstock')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> 전종목</button>
-      <button class="pmain-tab" data-panel="theme" onclick="switchMainPanel('theme')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> 테마별</button>
-    </div>
-
-    <!-- 총괄 패널 -->
-    <div id="pmain-portfolio" class="pmain-panel">
+    
+  </div>
+  <div id="fpc-portfolio">
 
 
   <!-- TOTAL ASSET SETTING -->
@@ -2407,77 +2389,9 @@
   </div><!-- /잔고 테이블 -->
 
   </div>
-    </div><!-- /pmain-portfolio -->
-
-    <!-- 전종목 패널 -->
-    <div id="pmain-allstock" class="pmain-panel" style="display:none">
-
-      <div class="card" style="max-width:1300px;margin:0 auto;">
-        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-          <span style="display:flex;align-items:center;gap:6px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-            전종목 조회
-            <span id="allStockCount" style="font-size:11px;color:var(--text3);font-weight:400;"></span>
-          </span>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <input id="allStockSearch" type="text" placeholder="종목명·코드·업종 검색" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:12px;width:170px;" oninput="filterAndRenderAll()">
-            <button onclick="loadAllStocks(true)" id="allStockRefreshBtn" style="padding:5px 10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;">🔄 새로고침</button>
-            <button onclick="fetchAllStockPagePrices()" id="allStockPriceBtn" title="현재 페이지 종목을 KIS/Yahoo로 실시간 조회" style="padding:5px 10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;">📡 시세 조회</button>
-          </div>
-        </div>
-        <!-- 시장 탭: KOSPI / KOSDAQ / ETF -->
-        <div style="display:flex;gap:0;margin-bottom:10px;border-bottom:1px solid var(--border);">
-          <button id="allMktTab-KOSPI"  onclick="switchAllMarket('KOSPI')"  style="padding:7px 18px;background:none;border:none;border-bottom:2px solid var(--accent);color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;">KOSPI</button>
-          <button id="allMktTab-KOSDAQ" onclick="switchAllMarket('KOSDAQ')" style="padding:7px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:13px;font-weight:400;cursor:pointer;">KOSDAQ</button>
-          <button id="allMktTab-ETF"    onclick="switchAllMarket('ETF')"    style="padding:7px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:13px;font-weight:400;cursor:pointer;">ETF</button>
-        </div>
-        <div id="allStockStatus" style="font-size:11px;color:var(--text3);margin-bottom:6px;min-height:16px;"></div>
-        <div style="overflow-x:auto;">
-          <table class="hts-table" id="allStockTable" style="min-width:700px;">
-            <thead>
-              <tr>
-                <th>종목명</th><th>코드</th><th>업종</th>
-                <th style="text-align:right;">현재가</th>
-                <th style="text-align:right;">전일대비</th>
-                <th style="text-align:right;">등락률</th>
-                <th style="text-align:right;">거래량</th>
-                <th style="text-align:right;">시총(억)</th>
-              </tr>
-            </thead>
-            <tbody id="allStockBody">
-              <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:48px 20px;">
-                시장 탭을 선택하면 자동으로 불러옵니다
-              </td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div style="display:flex;justify-content:center;align-items:center;gap:4px;margin-top:12px;flex-wrap:wrap;" id="allStockPagination"></div>
-      </div>
     </div>
-    </div><!-- /pmain-allstock -->
-
-    <!-- 테마별 패널 -->
-    <div id="pmain-theme" class="pmain-panel" style="display:none">
-
-      <div class="card" style="max-width:860px;margin:0 auto;">
-        <div class="card-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-          테마별 종목
-        </div>
-        <div id="themeList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;"></div>
-        <div id="themeStockTable">
-          <div style="color:var(--text3);font-size:13px;text-align:center;padding:40px 0;">
-            왼쪽에서 테마를 선택하면 해당 종목이 표시됩니다.
-          </div>
-        </div>
-      </div>
-    </div>
-    </div><!-- /pmain-theme -->
-
-  </main><!-- /panel-main -->
-
-  <!-- ③ 우: 트레이딩 패널 (잔고/예수금/주문/호가 등) -->
-  <aside class="panel-trading" id="panelTrading">
+  </div>
+  <div id="fpc-trading">
 <!-- ========== 종합탭 우측 미니탭 래퍼 ========== -->
     <div id="main-right-wrapper">
       <div class="right-mini-tabs">
@@ -2842,23 +2756,72 @@
       </div><!-- /rtab-corp -->
 
     </div><!-- /main-right-wrapper -->
-  </aside><!-- /panel-trading -->
-
-</div><!-- /panel-grid -->
-
-<!-- ④ 하단 독 (거래기록 / 뉴스시황 / 투자일지 / 실현손익) -->
-<div class="panel-dock" id="panelDock">
-  <div class="dock-tabbar">
-    <div style="display:flex;align-items:center;height:36px;">
-      <button class="dock-tab active" data-dpanel="trades"   onclick="switchDock('trades')">&#128203; 거래기록</button>
-      <button class="dock-tab"        data-dpanel="news"     onclick="switchDock('news')">&#128240; 뉴스/시황</button>
-      <button class="dock-tab"        data-dpanel="journal"  onclick="switchDock('journal')">&#128211; 투자일지</button>
-      <button class="dock-tab"        data-dpanel="realized" onclick="switchDock('realized')">&#128176; 실현손익</button>
-    </div>
-    <button class="dock-toggle" id="dockToggle" onclick="toggleDock()">&#9660; 접기</button>
+  
   </div>
-  <div class="dock-body" id="dockBody">
-    <div id="dpanel-trades" class="dock-panel">
+  <div id="fpc-allstock">
+
+      <div class="card" style="max-width:1300px;margin:0 auto;">
+        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <span style="display:flex;align-items:center;gap:6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            전종목 조회
+            <span id="allStockCount" style="font-size:11px;color:var(--text3);font-weight:400;"></span>
+          </span>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input id="allStockSearch" type="text" placeholder="종목명·코드·업종 검색" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:12px;width:170px;" oninput="filterAndRenderAll()">
+            <button onclick="loadAllStocks(true)" id="allStockRefreshBtn" style="padding:5px 10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;">🔄 새로고침</button>
+            <button onclick="fetchAllStockPagePrices()" id="allStockPriceBtn" title="현재 페이지 종목을 KIS/Yahoo로 실시간 조회" style="padding:5px 10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;">📡 시세 조회</button>
+          </div>
+        </div>
+        <!-- 시장 탭: KOSPI / KOSDAQ / ETF -->
+        <div style="display:flex;gap:0;margin-bottom:10px;border-bottom:1px solid var(--border);">
+          <button id="allMktTab-KOSPI"  onclick="switchAllMarket('KOSPI')"  style="padding:7px 18px;background:none;border:none;border-bottom:2px solid var(--accent);color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;">KOSPI</button>
+          <button id="allMktTab-KOSDAQ" onclick="switchAllMarket('KOSDAQ')" style="padding:7px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:13px;font-weight:400;cursor:pointer;">KOSDAQ</button>
+          <button id="allMktTab-ETF"    onclick="switchAllMarket('ETF')"    style="padding:7px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:13px;font-weight:400;cursor:pointer;">ETF</button>
+        </div>
+        <div id="allStockStatus" style="font-size:11px;color:var(--text3);margin-bottom:6px;min-height:16px;"></div>
+        <div style="overflow-x:auto;">
+          <table class="hts-table" id="allStockTable" style="min-width:700px;">
+            <thead>
+              <tr>
+                <th>종목명</th><th>코드</th><th>업종</th>
+                <th style="text-align:right;">현재가</th>
+                <th style="text-align:right;">전일대비</th>
+                <th style="text-align:right;">등락률</th>
+                <th style="text-align:right;">거래량</th>
+                <th style="text-align:right;">시총(억)</th>
+              </tr>
+            </thead>
+            <tbody id="allStockBody">
+              <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:48px 20px;">
+                시장 탭을 선택하면 자동으로 불러옵니다
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;justify-content:center;align-items:center;gap:4px;margin-top:12px;flex-wrap:wrap;" id="allStockPagination"></div>
+      </div>
+    </div>
+    </div>
+  </div>
+  <div id="fpc-theme">
+
+      <div class="card" style="max-width:860px;margin:0 auto;">
+        <div class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          테마별 종목
+        </div>
+        <div id="themeList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;"></div>
+        <div id="themeStockTable">
+          <div style="color:var(--text3);font-size:13px;text-align:center;padding:40px 0;">
+            왼쪽에서 테마를 선택하면 해당 종목이 표시됩니다.
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+  <div id="fpc-trades">
 
       <div class="card">
     <div class="section-row">
@@ -2901,8 +2864,9 @@
   </div>
   <datalist id="tStockList"></datalist>
     </div>
-    </div><!-- /dpanel-trades -->
-    <div id="dpanel-news" class="dock-panel" style="display:none">
+    </div>
+  </div>
+  <div id="fpc-news">
 
       <!-- 종목 검색 -->
       <div class="card">
@@ -3037,8 +3001,9 @@
 
       </div><!-- /news-grid -->
     </div>
-    </div><!-- /dpanel-news -->
-    <div id="dpanel-journal" class="dock-panel" style="display:none">
+    </div>
+  </div>
+  <div id="fpc-journal">
 
       <div id="journalLayout">
 
@@ -3215,8 +3180,9 @@
 
   </div>
     </div>
-    </div><!-- /dpanel-journal -->
-    <div id="dpanel-realized" class="dock-panel" style="display:none">
+    </div>
+  </div>
+  <div id="fpc-realized">
 
   <!-- 실현손익 요약 카드 -->
   <div class="card" style="margin-bottom:12px;">
@@ -3271,11 +3237,12 @@
     <div id="realizedEmpty" class="empty-state" style="display:none;">매도 기록이 없습니다</div>
   </div>
 </div>
-    </div><!-- /dpanel-realized -->
-  </div><!-- /dock-body -->
-</div><!-- /panel-dock -->
+    </div>
+  </div>
+</div>
 
-</div><!-- /panel-layout-content -->
+</div><!-- /mdi-content -->
+
 
 
 <!-- SELL MODAL -->
@@ -5032,8 +4999,8 @@ function _startAllStockAutoRefresh() {
   _stopAllStockAutoRefresh();
   _allStockAutoRefreshTimer = setInterval(async () => {
     // 전종목 탭이 보이는 상태인지 확인
-    const panel = document.getElementById('stab-allstock');
-    if (!panel || panel.style.display === 'none') { _stopAllStockAutoRefresh(); return; }
+    const _asPanel = document.getElementById('mdi-panel-allstock');
+    if (!_asPanel || _asPanel.dataset.mdiState === 'closed' || _asPanel.dataset.mdiState === 'minimized') { _stopAllStockAutoRefresh(); return; }
     if (!window.electronAPI?.fetchNaverStocks) return;
     try {
       const result = await window.electronAPI.fetchNaverStocks(_allMkt);
@@ -8672,76 +8639,309 @@ function _toggleCheck(stockKey, checkKey, val) {
 }
 
 
-  // ═══════════════════════════════════════════════════════
-  // 패널 레이아웃 컨트롤  (proto-spinoff-2.6.6)
-  // ═══════════════════════════════════════════════════════
+  
 
+
+  // ═══════════════════════════════════════════════════════
+  //  MDI 패널 매니저  proto-spinoff-2.6.6  (KAIROS-style)
+  // ═══════════════════════════════════════════════════════
+  const _MDI = {
+    topZ: 100,
+    panels: {},   // id -> {state, prevPos, prevSize}
+
+    // 패널 정의
+    DEFS: [
+      { id:'watchlist', title:'★ 관심종목',   src:'fpc-watchlist', defaultOpen:true  },
+      { id:'portfolio', title:'📊 포트폴리오', src:'fpc-portfolio', defaultOpen:true  },
+      { id:'trading',   title:'📈 주문/호가',  src:'fpc-trading',   defaultOpen:true  },
+      { id:'allstock',  title:'📋 전종목',     src:'fpc-allstock',  defaultOpen:false },
+      { id:'theme',     title:'🏷 테마별',     src:'fpc-theme',     defaultOpen:false },
+      { id:'trades',    title:'📄 거래기록',   src:'fpc-trades',    defaultOpen:true  },
+      { id:'news',      title:'📰 뉴스·시황',  src:'fpc-news',      defaultOpen:false },
+      { id:'journal',   title:'📒 투자일지',   src:'fpc-journal',   defaultOpen:false },
+      { id:'realized',  title:'💰 실현손익',   src:'fpc-realized',  defaultOpen:false },
+    ],
+
+    // 기본 레이아웃 계산 (컨테이너 크기 기반)
+    _layout() {
+      const ws = document.getElementById('mdiWorkspace');
+      const cw = ws ? ws.offsetWidth  : (window.innerWidth  - 20);
+      const ch = ws ? ws.offsetHeight : (window.innerHeight - 150);
+      const lw = 222, rw = 402;
+      const mw = Math.max(200, cw - lw - rw - 6);
+      const dh = Math.min(280, Math.floor(ch * 0.36));
+      const mh = ch - dh - 4;
+      return {
+        watchlist: { x:0,        y:0,   w:lw,  h:ch,   open:true  },
+        portfolio: { x:lw+3,     y:0,   w:mw,  h:mh,   open:true  },
+        trading:   { x:lw+mw+6,  y:0,   w:rw,  h:ch,   open:true  },
+        allstock:  { x:lw+3,     y:0,   w:mw,  h:ch,   open:false },
+        theme:     { x:lw+3,     y:0,   w:mw,  h:ch,   open:false },
+        trades:    { x:lw+3,     y:mh+4,w:mw,  h:dh,   open:true  },
+        news:      { x:lw+3,     y:60,  w:600, h:400,  open:false },
+        journal:   { x:lw+3,     y:60,  w:700, h:500,  open:false },
+        realized:  { x:lw+3,     y:60,  w:700, h:420,  open:false },
+      };
+    },
+
+    // 초기화
+    init() {
+      const ws = document.getElementById('mdiWorkspace');
+      if (!ws) return;
+      const layout = this._layout();
+
+      this.DEFS.forEach(def => {
+        const srcEl = document.getElementById(def.src);
+        if (!srcEl) return;
+        const l = layout[def.id] || { x:80, y:80, w:400, h:300, open:def.defaultOpen };
+
+        // 패널 DOM 생성
+        const panel = document.createElement('div');
+        panel.className = 'mdi-panel';
+        panel.id = 'mdi-panel-' + def.id;
+        panel.dataset.mdiState = l.open ? 'open' : 'closed';
+        panel.style.cssText = [
+          `left:${l.x}px`, `top:${l.y}px`,
+          `width:${l.w}px`, `height:${l.h}px`,
+          `z-index:${++this.topZ}`,
+          l.open ? '' : 'display:none',
+        ].join(';');
+
+        // 타이틀바
+        const tb = document.createElement('div');
+        tb.className = 'mdi-tb';
+        tb.dataset.pid = def.id;
+        tb.innerHTML =
+          `<span class="mdi-tb-title">${def.title}</span>` +
+          `<div class="mdi-tb-btns">` +
+          `<button class="mdi-tb-btn mdi-btn-min" onclick="_MDI.minimize('${def.id}')" title="최소화">─</button>` +
+          `<button class="mdi-tb-btn mdi-btn-max" onclick="_MDI.maximize('${def.id}')" title="최대화/복구">□</button>` +
+          `<button class="mdi-tb-btn mdi-btn-close" onclick="_MDI.close('${def.id}')" title="닫기">✕</button>` +
+          `</div>`;
+
+        // 바디 — 콘텐츠 이동
+        const body = document.createElement('div');
+        body.className = 'mdi-body';
+        body.id = 'mdi-body-' + def.id;
+        while (srcEl.firstChild) body.appendChild(srcEl.firstChild);
+
+        // 리사이즈 핸들
+        const rz = document.createElement('div');
+        rz.className = 'mdi-resize-se';
+
+        panel.appendChild(tb);
+        panel.appendChild(body);
+        panel.appendChild(rz);
+        ws.appendChild(panel);
+
+        this.panels[def.id] = { state: l.open ? 'open' : 'closed', prevPos:null, prevSize:null };
+        this._makeDraggable(panel, tb);
+        this._makeResizable(panel, rz);
+        panel.addEventListener('mousedown', () => this._front(def.id), true);
+        this._syncBtn(def.id);
+      });
+
+      // 초기 렌더 트리거
+      setTimeout(() => {
+        try { if (typeof renderPortfolio  === 'function') renderPortfolio(); }  catch(e){}
+        try { if (typeof renderTrades     === 'function') renderTrades(); }     catch(e){}
+        try { if (typeof renderNewsPortfolioLinks === 'function') renderNewsPortfolioLinks(); } catch(e){}
+      }, 100);
+    },
+
+    // 열기
+    open(id) {
+      const p = this.panels[id], el = document.getElementById('mdi-panel-'+id);
+      if (!p || !el) return;
+      el.style.display = '';
+      el.dataset.mdiState = 'open';
+      p.state = 'open';
+      // body/resize 복구 (최소화 해제)
+      const body = document.getElementById('mdi-body-'+id);
+      const rz = el.querySelector('.mdi-resize-se');
+      if (body) body.style.display = '';
+      if (rz) rz.style.display = '';
+      if (p.prevSize) el.style.height = p.prevSize.h + 'px';
+      this._front(id);
+      this._syncBtn(id);
+      // 탭별 렌더
+      if (id==='trades')    try{ renderTrades?.(); }catch(e){}
+      if (id==='journal')   try{ renderJournals?.(); updateJournalDatalist?.(); }catch(e){}
+      if (id==='news')      try{ renderNewsPortfolioLinks?.(); }catch(e){}
+      if (id==='realized')  try{ renderRealizedTab?.(); }catch(e){}
+      if (id==='allstock')  try{ renderAllStockTab?.(); _startAllStockAutoRefresh?.(); }catch(e){}
+      if (id==='theme')     try{ renderThemeTab?.(); }catch(e){}
+    },
+
+    // 닫기
+    close(id) {
+      const p = this.panels[id], el = document.getElementById('mdi-panel-'+id);
+      if (!p || !el) return;
+      el.style.display = 'none';
+      el.dataset.mdiState = 'closed';
+      p.state = 'closed';
+      if (id === 'allstock') try{ _stopAllStockAutoRefresh?.(); }catch(e){}
+      this._syncBtn(id);
+    },
+
+    // 토글 (메뉴버튼)
+    toggle(id) {
+      const p = this.panels[id];
+      if (!p) return;
+      if (p.state === 'closed') this.open(id);
+      else this.close(id);
+    },
+
+    // 최소화 (타이틀바만 남김)
+    minimize(id) {
+      const p = this.panels[id], el = document.getElementById('mdi-panel-'+id);
+      const body = document.getElementById('mdi-body-'+id);
+      const rz = el?.querySelector('.mdi-resize-se');
+      if (!p || !el || !body) return;
+      if (p.state === 'minimized') {
+        body.style.display = '';
+        if (rz) rz.style.display = '';
+        el.style.height = (p.prevSize?.h || 300) + 'px';
+        el.dataset.mdiState = 'open'; p.state = 'open';
+      } else {
+        p.prevSize = { w: el.offsetWidth, h: el.offsetHeight };
+        body.style.display = 'none';
+        if (rz) rz.style.display = 'none';
+        el.style.height = '26px';
+        el.dataset.mdiState = 'minimized'; p.state = 'minimized';
+      }
+    },
+
+    // 최대화 / 복구
+    maximize(id) {
+      const p = this.panels[id], el = document.getElementById('mdi-panel-'+id);
+      const ws = document.getElementById('mdiWorkspace');
+      if (!p || !el || !ws) return;
+      if (p.state === 'maximized') {
+        el.style.left   = (p.prevPos?.x || 0) + 'px';
+        el.style.top    = (p.prevPos?.y || 0) + 'px';
+        el.style.width  = (p.prevSize?.w || 400) + 'px';
+        el.style.height = (p.prevSize?.h || 300) + 'px';
+        el.dataset.mdiState = 'open'; p.state = 'open';
+      } else {
+        p.prevPos  = { x: el.offsetLeft, y: el.offsetTop };
+        p.prevSize = { w: el.offsetWidth, h: el.offsetHeight };
+        el.style.left = '0'; el.style.top = '0';
+        el.style.width  = ws.offsetWidth  + 'px';
+        el.style.height = ws.offsetHeight + 'px';
+        el.dataset.mdiState = 'maximized'; p.state = 'maximized';
+      }
+      this._front(id);
+    },
+
+    // Z-order
+    _front(id) {
+      const el = document.getElementById('mdi-panel-'+id);
+      if (!el) return;
+      document.querySelectorAll('.mdi-panel').forEach(p => p.classList.remove('mdi-focused'));
+      el.classList.add('mdi-focused');
+      el.style.zIndex = ++this.topZ;
+    },
+
+    // 메뉴버튼 active 동기화
+    _syncBtn(id) {
+      const btn = document.querySelector(`.mdi-btn[data-pid="${id}"]`);
+      const p = this.panels[id];
+      if (btn && p) btn.classList.toggle('mdi-active', p.state !== 'closed');
+    },
+
+    // 드래그 (타이틀바)
+    _makeDraggable(panel, tb) {
+      tb.addEventListener('mousedown', e => {
+        if (e.target.closest('.mdi-tb-btns')) return;
+        const id = panel.id.replace('mdi-panel-','');
+        if (this.panels[id]?.state === 'maximized') return;
+        let ox=e.clientX, oy=e.clientY, ol=panel.offsetLeft, ot=panel.offsetTop;
+        const move = e => {
+          panel.style.left = Math.max(0, ol + e.clientX - ox) + 'px';
+          panel.style.top  = Math.max(0, ot + e.clientY - oy) + 'px';
+        };
+        const up = () => { document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up); };
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', up);
+        e.preventDefault();
+      });
+    },
+
+    // 리사이즈 (SE 핸들)
+    _makeResizable(panel, rz) {
+      if (!rz) return;
+      rz.addEventListener('mousedown', e => {
+        let ox=e.clientX, oy=e.clientY, ow=panel.offsetWidth, oh=panel.offsetHeight;
+        const move = e => {
+          panel.style.width  = Math.max(160, ow + e.clientX - ox) + 'px';
+          panel.style.height = Math.max(56,  oh + e.clientY - oy) + 'px';
+        };
+        const up = () => { document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up); };
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', up);
+        e.preventDefault();
+      });
+    },
+
+    // 기본 배치 복구
+    resetLayout() {
+      const layout = this._layout();
+      Object.keys(layout).forEach(id => {
+        const p = this.panels[id], el = document.getElementById('mdi-panel-'+id);
+        const body = document.getElementById('mdi-body-'+id);
+        const rz = el?.querySelector('.mdi-resize-se');
+        if (!p || !el) return;
+        const l = layout[id];
+        el.style.left = l.x+'px'; el.style.top = l.y+'px';
+        el.style.width = l.w+'px'; el.style.height = l.h+'px';
+        el.style.display = l.open ? '' : 'none';
+        el.dataset.mdiState = l.open ? 'open' : 'closed';
+        p.state = l.open ? 'open' : 'closed';
+        if (body) body.style.display = '';
+        if (rz) rz.style.display = '';
+        p.prevPos = null; p.prevSize = null;
+        this._syncBtn(id);
+      });
+      // z-order 리셋
+      document.querySelectorAll('.mdi-panel').forEach((el,i) => { el.style.zIndex = 101+i; el.classList.remove('mdi-focused'); });
+      this.topZ = 101 + this.DEFS.length;
+    },
+  };
+
+  // 전역 함수
+  function mdiToggle(id)    { _MDI.toggle(id); }
+  function mdiResetLayout() { _MDI.resetLayout(); }
+
+  // 구버전 호환 stubs
   function switchMainPanel(name) {
-    document.querySelectorAll('.pmain-panel').forEach(p => p.style.display = 'none');
-    document.querySelectorAll('.pmain-tab').forEach(b => {
-      b.classList.toggle('active', b.dataset.panel === name);
-    });
-    const panel = document.getElementById('pmain-' + name);
-    if (panel) panel.style.display = '';
-    if (name !== 'allstock') _stopAllStockAutoRefresh();
-    if (name === 'allstock') { renderAllStockTab(); _startAllStockAutoRefresh(); }
-    if (name === 'theme')    renderThemeTab();
+    if (name==='portfolio') { _MDI.open('portfolio'); }
+    else if (name==='allstock') { _MDI.open('allstock'); }
+    else if (name==='theme')    { _MDI.open('theme'); }
   }
-
   function switchDock(name) {
-    document.querySelectorAll('.dock-panel').forEach(p => p.style.display = 'none');
-    document.querySelectorAll('.dock-tab').forEach(b => {
-      b.classList.toggle('active', b.dataset.dpanel === name);
-    });
-    const panel = document.getElementById('dpanel-' + name);
-    if (panel) panel.style.display = '';
-    if (name === 'journal')  { renderJournals(); updateJournalDatalist(); }
-    if (name === 'trades')   renderTrades();
-    if (name === 'news')     renderNewsPortfolioLinks();
-    if (name === 'realized') renderRealizedTab();
+    if (name==='trades')   _MDI.open('trades');
+    else if (name==='news')     _MDI.open('news');
+    else if (name==='journal')  _MDI.open('journal');
+    else if (name==='realized') _MDI.open('realized');
   }
-
-  let _dockCollapsed = false;
-  function toggleDock() {
-    _dockCollapsed = !_dockCollapsed;
-    const dock = document.getElementById('panelDock');
-    const btn  = document.getElementById('dockToggle');
-    dock.classList.toggle('collapsed', _dockCollapsed);
-    if (btn) btn.textContent = _dockCollapsed ? '▲ 펼치기' : '▼ 접기';
-  }
-
-  let _sidebarCollapsed = false;
-  function toggleSidebar() {
-    _sidebarCollapsed = !_sidebarCollapsed;
-    const grid    = document.getElementById('panelGrid');
-    const sidebar = document.getElementById('panelSidebar');
-    const fab     = document.getElementById('sidebarFab');
-    const btn     = document.getElementById('sidebarToggleBtn');
-    if (_sidebarCollapsed) {
-      grid.style.gridTemplateColumns = '0px 1fr 380px';
-      sidebar.style.width = '0';
-      sidebar.style.overflow = 'hidden';
-      if (fab) fab.style.display = '';
-      if (btn) btn.textContent = '▶';
-    } else {
-      grid.style.gridTemplateColumns = '220px 1fr 380px';
-      sidebar.style.width = '';
-      sidebar.style.overflow = '';
-      if (fab) fab.style.display = 'none';
-      if (btn) btn.textContent = '◄';
-    }
-  }
-
-  // 구버전 호환 stub — 기존 switchSubTab() 호출을 새 패널 시스템으로 라우팅
+  function toggleDock()    { _MDI.toggle('trades'); }
+  function toggleSidebar() { _MDI.toggle('watchlist'); }
   function switchSubTab(name) {
-    if      (name === 'main' || name === 'portfolio') switchMainPanel('portfolio');
-    else if (name === 'allstock') switchMainPanel('allstock');
-    else if (name === 'theme')    switchMainPanel('theme');
-    else if (name === 'news')     switchDock('news');
-    else if (name === 'journal')  switchDock('journal');
-    else if (name === 'trades')   switchDock('trades');
-    else if (name === 'add')      switchDock('realized');
-    // watchlist → 사이드바에 항상 표시되므로 별도 처리 불필요
+    if (name==='main'||name==='portfolio') switchMainPanel('portfolio');
+    else if (name==='allstock') switchMainPanel('allstock');
+    else if (name==='theme')    switchMainPanel('theme');
+    else if (name==='news')     switchDock('news');
+    else if (name==='journal')  switchDock('journal');
+    else if (name==='trades')   switchDock('trades');
+    else if (name==='add')      switchDock('realized');
+  }
+
+  // DOM 준비 후 MDI 초기화
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(() => _MDI.init(), 0));
+  } else {
+    setTimeout(() => _MDI.init(), 0);
   }
 
 </script>
