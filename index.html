@@ -7520,7 +7520,7 @@ function closeApiKeyPopup() {
 }
 
 // ─── 시작 로그인 팝업 ────────────────────────────────────────────────────────
-async async function maybeShowLoginModal() {
+async function maybeShowLoginModal() {
   if (!window.electronAPI) return; // PWA에서는 표시하지 않음
   // 자동로그인 ON + API 키 저장됨 → 건너뜀
   if (state.autoLogin) {
