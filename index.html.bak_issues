@@ -125,60 +125,6 @@
     overflow-x: hidden;
   }
 
-
-  /* ── MDI 라이트 모드 ── */
-  body.light-mode .mdi-workspace {
-    background: #e8eef5;
-  }
-  body.light-mode .mdi-panel {
-    background: #ffffff;
-    border-color: #c8d4e0;
-    box-shadow: 0 2px 12px rgba(0,0,0,.12);
-    color: #1a2840;
-  }
-  body.light-mode .mdi-tb {
-    background: #dce6f0;
-    border-bottom-color: #c0ccd8;
-    color: #1a2840;
-  }
-  body.light-mode .mdi-tb-title { color: #1a2840; }
-  body.light-mode .mdi-tb-btn   { color: #3a5070; }
-  body.light-mode .mdi-tb-btn:hover { background: #c8d4e0; color: #0d1520; }
-  body.light-mode .mdi-ptab-bar {
-    background: #edf2f8;
-    border-bottom-color: #c0ccd8;
-  }
-  body.light-mode .mdi-ptab {
-    color: #3a5070;
-  }
-  body.light-mode .mdi-ptab.active {
-    color: #0d6efd;
-    border-bottom-color: #0d6efd;
-  }
-  body.light-mode .mdi-body {
-    background: #ffffff;
-    color: #1a2840;
-  }
-  body.light-mode .mdi-sidebar {
-    background: #dce6f0;
-    border-right-color: #c0ccd8;
-  }
-  body.light-mode .mdi-sb-btn { color: #3a5070; }
-  body.light-mode .mdi-sb-btn:hover { background: #c8d4e0; }
-  body.light-mode .mdi-taskbar {
-    background: #dce6f0;
-    border-top-color: #c0ccd8;
-  }
-  body.light-mode .mdi-dock-btn {
-    background: #edf2f8;
-    border-color: #c0ccd8;
-    color: #3a5070;
-  }
-  body.light-mode .mdi-dock-btn.active {
-    background: #0d6efd;
-    color: #fff;
-  }
-
   /* 등폭 숫자 폰트 적용 (HTS 스타일 정렬) */
   .hts-bar-val, .summary-card .value, td, th, .pnl-cell, .calc-preview {
     font-feature-settings: "tnum";
@@ -2137,9 +2083,9 @@
   }
   .mdi-ptab-bar::-webkit-scrollbar { display: none; }
   .mdi-ptab {
-    padding: 7px 14px; background: none;
+    padding: 5px 10px; background: none;
     border: none; border-bottom: 2px solid transparent;
-    color: #3a5070; font-size: 13px; font-family: inherit;
+    color: #3a5070; font-size: 11px; font-family: inherit;
     cursor: pointer; white-space: nowrap; transition: all 0.1s;
   }
   .mdi-ptab:hover { color: #8aabb0; }
@@ -2228,16 +2174,8 @@
     min-height: 0;
   }
 
-  /* ── MDI 리사이즈 핸들 ── */
-  .mdi-rz { position: absolute; z-index: 10; }
-  .mdi-rz-n  { top:-4px;    left:8px;    right:8px;    height:8px;  cursor:n-resize; }
-  .mdi-rz-s  { bottom:-4px; left:8px;    right:8px;    height:8px;  cursor:s-resize; }
-  .mdi-rz-e  { top:8px;     right:-4px;  bottom:8px;   width:8px;   cursor:e-resize; }
-  .mdi-rz-w  { top:8px;     left:-4px;   bottom:8px;   width:8px;   cursor:w-resize; }
-  .mdi-rz-ne { top:-6px;    right:-6px;  width:12px;   height:12px; cursor:ne-resize; }
-  .mdi-rz-nw { top:-6px;    left:-6px;   width:12px;   height:12px; cursor:nw-resize; }
-  .mdi-rz-se { bottom:-6px; right:-6px;  width:12px;   height:12px; cursor:se-resize; }
-  .mdi-rz-sw { bottom:-6px; left:-6px;   width:12px;   height:12px; cursor:sw-resize; }
+  /* SE 리사이즈 핸들 */
+
 
   </style>
 </head>
@@ -2405,7 +2343,7 @@
 
   <div class="mdi-sb-spacer"></div>
 
-  <button class="mdi-sb-btn mdi-sb-util" onclick="openSettings()" title="환경설정">
+  <button class="mdi-sb-btn mdi-sb-util" onclick="if(typeof showSettingsModal==='function')showSettingsModal()" title="환경설정">
     <span class="mdi-sb-icon">⚙</span>
     <span class="mdi-sb-label">환경설정</span>
   </button>
@@ -2663,7 +2601,99 @@
   </div>
   <div class="mdi-ptab-pane" id="mdi-ptc-trading-ord" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto">
 <!-- ========== 종합탭 우측 미니탭 래퍼 ========== -->
-    <div id="ord-hoga-direct" style="padding:0;overflow-y:auto;height:100%;">
+    <div id="main-right-wrapper">
+      <div class="right-mini-tabs">
+        <button class="mini-tab-btn active" data-rtab="balance" onclick="switchRightTab('balance')">잔고요약</button>
+        <button class="mini-tab-btn" data-rtab="cash" onclick="switchRightTab('cash')">예수금</button>
+        <button class="mini-tab-btn" data-rtab="order" onclick="switchRightTab('order')">주문입력</button>
+        <button class="mini-tab-btn" data-rtab="calc" onclick="switchRightTab('calc')">계산기</button>
+        <button class="mini-tab-btn" data-rtab="realized" onclick="switchRightTab('realized');renderRealizedMini()">실현손익</button>
+        <button class="mini-tab-btn" data-rtab="trades-mini" onclick="switchRightTab('trades-mini');renderTradesMini()">거래기록</button>
+        <button class="mini-tab-btn" data-rtab="corp" onclick="switchRightTab('corp')">기업정보</button>
+      </div>
+
+      <!-- [미니탭 1] 잔고요약 + 도넛 -->
+      <div id="rtab-balance" class="mini-tab-panel active">
+        <div class="card">
+    <div class="card-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> 잔고 요약</div>
+    <div class="hts-bar" style="margin-bottom:0;">
+      <div class="hts-bar-cell">
+        <div class="hts-bar-label">예수금 <span onclick="openCashManualModal()" style="cursor:pointer;" title="예수금 직접 입력"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span></div>
+        <div class="hts-bar-val" id="balCash">-</div>
+      </div>
+      <div class="hts-bar-cell">
+        <div class="hts-bar-label">보유종목 평가금액</div>
+        <div class="hts-bar-val" id="balStockVal">-</div>
+      </div>
+      <div class="hts-bar-cell">
+        <div class="hts-bar-label">총 잔고 (예수금+평가금액)</div>
+        <div class="hts-bar-val" id="balTotal">-</div>
+      </div>
+      <div class="hts-bar-cell">
+        <div class="hts-bar-label">평가손익</div>
+        <div class="hts-bar-val" id="balPnl">-</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg> 자산 구성</div>
+    <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;">
+      <div class="donut-wrap">
+        <div class="donut-chart" id="balDonut"></div>
+        <div class="donut-hole">
+          <div class="donut-center-label">총자산</div>
+          <div class="donut-center-val" id="balDonutTotal">-</div>
+        </div>
+      </div>
+      <div class="portfolio-bar-legend" id="balDonutLegend" style="flex:1;min-width:180px;"></div>
+    </div>
+  </div>
+      </div><!-- /rtab-balance -->
+
+      <!-- [미니탭 2] 예수금 관리 -->
+      <div id="rtab-cash" class="mini-tab-panel">
+        <div class="card">
+    <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;">
+      <span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> 예수금 관리</span>
+      <span style="display:flex;align-items:center;gap:8px;">
+        <span id="cashTabBalance" style="font-size:15px;font-weight:700;color:var(--green)"></span>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="refreshCashDisplay()" title="예수금 자동 계산 새로고침" style="display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> 새로고침</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="openCashManualModal()" title="입출금 내역 대신 실제 예수금을 직접 입력" style="display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> 직접 입력</button>
+      </span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+      <select id="cf2_type" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg3);color:var(--text);min-height:40px;">
+        <option value="deposit">입금</option>
+        <option value="withdraw">출금</option>
+      </select>
+      <input id="cf2_date" type="date" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg3);color:var(--text);min-height:40px;">
+      <input id="cf2_amount" type="text" inputmode="decimal" placeholder="금액 (원)" oninput="formatWithComma(this)" style="flex:1;min-width:110px;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg3);color:var(--text);min-height:40px;">
+      <input id="cf2_memo" type="text" placeholder="메모 (선택)" style="flex:1;min-width:90px;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg3);color:var(--text);min-height:40px;">
+      <button class="btn btn-primary btn-sm" onclick="saveCash2()">추가</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>날짜</th>
+            <th>구분</th>
+            <th style="text-align:right">금액</th>
+            <th>메모</th>
+            <th style="text-align:center">삭제</th>
+          </tr>
+        </thead>
+        <tbody id="cashTabBody"></tbody>
+      </table>
+    </div>
+    <div id="cashTabEmpty" class="empty-state" style="display:none">입금/출금 내역이 없습니다.</div>
+    <div style="margin-top:14px;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;font-size:13px;color:var(--text3);">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg> 예수금 = 입금 합계 − 출금 합계 − 현금 매수 합계 + 현금 매도 합계
+    </div>
+  </div>
+      </div><!-- /rtab-cash -->
+
+      <!-- [미니탭 3] 빠른 주문 입력 -->
+      <div id="rtab-order" class="mini-tab-panel">
         <!-- ── 호가창 스타일 주문 입력 ── -->
         <!-- 종목 선택 헤더 -->
         <div style="padding:8px 0 6px;display:flex;align-items:center;gap:6px;">
@@ -2722,7 +2752,218 @@
             매수 기록
           </button>
         </div>
+      </div><!-- /rtab-order -->
+
+      <!-- [미니탭 4] 계산기 (복리 + 물타기) -->
+      <div id="rtab-calc" class="mini-tab-panel">
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:start;">
+        <!-- ── 복리 계산기 (접이식) ── -->
+  <div class="card" style="min-width:0;padding:16px;">
+    <button class="calc-toggle-btn" id="calcToggleBtn" onclick="toggleCalcPanel()">
+      <span style="display:flex;align-items:center;gap:7px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        복리 계산기
+      </span>
+      <span class="calc-arrow">▴</span>
+    </button>
+    <div class="calc-collapsible open" id="calcCollapsible">
+      <div style="margin-top:12px;">
+        <div class="form-grid" style="gap:8px;">
+          <div class="form-group"><label>초기 원금 (원)</label><input type="text" inputmode="decimal" id="mc_principal" placeholder="10,000,000" oninput="formatWithComma(this);calcMonthlyCompound()"></div>
+          <div class="form-group"><label>월 수익률 (%)</label><input type="number" id="mc_rate" placeholder="3.0" step="0.01" oninput="calcMonthlyCompound()"></div>
+          <div class="form-group"><label>투자 기간 (개월)</label><input type="number" id="mc_months" placeholder="24" min="1" max="600" oninput="calcMonthlyCompound()"></div>
+          <div class="form-group"><label>월 추가 납입 (원)</label><input type="text" inputmode="decimal" id="mc_add" placeholder="0" oninput="formatWithComma(this);calcMonthlyCompound()"></div>
+          <div class="form-group"><label>투자 시작일</label><input type="date" id="mc_startDate" oninput="calcMonthlyCompound()"></div>
+        </div>
+        <div id="mc_result" style="display:none;margin-top:8px;">
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <tr style="border-bottom:1px solid var(--border)"><td style="padding:5px 0;color:var(--text2)">최종 금액</td><td id="mc_final" style="text-align:right;font-weight:700;color:var(--green)"></td></tr>
+              <tr><td style="padding:5px 0;color:var(--text2)">총 납입 원금</td><td id="mc_totalIn" style="text-align:right;color:var(--text2)"></td></tr>
+              <tr><td style="padding:5px 0;color:var(--text2)">총 수익</td><td id="mc_profit" style="text-align:right;font-weight:700;color:var(--red)"></td></tr>
+              <tr><td style="padding:5px 0;color:var(--text2)">수익률</td><td id="mc_roi" style="text-align:right;font-weight:700;color:var(--red)"></td></tr>
+              <tr><td style="padding:5px 0;color:var(--text2)">연환산</td><td id="mc_annualRoi" style="text-align:right;color:var(--text3)"></td></tr>
+            </table>
+          </div>
+          <!-- 월별 복리 진행 테이블 -->
+          <div style="max-height:220px;overflow-y:auto;margin-top:8px;border-radius:8px;border:1px solid var(--border);">
+            <table style="width:100%;border-collapse:collapse;font-size:11px;">
+              <thead>
+                <tr style="background:var(--bg3);position:sticky;top:0;color:var(--text3);font-size:10px;text-align:right;">
+                  <th style="text-align:left;padding:4px 8px;font-weight:600">기간</th>
+                  <th style="padding:4px 8px;font-weight:600">목표잔액</th>
+                  <th style="padding:4px 8px;font-weight:600">실적</th>
+                  <th style="padding:4px 8px;font-weight:600">수익률</th>
+                  <th style="padding:4px 8px;font-weight:600">달성</th>
+                </tr>
+              </thead>
+              <tbody id="mc_tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="calcMonthlyCompound()">계산</button>
+          <button class="btn btn-ghost btn-sm" id="mc_record_btn" onclick="recordThisMonth()" style="display:none">이번 달 기록</button>
+          <button class="btn btn-ghost btn-sm" onclick="['mc_principal','mc_rate','mc_months','mc_add','mc_startDate'].forEach(id=>{document.getElementById(id).value=''}); document.getElementById('mc_result').style.display='none'; state.mcChecks={}; state.mcSettings={}; state.monthlySnapshots=[]; save();">초기화</button>
+        </div>
       </div>
+    </div>
+  </div>
+
+    <!-- ■ 물타기 계산기 -->
+    <div class="card" style="min-width:0;padding:16px;">
+      <div class="card-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg> 물타기 계산기</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">추가 매수 시 새 평균단가를 계산합니다.</div>
+      <div class="form-grid" style="grid-template-columns:1fr;">
+        <div class="form-group"><label>기존 평균단가 (원)</label><input type="text" inputmode="decimal" id="wa_avgPrice" placeholder="80,000" oninput="formatWithComma(this);calcWaterDown()"></div>
+        <div class="form-group"><label>기존 보유 수량 (주)</label><input type="number" id="wa_qty" placeholder="100" min="0" oninput="calcWaterDown()"></div>
+        <div class="form-group"><label>추가 매수 가격 (원)</label><input type="text" inputmode="decimal" id="wa_addPrice" placeholder="65,000" oninput="formatWithComma(this);calcWaterDown()"></div>
+        <div class="form-group"><label>추가 매수 수량 (주)</label><input type="number" id="wa_addQty" placeholder="50" min="0" oninput="calcWaterDown()"></div>
+      </div>
+      <div id="wa_result" style="display:none;margin-top:4px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px;">
+        <div style="font-size:13px;color:var(--text3);margin-bottom:10px;font-weight:600;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> 계산 결과</div>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 0;color:var(--text2)">새 평균단가</td><td id="wa_newAvg" style="text-align:right;font-weight:700;font-size:16px;color:var(--accent)"></td></tr>
+          <tr><td style="padding:6px 0;color:var(--text2)">평균단가 변동</td><td id="wa_change" style="text-align:right;font-weight:700"></td></tr>
+          <tr><td style="padding:6px 0;color:var(--text2)">총 보유 수량</td><td id="wa_totalQty" style="text-align:right;font-weight:600"></td></tr>
+          <tr><td style="padding:6px 0;color:var(--text2)">총 매수금액</td><td id="wa_totalAmt" style="text-align:right;font-weight:600"></td></tr>
+          <tr><td style="padding:6px 0;color:var(--text3);font-size:13px">&nbsp;&nbsp;기존 매수금액</td><td id="wa_oldAmt" style="text-align:right;color:var(--text3);font-size:13px"></td></tr>
+          <tr><td style="padding:6px 0;color:var(--text3);font-size:13px">&nbsp;&nbsp;추가 매수금액</td><td id="wa_addAmt" style="text-align:right;color:var(--text3);font-size:13px"></td></tr>
+        </table>
+      </div>
+      <button class="btn btn-ghost" style="margin-top:12px;" onclick="['wa_avgPrice','wa_qty','wa_addPrice','wa_addQty'].forEach(id=>{document.getElementById(id).value=''}); document.getElementById('wa_result').style.display='none';">초기화</button>
+    </div>
+
+        </div><!-- /calc-2col-grid -->
+      </div><!-- /rtab-calc -->
+
+      <!-- [미니탭 5] 실현손익 (컴팩트) -->
+      <div id="rtab-realized" class="mini-tab-panel">
+        <div class="card" style="margin-bottom:10px;">
+          <div class="section-row" style="margin-bottom:10px;">
+            <div class="section-title" style="font-size:13px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> 실현손익 요약</div>
+            <select id="rtabRealizedYear" onchange="renderRealizedMini()" style="padding:4px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;">
+              <option value="all">전체</option>
+            </select>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px;text-align:center;">
+              <div style="font-size:10px;color:var(--text3);margin-bottom:3px;">매도 횟수</div>
+              <div id="rtab_rs_count" style="font-size:16px;font-weight:700;">-</div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px;text-align:center;">
+              <div style="font-size:10px;color:var(--text3);margin-bottom:3px;">실현 손익</div>
+              <div id="rtab_rs_total" style="font-size:13px;font-weight:700;">-</div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px;text-align:center;">
+              <div style="font-size:10px;color:var(--text3);margin-bottom:3px;">평균 수익률</div>
+              <div id="rtab_rs_avg" style="font-size:14px;font-weight:700;">-</div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="padding:14px;">
+          <div class="section-row" style="margin-bottom:8px;">
+            <div class="section-title" style="font-size:12px;">최근 매도 내역</div>
+            <button class="btn btn-ghost btn-sm" onclick="switchSubTab('add')" style="font-size:11px;padding:3px 8px;">전체 보기 →</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="hts-table" style="width:100%;font-size:12px;">
+              <thead>
+                <tr>
+                  <th style="font-size:11px;">날짜</th>
+                  <th style="font-size:11px;">종목</th>
+                  <th style="text-align:right;font-size:11px;">손익</th>
+                  <th style="text-align:right;font-size:11px;">수익률</th>
+                </tr>
+              </thead>
+              <tbody id="rtab_realizedBody"></tbody>
+            </table>
+          </div>
+          <div id="rtab_realizedEmpty" class="empty-state" style="display:none;font-size:12px;padding:20px 0;">매도 기록이 없습니다</div>
+        </div>
+      </div><!-- /rtab-realized -->
+
+
+      <!-- [미니탭 6] 거래기록 (mini) -->
+      <div id="rtab-trades-mini" class="mini-tab-panel">
+        <div class="card" style="padding:12px;">
+          <div class="section-row" style="margin-bottom:8px;">
+            <div class="section-title" style="font-size:13px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              거래 기록
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <div class="filter-row" style="margin:0;">
+                <button class="filter-btn active" onclick="setTradeMiniFilter('all',this)">전체</button>
+                <button class="filter-btn" onclick="setTradeMiniFilter('buy',this)">매수</button>
+                <button class="filter-btn" onclick="setTradeMiniFilter('sell',this)">매도</button>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="exportCSV()" title="CSV 내보내기">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <input type="text" placeholder="종목 검색..." id="tradeMiniSearch" oninput="renderTradesMini()"
+            style="width:100%;padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none;box-sizing:border-box;margin-bottom:8px;">
+          <div id="tradeMiniList" style="max-height:calc(100vh - 320px);overflow-y:auto;"></div>
+          <div id="tradeMiniEmpty" class="empty-state" style="display:none;font-size:12px;">거래 기록이 없습니다</div>
+        </div>
+      </div>
+
+      <!-- [미니탭 7] 기업정보 / 분석 -->
+      <div id="rtab-corp" class="mini-tab-panel">
+        <div class="card">
+          <div class="card-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            기업정보 조회
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:10px;">
+            <input id="corpSearchInput" type="text" placeholder="종목코드 6자리 (국내) 또는 티커" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:13px;" onkeydown="if(event.key==='Enter')loadCorpFinance()">
+            <button onclick="loadCorpFinance()" style="padding:7px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">재무분석</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <button onclick="openCorpLink('dart')" style="padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;text-align:left;">
+              📋 DART 전자공시
+            </button>
+            <button onclick="openCorpLink('naver')" style="padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;text-align:left;">
+              📈 네이버 주식
+            </button>
+            <button onclick="openCorpLink('investing')" style="padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;text-align:left;">
+              🌐 Investing.com
+            </button>
+            <button onclick="openCorpLink('fsc')" style="padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;text-align:left;">
+              🏛️ 금융감독원
+            </button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            주요 지수 / 리소스
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <button onclick="window.open('https://finance.yahoo.com','_blank')" style="padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;text-align:left;">🇺🇸 Yahoo Finance</button>
+            <button onclick="window.open('https://www.macrotrends.net','_blank')" style="padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;text-align:left;">📊 Macrotrends</button>
+            <button onclick="window.open('https://kr.investing.com/economic-calendar/','_blank')" style="padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;text-align:left;">📅 경제캘린더</button>
+            <button onclick="window.open('https://www.fearandgreedindex.com','_blank')" style="padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;text-align:left;">😱 공포탐욕지수</button>
+          </div>
+        </div>
+        <!-- AI 재무분석 -->
+        <div class="card" id="corpFinanceCard" style="display:none;">
+          <div class="card-title" style="display:flex;align-items:center;gap:6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span id="corpFinanceName">AI 재무분석</span>
+            <span id="corpFinanceLoading" style="display:none;font-size:11px;color:var(--text3);font-weight:400;">불러오는 중…</span>
+          </div>
+          <div id="corpFinanceData"></div>
+          <div id="corpFinanceLinks" style="margin-top:8px;display:none;">
+            <button class="btn btn-sm btn-ghost" onclick="openCorpLink('dart')" style="margin-right:4px;">📋DART</button>
+            <button class="btn btn-sm btn-ghost" onclick="openCorpLink('naver')">💹네이버</button>
+          </div>
+        </div>
+      </div><!-- /rtab-corp -->
+
+    </div><!-- /main-right-wrapper -->
       </div>
   <div class="mdi-ptab-pane" id="mdi-ptc-trading-trd" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
 
@@ -3032,7 +3273,7 @@
     </div>
     <!-- ─ MDI 패널: journal ─ -->
     <div id="mdi-panel-journal" class="mdi-panel" data-pid="journal" data-mdi-state="closed"
-         style="left:200px;top:40px;width:960px;height:640px;display:none;display:none;z-index:108">
+         style="left:250px;top:50px;width:780px;height:520px;display:none;display:none;z-index:108">
       <div class="mdi-tb">
         <span class="mdi-tb-icon">📒</span>
         <span class="mdi-tb-title">투자일지</span>
@@ -7361,6 +7602,7 @@ function openSettings() {
   });
   // API 키 등록 상태 갱신 + 첫 탭 초기화
   loadApiKeysUI();
+  selectBroker(_selectedBroker || 'kis');
 }
 
 function closeSettings() {
@@ -8375,10 +8617,6 @@ function _renderAnalysisBody(body, stock, naverData, yf) {
       <div style="flex:1;min-width:100px;">
         <div style="font-size:11px;color:var(--text3);margin-bottom:2px">수익률</div>
         <div class="${pctCls}" style="font-weight:700">${pct>0?'+':''}${pct.toFixed(2)}%</div>
-      </div>
-      <div style="flex:1;min-width:100px;">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:2px">시가총액</div>
-        <div style="font-weight:700">${(()=>{const mc=yf?.marketCap||stock.marketCap||0;return mc>0?fBig(mc):'-';})()}</div>
       </div>
     </div>
   </div>`;
