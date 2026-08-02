@@ -8988,13 +8988,13 @@ function _toggleCheck(stockKey, checkKey, val) {
         const ph = this.prevPos[pid] && this.prevPos[pid].h;
         el.style.height  = (ph || 300) + 'px';
         body.style.display = '';
-        if (rz) rz.style.display = '';
+        rzAll.forEach(r => r.style.display = '');
         el.dataset.mdiState = 'open';
       } else {
         if (!this.prevPos[pid]) this.prevPos[pid] = {};
         this.prevPos[pid].h = el.offsetHeight;
         body.style.display = 'none';
-        if (rz) rz.style.display = 'none';
+        rzAll.forEach(r => r.style.display = 'none');
         el.style.height = '26px';
         el.dataset.mdiState = 'minimized';
       }
@@ -9032,7 +9032,7 @@ function _toggleCheck(stockKey, checkKey, val) {
         el.style.display = l.open ? '' : 'none';
         el.dataset.mdiState = l.open ? 'open' : 'closed';
         if (body) body.style.display = '';
-        rzAll3.forEach(r => r.style.display = '');
+        rzAll.forEach(r => r.style.display = '');
         if (this.prevPos[pid]) delete this.prevPos[pid];
       });
       document.querySelectorAll('.mdi-panel').forEach((el, i) => {
@@ -9238,7 +9238,7 @@ function _toggleCheck(stockKey, checkKey, val) {
   }
   function switchMainPanel(n) { switchSubTab(n); }
   function switchDock(n)      { switchSubTab(n); }
-  function toggleDock()       { window._MDI && _MDIPanelTab('trading','trd'), _MDI.open('trading'); }
+  function toggleDock()       { if (window._MDI) { _MDIPanelTab('trading','trd'); _MDI.open('trading'); } }
   function toggleSidebar()    { window._MDI && _MDI.toggleSidebar(); }
 
 </script>
