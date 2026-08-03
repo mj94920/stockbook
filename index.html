@@ -6307,7 +6307,7 @@ function renderPortfolio() {
       <td ondblclick="startInlineEdit(event,${origIdx},'avgPrice')" style="cursor:text" title="더블클릭으로 평단가 수정">${fmt(s.avgPrice)}</td>
       <td class="${curCls} ${highlightCls}" style="cursor:pointer" onclick="openPriceModal(${origIdx})" title="클릭 → 현재가 업데이트">
         ${s.currentPrice ? fmt(s.currentPrice) : '<span style="font-size:11px;text-decoration:underline dotted">미입력</span>'}
-        ${(()=>{ if (!s.currentPrice || !s.avgPrice) return ''; const diff=s.currentPrice-s.avgPrice; const dp=diff/s.avgPrice*100; const dc=diff>0?'up':diff<0?'dn':'eq'; return `<div class="${dc}" style="font-size:10px;line-height:1.3">${diff>0?'+':''}${Math.round(diff).toLocaleString('ko-KR')} (${dp>0?'+':''}${dp.toFixed(2)}%)</div>`; })()}
+        ${(()=>{ if (!s.currentPrice) return ''; const pc=s.prevClose||null; if(!pc) return ''; const diff=s.currentPrice-pc; const dp=diff/pc*100; const dc=diff>0?'up':diff<0?'dn':'eq'; return `<div class="${dc}" style="font-size:10px;line-height:1.3">${diff>0?'+':''}${Math.round(diff).toLocaleString('ko-KR')} (${dp>0?'+':''}${dp.toFixed(2)}%)</div>`; })()}
       </td>
       <td>${fmt(buyAmt)}</td>
       <td>${fmt(valAmt)}</td>
