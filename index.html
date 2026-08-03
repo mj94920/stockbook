@@ -2133,14 +2133,14 @@
     padding: 0 0 0 10px;
     height: 36px; min-height: 36px;
     background: none; border: none; border-left: 2px solid transparent;
-    color: #4a6888; font-size: 12.5px; font-family: inherit;
+    color: #9ab8d4; font-size: 12.5px; font-family: inherit;
     cursor: pointer; text-align: left; white-space: nowrap;
     transition: all 0.12s; width: 100%;
   }
   .mdi-sb-btn:hover { background: #0d1a2e; color: #b0c8e0; border-left-color: #2a3d55; }
   .mdi-sb-btn-active { color: #d0e4f5; border-left-color: #2563eb; background: #0c1628; }
   .mdi-sb-btn-active:hover { background: #0f1e36; border-left-color: #3b82f6; }
-  .mdi-sb-util { color: #35506a; font-size: 12px; }
+  .mdi-sb-util { color: #6a90b0; font-size: 12px; }
   .mdi-sb-util:hover { color: #8aabb0; }
   .mdi-sb-icon { font-size: 14px; min-width: 20px; text-align: center; }
 
@@ -5025,45 +5025,133 @@ function renderRealizedMini() {
   }).join('');
 }
 
+// ── 자동 섹터 분류 함수 ────────────────────────────────────────────────────
+function _getAutoSector(name, industry) {
+  const n = (name||'').replace(/\s/g,'').toLowerCase();
+  const ind = (industry||'').toLowerCase();
+  if (/두산에너빌|한국원자력|한전기술|한전kps|우리기술|비에이치아이|두산중공업/.test(n) || /원자력|핵연료/.test(ind)) return '원자력';
+  if (/제룡전기|가온전선|ls전선|대한전선|일진전기|효성중공업|ls일렉트릭|현대일렉|제일전기/.test(n) || /전선|전력기기/.test(ind)) return '전력/에너지';
+  if (/한미반도체|주성엔지|원익ips|이오테크닉스|테스나|피에스케이|리노공업|hpsp|인텍플러스/.test(n) || /반도체장비/.test(ind)) return '반도체장비';
+  if (/삼성전자|sk하이닉스/.test(n) || /반도체제조/.test(ind)) return '반도체';
+  if (/에코프로비엠|에코프로|엘앤에프|코스모신소재|포스코퓨처엠|삼성sdi|lg에너지|sk온/.test(n) || /이차전지|배터리/.test(ind)) return '2차전지';
+  if (/레인보우로보틱스|두산로보틱스|현대로보틱스|티로보틱스|유진로봇|로보스타/.test(n) || /로봇/.test(ind)) return '로보틱스';
+  if (/한화에어로|한화시스템|현대로템|한국항공우주|lig넥스원|풍산|빅텍/.test(n) || /방산|항공우주/.test(ind)) return '방산/항공';
+  if (/현대차|기아|현대모비스|만도|현대위아|현대트랜시스|hl만도/.test(n) || /완성차|자동차부품/.test(ind)) return '자동차';
+  if (/삼성바이오로직스|셀트리온|한미약품|유한양행|녹십자|동아제약|대웅제약|종근당/.test(n) || /제약|바이오/.test(ind)) return '바이오/제약';
+  if (/네이버|카카오|nhn|크래프톤|넥슨|엔씨소프트|펄어비스/.test(n) || /인터넷|게임/.test(ind)) return 'IT/인터넷·게임';
+  if (/현대중공업|한국조선|삼성중공업|대우조선해양|hd한국조선/.test(n) || /조선/.test(ind)) return '조선';
+  if (/posco|포스코|현대제철|고려아연/.test(n) || /철강|금속/.test(ind)) return '소재/철강';
+  if (/kb금융|신한지주|하나금융|우리금융|삼성화재|메리츠|삼성생명|키움/.test(n) || /은행|증권|보험/.test(ind)) return '금융';
+  if (/삼성물산|현대건설|대우건설|gs건설|hdc/.test(n) || /건설/.test(ind)) return '건설';
+  if (/sk텔레콤|kt|lg유플러스|삼성sds/.test(n) || /통신|it서비스/.test(ind)) return 'IT/통신';
+  if (ind) {
+    if (ind.includes('화학')) return '화학';
+    if (ind.includes('유통')||ind.includes('소매')) return '유통/소비재';
+    if (ind.includes('음식')||ind.includes('식품')) return '음식료';
+    if (ind.includes('기계')) return '기계';
+    if (ind.includes('운수')||ind.includes('물류')) return '물류/운수';
+  }
+  return '기타';
+}
+
+let _themeMode = 'theme'; // 'theme' | 'sector'
+
 function renderThemeTab() {
   const themeListEl = document.getElementById('themeList');
   const tableEl = document.getElementById('themeStockTable');
   if (!themeListEl) return;
-  // state.portfolio 에서 themes 수집
-  const themes = {};
-  (state.portfolio || []).forEach(s => {
-    const th = s.theme || '미분류';
-    if (!themes[th]) themes[th] = [];
-    themes[th].push(s);
-  });
-  const themeNames = Object.keys(themes);
-  if (themeNames.length === 0) {
+  if (!(state.portfolio||[]).length) {
     themeListEl.innerHTML = '<span style="color:var(--text3);font-size:13px;">등록된 종목이 없습니다.</span>';
     tableEl.innerHTML = '';
     return;
   }
-  themeListEl.innerHTML = themeNames.map(t =>
-    `<button onclick="showThemeStocks('${t.replace(/'/g,"\\'")}',this)" style="padding:6px 12px;border:1px solid var(--border);border-radius:20px;background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;">${t} <span style="color:var(--text3)">(${themes[t].length})</span></button>`
-  ).join('');
-  tableEl.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:40px 0;">테마를 선택하세요.</div>';
+  const btnStyle = (active) =>
+    `padding:4px 14px;border-radius:14px;font-size:12px;cursor:pointer;border:1px solid var(--border);` +
+    `background:${active?'var(--accent)':'var(--bg3)'};color:${active?'#fff':'var(--text2)'};`;
+  const modeBar = `<div style="display:flex;gap:6px;margin-bottom:10px;">
+    <button onclick="_setThemeMode('theme')" style="${btnStyle(_themeMode==='theme')}">내 테마</button>
+    <button onclick="_setThemeMode('sector')" style="${btnStyle(_themeMode==='sector')}">섹터별</button>
+  </div>`;
+  if (_themeMode === 'sector') {
+    const sectors = {};
+    (state.portfolio||[]).forEach(s => {
+      const sec = _getAutoSector(s.name, s.industry||'');
+      if (!sectors[sec]) sectors[sec] = [];
+      sectors[sec].push(s);
+    });
+    const secNames = Object.keys(sectors).sort();
+    themeListEl.innerHTML = modeBar + secNames.map(t =>
+      `<button onclick="showThemeStocks('__sec__${t.replace(/'/g,"\\'")}',this)"
+        style="padding:6px 12px;border:1px solid var(--border);border-radius:20px;background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;"
+      >${t} <span style="color:var(--text3)">(${sectors[t].length})</span></button>`
+    ).join('');
+  } else {
+    const themes = {};
+    (state.portfolio||[]).forEach(s => {
+      const th = s.theme || '미분류';
+      if (!themes[th]) themes[th] = [];
+      themes[th].push(s);
+    });
+    const themeNames = Object.keys(themes);
+    themeListEl.innerHTML = modeBar + themeNames.map(t =>
+      `<button onclick="showThemeStocks('${t.replace(/'/g,"\\'")}',this)"
+        style="padding:6px 12px;border:1px solid var(--border);border-radius:20px;background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;"
+      >${t} <span style="color:var(--text3)">(${themes[t].length})</span></button>`
+    ).join('');
+  }
+  tableEl.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:40px 0;">테마/섹터를 선택하세요.</div>';
 }
+
+function _setThemeMode(mode) {
+  _themeMode = mode;
+  renderThemeTab();
+}
+
 function showThemeStocks(theme, btn) {
-  document.querySelectorAll('#themeList button').forEach(b => b.style.background = '');
-  if (btn) btn.style.background = 'var(--accent)'; btn && (btn.style.color='#fff');
+  document.querySelectorAll('#themeList button').forEach(b => {
+    if (!b.onclick || !b.onclick.toString().includes('_setThemeMode')) {
+      b.style.background = 'var(--bg3)'; b.style.color = 'var(--text2)';
+    }
+  });
+  if (btn && btn.onclick && !btn.onclick.toString().includes('_setThemeMode')) {
+    btn.style.background = 'var(--accent)'; btn.style.color = '#fff';
+  }
   const tableEl = document.getElementById('themeStockTable');
   if (!tableEl) return;
-  const stocks = (state.portfolio || []).filter(s => (s.theme || '미분류') === theme);
-  if (stocks.length === 0) { tableEl.innerHTML = '<p style="color:var(--text3);text-align:center;padding:20px;">종목 없음</p>'; return; }
-  tableEl.innerHTML = `<table class="hts-table" style="margin-top:8px;"><thead><tr><th>종목명</th><th>티커</th><th>수량</th><th>평균단가</th><th>평가손익</th></tr></thead><tbody>${
+  let stocks;
+  if (theme.startsWith('__sec__')) {
+    const sec = theme.slice(7);
+    stocks = (state.portfolio||[]).filter(s => _getAutoSector(s.name, s.industry||'') === sec);
+  } else {
+    stocks = (state.portfolio||[]).filter(s => (s.theme || '미분류') === theme);
+  }
+  if (!stocks.length) { tableEl.innerHTML = '<p style="color:var(--text3);text-align:center;padding:20px;">종목 없음</p>'; return; }
+  tableEl.innerHTML = `<table class="hts-table" style="margin-top:8px;"><thead><tr>
+    <th>종목명</th><th>티커</th><th>수량</th><th>평균단가</th><th>현재가</th><th>평가손익</th>
+  </tr></thead><tbody>${
     stocks.map(s => {
-      const pnl = (s.currentPrice - s.avgPrice) * s.qty;
-      const pnlPct = s.avgPrice ? ((s.currentPrice - s.avgPrice)/s.avgPrice*100).toFixed(2) : '0.00';
-      const cls = pnl >= 0 ? 'pos' : 'neg';
-      return `<tr><td>${s.name}</td><td>${s.ticker}</td><td>${(s.qty||0).toLocaleString()}</td><td>${(s.avgPrice||0).toLocaleString()}원</td><td class="${cls}">${pnl>=0?'+':''}${Math.round(pnl).toLocaleString()}원 (${pnlPct}%)</td></tr>`;
+      const cur = s.currentPrice || s.avgPrice || 0;
+      const pnl = (cur - (s.avgPrice||0)) * (s.qty||0);
+      const pnlPct = s.avgPrice ? ((cur - s.avgPrice)/s.avgPrice*100).toFixed(2) : '0.00';
+      const allS = (Object.values(_allStockRaw||{}).flat()).find(a=>(a.code||a.ISU_SRT_CD)===s.ticker);
+      let dp = null;
+      if (allS) {
+        if (typeof allS.changePct === 'number') dp = allS.changePct;
+        else if (allS.FLUC_RT) dp = parseFloat(allS.FLUC_RT);
+      }
+      const curCls = dp !== null ? (dp>0?'up':dp<0?'dn':'eq') : 'eq';
+      const pnlCls = pnl>0?'up':pnl<0?'dn':'eq';
+      return `<tr>
+        <td>${s.name||''}</td>
+        <td style="font-family:monospace;font-size:11px;">${s.ticker||''}</td>
+        <td style="text-align:right;">${(s.qty||0).toLocaleString()}</td>
+        <td style="text-align:right;">${(s.avgPrice||0).toLocaleString()}원</td>
+        <td class="${curCls}" style="text-align:right;font-weight:600;">${cur?cur.toLocaleString():'-'}원</td>
+        <td class="${pnlCls}" style="text-align:right;">${pnl>=0?'+':''}${Math.round(pnl).toLocaleString()}원 (${pnlPct}%)</td>
+      </tr>`;
     }).join('')
   }</tbody></table>`;
 }
-
 // ── 전종목 탭 (네이버 증권 API — KOSPI / KOSDAQ / ETF) ───────────────────────
 let _allMkt          = 'KOSPI'; // 현재 선택 시장
 let _allStockRaw     = {};      // { KOSPI: [...], KOSDAQ: [...], ETF: [...] }
@@ -5256,7 +5344,7 @@ function renderAllStockTable() {
   } else {
     bodyEl.innerHTML = slice.map(s => {
       const up       = (s.changePct || 0) >= 0;
-      const cls      = s.change === 0 ? '' : (up ? 'pos' : 'neg');
+      const cls      = s.change === 0 ? '' : (up ? 'up' : 'dn');
       const arrow    = s.change === 0 ? '—' : (up ? '▲' : '▼') + ' ' + Math.abs(s.change || 0).toLocaleString();
       const pctStr   = !s.changePct ? '0.00%' : (up ? '+' : '') + Number(s.changePct).toFixed(2) + '%';
       const capStr   = s.marketCap > 0 ? Math.round(s.marketCap / 100000000).toLocaleString() : '-';
@@ -6281,8 +6369,14 @@ function renderPortfolio() {
       highlightCls = s.currentPrice > prevPrice ? 'highlight-up' : 'highlight-down';
     }
     
-    // HTS 색상: 상승=빨강, 하락=파랑
-    const curCls = s.currentPrice ? (pct > 0 ? 'up' : pct < 0 ? 'dn' : 'eq') : 'eq';
+    // HTS 색상: 상승=빨강, 하락=파랑 (일일 등락률 기준)
+    const _allS = (Object.values(_allStockRaw||{}).flat()).find(a=>(a.code||a.ISU_SRT_CD)===s.ticker);
+    let _dp = null;
+    if (_allS) {
+      if (typeof _allS.changePct === 'number') _dp = _allS.changePct;
+      else if (_allS.FLUC_RT) _dp = parseFloat(_allS.FLUC_RT);
+    }
+    const curCls = s.currentPrice ? (_dp !== null ? (_dp > 0 ? 'up' : _dp < 0 ? 'dn' : 'eq') : (pct > 0 ? 'up' : pct < 0 ? 'dn' : 'eq')) : 'eq';
     const pnlCls = pnl > 0 ? 'up' : pnl < 0 ? 'dn' : 'eq';
     const tRate = (t) => s.avgPrice && t ? ((t-s.avgPrice)/s.avgPrice*100).toFixed(1) : null;
     const hasTargets = s.target1||s.target2||s.target3||s.stop1;
@@ -9178,6 +9272,13 @@ function _toggleCheck(stockKey, checkKey, val) {
         const sL = panel.offsetLeft, sT = panel.offsetTop;
         const sW = panel.offsetWidth, sH = panel.offsetHeight;
         const ws = panel.parentElement;
+        // 전체화면 투명 오버레이: 겹치는 패널로 인한 스태킹 컨텍스트 문제 해결
+        const ov = document.createElement('div');
+        const cur = (dir.includes('e')&&dir.includes('s'))||(dir.includes('w')&&dir.includes('n')) ? 'nwse-resize'
+                  : (dir.includes('e')&&dir.includes('n'))||(dir.includes('w')&&dir.includes('s')) ? 'nesw-resize'
+                  : dir.includes('e')||dir.includes('w') ? 'ew-resize' : 'ns-resize';
+        ov.style.cssText = 'position:fixed;inset:0;z-index:2147483647;cursor:'+cur+';';
+        document.body.appendChild(ov);
         const move = e => {
           const dx = e.clientX - sX, dy = e.clientY - sY;
           let L = sL, T = sT, W = sW, H = sH;
@@ -9200,6 +9301,7 @@ function _toggleCheck(stockKey, checkKey, val) {
         const up = () => {
           document.removeEventListener('mousemove', move);
           document.removeEventListener('mouseup',   up);
+          ov.remove();
         };
         document.addEventListener('mousemove', move);
         document.addEventListener('mouseup',   up);
