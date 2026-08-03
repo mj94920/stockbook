@@ -9216,37 +9216,35 @@ function _toggleCheck(stockKey, checkKey, val) {
 
     // ── 전역 리사이즈 핸들러 ───────────────────────────────────────────────────
     _initGlobalResize() {
-      const EDGE = 6;
+      const EDGE = 7;
       window.addEventListener('pointerdown', ev => {
-        const ws = document.getElementById('mdiWorkspace');
-        if (!ws) return;
-        // 텍스트 입력 / 버튼 클릭은 무시
+        // 텍스트 입력 / 타이틀바 클릭은 무시
         const tag = (ev.target.tagName||'').toUpperCase();
         if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
-        if (ev.target.closest('.mdi-tb')) return; // 타이틀바는 드래그
-        const panels = ws.querySelectorAll('.mdi-panel[data-mdi-state="open"]');
-        // z-index 높은 패널부터 검사해 가장 앞에 있는 엣지 우선
+        if (ev.target.closest('.mdi-tb')) return;
+        if (ev.target.closest('button')) return;
+        // 모든 열린 패널 검색 (DOM 위치 불문 — document 레벨)
+        const panels = document.querySelectorAll('.mdi-panel[data-mdi-state="open"]');
         const sortedPanels = [...panels].sort((a,b) =>
           parseInt(b.style.zIndex||0) - parseInt(a.style.zIndex||0)
         );
         for (const panel of sortedPanels) {
           const pid = panel.dataset.pid;
-          if (pid === 'allstock') continue; // 전종목은 스크롤 많아서 제외
-          const pl = panel.offsetLeft, pt = panel.offsetTop;
-          const pw = panel.offsetWidth, ph = panel.offsetHeight;
-          const wsR = ws.getBoundingClientRect();
-          const mx = ev.clientX - wsR.left;
-          const my = ev.clientY - wsR.top;
-          const onL = mx >= pl - EDGE && mx <= pl + EDGE && my >= pt && my <= pt + ph;
-          const onR = mx >= pl + pw - EDGE && mx <= pl + pw + EDGE && my >= pt && my <= pt + ph;
-          const onT = my >= pt - EDGE && my <= pt + EDGE && mx >= pl && mx <= pl + pw;
-          const onB = my >= pt + ph - EDGE && my <= pt + ph + EDGE && mx >= pl && mx <= pl + pw;
+          // getBoundingClientRect: viewport 기준 절대좌표 사용
+          const pr = panel.getBoundingClientRect();
+          const mx = ev.clientX, my = ev.clientY;
+          // 엣지 감지
+          const onL = mx >= pr.left - EDGE && mx <= pr.left + EDGE && my > pr.top + 4 && my < pr.bottom - 4;
+          const onR = mx >= pr.right - EDGE && mx <= pr.right + EDGE && my > pr.top + 4 && my < pr.bottom - 4;
+          const onT = my >= pr.top - EDGE && my <= pr.top + EDGE && mx > pr.left + 4 && mx < pr.right - 4;
+          const onB = my >= pr.bottom - EDGE && my <= pr.bottom + EDGE && mx > pr.left + 4 && mx < pr.right - 4;
           if (!onL && !onR && !onT && !onB) continue;
           const dir = (onL?'w':'') + (onR?'e':'') + (onT?'n':'') + (onB?'s':'');
           ev.preventDefault();
           ev.stopPropagation();
           this._front(pid);
-          const sX = ev.clientX, sY = ev.clientY;
+          // 리사이즈 시작 기준값 (offsetLeft/Top/Width/Height — 부모 기준 상대좌표)
+          const sX = mx, sY = my;
           const sL = panel.offsetLeft, sT = panel.offsetTop;
           const sW = panel.offsetWidth, sH = panel.offsetHeight;
           const cur = (dir==='se'||dir==='nw') ? 'nwse-resize'
@@ -9258,15 +9256,10 @@ function _toggleCheck(stockKey, checkKey, val) {
           const move = e => {
             const dx = e.clientX - sX, dy = e.clientY - sY;
             let L=sL, T=sT, W=sW, H=sH;
-            if (dir.includes('e')) W = Math.max(160, sW+dx);
-            if (dir.includes('w')) { W=Math.max(160,sW-dx); L=sL+sW-W; }
-            if (dir.includes('s')) H = Math.max(26, sH+dy);
-            if (dir.includes('n')) { H=Math.max(26,sH-dy); T=sT+sH-H; }
-            const ws2 = panel.parentElement;
-            if (ws2) {
-              L = Math.max(0, Math.min(ws2.offsetWidth-40, L));
-              T = Math.max(0, Math.min(ws2.offsetHeight-26, T));
-            }
+            if (dir.includes('e')) W = Math.max(200, sW+dx);
+            if (dir.includes('w')) { W=Math.max(200,sW-dx); L=sL+sW-W; }
+            if (dir.includes('s')) H = Math.max(30, sH+dy);
+            if (dir.includes('n')) { H=Math.max(30,sH-dy); T=sT+sH-H; }
             panel.style.left=L+'px'; panel.style.top=T+'px';
             panel.style.width=W+'px'; panel.style.height=H+'px';
           };
@@ -9277,9 +9270,9 @@ function _toggleCheck(stockKey, checkKey, val) {
           };
           window.addEventListener('pointermove', move);
           window.addEventListener('pointerup', up);
-          return; // 첫 번째 매칭 패널만 처리
+          return;
         }
-      }, true); // capture=true: 다른 리스너보다 먼저 실행
+      }, true);
     },
 
     // ── 열기 ────────────────────────────────────────────────────────────
