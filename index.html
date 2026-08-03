@@ -3296,8 +3296,6 @@
       <div class="mdi-rz mdi-rz-se" title="우하단 크기조절"></div>
       <div class="mdi-rz mdi-rz-sw" title="좌하단 크기조절"></div>
     </div><!-- /mdi-panel-journal -->
-  <div id="mdiVSplit" class="mdi-split-v" title="좌우 비율 조절 (드래그)"></div>
-  <div id="mdiHSplit" class="mdi-split-h" title="상하 비율 조절 (드래그)"></div>
 </div><!-- /mdi-workspace -->
 </div><!-- /mdi-content -->
 
@@ -5643,7 +5641,7 @@ function updateHogaDisplay() {
   let curPrice = null, prevClose = null;
   const portS = (state.portfolio || []).find(s => s.name === name || s.ticker === code);
   if (portS) {
-    curPrice  = portS.price ?? portS.avgPrice ?? null;
+    curPrice  = portS.price ?? null;  // 실시간 현재가만 사용 (avgPrice 절대 폴백 금지)
     prevClose = portS.prevClose ?? null;
   }
   if (!curPrice) {
@@ -8713,58 +8711,20 @@ function _toggleCheck(stockKey, checkKey, val) {
       const ws = document.getElementById('mdiWorkspace');
       const W = (ws && ws.offsetWidth  > 50) ? ws.offsetWidth  : Math.max(900, window.innerWidth  - 20);
       const H = (ws && ws.offsetHeight > 50) ? ws.offsetHeight : Math.max(500, window.innerHeight - 140);
-      const VGAP = 6, HGAP = 6;
-      const colR = Math.max(0.20, Math.min(0.70, parseFloat(localStorage.getItem('mdi_split_col') || '0.35')));
-      const rowR = Math.max(0.20, Math.min(0.75, parseFloat(localStorage.getItem('mdi_split_row') || '0.40')));
-      const hw = Math.round(W * colR);
-      const rw = W - hw - VGAP;
-      const th = Math.round(H * rowR);
-      const ph = H - th - HGAP;
-      const vs = document.getElementById('mdiVSplit');
-      const hs = document.getElementById('mdiHSplit');
-      if (vs) { vs.style.left = hw + 'px'; vs.style.height = H + 'px'; vs.style.top = '0'; }
-      if (hs) { hs.style.left = (hw + VGAP) + 'px'; hs.style.top = th + 'px'; hs.style.width = rw + 'px'; }
+      const hw = Math.floor((W - 4) / 2);
+      const rw = W - hw - 4;
+      const gap = 10;
+      const th = Math.floor(H * 0.40);
+      const ph = H - th - gap;
       return {
-        watchlist: { x:0,         y:0,        w:hw, h:H,  open:true  },
-        trading:   { x:hw+VGAP,   y:0,        w:rw, h:th, open:true  },
-        portfolio: { x:hw+VGAP,   y:th+HGAP,  w:rw, h:ph, open:true  },
-        news:      { x:hw+VGAP,   y:60,       w:720, h:700, open:false },
-        journal:   { x:hw+VGAP,   y:50,       w:800, h:520, open:false },
+        watchlist: { x:0,    y:0,       w:hw,  h:H,  open:true  },
+        trading:   { x:hw+4, y:0,       w:rw,  h:th, open:true  },
+        portfolio: { x:hw+4, y:th+gap,  w:rw,  h:ph, open:true  },
+        news:      { x:hw+4, y:60,      w:720, h:700, open:false },
+        journal:   { x:hw+4, y:50,      w:800, h:520, open:false },
       };
     },
 
-    _initSplitters() {
-      const vs = document.getElementById('mdiVSplit');
-      const hs = document.getElementById('mdiHSplit');
-      const ws = document.getElementById('mdiWorkspace');
-      if (!vs || !hs || !ws) return;
-      const drag = (el, onMove) => {
-        el.addEventListener('mousedown', e => {
-          e.preventDefault();
-          el.classList.add('dragging');
-          const move = ev => onMove(ev);
-          const up = () => {
-            el.classList.remove('dragging');
-            document.removeEventListener('mousemove', move);
-            document.removeEventListener('mouseup', up);
-          };
-          document.addEventListener('mousemove', move);
-          document.addEventListener('mouseup', up);
-        });
-      };
-      drag(vs, (ev) => {
-        const rect = ws.getBoundingClientRect();
-        const r = Math.max(0.20, Math.min(0.70, (ev.clientX - rect.left) / ws.offsetWidth));
-        localStorage.setItem('mdi_split_col', r.toFixed(4));
-        this.resetLayout();
-      });
-      drag(hs, (ev) => {
-        const rect = ws.getBoundingClientRect();
-        const r = Math.max(0.20, Math.min(0.75, (ev.clientY - rect.top) / ws.offsetHeight));
-        localStorage.setItem('mdi_split_row', r.toFixed(4));
-        this.resetLayout();
-      });
-    },
 
     // ── 초기화: 이벤트 핸들러 등록 + 기본배치 ─────────────────────────
     init() {
@@ -8780,7 +8740,6 @@ function _toggleCheck(stockKey, checkKey, val) {
         panel.addEventListener('mousedown', () => this._front(pid), true);
       });
       this.resetLayout();
-      this._initSplitters();
       // 메뉴버튼 초기 active 상태 동기화 (레이아웃은 워크스페이스 크기 확인 후 적용)
       this._syncAllBtns();
       // resetLayout은 workspace가 실제 크기를 갖춘 뒤 실행
