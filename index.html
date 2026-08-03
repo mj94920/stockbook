@@ -2260,7 +2260,7 @@
   }
 
   /* ── MDI 리사이즈 핸들 ── */
-  .mdi-rz { position: absolute; z-index: 100; pointer-events: auto; }
+  .mdi-rz { position: absolute; z-index: 9999; pointer-events: auto; }
   .mdi-rz-n  { top:-4px;    left:4px;    right:4px;    height:10px; cursor:n-resize; }
   .mdi-rz-s  { bottom:-4px; left:4px;    right:4px;    height:10px; cursor:s-resize; }
   .mdi-rz-e  { top:4px;     right:-4px;  bottom:4px;   width:10px;  cursor:e-resize; }
@@ -2858,24 +2858,6 @@
   <!-- SUMMARY -->
   <div id="htsSummary" class="hts-bar"></div>
 
-  <!-- PORTFOLIO GAUGE (반원 비중 게이지) -->
-  <div class="portfolio-bar-wrap" id="portfolioBar" style="display:none">
-    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
-      <svg id="portGaugeSvg" viewBox="0 0 200 130" style="width:200px;height:130px;flex-shrink:0;" role="img" aria-label="포트폴리오 비중 게이지">
-        <!-- 배경 반원 (현금 영역) -->
-        <path d="M 14 108 A 86 86 0 0 1 186 108" fill="none" stroke="var(--bg4)" stroke-width="28" stroke-linecap="butt"/>
-        <!-- 주식 비중 호 (JS로 동적 생성) -->
-        <g id="portGaugeArcs"></g>
-        <!-- 총잔고 레이블 -->
-        <text id="portGaugeLabel" x="100" y="74" text-anchor="middle" font-size="10" fill="var(--text3)">총잔고</text>
-        <text id="portGaugeTotal" x="100" y="93" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">-</text>
-        <!-- 좌: 주식 / 우: 현금 -->
-        <text id="portGaugePctStock" x="14" y="127" text-anchor="start" font-size="12" fill="#388bfd">주식</text>
-        <text id="portGaugePctCash" x="186" y="127" text-anchor="end" font-size="12" fill="var(--text3)">현금</text>
-      </svg>
-      <div id="portGaugeLegend"></div>
-    </div>
-  </div>
 
   <!-- 잔고 테이블 -->
   <div class="card" style="min-height:300px;">
@@ -5603,31 +5585,47 @@ function selectStockForCorpInfo(idx) {
   }
 }
 
+/* 앱 시작 시 전종목 데이터를 백그라운드로 미리 로드해 주문/호가 datalist에 반영 */
+async function _preloadAllStockData() {
+  if (!window.electronAPI?.fetchNaverStocks) return;
+  try {
+    for (const mkt of ['KOSPI', 'KOSDAQ', 'ETF']) {
+      if (_allStockRaw[mkt] && _allStockRaw[mkt].length) continue;
+      const result = await window.electronAPI.fetchNaverStocks(mkt);
+      if (result?.ok && result.data) _allStockRaw[mkt] = result.data;
+    }
+    populateQOStockList();
+  } catch(e) { /* silent */ }
+}
+
 function populateQOStockList() {
   const dl = document.getElementById('qoNameList');
   if (!dl) return;
-  // 포트폴리오 + 전종목 캐시(Object.values(_allStockRaw || {}).flat()) 합산
+  // 포트폴리오 + 전종목 캐시 합산 후 가나다순 정렬
   const seen = new Set();
-  dl.innerHTML = '';
-  // 보유 종목 우선
+  const items = [];
+  // 보유 종목
   (state.portfolio || []).forEach(s => {
     if (!seen.has(s.name)) {
       seen.add(s.name);
-      const opt = document.createElement('option');
-      opt.value = s.name;
-      opt.label = s.ticker ? `${s.name} (${s.ticker})` : s.name;
-      dl.appendChild(opt);
+      items.push({ name: s.name, label: s.ticker ? `${s.name} (${s.ticker})` : s.name });
     }
   });
   // 전종목 캐시에서 추가
-  (Object.values(_allStockRaw || {}).flat() || []).slice(0, 500).forEach(s => {
+  (Object.values(_allStockRaw || {}).flat() || []).forEach(s => {
     if (!seen.has(s.name)) {
       seen.add(s.name);
-      const opt = document.createElement('option');
-      opt.value = s.name;
-      opt.label = s.code ? `${s.name} (${s.code})` : s.name;
-      dl.appendChild(opt);
+      items.push({ name: s.name, label: s.code ? `${s.name} (${s.code})` : s.name });
     }
+  });
+  // 가나다순 정렬
+  items.sort((a,b) => (a.name||'').localeCompare(b.name||'', 'ko'));
+  dl.innerHTML = '';
+  items.forEach(it => {
+    const opt = document.createElement('option');
+    opt.value = it.name;
+    opt.label = it.label;
+    dl.appendChild(opt);
   });
 }
 
@@ -6023,76 +6021,12 @@ function renderSummary() {
   try { renderBalanceSummary(); } catch(e) {}
 }
 
-function renderPortfolioBar() {
-  const p = state.portfolio;
-  if (!p.length) { document.getElementById('portfolioBar').style.display='none'; return; }
-  document.getElementById('portfolioBar').style.display='block';
-  const totalVal = p.reduce((a,s) => a + (s.currentPrice||s.avgPrice)*s.qty, 0);
-  const segs = p.map((s,i) => {
-    const w = totalVal > 0 ? ((s.currentPrice||s.avgPrice)*s.qty/totalVal*100) : 0;
-    return { name: s.name, w, color: COLORS[i%COLORS.length] };
-  });
-  const cash = getCashBalance();
-  const cashBase = totalVal + cash;
-  const cashPct = cashBase > 0 ? Math.max(0, cash / cashBase * 100) : 0;
-  renderPortfolioDonut(segs, cashPct, cash, cashBase);
-}
-
-function renderPortfolioDonut(segs, cashPct, cash, cashBase) {
-  const arcsEl = document.getElementById('portGaugeArcs');
-  if (!arcsEl) return;
-  const r = 86, P = Math.PI * r; // 반원 둘레 ≈ 270.18
-  const totalStockPct = Math.max(0, 100 - cashPct);
-
-  // 종목별 호 그리기 (dasharray + dashoffset 기법)
-  let accPct = 0;
-  arcsEl.innerHTML = segs.map(s => {
-    const segPct = s.w * totalStockPct / 100; // cashBase 기준 비중
-    const start   = accPct / 100 * P;
-    const len     = segPct  / 100 * P;
-    accPct += segPct;
-    const dashOff = (len + P) - start; // 정확히 해당 구간만 표시
-    return `<path d="M 14 108 A 86 86 0 0 1 186 108" fill="none" stroke="${s.color}" stroke-width="28" stroke-linecap="butt" stroke-dasharray="${len.toFixed(2)} ${P.toFixed(2)}" stroke-dashoffset="${dashOff.toFixed(2)}"/>`;
-  }).join('');
-
-  // 중앙 총잔고
-  const totalEl = document.getElementById('portGaugeTotal');
-  if (totalEl) {
-    const v = cashBase;
-    totalEl.textContent = v >= 1e8 ? (v/1e8).toFixed(1)+'억'
-                        : v >= 1e4 ? Math.round(v/1e4).toLocaleString()+'만'
-                        : Math.round(v).toLocaleString()+'원';
-  }
-
-  // 좌(주식) / 우(현금) 레이블
-  const stockEl = document.getElementById('portGaugePctStock');
-  const cashEl  = document.getElementById('portGaugePctCash');
-  if (stockEl) {
-    stockEl.textContent = `주식 ${totalStockPct.toFixed(1)}%`;
-    stockEl.setAttribute('fill', segs.length ? segs[0].color : '#388bfd');
-  }
-  if (cashEl) cashEl.textContent = `현금 ${cashPct.toFixed(1)}%`;
-
-  // 우측 범례
-  const legend = document.getElementById('portGaugeLegend');
-  if (!legend) return;
-  const cashAmt = Math.max(0, cash);
-  const fmtAmt = v => v >= 1e8 ? (v/1e8).toFixed(1)+'억' : v >= 1e4 ? Math.round(v/1e4).toLocaleString()+'만' : Math.round(v).toLocaleString()+'원';
-  const cashLeg = cashPct > 0
-    ? `<div class="legend-item"><div class="legend-dot" style="background:var(--bg4);border:1px dashed var(--border)"></div><span>현금 ${cashPct.toFixed(1)}% <span style="color:var(--text3);font-size:10px;">₩${fmtAmt(cashAmt)}</span></span></div>`
-    : '';
-  legend.innerHTML = segs.map(s => {
-    const pct = cashBase > 0 ? (s.w * totalStockPct / 100).toFixed(1) : s.w.toFixed(1);
-    return `<div class="legend-item"><div class="legend-dot" style="background:${s.color}"></div><span>${s.name} ${pct}%</span></div>`;
-  }).join('') + cashLeg;
-}
 
 let prevPricesMap = {};
 
 function renderPortfolio() {
   try { updateHeaderAsset(); } catch(e) {}
   renderSummary();
-  renderPortfolioBar();
   const q = (document.getElementById('stockSearch').value||'').toLowerCase();
   const p = state.portfolio.filter(s => !q || s.name.toLowerCase().includes(q) || (s.ticker||'').toLowerCase().includes(q));
   const totalVal = state.portfolio.reduce((a,s) => a + (s.currentPrice||s.avgPrice)*s.qty, 0);
@@ -6215,7 +6149,8 @@ function renderPortfolio() {
 function updateDatalist(id) {
   const dl = document.getElementById(id);
   if (!dl) return;
-  dl.innerHTML = state.portfolio.map(s => `<option value="${s.name}">`).join('');
+  const sorted = [...state.portfolio].sort((a,b) => (a.name||'').localeCompare(b.name||'', 'ko'));
+  dl.innerHTML = sorted.map(s => `<option value="${s.name}">`).join('');
 }
 
 function addStock() {
@@ -7355,7 +7290,8 @@ function renderNewsPortfolioLinks() {
   // ── sn_newsStockList 갱신 (종목 자동완성) ──
   const snList = document.getElementById('sn_newsStockList');
   const rtList = document.getElementById('newsStockList');
-  const optHtml = state.portfolio.map(s => `<option value="${s.name}">${s.ticker||''}</option>`).join('');
+  const sortedPort = [...state.portfolio].sort((a,b) => (a.name||'').localeCompare(b.name||'', 'ko'));
+  const optHtml = sortedPort.map(s => `<option value="${s.name}">${s.ticker||''}</option>`).join('');
   if (snList) snList.innerHTML = optHtml;
   if (rtList) rtList.innerHTML = optHtml;
   const links = linkEls[0];
@@ -7852,6 +7788,7 @@ updateDatalist('stockNameList');
 updateDatalist('jStockList');
 updateDatalist('tStockList');
 updateDatalist('newsStockList');
+_preloadAllStockData(); // 전종목 백그라운드 프리로드 (호가창 검색 지원)
 
 // ── 시장 지수 티커 초기화 ──
 fetchMarketTicker();
@@ -8761,14 +8698,15 @@ function _toggleCheck(stockKey, checkKey, val) {
       const H = (ws && ws.offsetHeight > 50) ? ws.offsetHeight : Math.max(500, window.innerHeight - 140);
       const hw = Math.floor((W - 4) / 2);
       const rw = W - hw - 4;
-      const th = Math.floor(H * 0.57);
-      const ph = H - th - 4;
+      const gap = 10;
+      const th = Math.floor(H * 0.40);
+      const ph = H - th - gap;
       return {
-        watchlist: { x:0,    y:0,    w:hw,  h:H,   open:true  },
-        trading:   { x:hw+4, y:0,    w:rw,  h:th,  open:true  },
-        portfolio: { x:hw+4, y:th+4, w:rw,  h:ph,  open:true  },
-        news:      { x:hw+4, y:60,   w:720, h:700, open:false },
-        journal:   { x:hw+4, y:50,   w:800, h:520, open:false },
+        watchlist: { x:0,    y:0,       w:hw,  h:H,  open:true  },
+        trading:   { x:hw+4, y:0,       w:rw,  h:th, open:true  },
+        portfolio: { x:hw+4, y:th+gap,  w:rw,  h:ph, open:true  },
+        news:      { x:hw+4, y:60,      w:720, h:700, open:false },
+        journal:   { x:hw+4, y:50,      w:800, h:520, open:false },
       };
     },
 
