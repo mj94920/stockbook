@@ -6307,7 +6307,28 @@ function renderPortfolio() {
       <td ondblclick="startInlineEdit(event,${origIdx},'avgPrice')" style="cursor:text" title="더블클릭으로 평단가 수정">${fmt(s.avgPrice)}</td>
       <td class="${curCls} ${highlightCls}" style="cursor:pointer" onclick="openPriceModal(${origIdx})" title="클릭 → 현재가 업데이트">
         ${s.currentPrice ? fmt(s.currentPrice) : '<span style="font-size:11px;text-decoration:underline dotted">미입력</span>'}
-        ${(()=>{ if (!s.currentPrice) return ''; const pc=s.prevClose||null; if(!pc) return ''; const diff=s.currentPrice-pc; const dp=diff/pc*100; const dc=diff>0?'up':diff<0?'dn':'eq'; return `<div class="${dc}" style="font-size:10px;line-height:1.3">${diff>0?'+':''}${Math.round(diff).toLocaleString('ko-KR')} (${dp>0?'+':''}${dp.toFixed(2)}%)</div>`; })()}
+        ${(()=>{
+        if (!s.currentPrice) return '';
+        // 1순위: _allStockRaw 에서 갱신된 일일 등락률 (60초 갱신)
+        const allS = (Object.values(_allStockRaw||{}).flat()).find(a=>(a.code||a.ISU_SRT_CD)===s.ticker);
+        let dp = null, diff = null;
+        if (allS) {
+          if (typeof allS.changePct === 'number') { dp = allS.changePct; diff = allS.change ?? null; }
+          else if (allS.FLUC_RT) { dp = parseFloat(allS.FLUC_RT); diff = allS.CMPPREVDD_PRC ? parseFloat(allS.CMPPREVDD_PRC) : null; }
+        }
+        // 2순위: prevClose 기반 (최근 시세 조회 시 저장된 값)
+        if (dp === null && s.prevClose && s.currentPrice) {
+          const pc = s.prevClose;
+          diff = s.currentPrice - pc;
+          dp = diff / pc * 100;
+          // 변동폭이 5% 미만이어야 당일 등락률로 신뢰 가능 (stale 방지)
+          if (Math.abs(dp) > 30) { dp = null; diff = null; }
+        }
+        if (dp === null) return '';
+        const dc = dp>0?'up':dp<0?'dn':'eq';
+        const diffStr = diff !== null ? `${diff>0?'+':''}${Math.round(diff).toLocaleString('ko-KR')} ` : '';
+        return `<div class="${dc}" style="font-size:10px;line-height:1.3">${diffStr}(${dp>0?'+':''}${dp.toFixed(2)}%)</div>`;
+      })()}
       </td>
       <td>${fmt(buyAmt)}</td>
       <td>${fmt(valAmt)}</td>
