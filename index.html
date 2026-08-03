@@ -2434,10 +2434,15 @@
     <span class="mdi-sb-icon">★</span>
     <span class="mdi-sb-label">종목탐색</span>
   </button>
-  <button class="mdi-sb-btn mdi-sb-btn-active" data-pid="main"
-          onclick="window._MDI.toggle('main')" title="종합창">
-    <span class="mdi-sb-icon">📈</span>
-    <span class="mdi-sb-label">종합창</span>
+  <button class="mdi-sb-btn mdi-sb-btn-active" data-pid="trading"
+          onclick="window._MDI.toggle('trading')" title="매매관리">
+    <span class="mdi-sb-icon">📊</span>
+    <span class="mdi-sb-label">매매관리</span>
+  </button>
+  <button class="mdi-sb-btn mdi-sb-btn-active" data-pid="portfolio"
+          onclick="window._MDI.toggle('portfolio')" title="포트폴리오">
+    <span class="mdi-sb-icon">💼</span>
+    <span class="mdi-sb-label">포트폴리오</span>
   </button>
 
   <div class="mdi-sb-sep"></div>
@@ -2586,109 +2591,27 @@
       <div class="mdi-rz mdi-rz-se" title="우하단 크기조절"></div>
       <div class="mdi-rz mdi-rz-sw" title="좌하단 크기조절"></div>
     </div>
-    <!-- ─ MDI 패널: main (종합창) ─ -->
-    <div id="mdi-panel-main" class="mdi-panel" data-pid="main" data-mdi-state="open"
-         style="left:284px;top:0;width:700px;height:600px;z-index:102">
+    <!-- ─ MDI 패널: trading (매매관리) ─ -->
+    <div id="mdi-panel-trading" class="mdi-panel" data-pid="trading" data-mdi-state="open"
+         style="left:284px;top:0;width:700px;height:340px;z-index:102">
       <div class="mdi-tb">
-        <span class="mdi-tb-icon">📈</span>
-        <span class="mdi-tb-title">종합창</span>
+        <span class="mdi-tb-icon">📊</span>
+        <span class="mdi-tb-title">매매관리</span>
         <div class="mdi-tb-btns">
-          <button class="mdi-tb-btn mdi-btn-min"  onclick="window._MDI.minimize('main')" title="최소화">─</button>
-          <button class="mdi-tb-btn mdi-btn-max"  onclick="window._MDI.maximize('main')" title="최대화/복구">□</button>
-          <button class="mdi-tb-btn mdi-btn-close" onclick="window._MDI.close('main')"  title="닫기">✕</button>
+          <button class="mdi-tb-btn mdi-btn-min"  onclick="window._MDI.minimize('trading')" title="최소화">─</button>
+          <button class="mdi-tb-btn mdi-btn-max"  onclick="window._MDI.maximize('trading')" title="최대화/복구">□</button>
+          <button class="mdi-tb-btn mdi-btn-close" onclick="window._MDI.close('trading')"  title="닫기">✕</button>
         </div>
       </div>
-      <div class="mdi-body" id="mdi-body-main">
+      <div class="mdi-body" id="mdi-body-trading">
   <div class="mdi-ptab-bar">
-    <button class="mdi-ptab active" onclick="window._MDIPanelTab('main','pf')">포트폴리오</button>
-    <button class="mdi-ptab" onclick="window._MDIPanelTab('main','ord')">주문/호가</button>
-    <button class="mdi-ptab" onclick="window._MDIPanelTab('main','trd')">거래내역</button>
-    <button class="mdi-ptab" onclick="window._MDIPanelTab('main','rlz')">실현손익</button>
-    <button class="mdi-ptab" onclick="window._MDIPanelTab('main','bal')">예수금</button>
-    <button class="mdi-ptab" onclick="window._MDIPanelTab('main','calc')">계산기</button>
+    <button class="mdi-ptab active" onclick="window._MDIPanelTab('trading','ord')">주문/호가</button>
+    <button class="mdi-ptab" onclick="window._MDIPanelTab('trading','trd')">거래내역</button>
+    <button class="mdi-ptab" onclick="window._MDIPanelTab('trading','bal')">예수금</button>
+    <button class="mdi-ptab" onclick="window._MDIPanelTab('trading','calc')">계산기</button>
   </div>
-  <!-- ── 포트폴리오 탭 ── -->
-  <div class="mdi-ptab-pane" id="mdi-ptc-main-pf" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto">
-
-
-
-  <!-- TOTAL ASSET SETTING -->
-  <div class="card total-asset-card" style="padding:12px 16px;margin-bottom:12px;">
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span style="font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> 총 자산</span>
-      <input type="text" inputmode="decimal" id="totalAssetInput" placeholder="예: 100,000,000 (1억)" min="0" step="any"
-        style="flex:1;min-width:180px;padding:7px 12px;background:var(--bg3);border:1px solid var(--accent);border-radius:6px;color:var(--text);font-size:14px;outline:none;"
-        oninput="formatWithComma(this);previewAssetRatio()" onkeydown="if(event.key==='Enter')saveTotalAsset()">
-      <button class="btn btn-primary btn-sm" onclick="saveTotalAsset()" style="white-space:nowrap;">설정</button>
-      <button class="btn btn-ghost btn-sm" onclick="clearTotalAsset()" style="white-space:nowrap;">초기화</button>
-      <span id="assetRatioPreview" style="font-size:13px;color:var(--text3);"></span>
-    </div>
-  </div>
-
-  <!-- SUMMARY -->
-  <div id="htsSummary" class="hts-bar"></div>
-
-  <!-- PORTFOLIO GAUGE (반원 비중 게이지) -->
-  <div class="portfolio-bar-wrap" id="portfolioBar" style="display:none">
-    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
-      <svg id="portGaugeSvg" viewBox="0 0 200 130" style="width:200px;height:130px;flex-shrink:0;" role="img" aria-label="포트폴리오 비중 게이지">
-        <!-- 배경 반원 (현금 영역) -->
-        <path d="M 14 108 A 86 86 0 0 1 186 108" fill="none" stroke="var(--bg4)" stroke-width="28" stroke-linecap="butt"/>
-        <!-- 주식 비중 호 (JS로 동적 생성) -->
-        <g id="portGaugeArcs"></g>
-        <!-- 총잔고 레이블 -->
-        <text id="portGaugeLabel" x="100" y="74" text-anchor="middle" font-size="10" fill="var(--text3)">총잔고</text>
-        <text id="portGaugeTotal" x="100" y="93" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">-</text>
-        <!-- 좌: 주식 / 우: 현금 -->
-        <text id="portGaugePctStock" x="14" y="127" text-anchor="start" font-size="12" fill="#388bfd">주식</text>
-        <text id="portGaugePctCash" x="186" y="127" text-anchor="end" font-size="12" fill="var(--text3)">현금</text>
-      </svg>
-      <div id="portGaugeLegend"></div>
-    </div>
-  </div>
-
-  <!-- 잔고 테이블 -->
-  <div class="card" style="min-height:300px;">
-    <div class="section-row">
-      <div class="section-title">보유 종목</div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <input type="text" placeholder="종목 검색..." id="stockSearch" oninput="renderPortfolio()" style="padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;width:160px;outline:none;">
-        <button class="btn btn-ghost btn-sm" onclick="fetchAllPrices()" title="티커가 등록된 종목의 시세를 야후 파이낸스에서 자동 조회"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> 시세 새로고침</button>
-        <button class="btn btn-ghost btn-sm" onclick="openBulkPriceModal()" title="모든 종목 현재가 일괄 입력"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg> 현재가 업데이트</button>
-        <button class="btn btn-ghost btn-sm" onclick="openBulkEditModal()" title="모든 종목 기본 정보 일괄 수정"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> 전체 편집</button>
-        <!-- 실시간 시세 상태 인디케이터 -->
-        <span id="wsStatusBadge" onclick="toggleRealtimePrice()" title="KIS 실시간 시세 (클릭: 수동 재연결)" style="display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text3);user-select:none;">
-          <span id="wsStatusDot" style="width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;"></span>
-          <span id="wsStatusText">실시간 OFF</span>
-        </span>
-      </div>
-    </div>
-    <div class="table-wrap" style="overflow-x:auto;">
-      <table class="hts-table portfolio-table">
-        <thead>
-          <tr>
-            <th style="text-align:left;min-width:120px">종목명</th>
-            <th style="min-width:40px">구분</th>
-            <th style="min-width:55px">보유량</th>
-            <th style="min-width:55px">주문가능</th>
-            <th style="min-width:80px">평균단가</th>
-            <th style="min-width:80px">현재가</th>
-            <th style="min-width:90px">매입금액</th>
-            <th style="min-width:90px">평가금액</th>
-            <th style="min-width:90px">평가손익</th>
-            <th style="min-width:65px">수익률</th>
-            <th style="min-width:80px">비중</th>
-            <th class="col-action" style="min-width:210px;text-align:center">관리</th>
-          </tr>
-        </thead>
-        <tbody id="portfolioBody"></tbody>
-        <tfoot id="portfolioFoot" style="display:none"></tfoot>
-      </table>
-    </div>
-    <div id="portfolioEmpty" class="empty-state" style="display:none">보유 종목이 없습니다. 매수를 등록해보세요.</div>
-  </div><!-- /잔고 테이블 -->
-  </div>
-  <div class="mdi-ptab-pane" id="mdi-ptc-main-ord" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto">
+  <!-- ── 주문/호가 탭 ── -->
+    <div class="mdi-ptab-pane" id="mdi-ptc-trading-ord" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto">
 <!-- ========== 종합탭 우측 미니탭 래퍼 ========== -->
     <div id="ord-hoga-direct" style="padding:0;overflow-y:auto;height:100%;">
         <!-- ── 호가창 스타일 주문 입력 ── -->
@@ -2751,7 +2674,7 @@
         </div>
       </div>
       </div>
-  <div class="mdi-ptab-pane" id="mdi-ptc-main-trd" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
+  <div class="mdi-ptab-pane" id="mdi-ptc-trading-trd" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
 
       <div class="card">
     <div class="section-row">
@@ -2794,62 +2717,7 @@
   </div>
   <datalist id="tStockList"></datalist>
     </div>
-  <div class="mdi-ptab-pane" id="mdi-ptc-main-rlz" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
-
-  <!-- 실현손익 요약 카드 -->
-  <div class="card" style="margin-bottom:12px;">
-    <div class="section-row">
-      <div class="section-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> 실현손익 요약</div>
-      <div style="display:flex;gap:6px;">
-        <select id="realizedYear" onchange="renderRealizedTab()" style="padding:5px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;">
-          <option value="all">전체</option>
-        </select>
-      </div>
-    </div>
-    <div id="realizedSummary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px;">
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">총 매도 횟수</div>
-        <div id="rs_count" style="font-size:20px;font-weight:700;">-</div>
-      </div>
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">실현 손익 합계</div>
-        <div id="rs_total" style="font-size:18px;font-weight:700;">-</div>
-      </div>
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">평균 수익률</div>
-        <div id="rs_avg" style="font-size:18px;font-weight:700;">-</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 매도 거래 목록 -->
-  <div class="card">
-    <div class="section-row">
-      <div class="section-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> 매도 거래 내역</div>
-      <input type="text" placeholder="종목 검색..." id="realizedSearch" oninput="renderRealizedTab()"
-        style="padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;width:140px;outline:none;">
-    </div>
-    <div style="overflow-x:auto;margin-top:10px;">
-      <table class="hts-table" style="width:100%;border-collapse:collapse;font-size:13px;">
-        <thead>
-          <tr>
-            <th>날짜</th>
-            <th>종목</th>
-            <th style="text-align:right">매수가</th>
-            <th style="text-align:right">매도가</th>
-            <th style="text-align:right">수량</th>
-            <th style="text-align:right">실현손익</th>
-            <th style="text-align:right">수익률</th>
-            <th>비고</th>
-          </tr>
-        </thead>
-        <tbody id="realizedBody"></tbody>
-      </table>
-    </div>
-    <div id="realizedEmpty" class="empty-state" style="display:none;">매도 기록이 없습니다</div>
-  </div>
-</div>
-  <div class="mdi-ptab-pane" id="mdi-ptc-main-bal" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
+  <div class="mdi-ptab-pane" id="mdi-ptc-trading-bal" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
   <div style="padding:12px 8px;color:#9eb3cc;font-size:12px">
     <div class="bal-row"><span>예수금</span><span id="balCash" class="bal-val">-</span></div>
     <div class="bal-row"><span>주문가능금액</span><span id="balOrderable" class="bal-val">-</span></div>
@@ -2859,7 +2727,7 @@
     <button onclick="fetchBalanceInfo && fetchBalanceInfo()" style="margin-top:10px;width:100%;padding:5px;background:#1a2840;border:1px solid #2563eb;color:#9eb3cc;border-radius:3px;cursor:pointer;font-size:11px">🔄 잔고 조회</button>
   </div>
 </div>
-  <div class="mdi-ptab-pane" id="mdi-ptc-main-calc" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
+  <div class="mdi-ptab-pane" id="mdi-ptc-trading-calc" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
 
         <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:start;">
         <!-- ── 복리 계산기 (접이식) ── -->
@@ -2942,6 +2810,170 @@
         </div><!-- /calc-2col-grid -->
       </div>
   </div>
+      </div>
+      <div class="mdi-rz mdi-rz-n"  title="위 크기조절"></div>
+      <div class="mdi-rz mdi-rz-s"  title="아래 크기조절"></div>
+      <div class="mdi-rz mdi-rz-e"  title="오른쪽 크기조절"></div>
+      <div class="mdi-rz mdi-rz-w"  title="왼쪽 크기조절"></div>
+      <div class="mdi-rz mdi-rz-ne" title="우상단 크기조절"></div>
+      <div class="mdi-rz mdi-rz-nw" title="좌상단 크기조절"></div>
+      <div class="mdi-rz mdi-rz-se" title="우하단 크기조절"></div>
+      <div class="mdi-rz mdi-rz-sw" title="좌하단 크기조절"></div>
+    </div>
+    <!-- ─ MDI 패널: portfolio (포트폴리오) ─ -->
+    <div id="mdi-panel-portfolio" class="mdi-panel" data-pid="portfolio" data-mdi-state="open"
+         style="left:284px;top:344px;width:700px;height:256px;z-index:103">
+      <div class="mdi-tb">
+        <span class="mdi-tb-icon">💼</span>
+        <span class="mdi-tb-title">포트폴리오</span>
+        <div class="mdi-tb-btns">
+          <button class="mdi-tb-btn mdi-btn-min"  onclick="window._MDI.minimize('portfolio')" title="최소화">─</button>
+          <button class="mdi-tb-btn mdi-btn-max"  onclick="window._MDI.maximize('portfolio')" title="최대화/복구">□</button>
+          <button class="mdi-tb-btn mdi-btn-close" onclick="window._MDI.close('portfolio')"  title="닫기">✕</button>
+        </div>
+      </div>
+      <div class="mdi-body" id="mdi-body-portfolio">
+  <div class="mdi-ptab-bar">
+    <button class="mdi-ptab active" onclick="window._MDIPanelTab('portfolio','pf')">포트폴리오</button>
+    <button class="mdi-ptab" onclick="window._MDIPanelTab('portfolio','rlz')">실현손익</button>
+  </div>
+  <!-- ── 포트폴리오 탭 ── -->
+  <div class="mdi-ptab-pane" id="mdi-ptc-portfolio-pf" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto">
+
+
+
+  <!-- TOTAL ASSET SETTING -->
+  <div class="card total-asset-card" style="padding:12px 16px;margin-bottom:12px;">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> 총 자산</span>
+      <input type="text" inputmode="decimal" id="totalAssetInput" placeholder="예: 100,000,000 (1억)" min="0" step="any"
+        style="flex:1;min-width:180px;padding:7px 12px;background:var(--bg3);border:1px solid var(--accent);border-radius:6px;color:var(--text);font-size:14px;outline:none;"
+        oninput="formatWithComma(this);previewAssetRatio()" onkeydown="if(event.key==='Enter')saveTotalAsset()">
+      <button class="btn btn-primary btn-sm" onclick="saveTotalAsset()" style="white-space:nowrap;">설정</button>
+      <button class="btn btn-ghost btn-sm" onclick="clearTotalAsset()" style="white-space:nowrap;">초기화</button>
+      <span id="assetRatioPreview" style="font-size:13px;color:var(--text3);"></span>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div id="htsSummary" class="hts-bar"></div>
+
+  <!-- PORTFOLIO GAUGE (반원 비중 게이지) -->
+  <div class="portfolio-bar-wrap" id="portfolioBar" style="display:none">
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+      <svg id="portGaugeSvg" viewBox="0 0 200 130" style="width:200px;height:130px;flex-shrink:0;" role="img" aria-label="포트폴리오 비중 게이지">
+        <!-- 배경 반원 (현금 영역) -->
+        <path d="M 14 108 A 86 86 0 0 1 186 108" fill="none" stroke="var(--bg4)" stroke-width="28" stroke-linecap="butt"/>
+        <!-- 주식 비중 호 (JS로 동적 생성) -->
+        <g id="portGaugeArcs"></g>
+        <!-- 총잔고 레이블 -->
+        <text id="portGaugeLabel" x="100" y="74" text-anchor="middle" font-size="10" fill="var(--text3)">총잔고</text>
+        <text id="portGaugeTotal" x="100" y="93" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">-</text>
+        <!-- 좌: 주식 / 우: 현금 -->
+        <text id="portGaugePctStock" x="14" y="127" text-anchor="start" font-size="12" fill="#388bfd">주식</text>
+        <text id="portGaugePctCash" x="186" y="127" text-anchor="end" font-size="12" fill="var(--text3)">현금</text>
+      </svg>
+      <div id="portGaugeLegend"></div>
+    </div>
+  </div>
+
+  <!-- 잔고 테이블 -->
+  <div class="card" style="min-height:300px;">
+    <div class="section-row">
+      <div class="section-title">보유 종목</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input type="text" placeholder="종목 검색..." id="stockSearch" oninput="renderPortfolio()" style="padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;width:160px;outline:none;">
+        <button class="btn btn-ghost btn-sm" onclick="fetchAllPrices()" title="티커가 등록된 종목의 시세를 야후 파이낸스에서 자동 조회"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> 시세 새로고침</button>
+        <button class="btn btn-ghost btn-sm" onclick="openBulkPriceModal()" title="모든 종목 현재가 일괄 입력"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg> 현재가 업데이트</button>
+        <button class="btn btn-ghost btn-sm" onclick="openBulkEditModal()" title="모든 종목 기본 정보 일괄 수정"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> 전체 편집</button>
+        <!-- 실시간 시세 상태 인디케이터 -->
+        <span id="wsStatusBadge" onclick="toggleRealtimePrice()" title="KIS 실시간 시세 (클릭: 수동 재연결)" style="display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text3);user-select:none;">
+          <span id="wsStatusDot" style="width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;"></span>
+          <span id="wsStatusText">실시간 OFF</span>
+        </span>
+      </div>
+    </div>
+    <div class="table-wrap" style="overflow-x:auto;">
+      <table class="hts-table portfolio-table">
+        <thead>
+          <tr>
+            <th style="text-align:left;min-width:120px">종목명</th>
+            <th style="min-width:40px">구분</th>
+            <th style="min-width:55px">보유량</th>
+            <th style="min-width:55px">주문가능</th>
+            <th style="min-width:80px">평균단가</th>
+            <th style="min-width:80px">현재가</th>
+            <th style="min-width:90px">매입금액</th>
+            <th style="min-width:90px">평가금액</th>
+            <th style="min-width:90px">평가손익</th>
+            <th style="min-width:65px">수익률</th>
+            <th style="min-width:80px">비중</th>
+            <th class="col-action" style="min-width:210px;text-align:center">관리</th>
+          </tr>
+        </thead>
+        <tbody id="portfolioBody"></tbody>
+        <tfoot id="portfolioFoot" style="display:none"></tfoot>
+      </table>
+    </div>
+    <div id="portfolioEmpty" class="empty-state" style="display:none">보유 종목이 없습니다. 매수를 등록해보세요.</div>
+  </div><!-- /잔고 테이블 -->
+  </div>
+  <!-- ── 실현손익 탭 ── -->
+  <div class="mdi-ptab-pane" id="mdi-ptc-portfolio-rlz" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
+
+  <!-- 실현손익 요약 카드 -->
+  <div class="card" style="margin-bottom:12px;">
+    <div class="section-row">
+      <div class="section-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> 실현손익 요약</div>
+      <div style="display:flex;gap:6px;">
+        <select id="realizedYear" onchange="renderRealizedTab()" style="padding:5px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;">
+          <option value="all">전체</option>
+        </select>
+      </div>
+    </div>
+    <div id="realizedSummary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px;">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">총 매도 횟수</div>
+        <div id="rs_count" style="font-size:20px;font-weight:700;">-</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">실현 손익 합계</div>
+        <div id="rs_total" style="font-size:18px;font-weight:700;">-</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">평균 수익률</div>
+        <div id="rs_avg" style="font-size:18px;font-weight:700;">-</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 매도 거래 목록 -->
+  <div class="card">
+    <div class="section-row">
+      <div class="section-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> 매도 거래 내역</div>
+      <input type="text" placeholder="종목 검색..." id="realizedSearch" oninput="renderRealizedTab()"
+        style="padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;width:140px;outline:none;">
+    </div>
+    <div style="overflow-x:auto;margin-top:10px;">
+      <table class="hts-table" style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr>
+            <th>날짜</th>
+            <th>종목</th>
+            <th style="text-align:right">매수가</th>
+            <th style="text-align:right">매도가</th>
+            <th style="text-align:right">수량</th>
+            <th style="text-align:right">실현손익</th>
+            <th style="text-align:right">수익률</th>
+            <th>비고</th>
+          </tr>
+        </thead>
+        <tbody id="realizedBody"></tbody>
+      </table>
+    </div>
+    <div id="realizedEmpty" class="empty-state" style="display:none;">매도 기록이 없습니다</div>
+  </div>
+</div>
       </div>
       <div class="mdi-rz mdi-rz-n"  title="위 크기조절"></div>
       <div class="mdi-rz mdi-rz-s"  title="아래 크기조절"></div>
@@ -8720,20 +8752,23 @@ function _toggleCheck(stockKey, checkKey, val) {
   window._MDI = {
     topZ: 110,
     prevPos: {},   // pid -> {x,y,w,h}
-    OPEN_DEFAULT: ['watchlist','main'],
+    OPEN_DEFAULT: ['watchlist','trading','portfolio'],
 
     // ── 기본 레이아웃 계산 ─────────────────────────────────────────────
     _layout() {
       const ws = document.getElementById('mdiWorkspace');
       const W = (ws && ws.offsetWidth  > 50) ? ws.offsetWidth  : Math.max(900, window.innerWidth  - 20);
       const H = (ws && ws.offsetHeight > 50) ? ws.offsetHeight : Math.max(500, window.innerHeight - 140);
-      const lw = 280;
-      const rw = Math.max(400, W - lw - 4);
+      const hw = Math.floor((W - 4) / 2);
+      const rw = W - hw - 4;
+      const th = Math.floor(H * 0.57);
+      const ph = H - th - 4;
       return {
-        watchlist: { x:0,      y:0,  w:lw, h:H,   open:true  },
-        main:      { x:lw+4,   y:0,  w:rw, h:H,   open:true  },
-        news:      { x:lw+4,   y:60, w:720, h:700, open:false },
-        journal:   { x:lw+4,   y:50, w:800, h:520, open:false },
+        watchlist: { x:0,    y:0,    w:hw,  h:H,   open:true  },
+        trading:   { x:hw+4, y:0,    w:rw,  h:th,  open:true  },
+        portfolio: { x:hw+4, y:th+4, w:rw,  h:ph,  open:true  },
+        news:      { x:hw+4, y:60,   w:720, h:700, open:false },
+        journal:   { x:hw+4, y:50,   w:800, h:520, open:false },
       };
     },
 
@@ -8992,11 +9027,10 @@ function _toggleCheck(stockKey, checkKey, val) {
     // ── 패널별 렌더 트리거 ───────────────────────────────────────────────
     _render(pid) {
       try {
-        if (pid==='main') renderPortfolio && renderPortfolio();
-        if (pid==='trades')    renderTrades    && renderTrades();
+        if (pid==='portfolio') renderPortfolio && renderPortfolio();
+        if (pid==='trading')   renderTrades    && renderTrades();
         if (pid==='journal')   { renderJournals && renderJournals(); updateJournalDatalist && updateJournalDatalist(); }
         if (pid==='news')      renderNewsPortfolioLinks && renderNewsPortfolioLinks();
-        if (pid==='realized')  renderRealizedTab  && renderRealizedTab();
         if (pid==='allstock')  { renderAllStockTab && renderAllStockTab(); _startAllStockAutoRefresh && _startAllStockAutoRefresh(); }
         if (pid==='theme')     renderThemeTab  && renderThemeTab();
         if (pid==='watchlist') renderWatchlist && renderWatchlist();
@@ -9051,10 +9085,12 @@ function _toggleCheck(stockKey, checkKey, val) {
         if (tabKey === 'as') { renderAllStockTab && renderAllStockTab(); _startAllStockAutoRefresh && _startAllStockAutoRefresh(); }
         if (tabKey === 'tm') renderThemeTab && renderThemeTab();
       }
-      if (panelId === 'main') {
+      if (panelId === 'portfolio') {
         if (tabKey === 'pf')  renderPortfolio && renderPortfolio();
-        if (tabKey === 'trd') renderTrades && renderTrades();
         if (tabKey === 'rlz') renderRealizedTab && renderRealizedTab();
+      }
+      if (panelId === 'trading') {
+        if (tabKey === 'trd') renderTrades && renderTrades();
       }
     } catch(e) {}
   };
@@ -9062,18 +9098,19 @@ function _toggleCheck(stockKey, checkKey, val) {
     // ── 구버전 호환 stubs ─────────────────────────────────────────────────
   function switchSubTab(name) {
     if (!window._MDI) return;
-    if (name==='main'||name==='portfolio'||name==='trading') { _MDI.open('main'); }
+    if (name==='portfolio'||name==='main') { _MDI.open('portfolio'); }
+    else if (name==='trading')   { _MDI.open('trading'); }
     else if (name==='allstock')  { _MDIPanelTab('watchlist','as');  _MDI.open('watchlist'); }
     else if (name==='theme')     { _MDIPanelTab('watchlist','tm');  _MDI.open('watchlist'); }
     else if (name==='news')      { _MDI.open('news'); }
     else if (name==='journal')   { _MDI.open('journal'); }
-    else if (name==='trades')    { _MDIPanelTab('main','trd');   _MDI.open('main'); }
-    else if (name==='add')       { _MDIPanelTab('main','rlz');   _MDI.open('main'); }
+    else if (name==='trades')    { _MDIPanelTab('trading','trd');   _MDI.open('trading'); }
+    else if (name==='add')       { _MDIPanelTab('portfolio','rlz'); _MDI.open('portfolio'); }
     else if (name==='watchlist') { _MDI.open('watchlist'); }
   }
   function switchMainPanel(n) { switchSubTab(n); }
   function switchDock(n)      { switchSubTab(n); }
-  function toggleDock()       { if (window._MDI) { _MDIPanelTab('main','trd'); _MDI.open('main'); } }
+  function toggleDock()       { if (window._MDI) { _MDIPanelTab('trading','trd'); _MDI.open('trading'); } }
   function toggleSidebar()    { window._MDI && _MDI.toggleSidebar(); }
 
   // ── 헤더 자산 요약 업데이트 ─────────────────────────────────────────
