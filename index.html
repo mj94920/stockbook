@@ -2270,7 +2270,20 @@
   .mdi-rz-se { bottom:-4px; right:-4px;  width:14px;   height:14px; cursor:se-resize; }
   .mdi-rz-sw { bottom:-4px; left:-4px;   width:14px;   height:14px; cursor:sw-resize; }
 
-  </style>
+  
+/* 전종목 테이블 행 키보드 포커스 */
+#allStockBody tr[data-code]:focus {
+  background: var(--bg3) !important;
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+#allStockBody tr[data-code]:hover {
+  background: var(--bg3);
+}
+/* qo 드롭다운 스크롤바 */
+#qoDropdown::-webkit-scrollbar { width: 5px; }
+#qoDropdown::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
 </head>
 <body>
 
@@ -2532,7 +2545,7 @@
             <span id="allStockCount" style="font-size:11px;color:var(--text3);font-weight:400;"></span>
           </span>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <input id="allStockSearch" type="text" placeholder="종목명·코드·업종 검색" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:12px;width:170px;" oninput="filterAndRenderAll()">
+            <input id="allStockSearch" type="text" placeholder="종목명·코드·업종 검색" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:12px;width:170px;" oninput="filterAndRenderAll()" onkeydown="_allStockSearchKey(event)">
             <button onclick="loadAllStocks(true)" id="allStockRefreshBtn" style="padding:5px 10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;">🔄 새로고침</button>
             <button onclick="fetchAllStockPagePrices()" id="allStockPriceBtn" title="현재 페이지 종목을 KIS/Yahoo로 실시간 조회" style="padding:5px 10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;">📡 시세 조회</button>
           </div>
@@ -2548,16 +2561,21 @@
           <table class="hts-table" id="allStockTable" style="min-width:700px;">
             <thead>
               <tr>
+                <th style="width:28px;text-align:center;padding:4px 2px;" title="관심종목">☆</th>
                 <th>종목명</th><th>코드</th><th>업종</th>
                 <th style="text-align:right;">현재가</th>
                 <th style="text-align:right;">전일대비</th>
                 <th style="text-align:right;">등락률</th>
                 <th style="text-align:right;">거래량</th>
                 <th style="text-align:right;">시총(억)</th>
+                <th style="text-align:right;">PER</th>
+                <th style="text-align:right;">PBR</th>
+                <th style="text-align:right;">배당률</th>
+                <th style="width:46px;"></th>
               </tr>
             </thead>
             <tbody id="allStockBody">
-              <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:48px 20px;">
+              <tr><td colspan="13" style="text-align:center;color:var(--text3);padding:48px 20px;">
                 시장 탭을 선택하면 자동으로 불러옵니다
               </td></tr>
             </tbody>
@@ -2609,10 +2627,13 @@
         <!-- ── 호가창 스타일 주문 입력 ── -->
         <!-- 종목 선택 헤더 -->
         <div style="padding:8px 0 6px;display:flex;align-items:center;gap:6px;">
-          <input type="text" id="qo_name_input" placeholder="종목명 또는 코드 입력..." list="qoNameList"
-            oninput="onQONameInput();updateHogaDisplay()" autocomplete="off"
-            style="flex:1;padding:7px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;">
-          <datalist id="qoNameList"></datalist>
+          <div style="position:relative;flex:1;">
+            <input type="text" id="qo_name_input" placeholder="종목명 또는 코드 입력..."
+              oninput="_qoOnInput()" onkeydown="_qoKeydown(event)" autocomplete="off"
+              style="width:100%;padding:7px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;">
+            <datalist id="qoNameList"></datalist>
+            <div id="qoDropdown" style="display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:9999;background:var(--bg2);border:1px solid var(--border);border-radius:8px;max-height:220px;overflow-y:auto;box-shadow:0 6px 24px rgba(0,0,0,.45);"></div>
+          </div>
           <input type="hidden" id="qo_stock_code">
         </div>
         <!-- 현재가 표시 -->
@@ -5231,7 +5252,7 @@ function renderAllStockTable() {
   });
 
   if (!slice.length) {
-    bodyEl.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:30px;">검색 결과가 없습니다.</td></tr>`;
+    bodyEl.innerHTML = `<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:30px;">검색 결과가 없습니다.</td></tr>`;
   } else {
     bodyEl.innerHTML = slice.map(s => {
       const up       = (s.changePct || 0) >= 0;
@@ -5244,7 +5265,17 @@ function renderAllStockTable() {
       const safeCode = (s.code || '').replace(/'/g,'');
       const safeName = (s.name || '').replace(/'/g,'').replace(/"/g,'');
       const rowId    = `asr-${safeCode}`;
-      return `<tr id="${rowId}" style="cursor:pointer;" onclick="openAllStockPopup('${safeCode}','${safeName}')">
+      const per = s.per  ? Number(s.per ).toFixed(1)+'배' : '-';
+      const pbr = s.pbr  ? Number(s.pbr ).toFixed(2)+'배' : '-';
+      const div = s.dividendYield ? Number(s.dividendYield).toFixed(1)+'%' : (s.dividend ? s.dividend+'%' : '-');
+      const isW = (state.watchlist||[]).some(w => w.ticker === safeCode);
+      return `<tr id="${rowId}" tabindex="0" data-code="${safeCode}" data-name="${safeName}"
+          style="cursor:pointer;outline:none;"
+          onclick="connectToHoga('${safeCode}','${safeName}')"
+          onkeydown="_allRowKey(event,this,'${safeCode}','${safeName}')">
+        <td style="text-align:center;width:28px;padding:2px 3px;" onclick="event.stopPropagation();_toggleAllWatch('${safeCode}','${safeName}')" title="${isW?'관심 해제':'관심 추가'}">
+          <span style="font-size:13px;color:${isW?'gold':'var(--text3)'};">${isW?'★':'☆'}</span>
+        </td>
         <td style="font-weight:600;white-space:nowrap;">${s.name || ''}</td>
         <td style="font-family:monospace;font-size:11px;color:var(--text3);">${s.code || ''}</td>
         <td style="font-size:11px;color:var(--text3);white-space:nowrap;">${s.industry || '-'}</td>
@@ -5253,6 +5284,12 @@ function renderAllStockTable() {
         <td id="${rowId}-pct" style="text-align:right;font-weight:600;" class="${cls}">${pctStr}</td>
         <td style="text-align:right;font-size:11px;color:var(--text2);">${volStr}</td>
         <td style="text-align:right;font-size:11px;">${capStr}</td>
+        <td style="text-align:right;font-size:11px;color:var(--text3);">${per}</td>
+        <td style="text-align:right;font-size:11px;color:var(--text3);">${pbr}</td>
+        <td style="text-align:right;font-size:11px;color:var(--text3);">${div}</td>
+        <td style="text-align:center;padding:2px 3px;" onclick="event.stopPropagation();allStockOpenChart('${safeCode}','${safeName}')" title="기업분석">
+          <button style="padding:1px 6px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-size:10px;cursor:pointer;line-height:1.5;">분석</button>
+        </td>
       </tr>`;
     }).join('');
 
@@ -5452,6 +5489,177 @@ function allStockAddWatch(code, name, market) {
   save();
   showToast(`★ ${name}(${code}) 관심종목 추가`);
 }
+
+// ─── 전종목 키보드/호가 연결 함수 ───────────────────────────────
+function connectToHoga(code, name) {
+  const nameEl = document.getElementById('qo_name_input');
+  const codeEl = document.getElementById('qo_stock_code');
+  if (nameEl) nameEl.value = name;
+  if (codeEl) codeEl.value = code;
+  // 호가 탭으로 전환
+  if (typeof onQONameInput === 'function') onQONameInput();
+  if (typeof updateHogaDisplay === 'function') updateHogaDisplay();
+  // trading 패널 열기
+  const panel = document.getElementById('mdi-panel-trading');
+  if (panel && panel.style.display === 'none') {
+    if (window._MDI?.open) window._MDI.open('trading');
+  }
+  // 호가 탭 활성화 (첫 번째 탭)
+  const hogaTab = panel?.querySelector('.mdi-ptab');
+  if (hogaTab) hogaTab.click();
+  // 전종목 패널을 뒤로 보내기
+  const allPanel = document.getElementById('mdi-panel-allstock');
+  if (allPanel) allPanel.style.zIndex = '100';
+}
+
+function _toggleAllWatch(code, name) {
+  if (!state.watchlist) state.watchlist = [];
+  const idx = state.watchlist.findIndex(w => w.ticker === code);
+  if (idx >= 0) {
+    state.watchlist.splice(idx, 1);
+    save?.();
+    if (typeof showToast === 'function') showToast(`★ ${name} 관심 해제`);
+  } else {
+    const mkt = _allMkt || 'KOSPI';
+    state.watchlist.push({ ticker: code, name, market: mkt, addedAt: Date.now() });
+    save?.();
+    if (typeof showToast === 'function') showToast(`★ ${name} 관심 추가`);
+  }
+  // 별 아이콘 즉시 갱신
+  const bodyEl = document.getElementById('allStockBody');
+  if (bodyEl) {
+    const span = bodyEl.querySelector(`tr[data-code="${code}"] td:first-child span`);
+    if (span) {
+      const isNowW = state.watchlist.some(w => w.ticker === code);
+      span.textContent = isNowW ? '★' : '☆';
+      span.style.color = isNowW ? 'gold' : 'var(--text3)';
+    }
+  }
+}
+
+function _allStockSearchKey(e) {
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    const first = document.querySelector('#allStockBody tr[data-code]');
+    if (first) first.focus();
+  }
+}
+
+function _allRowKey(e, el, code, name) {
+  const bodyEl = document.getElementById('allStockBody');
+  const rows = [...(bodyEl?.querySelectorAll('tr[data-code]') || [])];
+  const idx = rows.indexOf(el);
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    const next = rows[idx + 1];
+    if (next) { next.focus(); next.scrollIntoView({ block: 'nearest' }); }
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (idx === 0) { document.getElementById('allStockSearch')?.focus(); return; }
+    const prev = rows[idx - 1];
+    if (prev) { prev.focus(); prev.scrollIntoView({ block: 'nearest' }); }
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    connectToHoga(code, name);
+  } else if (e.key === 'Escape') {
+    document.getElementById('allStockSearch')?.focus();
+  }
+}
+
+// ─── qo_name_input 커스텀 자동완성 ──────────────────────────────
+let _qoItems = [];
+let _qoActive = -1;
+
+function _qoOnInput() {
+  if (typeof onQONameInput === 'function') onQONameInput();
+  if (typeof updateHogaDisplay === 'function') updateHogaDisplay();
+  _qoRefreshDropdown();
+}
+
+function _qoRefreshDropdown() {
+  const inp = document.getElementById('qo_name_input');
+  const dd  = document.getElementById('qoDropdown');
+  if (!inp || !dd) return;
+  const q = inp.value.trim().toLowerCase();
+  if (!q) { dd.style.display = 'none'; _qoItems = []; _qoActive = -1; return; }
+
+  const all = Object.values(_allStockRaw || {}).flat();
+  _qoItems = all.filter(s =>
+    (s.name && s.name.toLowerCase().includes(q)) ||
+    (s.code && s.code.startsWith(q))
+  ).slice(0, 30);
+
+  if (!_qoItems.length) { dd.style.display = 'none'; _qoActive = -1; return; }
+
+  _qoActive = -1;
+  dd.innerHTML = _qoItems.map((s, i) =>
+    `<div class="qo-dd-item" data-i="${i}"
+       style="padding:7px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:12px;border-bottom:1px solid var(--border);"
+       onmousedown="event.preventDefault();_qoSelect(${i})"
+       onmouseenter="this.style.background='var(--bg3)'"
+       onmouseleave="this.style.background=''">
+       <span style="font-weight:600;">${s.name}</span>
+       <span style="color:var(--text3);font-family:monospace;font-size:11px;">${s.code}</span>
+     </div>`
+  ).join('');
+  dd.style.display = 'block';
+}
+
+function _qoSelect(i) {
+  const s = _qoItems[i];
+  if (!s) return;
+  const nameEl = document.getElementById('qo_name_input');
+  const codeEl = document.getElementById('qo_stock_code');
+  const dd = document.getElementById('qoDropdown');
+  if (nameEl) nameEl.value = s.name;
+  if (codeEl) codeEl.value = s.code;
+  if (dd) dd.style.display = 'none';
+  _qoItems = []; _qoActive = -1;
+  if (typeof onQONameInput === 'function') onQONameInput();
+  if (typeof updateHogaDisplay === 'function') updateHogaDisplay();
+}
+
+function _qoKeydown(e) {
+  const dd = document.getElementById('qoDropdown');
+  if (!dd || dd.style.display === 'none') {
+    if (e.key === 'Enter') { if (typeof updateHogaDisplay === 'function') updateHogaDisplay(); }
+    return;
+  }
+  const items = dd.querySelectorAll('.qo-dd-item');
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    _qoActive = Math.min(_qoActive + 1, items.length - 1);
+    _qoHighlight(items);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    _qoActive = Math.max(_qoActive - 1, -1);
+    _qoHighlight(items);
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (_qoActive >= 0) { _qoSelect(_qoActive); }
+    else if (_qoItems.length === 1) { _qoSelect(0); }
+    else { if (typeof updateHogaDisplay === 'function') updateHogaDisplay(); }
+  } else if (e.key === 'Escape') {
+    dd.style.display = 'none'; _qoActive = -1;
+  }
+}
+
+function _qoHighlight(items) {
+  items.forEach((el, i) => {
+    el.style.background = i === _qoActive ? 'var(--accent-dim, var(--bg3))' : '';
+    if (i === _qoActive) el.scrollIntoView({ block: 'nearest' });
+  });
+}
+
+// 전역 클릭 시 드롭다운 닫기 (DOMContentLoaded 이후 등록)
+document.addEventListener('click', e => {
+  const dd = document.getElementById('qoDropdown');
+  if (dd && !dd.contains(e.target) && e.target.id !== 'qo_name_input') {
+    dd.style.display = 'none'; _qoActive = -1;
+  }
+});
+
+
 function allStockOpenChart(code, name) {
   if (typeof openStockDrawer === 'function') { openStockDrawer(code, name); return; }
   switchSubTab('main');
