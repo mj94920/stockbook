@@ -163,7 +163,7 @@
     background: #dce6f0;
     border-right-color: #c0ccd8;
   }
-  body.light-mode .mdi-sb-btn { color: #3a5070; }
+  body.light-mode .mdi-sb-btn { color: #2a4060 !important; }
   body.light-mode .mdi-sb-btn:hover { background: #c8d4e0; }
   body.light-mode .mdi-taskbar {
     background: #dce6f0;
@@ -2133,7 +2133,7 @@
     padding: 0 0 0 10px;
     height: 36px; min-height: 36px;
     background: none; border: none; border-left: 2px solid transparent;
-    color: #9ab8d4; font-size: 12.5px; font-family: inherit;
+    color: #7aa0be; font-size: 12.5px; font-family: inherit;
     cursor: pointer; text-align: left; white-space: nowrap;
     transition: all 0.12s; width: 100%;
   }
@@ -2555,6 +2555,7 @@
           <button id="allMktTab-KOSPI"  onclick="switchAllMarket('KOSPI')"  style="padding:7px 18px;background:none;border:none;border-bottom:2px solid var(--accent);color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;">KOSPI</button>
           <button id="allMktTab-KOSDAQ" onclick="switchAllMarket('KOSDAQ')" style="padding:7px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:13px;font-weight:400;cursor:pointer;">KOSDAQ</button>
           <button id="allMktTab-ETF"    onclick="switchAllMarket('ETF')"    style="padding:7px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:13px;font-weight:400;cursor:pointer;">ETF</button>
+          <button id="allMktTab-SECTOR" onclick="switchAllMarket('SECTOR')" style="padding:7px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:13px;font-weight:400;cursor:pointer;">섹터별</button>
         </div>
         <div id="allStockStatus" style="font-size:11px;color:var(--text3);margin-bottom:6px;min-height:16px;"></div>
         <div style="overflow-x:auto;">
@@ -5192,7 +5193,7 @@ function renderAllStockTab() {
 
 function switchAllMarket(mkt) {
   _allMkt = mkt;
-  ['KOSPI','KOSDAQ','ETF'].forEach(m => {
+  ['KOSPI','KOSDAQ','ETF','SECTOR'].forEach(m => {
     const btn = document.getElementById('allMktTab-' + m);
     if (!btn) return;
     const active = m === mkt;
@@ -5200,7 +5201,11 @@ function switchAllMarket(mkt) {
     btn.style.color        = active ? 'var(--accent)' : 'var(--text2)';
     btn.style.fontWeight   = active ? '700' : '400';
   });
-  loadAllStocks();
+  if (mkt === 'SECTOR') {
+    renderAllStockSectorView();
+  } else {
+    loadAllStocks();
+  }
 }
 
 async function loadAllStocks(forceRefresh) {
@@ -5262,6 +5267,103 @@ function filterAndRenderAll() {
   if (countEl) countEl.textContent = `(${_allFiltered.length.toLocaleString()}종목)`;
   allStockPage = 1;
   renderAllStockTable();
+}
+
+// 전종목 섹터별 그룹 뷰
+function renderAllStockSectorView() {
+  const bodyEl = document.getElementById('allStockBody');
+  if (!bodyEl) return;
+
+  // KOSPI+KOSDAQ 합산 (없으면 로드)
+  const allData = [...(_allStockRaw['KOSPI']||[]), ...(_allStockRaw['KOSDAQ']||[])];
+  if (!allData.length) {
+    bodyEl.closest('table').parentElement.innerHTML =
+      `<div style="text-align:center;padding:40px;color:var(--text3);">
+        섹터별 분류를 위해 KOSPI/KOSDAQ 데이터를 먼저 불러옵니다...<br>
+        <button onclick="_loadSectorData()" style="margin-top:12px;padding:7px 18px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">데이터 불러오기</button>
+      </div>`;
+    return;
+  }
+
+  // 섹터 분류
+  const sectors = {};
+  allData.forEach(s => {
+    const sec = _getAutoSector(s.name || s.ISU_ABBRV || '', s.industry || '');
+    if (!sectors[sec]) sectors[sec] = [];
+    sectors[sec].push(s);
+  });
+  const secNames = Object.keys(sectors).sort();
+  const countEl = document.getElementById('allStockCount');
+  if (countEl) countEl.textContent = `(${allData.length.toLocaleString()}종목 / ${secNames.length}섹터)`;
+
+  const fmt = n => n > 0 ? n.toLocaleString('ko-KR') : '-';
+  const capStr = mc => mc > 0 ? Math.round(mc/100000000).toLocaleString()+'억' : '-';
+
+  // 섹터 그룹 렌더
+  const table = bodyEl.closest('table');
+  let html = '';
+  secNames.forEach(sec => {
+    const stocks = sectors[sec];
+    const totalCap = stocks.reduce((a,s)=>(a + (s.marketCap||0)), 0);
+    html += `<tr>
+      <td colspan="13" onclick="_toggleSector(this,'${sec.replace(/'/g,"\\'")}')"
+        style="background:var(--bg2);padding:8px 12px;cursor:pointer;font-weight:700;color:var(--accent);font-size:13px;user-select:none;">
+        ▶ ${sec} <span style="font-size:11px;font-weight:400;color:var(--text3);margin-left:8px;">${stocks.length}종목 · 시총 ${capStr(totalCap)}</span>
+      </td>
+    </tr>`;
+    stocks.sort((a,b)=>(b.marketCap||0)-(a.marketCap||0)).forEach(s => {
+      const up = (s.changePct||0) >= 0;
+      const cls = s.change === 0 ? '' : (up ? 'up' : 'dn');
+      const safeCode = (s.code||'').replace(/'/g,'');
+      const safeName = (s.name||'').replace(/'/g,'').replace(/"/g,'');
+      const isW = (state.watchlist||[]).some(w => w.ticker === safeCode);
+      html += `<tr class="sector-row-${sec.replace(/[^a-z0-9가-힣]/gi,'_')}"
+        style="cursor:pointer;" data-code="${safeCode}" data-name="${safeName}"
+        onclick="connectToHoga('${safeCode}','${safeName}')">
+        <td style="text-align:center;width:28px;padding:2px 3px;" onclick="event.stopPropagation();_toggleAllWatch('${safeCode}','${safeName}')" title="${isW?'관심 해제':'관심 추가'}">
+          <span style="font-size:13px;color:${isW?'gold':'var(--text3)'};">${isW?'★':'☆'}</span>
+        </td>
+        <td style="font-weight:600;white-space:nowrap;">${s.name||''}</td>
+        <td style="font-family:monospace;font-size:11px;color:var(--text3);">${s.code||''}</td>
+        <td style="font-size:11px;color:var(--text3);">${s.industry||'-'}</td>
+        <td style="text-align:right;font-weight:600;">${fmt(s.price)}</td>
+        <td class="${cls}" style="text-align:right;">${s.change===0?'—':(up?'▲':'▼')+' '+Math.abs(s.change||0).toLocaleString()}</td>
+        <td class="${cls}" style="text-align:right;font-weight:600;">${!s.changePct?'0.00%':(up?'+':'')+Number(s.changePct).toFixed(2)+'%'}</td>
+        <td style="text-align:right;font-size:11px;">${s.volume>0?s.volume.toLocaleString():'-'}</td>
+        <td style="text-align:right;font-size:11px;">${capStr(s.marketCap)}</td>
+        <td colspan="3" style="font-size:11px;color:var(--text3);text-align:center;">-</td>
+        <td style="text-align:center;padding:2px 3px;" onclick="event.stopPropagation();allStockOpenChart('${safeCode}','${safeName}')" title="기업분석">
+          <button style="padding:1px 6px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-size:10px;cursor:pointer;">분석</button>
+        </td>
+      </tr>`;
+    });
+  });
+  bodyEl.innerHTML = html;
+}
+
+function _toggleSector(tr, sec) {
+  const cls = 'sector-row-' + sec.replace(/[^a-z0-9가-힣]/gi,'_');
+  const rows = tr.closest('tbody').querySelectorAll('.' + cls);
+  const hidden = rows.length && rows[0].style.display === 'none';
+  rows.forEach(r => r.style.display = hidden ? '' : 'none');
+  tr.querySelector('span:first-child') && (tr.innerHTML = tr.innerHTML.replace(hidden?'▶':'▼', hidden?'▼':'▶'));
+  const arrow = tr.querySelector('td');
+  if (arrow) arrow.textContent = arrow.textContent.replace(hidden?'▶':'▼', hidden?'▼':'▶');
+}
+
+async function _loadSectorData() {
+  if (!window.electronAPI?.fetchNaverStocks) return;
+  const statusEl = document.getElementById('allStockStatus');
+  if (statusEl) statusEl.textContent = '로딩 중...';
+  for (const mkt of ['KOSPI','KOSDAQ']) {
+    if (!_allStockRaw[mkt]?.length) {
+      try {
+        const result = await window.electronAPI.fetchNaverStocks(mkt);
+        if (result?.ok) _allStockRaw[mkt] = result.data;
+      } catch(e) {}
+    }
+  }
+  renderAllStockSectorView();
 }
 
 // 현재 페이지 종목 시세 on-demand 조회 (KIS → Yahoo Finance)
@@ -9078,6 +9180,76 @@ function _toggleCheck(stockKey, checkKey, val) {
       requestAnimationFrame(function() {
         requestAnimationFrame(function() { _tryLayout(0); });
       });
+      // 전체창 리사이징: 패널 stacking 문제 해결 위해 window 레벨 capture 리스너 사용
+      this._initGlobalResize();
+    },
+
+    // ── 전역 리사이즈 핸들러 ───────────────────────────────────────────────────
+    _initGlobalResize() {
+      const EDGE = 6;
+      window.addEventListener('pointerdown', ev => {
+        const ws = document.getElementById('mdiWorkspace');
+        if (!ws) return;
+        // 텍스트 입력 / 버튼 클릭은 무시
+        const tag = (ev.target.tagName||'').toUpperCase();
+        if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+        if (ev.target.closest('.mdi-tb')) return; // 타이틀바는 드래그
+        const panels = ws.querySelectorAll('.mdi-panel[data-mdi-state="open"]');
+        // z-index 높은 패널부터 검사해 가장 앞에 있는 엣지 우선
+        const sortedPanels = [...panels].sort((a,b) =>
+          parseInt(b.style.zIndex||0) - parseInt(a.style.zIndex||0)
+        );
+        for (const panel of sortedPanels) {
+          const pid = panel.dataset.pid;
+          if (pid === 'allstock') continue; // 전종목은 스크롤 많아서 제외
+          const pl = panel.offsetLeft, pt = panel.offsetTop;
+          const pw = panel.offsetWidth, ph = panel.offsetHeight;
+          const wsR = ws.getBoundingClientRect();
+          const mx = ev.clientX - wsR.left;
+          const my = ev.clientY - wsR.top;
+          const onL = mx >= pl - EDGE && mx <= pl + EDGE && my >= pt && my <= pt + ph;
+          const onR = mx >= pl + pw - EDGE && mx <= pl + pw + EDGE && my >= pt && my <= pt + ph;
+          const onT = my >= pt - EDGE && my <= pt + EDGE && mx >= pl && mx <= pl + pw;
+          const onB = my >= pt + ph - EDGE && my <= pt + ph + EDGE && mx >= pl && mx <= pl + pw;
+          if (!onL && !onR && !onT && !onB) continue;
+          const dir = (onL?'w':'') + (onR?'e':'') + (onT?'n':'') + (onB?'s':'');
+          ev.preventDefault();
+          ev.stopPropagation();
+          this._front(pid);
+          const sX = ev.clientX, sY = ev.clientY;
+          const sL = panel.offsetLeft, sT = panel.offsetTop;
+          const sW = panel.offsetWidth, sH = panel.offsetHeight;
+          const cur = (dir==='se'||dir==='nw') ? 'nwse-resize'
+                    : (dir==='ne'||dir==='sw') ? 'nesw-resize'
+                    : (dir.includes('e')||dir.includes('w')) ? 'ew-resize' : 'ns-resize';
+          const ov = document.createElement('div');
+          ov.style.cssText = 'position:fixed;inset:0;z-index:2147483647;cursor:'+cur+';';
+          document.body.appendChild(ov);
+          const move = e => {
+            const dx = e.clientX - sX, dy = e.clientY - sY;
+            let L=sL, T=sT, W=sW, H=sH;
+            if (dir.includes('e')) W = Math.max(160, sW+dx);
+            if (dir.includes('w')) { W=Math.max(160,sW-dx); L=sL+sW-W; }
+            if (dir.includes('s')) H = Math.max(26, sH+dy);
+            if (dir.includes('n')) { H=Math.max(26,sH-dy); T=sT+sH-H; }
+            const ws2 = panel.parentElement;
+            if (ws2) {
+              L = Math.max(0, Math.min(ws2.offsetWidth-40, L));
+              T = Math.max(0, Math.min(ws2.offsetHeight-26, T));
+            }
+            panel.style.left=L+'px'; panel.style.top=T+'px';
+            panel.style.width=W+'px'; panel.style.height=H+'px';
+          };
+          const up = () => {
+            window.removeEventListener('pointermove', move);
+            window.removeEventListener('pointerup', up);
+            ov.remove();
+          };
+          window.addEventListener('pointermove', move);
+          window.addEventListener('pointerup', up);
+          return; // 첫 번째 매칭 패널만 처리
+        }
+      }, true); // capture=true: 다른 리스너보다 먼저 실행
     },
 
     // ── 열기 ────────────────────────────────────────────────────────────
