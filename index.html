@@ -149,11 +149,12 @@
     border-bottom-color: #c0ccd8;
   }
   body.light-mode .mdi-ptab {
-    color: #3a5070;
+    color: #5070a0;
   }
   body.light-mode .mdi-ptab.active {
-    color: #0d6efd;
-    border-bottom-color: #0d6efd;
+    color: #1a4fd6;
+    border-bottom-color: #1a4fd6;
+    font-weight: 700;
   }
   body.light-mode .mdi-body {
     background: #ffffff;
@@ -165,6 +166,8 @@
   }
   body.light-mode .mdi-sb-btn { color: #2a4060 !important; }
   body.light-mode .mdi-sb-btn:hover { background: #c8d4e0; }
+  body.light-mode .mdi-sb-btn-active { color: #1a4fd6 !important; border-left-color: #2563eb; background: rgba(37,99,235,0.08); }
+  body.light-mode .mdi-sb-btn-active:hover { background: rgba(37,99,235,0.14); }
   body.light-mode .mdi-taskbar {
     background: #dce6f0;
     border-top-color: #c0ccd8;
@@ -2173,7 +2176,7 @@
     cursor: pointer; white-space: nowrap; transition: all 0.1s;
   }
   .mdi-ptab:hover { color: #8aabb0; }
-  .mdi-ptab.active { color: #c8d8e8; border-bottom-color: #2563eb; font-weight: 600; }
+  .mdi-ptab.active { color: #60aaee; border-bottom-color: #2563eb; border-bottom-width: 3px; font-weight: 700; }
 
   .mdi-ptab-pane { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: auto; }
 
@@ -2569,8 +2572,8 @@
           <th style="text-align:right;">등락률</th>
           <th style="text-align:right;">거래량</th>
           <th style="text-align:right;">시총(억)</th>
-          <th style="text-align:right;color:#a78bfa;" title="기업분석 조회 시 자동 기록">EPS</th>
-          <th style="text-align:right;color:#a78bfa;" title="기업분석 조회 시 자동 기록">ROE</th>
+          <th style="text-align:right;" title="기업분석 조회 시 자동 기록">EPS</th>
+          <th style="text-align:right;" title="기업분석 조회 시 자동 기록">ROE</th>
           <th style="text-align:right;">PER</th>
           <th style="text-align:right;">PBR</th>
           <th style="text-align:right;">배당률</th>
@@ -2626,7 +2629,7 @@
   <!-- ── 주문/호가 탭 ── -->
     <div class="mdi-ptab-pane" id="mdi-ptc-trading-ord" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto">
 <!-- ========== 종합탭 우측 미니탭 래퍼 ========== -->
-    <div id="ord-hoga-direct" style="padding:0 8px;overflow-y:auto;height:100%;">
+    <div id="ord-hoga-direct" style="padding:0 12px;overflow-y:auto;height:100%;">
         <!-- ── 호가창 스타일 주문 입력 ── -->
         <!-- 종목 선택 헤더 -->
         <div style="padding:8px 0 6px;display:flex;align-items:center;gap:6px;">
@@ -5492,8 +5495,8 @@ function renderAllStockTable() {
         <td id="${rowId}-pct" style="text-align:right;font-weight:600;" class="${cls}">${pctStr}</td>
         <td style="text-align:right;font-size:11px;color:var(--text2);">${volStr}</td>
         <td style="text-align:right;font-size:11px;">${capStr}</td>
-        <td style="text-align:right;font-size:11px;color:${hasFund?'#a78bfa':'var(--text3)'};">${epsStr}</td>
-        <td style="text-align:right;font-size:11px;color:${hasFund?'#a78bfa':'var(--text3)'};">${roeStr}</td>
+        <td style="text-align:right;font-size:11px;color:var(--text3);">${epsStr}</td>
+        <td style="text-align:right;font-size:11px;color:var(--text3);">${roeStr}</td>
         <td style="text-align:right;font-size:11px;color:var(--text3);">${per}</td>
         <td style="text-align:right;font-size:11px;color:var(--text3);">${pbr}</td>
         <td style="text-align:right;font-size:11px;color:var(--text3);">${div}</td>
