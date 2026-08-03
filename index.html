@@ -2535,56 +2535,58 @@
         </div>
       </div>
     </div>
-  <div class="mdi-ptab-pane" id="mdi-ptc-watchlist-as" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
-
-      <div class="card" style="max-width:1300px;margin:0 auto;">
-        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-          <span style="display:flex;align-items:center;gap:6px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-            전종목 조회
-            <span id="allStockCount" style="font-size:11px;color:var(--text3);font-weight:400;"></span>
-          </span>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <input id="allStockSearch" type="text" placeholder="종목명·코드·업종 검색" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:12px;width:170px;" oninput="filterAndRenderAll()" onkeydown="_allStockSearchKey(event)">
-            <button onclick="loadAllStocks(true)" id="allStockRefreshBtn" style="padding:5px 10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;">🔄 새로고침</button>
-            <button onclick="fetchAllStockPagePrices()" id="allStockPriceBtn" title="현재 페이지 종목을 KIS/Yahoo로 실시간 조회" style="padding:5px 10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;">📡 시세 조회</button>
-          </div>
-        </div>
-        <!-- 시장 탭: KOSPI / KOSDAQ / ETF -->
-        <div style="display:flex;gap:0;margin-bottom:10px;border-bottom:1px solid var(--border);">
-          <button id="allMktTab-KOSPI"  onclick="switchAllMarket('KOSPI')"  style="padding:7px 18px;background:none;border:none;border-bottom:2px solid var(--accent);color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;">KOSPI</button>
-          <button id="allMktTab-KOSDAQ" onclick="switchAllMarket('KOSDAQ')" style="padding:7px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:13px;font-weight:400;cursor:pointer;">KOSDAQ</button>
-          <button id="allMktTab-ETF"    onclick="switchAllMarket('ETF')"    style="padding:7px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:13px;font-weight:400;cursor:pointer;">ETF</button>
-          <button id="allMktTab-SECTOR" onclick="switchAllMarket('SECTOR')" style="padding:7px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:13px;font-weight:400;cursor:pointer;">섹터별</button>
-        </div>
-        <div id="allStockStatus" style="font-size:11px;color:var(--text3);margin-bottom:6px;min-height:16px;"></div>
-        <div style="overflow-x:auto;">
-          <table class="hts-table" id="allStockTable" style="min-width:700px;">
-            <thead>
-              <tr>
-                <th style="width:28px;text-align:center;padding:4px 2px;" title="관심종목">☆</th>
-                <th>종목명</th><th>코드</th><th>업종</th>
-                <th style="text-align:right;">현재가</th>
-                <th style="text-align:right;">전일대비</th>
-                <th style="text-align:right;">등락률</th>
-                <th style="text-align:right;">거래량</th>
-                <th style="text-align:right;">시총(억)</th>
-                <th style="text-align:right;">PER</th>
-                <th style="text-align:right;">PBR</th>
-                <th style="text-align:right;">배당률</th>
-                <th style="width:46px;"></th>
-              </tr>
-            </thead>
-            <tbody id="allStockBody">
-              <tr><td colspan="13" style="text-align:center;color:var(--text3);padding:48px 20px;">
-                시장 탭을 선택하면 자동으로 불러옵니다
-              </td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div style="display:flex;justify-content:center;align-items:center;gap:4px;margin-top:12px;flex-wrap:wrap;" id="allStockPagination"></div>
+  <div class="mdi-ptab-pane" id="mdi-ptc-watchlist-as" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
+  <!-- 고정 헤더 -->
+  <div style="flex-shrink:0;padding:6px 8px 0;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;margin-bottom:5px;">
+      <span style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:5px;">
+        전종목
+        <span id="allStockCount" style="font-size:11px;color:var(--text3);font-weight:400;"></span>
+      </span>
+      <div style="display:flex;gap:5px;align-items:center;">
+        <input id="allStockSearch" type="text" placeholder="종목명·코드 검색" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:12px;width:140px;" oninput="filterAndRenderAll()" onkeydown="_allStockSearchKey(event)">
+        <button onclick="loadAllStocks(true)" id="allStockRefreshBtn" title="새로고침" style="padding:4px 8px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;">🔄</button>
+        <button onclick="fetchAllStockPagePrices()" id="allStockPriceBtn" title="현재 페이지 실시간 시세" style="padding:4px 8px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;">📡</button>
       </div>
     </div>
+    <div style="display:flex;gap:0;border-bottom:1px solid var(--border);">
+      <button id="allMktTab-KOSPI"  onclick="switchAllMarket('KOSPI')"  style="padding:5px 12px;background:none;border:none;border-bottom:2px solid var(--accent);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;">KOSPI</button>
+      <button id="allMktTab-KOSDAQ" onclick="switchAllMarket('KOSDAQ')" style="padding:5px 12px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:12px;font-weight:400;cursor:pointer;">KOSDAQ</button>
+      <button id="allMktTab-ETF"    onclick="switchAllMarket('ETF')"    style="padding:5px 12px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:12px;font-weight:400;cursor:pointer;">ETF</button>
+      <button id="allMktTab-SECTOR" onclick="switchAllMarket('SECTOR')" style="padding:5px 12px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:12px;font-weight:400;cursor:pointer;">섹터별</button>
+    </div>
+    <div id="allStockStatus" style="font-size:10px;color:var(--text3);padding:2px 0;min-height:14px;"></div>
+  </div>
+  <!-- 테이블: flex:1로 남은 높이 전부 채움, 가로·세로 스크롤 -->
+  <div style="flex:1;overflow:auto;min-height:0;">
+    <table class="hts-table" id="allStockTable" style="width:100%;min-width:820px;">
+      <thead>
+        <tr>
+          <th style="width:26px;text-align:center;padding:4px 2px;" title="관심종목">☆</th>
+          <th>종목명</th><th>코드</th><th>업종</th>
+          <th style="text-align:right;">현재가</th>
+          <th style="text-align:right;">전일대비</th>
+          <th style="text-align:right;">등락률</th>
+          <th style="text-align:right;">거래량</th>
+          <th style="text-align:right;">시총(억)</th>
+          <th style="text-align:right;color:#a78bfa;" title="기업분석 조회 시 자동 기록">EPS</th>
+          <th style="text-align:right;color:#a78bfa;" title="기업분석 조회 시 자동 기록">ROE</th>
+          <th style="text-align:right;">PER</th>
+          <th style="text-align:right;">PBR</th>
+          <th style="text-align:right;">배당률</th>
+          <th style="width:40px;"></th>
+        </tr>
+      </thead>
+      <tbody id="allStockBody">
+        <tr><td colspan="15" style="text-align:center;color:var(--text3);padding:48px 20px;">
+          시장 탭을 선택하면 자동으로 불러옵니다
+        </td></tr>
+      </tbody>
+    </table>
+  </div>
+  <!-- 페이지네이션 고정 하단 -->
+  <div style="flex-shrink:0;display:flex;justify-content:center;align-items:center;gap:4px;padding:5px 8px;border-top:1px solid var(--border);" id="allStockPagination"></div>
+</div>
   <div class="mdi-ptab-pane" id="mdi-ptc-watchlist-tm" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
 
       <div class="card" style="max-width:860px;margin:0 auto;">
@@ -2624,7 +2626,7 @@
   <!-- ── 주문/호가 탭 ── -->
     <div class="mdi-ptab-pane" id="mdi-ptc-trading-ord" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto">
 <!-- ========== 종합탭 우측 미니탭 래퍼 ========== -->
-    <div id="ord-hoga-direct" style="padding:0;overflow-y:auto;height:100%;">
+    <div id="ord-hoga-direct" style="padding:0 8px;overflow-y:auto;height:100%;">
         <!-- ── 호가창 스타일 주문 입력 ── -->
         <!-- 종목 선택 헤더 -->
         <div style="padding:8px 0 6px;display:flex;align-items:center;gap:6px;">
@@ -4774,6 +4776,14 @@ function _buildFinanceTable(res, code) {
     ['배당수익률', strip(getVal(getRow('주당배당금'),latestKey))],
   ];
   const hasKpi = kpiMetrics.some(([,v]) => v != null);
+  // 펀더멘털 캐시 저장 (전종목 EPS/ROE 컬럼에 표시)
+  const _kpiMap = Object.fromEntries(kpiMetrics.filter(([,v])=>v!=null));
+  if (ticker && (_kpiMap['EPS'] || _kpiMap['ROE'])) {
+    _stockFundamentalsCache[ticker] = {
+      eps: _kpiMap['EPS'], roe: _kpiMap['ROE'],
+      per: _kpiMap['PER'], pbr: _kpiMap['PBR']
+    };
+  }
   const fmtKpi = ([k, v]) => {
     if (v == null) return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 7px;font-size:11px;"><div style="color:var(--text3);margin-bottom:2px;">${k}</div><div style="font-weight:700;">-</div></div>`;
     const n = parseFloat(v);
@@ -5156,6 +5166,7 @@ function showThemeStocks(theme, btn) {
 // ── 전종목 탭 (네이버 증권 API — KOSPI / KOSDAQ / ETF) ───────────────────────
 let _allMkt          = 'KOSPI'; // 현재 선택 시장
 let _allStockRaw     = {};      // { KOSPI: [...], KOSDAQ: [...], ETF: [...] }
+let _stockFundamentalsCache = {}; // 기업분석에서 조회한 EPS/ROE 캐시
 let _allFiltered     = [];
 let _allPrevPrices   = {};      // 자동 갱신 깜빡임용: { code: price }
 let allStockPage = 1;
@@ -5442,7 +5453,7 @@ function renderAllStockTable() {
   });
 
   if (!slice.length) {
-    bodyEl.innerHTML = `<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:30px;">검색 결과가 없습니다.</td></tr>`;
+    bodyEl.innerHTML = `<tr><td colspan="15" style="text-align:center;color:var(--text3);padding:30px;">검색 결과가 없습니다.</td></tr>`;
   } else {
     bodyEl.innerHTML = slice.map(s => {
       const up       = (s.changePct || 0) >= 0;
@@ -5459,11 +5470,18 @@ function renderAllStockTable() {
       const pbr = s.pbr  ? Number(s.pbr ).toFixed(2)+'배' : '-';
       const div = s.dividendYield ? Number(s.dividendYield).toFixed(1)+'%' : (s.dividend ? s.dividend+'%' : '-');
       const isW = (state.watchlist||[]).some(w => w.ticker === safeCode);
+      // EPS/ROE: 기업분석 조회 시 캐시에 저장된 값 사용
+      const _fc = (window._stockFundamentalsCache||{})[safeCode] || {};
+      const epsRaw = _fc.eps || s.eps;
+      const roeRaw = _fc.roe || s.roe;
+      const epsStr = epsRaw ? Math.round(Number(epsRaw)).toLocaleString() : '-';
+      const roeStr = roeRaw ? Number(roeRaw).toFixed(1)+'%' : '-';
+      const hasFund = !!(epsRaw || roeRaw);
       return `<tr id="${rowId}" tabindex="0" data-code="${safeCode}" data-name="${safeName}"
           style="cursor:pointer;outline:none;"
           onclick="connectToHoga('${safeCode}','${safeName}')"
           onkeydown="_allRowKey(event,this,'${safeCode}','${safeName}')">
-        <td style="text-align:center;width:28px;padding:2px 3px;" onclick="event.stopPropagation();_toggleAllWatch('${safeCode}','${safeName}')" title="${isW?'관심 해제':'관심 추가'}">
+        <td style="text-align:center;width:26px;padding:2px 3px;" onclick="event.stopPropagation();_toggleAllWatch('${safeCode}','${safeName}')" title="${isW?'관심 해제':'관심 추가'}">
           <span style="font-size:13px;color:${isW?'gold':'var(--text3)'};">${isW?'★':'☆'}</span>
         </td>
         <td style="font-weight:600;white-space:nowrap;">${s.name || ''}</td>
@@ -5474,11 +5492,13 @@ function renderAllStockTable() {
         <td id="${rowId}-pct" style="text-align:right;font-weight:600;" class="${cls}">${pctStr}</td>
         <td style="text-align:right;font-size:11px;color:var(--text2);">${volStr}</td>
         <td style="text-align:right;font-size:11px;">${capStr}</td>
+        <td style="text-align:right;font-size:11px;color:${hasFund?'#a78bfa':'var(--text3)'};">${epsStr}</td>
+        <td style="text-align:right;font-size:11px;color:${hasFund?'#a78bfa':'var(--text3)'};">${roeStr}</td>
         <td style="text-align:right;font-size:11px;color:var(--text3);">${per}</td>
         <td style="text-align:right;font-size:11px;color:var(--text3);">${pbr}</td>
         <td style="text-align:right;font-size:11px;color:var(--text3);">${div}</td>
         <td style="text-align:center;padding:2px 3px;" onclick="event.stopPropagation();allStockOpenChart('${safeCode}','${safeName}')" title="기업분석">
-          <button style="padding:1px 6px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-size:10px;cursor:pointer;line-height:1.5;">분석</button>
+          <button style="padding:1px 5px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-size:10px;cursor:pointer;line-height:1.5;">분석</button>
         </td>
       </tr>`;
     }).join('');
@@ -5628,6 +5648,16 @@ async function openAllStockPopup(code, name) {
       return;
     }
     const d    = res.data || {};
+    // 기업 펀더멘털 캐시 저장 (전종목 목록 EPS/ROE 표시용)
+    if (ticker && (d.eps || d.roe || d.roa)) {
+      if (!window._stockFundamentalsCache) window._stockFundamentalsCache = {};
+      window._stockFundamentalsCache[ticker] = {
+        eps: d.eps,
+        roe: d.roe || d.roa,
+        per: d.per,
+        pbr: d.pbr
+      };
+    }
     // 쉼표 포함 문자열도 안전하게 파싱
     const fmt  = v => { const n = parseFloat(String(v||'').replace(/,/g,'')); return (!isNaN(n) && n !== 0) ? n.toLocaleString() : '-'; };
     const fmts = (v, sfx='') => { const s = String(v||'').replace(/,/g,'').trim(); return (s && s !== '0' && s !== '-') ? s + sfx : '-'; };
