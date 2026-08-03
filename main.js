@@ -735,6 +735,51 @@ async function fetchKisPrice(code) {
   }
 }
 
+// ── KIS 호가 조회 (매도5+매수5 실시간 호가 레더) ─────────────────────────────
+async function fetchKisHoga(code) {
+  const auth = await getKisToken();
+  if (!auth) return null;
+  try {
+    const body = await httpsGet(
+      `https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-asking-price-exp-ccn?FID_COND_MRKT_DIV_CODE=J&FID_INPUT_ISCD=${code}`,
+      8000,
+      {
+        authorization: `Bearer ${auth.token}`,
+        appkey:        auth.appKey,
+        appsecret:     auth.appSecret,
+        tr_id:         'FHKST01010200',
+      }
+    );
+    const d = JSON.parse(body);
+    const o = d?.output1;
+    if (!o) return null;
+    // 매도호가: askp5(가장 높음)→askp1(가장 낮음) 순으로 배열 (화면 위→아래)
+    const asks = [];
+    for (let i = 5; i >= 1; i--) {
+      const price = parseInt(o[`askp${i}`]      || '0', 10);
+      const qty   = parseInt(o[`askp_rsqn${i}`] || '0', 10);
+      if (price > 0) asks.push({ price, qty });
+    }
+    // 매수호가: bidp1(가장 높음)→bidp5(가장 낮음) 순으로 배열
+    const bids = [];
+    for (let i = 1; i <= 5; i++) {
+      const price = parseInt(o[`bidp${i}`]      || '0', 10);
+      const qty   = parseInt(o[`bidp_rsqn${i}`] || '0', 10);
+      if (price > 0) bids.push({ price, qty });
+    }
+    if (!asks.length || !bids.length) return null;
+    return { asks, bids };
+  } catch (e) {
+    console.error('[StockBook] KIS 호가 조회 실패:', e.message);
+    return null;
+  }
+}
+
+ipcMain.handle('fetch-hoga', async (_event, code) => {
+  if (!code || !/^\d{6}$/.test(code)) return null;
+  return await fetchKisHoga(code);
+});
+
 // ── IPC: 시세 조회 (main 프로세스에서 직접 요청 → CORS 없음) ────────────────
 ipcMain.handle('fetch-quote', async (_event, rawTicker) => {
   if (!rawTicker) return null;

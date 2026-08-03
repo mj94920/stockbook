@@ -23,6 +23,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   fetchStockDetail: (code) => ipcRenderer.invoke('fetch-stock-detail', code),
   // 시장 지수 티커 일괄 조회 (KOSPI·KOSDAQ·나스닥·S&P·DOW·SOX·환율·WTI 등)
   fetchMarketTickers: () => ipcRenderer.invoke('fetch-market-tickers'),
+  // KIS 실시간 호가 (매도5+매수5 잔량)
+  fetchHoga: (code) => ipcRenderer.invoke('fetch-hoga', code),
   // main 프로세스가 did-finish-load 후 파일 데이터를 직접 push하는 채널
   onPushState: (callback)  => ipcRenderer.once('push-state', (_event, data) => callback(data)),
 

@@ -2582,14 +2582,6 @@
       </div>
     </div>
       </div>
-      <div class="mdi-rz mdi-rz-n"  title="위 크기조절"></div>
-      <div class="mdi-rz mdi-rz-s"  title="아래 크기조절"></div>
-      <div class="mdi-rz mdi-rz-e"  title="오른쪽 크기조절"></div>
-      <div class="mdi-rz mdi-rz-w"  title="왼쪽 크기조절"></div>
-      <div class="mdi-rz mdi-rz-ne" title="우상단 크기조절"></div>
-      <div class="mdi-rz mdi-rz-nw" title="좌상단 크기조절"></div>
-      <div class="mdi-rz mdi-rz-se" title="우하단 크기조절"></div>
-      <div class="mdi-rz mdi-rz-sw" title="좌하단 크기조절"></div>
     </div>
     <!-- ─ MDI 패널: trading (매매관리) ─ -->
     <div id="mdi-panel-trading" class="mdi-panel" data-pid="trading" data-mdi-state="open"
@@ -2628,13 +2620,13 @@
           <span id="qo_cur_price" style="font-size:20px;font-weight:700;">-</span>
           <span id="qo_cur_change" style="font-size:12px;color:var(--text3);">-</span>
         </div>
-        <!-- 호가창 (현재가 기반 가상 호가 레더) -->
+        <!-- 호가창 (KIS 실시간 / 가상 폴백) -->
         <div id="qo_hoga_wrap" style="display:none;margin:4px 0 8px;border:1px solid var(--border);border-radius:7px;overflow:hidden;">
           <table style="width:100%;border-collapse:collapse;">
             <thead>
               <tr style="background:var(--bg3);border-bottom:1px solid var(--border);">
                 <th style="text-align:right;padding:3px 6px;font-size:10px;font-weight:500;color:var(--hts-dn);width:35%;">매도잔량</th>
-                <th style="text-align:center;padding:3px 4px;font-size:10px;font-weight:500;color:var(--text3);width:30%;">호가 (가상)</th>
+                <th style="text-align:center;padding:3px 4px;font-size:10px;font-weight:500;color:var(--text3);width:30%;">호가</th>
                 <th style="text-align:left;padding:3px 6px;font-size:10px;font-weight:500;color:var(--hts-up);width:35%;">매수잔량</th>
               </tr>
             </thead>
@@ -2811,14 +2803,6 @@
       </div>
   </div>
       </div>
-      <div class="mdi-rz mdi-rz-n"  title="위 크기조절"></div>
-      <div class="mdi-rz mdi-rz-s"  title="아래 크기조절"></div>
-      <div class="mdi-rz mdi-rz-e"  title="오른쪽 크기조절"></div>
-      <div class="mdi-rz mdi-rz-w"  title="왼쪽 크기조절"></div>
-      <div class="mdi-rz mdi-rz-ne" title="우상단 크기조절"></div>
-      <div class="mdi-rz mdi-rz-nw" title="좌상단 크기조절"></div>
-      <div class="mdi-rz mdi-rz-se" title="우하단 크기조절"></div>
-      <div class="mdi-rz mdi-rz-sw" title="좌하단 크기조절"></div>
     </div>
     <!-- ─ MDI 패널: portfolio (포트폴리오) ─ -->
     <div id="mdi-panel-portfolio" class="mdi-panel" data-pid="portfolio" data-mdi-state="open"
@@ -2957,14 +2941,6 @@
   </div>
 </div>
       </div>
-      <div class="mdi-rz mdi-rz-n"  title="위 크기조절"></div>
-      <div class="mdi-rz mdi-rz-s"  title="아래 크기조절"></div>
-      <div class="mdi-rz mdi-rz-e"  title="오른쪽 크기조절"></div>
-      <div class="mdi-rz mdi-rz-w"  title="왼쪽 크기조절"></div>
-      <div class="mdi-rz mdi-rz-ne" title="우상단 크기조절"></div>
-      <div class="mdi-rz mdi-rz-nw" title="좌상단 크기조절"></div>
-      <div class="mdi-rz mdi-rz-se" title="우하단 크기조절"></div>
-      <div class="mdi-rz mdi-rz-sw" title="좌하단 크기조절"></div>
     </div>
     <!-- ─ MDI 패널: news ─ -->
     <div id="mdi-panel-news" class="mdi-panel" data-pid="news" data-mdi-state="closed"
@@ -3320,6 +3296,8 @@
       <div class="mdi-rz mdi-rz-se" title="우하단 크기조절"></div>
       <div class="mdi-rz mdi-rz-sw" title="좌하단 크기조절"></div>
     </div><!-- /mdi-panel-journal -->
+  <div id="mdiVSplit" class="mdi-split-v" title="좌우 비율 조절 (드래그)"></div>
+  <div id="mdiHSplit" class="mdi-split-h" title="상하 비율 조절 (드래그)"></div>
 </div><!-- /mdi-workspace -->
 </div><!-- /mdi-content -->
 
@@ -5697,12 +5675,23 @@ function updateHogaDisplay() {
     chgEl.textContent   = '';
   }
 
-  // 현재가 있으면 항상 호가창 표시 (가상 호가 레더)
+  // 현재가 있으면 호가창 표시: KIS API 우선, 실패 시 가상 폴백
   if (curPrice != null && wrap) {
-    _renderSimulatedHoga(curPrice);
+    if (code && /^\d{6}$/.test(code) && window.electronAPI?.fetchHoga) {
+      window.electronAPI.fetchHoga(code).then(hoga => {
+        if (hoga && hoga.asks?.length && hoga.bids?.length) {
+          _renderKisHoga(hoga, curPrice);
+          _startHogaAutoRefresh(curPrice, code);
+        } else {
+          _renderSimulatedHoga(curPrice);
+        }
+      }).catch(() => _renderSimulatedHoga(curPrice));
+    } else {
+      _renderSimulatedHoga(curPrice);
+    }
   } else if (wrap) {
     wrap.style.display = 'none';
-    _stopHogaAutoRefresh(); // 호가창 숨김 시 타이머 정리
+    _stopHogaAutoRefresh();
   }
 }
 
@@ -5720,19 +5709,47 @@ function _getTickSize(price) {
 /* 호가창 자동 갱신 타이머 */
 let _hogaRefreshTimer = null;
 let _hogaCurrentPrice = null;
+let _hogaCurrentCode  = null;
 
-function _startHogaAutoRefresh(price) {
+function _startHogaAutoRefresh(price, code) {
   _hogaCurrentPrice = price;
+  _hogaCurrentCode  = code || null;
   if (_hogaRefreshTimer) { clearInterval(_hogaRefreshTimer); _hogaRefreshTimer = null; }
-  _hogaRefreshTimer = setInterval(() => {
+  _hogaRefreshTimer = setInterval(async () => {
     const wrap = document.getElementById('qo_hoga_wrap');
     if (!wrap || wrap.style.display === 'none') { _stopHogaAutoRefresh(); return; }
-    if (_hogaCurrentPrice) _renderSimulatedHoga(_hogaCurrentPrice, true);
-  }, 2000); // 2초마다 잔량 갱신 (메모리 부담 없음 — 11개 DOM 셀 업데이트만)
+    if (!_hogaCurrentPrice) return;
+    // KIS 실시간 호가 우선, 실패 시 가상 폴백
+    if (_hogaCurrentCode && /^\d{6}$/.test(_hogaCurrentCode) && window.electronAPI?.fetchHoga) {
+      try {
+        const hoga = await window.electronAPI.fetchHoga(_hogaCurrentCode);
+        if (hoga && hoga.asks?.length && hoga.bids?.length) {
+          _renderKisHoga(hoga, _hogaCurrentPrice); return;
+        }
+      } catch(e) { /* KIS 실패 → 가상 폴백 */ }
+    }
+    _renderSimulatedHoga(_hogaCurrentPrice, true);
+  }, 2000);
 }
 
 function _stopHogaAutoRefresh() {
   if (_hogaRefreshTimer) { clearInterval(_hogaRefreshTimer); _hogaRefreshTimer = null; }
+}
+
+
+/* KIS API 실시간 호가 렌더 */
+function _renderKisHoga(hoga, curPrice) {
+  // asks: 매도 (높은 가격 → 낮은 가격 순, length=5)
+  // hoga.asks = [{price, qty}] — fetchKisHoga에서 i=5..1 순으로 push → 높은순
+  const rows = [];
+  (hoga.asks || []).forEach(a => {
+    rows.push({ price: a.price, askVol: a.qty, bidVol: 0, isCur: false });
+  });
+  rows.push({ price: curPrice, askVol: 0, bidVol: 0, isCur: true });
+  (hoga.bids || []).forEach(b => {
+    rows.push({ price: b.price, askVol: 0, bidVol: b.qty, isCur: false });
+  });
+  _renderHogaTable(rows);
 }
 
 /* 현재가 기반 가상 호가 5+5 레더 생성 */
@@ -5753,7 +5770,7 @@ function _renderSimulatedHoga(price, isAutoRefresh = false) {
   }
   _renderHogaTable(rows);
   // 최초 렌더 시에만 자동 갱신 타이머 시작
-  if (!isAutoRefresh) _startHogaAutoRefresh(price);
+  if (!isAutoRefresh) _startHogaAutoRefresh(price, _hogaCurrentCode);
 }
 
 function _renderHogaTable(rows) {
@@ -8696,18 +8713,57 @@ function _toggleCheck(stockKey, checkKey, val) {
       const ws = document.getElementById('mdiWorkspace');
       const W = (ws && ws.offsetWidth  > 50) ? ws.offsetWidth  : Math.max(900, window.innerWidth  - 20);
       const H = (ws && ws.offsetHeight > 50) ? ws.offsetHeight : Math.max(500, window.innerHeight - 140);
-      const hw = Math.floor((W - 4) / 2);
-      const rw = W - hw - 4;
-      const gap = 10;
-      const th = Math.floor(H * 0.40);
-      const ph = H - th - gap;
+      const VGAP = 6, HGAP = 6;
+      const colR = Math.max(0.20, Math.min(0.70, parseFloat(localStorage.getItem('mdi_split_col') || '0.35')));
+      const rowR = Math.max(0.20, Math.min(0.75, parseFloat(localStorage.getItem('mdi_split_row') || '0.40')));
+      const hw = Math.round(W * colR);
+      const rw = W - hw - VGAP;
+      const th = Math.round(H * rowR);
+      const ph = H - th - HGAP;
+      const vs = document.getElementById('mdiVSplit');
+      const hs = document.getElementById('mdiHSplit');
+      if (vs) { vs.style.left = hw + 'px'; vs.style.height = H + 'px'; vs.style.top = '0'; }
+      if (hs) { hs.style.left = (hw + VGAP) + 'px'; hs.style.top = th + 'px'; hs.style.width = rw + 'px'; }
       return {
-        watchlist: { x:0,    y:0,       w:hw,  h:H,  open:true  },
-        trading:   { x:hw+4, y:0,       w:rw,  h:th, open:true  },
-        portfolio: { x:hw+4, y:th+gap,  w:rw,  h:ph, open:true  },
-        news:      { x:hw+4, y:60,      w:720, h:700, open:false },
-        journal:   { x:hw+4, y:50,      w:800, h:520, open:false },
+        watchlist: { x:0,         y:0,        w:hw, h:H,  open:true  },
+        trading:   { x:hw+VGAP,   y:0,        w:rw, h:th, open:true  },
+        portfolio: { x:hw+VGAP,   y:th+HGAP,  w:rw, h:ph, open:true  },
+        news:      { x:hw+VGAP,   y:60,       w:720, h:700, open:false },
+        journal:   { x:hw+VGAP,   y:50,       w:800, h:520, open:false },
       };
+    },
+
+    _initSplitters() {
+      const vs = document.getElementById('mdiVSplit');
+      const hs = document.getElementById('mdiHSplit');
+      const ws = document.getElementById('mdiWorkspace');
+      if (!vs || !hs || !ws) return;
+      const drag = (el, onMove) => {
+        el.addEventListener('mousedown', e => {
+          e.preventDefault();
+          el.classList.add('dragging');
+          const move = ev => onMove(ev);
+          const up = () => {
+            el.classList.remove('dragging');
+            document.removeEventListener('mousemove', move);
+            document.removeEventListener('mouseup', up);
+          };
+          document.addEventListener('mousemove', move);
+          document.addEventListener('mouseup', up);
+        });
+      };
+      drag(vs, (ev) => {
+        const rect = ws.getBoundingClientRect();
+        const r = Math.max(0.20, Math.min(0.70, (ev.clientX - rect.left) / ws.offsetWidth));
+        localStorage.setItem('mdi_split_col', r.toFixed(4));
+        this.resetLayout();
+      });
+      drag(hs, (ev) => {
+        const rect = ws.getBoundingClientRect();
+        const r = Math.max(0.20, Math.min(0.75, (ev.clientY - rect.top) / ws.offsetHeight));
+        localStorage.setItem('mdi_split_row', r.toFixed(4));
+        this.resetLayout();
+      });
     },
 
     // ── 초기화: 이벤트 핸들러 등록 + 기본배치 ─────────────────────────
@@ -8724,6 +8780,7 @@ function _toggleCheck(stockKey, checkKey, val) {
         panel.addEventListener('mousedown', () => this._front(pid), true);
       });
       this.resetLayout();
+      this._initSplitters();
       // 메뉴버튼 초기 active 상태 동기화 (레이아웃은 워크스페이스 크기 확인 후 적용)
       this._syncAllBtns();
       // resetLayout은 workspace가 실제 크기를 갖춘 뒤 실행
