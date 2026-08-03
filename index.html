@@ -6528,7 +6528,7 @@ function renderPortfolio() {
         <strong>${s.name}</strong>${s.ticker?`<span class="ticker">${s.ticker}</span>`:''}
         ${s.tradeType==='credit'?`<span class="badge" style="background:rgba(107,33,168,0.12);color:#7c3aed;border:1px solid rgba(107,33,168,0.25);font-size:10px;padding:1px 5px;margin-left:3px;">신용</span>`:''}
         ${(()=>{const bc=state.trades.filter(t=>t.name===s.name&&t.type==='buy').length;return bc>1?`<span class="badge badge-mid" style="font-size:10px;padding:1px 5px;margin-left:4px;">추매 ${bc-1}회</span>`:'';})()}
-        ${s.sector?`<span class="sector">${s.sector}${s.position?` · ${posLabel(s.position)}`:''}</span>`:''}
+        ${s.sector?`<span class="sector">${s.sector}${s.position?` · ${posText(s.position)}`:''}</span>`:''}
       </td>
       <td style="text-align:center;font-size:12px;color:var(--text3)">${s.position?posLabel(s.position):'일반'}</td>
       <td ondblclick="startInlineEdit(event,${origIdx},'qty')" style="cursor:text" title="더블클릭으로 수량 수정">${fmt(s.qty)}</td>
