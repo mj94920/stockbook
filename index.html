@@ -4130,14 +4130,14 @@ function load() {
   if (window.electronAPI) {
     window.electronAPI.loadState().then(d => {
       console.log('[StockBook] electronAPI.loadState():', d ? d.length + ' bytes' : 'null');
-      if (d) { _applyState(d); _renderAll(); startRealtimePrices(); }
+      if (d) { _applyState(d); _renderAll(); startRealtimePrices(); _startPortPriceAutoRefresh(); }
     }).catch(e => { console.error('[StockBook] electronAPI.loadState 오류:', e); });
 
     // 3) Main push 방식 — did-finish-load 후 300ms 뒤에 수신 (가장 확실)
     if (window.electronAPI.onPushState) {
       window.electronAPI.onPushState(d => {
         console.log('[StockBook] push-state 수신:', d ? d.length + ' bytes' : 'null');
-        if (d) { _applyState(d); _renderAll(); startRealtimePrices(); }
+        if (d) { _applyState(d); _renderAll(); startRealtimePrices(); _startPortPriceAutoRefresh(); }
       });
     }
   }
@@ -5199,6 +5199,22 @@ function _startAllStockAutoRefresh() {
 
 function _stopAllStockAutoRefresh() {
   if (_allStockAutoRefreshTimer) { clearInterval(_allStockAutoRefreshTimer); _allStockAutoRefreshTimer = null; }
+}
+
+// ── 포트폴리오 패널 자체 시세 자동갱신 (전종목 패널 무관) ──
+let _portPriceRefreshTimer = null;
+function _startPortPriceAutoRefresh() {
+  if (_portPriceRefreshTimer) return; // 이미 실행 중
+  // 앱 시작 시 바로 1회 silent 조회 (3초 후 — 상태 로드 완료 대기)
+  setTimeout(() => fetchAllPrices(true), 3000);
+  _portPriceRefreshTimer = setInterval(() => {
+    const portPanel = document.getElementById('mdi-panel-portfolio');
+    if (!portPanel || portPanel.dataset.mdiState === 'closed' || portPanel.dataset.mdiState === 'minimized') return;
+    fetchAllPrices(true); // silent — 포트폴리오 현재가/prevClose 갱신
+  }, 60000); // 60초 주기
+}
+function _stopPortPriceAutoRefresh() {
+  if (_portPriceRefreshTimer) { clearInterval(_portPriceRefreshTimer); _portPriceRefreshTimer = null; }
 }
 
 function renderAllStockTab() {
@@ -6511,7 +6527,13 @@ function renderPortfolio() {
       if (typeof _allS.changePct === 'number') _dp = _allS.changePct;
       else if (_allS.FLUC_RT) _dp = parseFloat(_allS.FLUC_RT);
     }
-    const curCls = s.currentPrice ? (_dp !== null ? (_dp > 0 ? 'up' : _dp < 0 ? 'dn' : 'eq') : (pct > 0 ? 'up' : pct < 0 ? 'dn' : 'eq')) : 'eq';
+    // prevClose 기반 색상 폴백 (_allStockRaw 없을 때)
+    let _colorDp = _dp;
+    if (_colorDp === null && s.prevClose && s.currentPrice) {
+      const _cd = (s.currentPrice - s.prevClose) / s.prevClose * 100;
+      if (Math.abs(_cd) <= 35) _colorDp = _cd;
+    }
+    const curCls = s.currentPrice ? (_colorDp !== null ? (_colorDp > 0 ? 'up' : _colorDp < 0 ? 'dn' : 'eq') : (pct > 0 ? 'up' : pct < 0 ? 'dn' : 'eq')) : 'eq';
     const pnlCls = pnl > 0 ? 'up' : pnl < 0 ? 'dn' : 'eq';
     const tRate = (t) => s.avgPrice && t ? ((t-s.avgPrice)/s.avgPrice*100).toFixed(1) : null;
     const hasTargets = s.target1||s.target2||s.target3||s.stop1;
