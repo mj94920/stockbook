@@ -796,14 +796,14 @@
     border: 1px solid transparent;
   }
   .badge-buy {
-    background: var(--blue-bg);
-    color: var(--blue);
-    border-color: var(--blue-border);
-  }
-  .badge-sell {
     background: var(--red-bg);
     color: var(--red);
     border-color: var(--red-border);
+  }
+  .badge-sell {
+    background: var(--blue-bg);
+    color: var(--blue);
+    border-color: var(--blue-border);
   }
   .badge-top {
     background: var(--red-bg);
@@ -2632,8 +2632,6 @@
       <div class="mdi-body" id="mdi-body-trading">
   <div class="mdi-ptab-bar">
     <button class="mdi-ptab active" onclick="window._MDIPanelTab('trading','ord')">주문/호가</button>
-    <button class="mdi-ptab" onclick="window._MDIPanelTab('trading','trd')">거래내역</button>
-    <button class="mdi-ptab" onclick="window._MDIPanelTab('trading','bal')">예수금</button>
     <button class="mdi-ptab" onclick="window._MDIPanelTab('trading','calc')">계산기</button>
   </div>
   <!-- ── 주문/호가 탭 ── -->
@@ -2717,59 +2715,6 @@
         </div>
       </div>
       </div>
-  <div class="mdi-ptab-pane" id="mdi-ptc-trading-trd" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
-
-      <div class="card">
-    <div class="section-row">
-      <div class="section-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> 거래 기록</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-        <div class="filter-row" style="margin:0;">
-          <button class="filter-btn active" onclick="setTradeFilter('all',this)">전체</button>
-          <button class="filter-btn" onclick="setTradeFilter('buy',this)">매수</button>
-          <button class="filter-btn" onclick="setTradeFilter('sell',this)">매도</button>
-        </div>
-        <input type="text" placeholder="종목 검색..." id="tradeSearch" oninput="renderTrades()"
-          style="padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;width:140px;outline:none;">
-        <button class="btn btn-ghost btn-sm" onclick="exportCSV()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> CSV 내보내기</button>
-        <button class="btn btn-sm" id="cleanOrphanBtn" onclick="cleanOrphanedData()" style="display:none;background:var(--red);color:#fff;border:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> 고아 데이터 정리</button>
-      </div>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>날짜</th>
-            <th>종목명</th>
-            <th>구분</th>
-            <th style="text-align:right">가격</th>
-            <th style="text-align:right">수량</th>
-            <th style="text-align:right">총 금액</th>
-            <th style="text-align:right">비중(%)</th>
-            <th>매수 사유</th>
-            <th>포트 위치</th>
-            <th>매도 사유</th>
-            <th style="text-align:right">수익률(%)</th>
-            <th>멘털</th>
-            <th>비고</th>
-          </tr>
-        </thead>
-        <tbody id="tradeBody"></tbody>
-      </table>
-    </div>
-    <div id="tradeEmpty" class="empty-state" style="display:none">거래 기록이 없습니다</div>
-  </div>
-  <datalist id="tStockList"></datalist>
-    </div>
-  <div class="mdi-ptab-pane" id="mdi-ptc-trading-bal" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
-  <div style="padding:12px 8px;color:#9eb3cc;font-size:12px">
-    <div class="bal-row"><span>예수금</span><span id="balCash" class="bal-val">-</span></div>
-    <div class="bal-row"><span>주문가능금액</span><span id="balOrderable" class="bal-val">-</span></div>
-    <div class="bal-row"><span>D+2예수금</span><span id="balD2" class="bal-val">-</span></div>
-    <div class="bal-row" style="margin-top:8px;border-top:1px solid #1a2840;padding-top:8px"><span>총평가금액</span><span id="balTotal" class="bal-val">-</span></div>
-    <div class="bal-row"><span>총손익</span><span id="balPnl" class="bal-val">-</span></div>
-    <button onclick="fetchBalanceInfo && fetchBalanceInfo()" style="margin-top:10px;width:100%;padding:5px;background:#1a2840;border:1px solid #2563eb;color:#9eb3cc;border-radius:3px;cursor:pointer;font-size:11px">🔄 잔고 조회</button>
-  </div>
-</div>
   <div class="mdi-ptab-pane" id="mdi-ptc-trading-calc" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
 
         <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:start;">
@@ -2870,7 +2815,7 @@
       <div class="mdi-body" id="mdi-body-portfolio">
   <div class="mdi-ptab-bar">
     <button class="mdi-ptab active" onclick="window._MDIPanelTab('portfolio','pf')">보유종목</button>
-    <button class="mdi-ptab" onclick="window._MDIPanelTab('portfolio','trd');renderPortfolioTrades()">거래내역</button>
+    <button class="mdi-ptab" onclick="window._MDIPanelTab('portfolio','trd');renderTrades()">거래내역</button>
     <button class="mdi-ptab" onclick="window._MDIPanelTab('portfolio','rlz')">실현손익</button>
   </div>
   <!-- ── 포트폴리오 탭 ── -->
@@ -2939,38 +2884,44 @@
   <div class="mdi-ptab-pane" id="mdi-ptc-portfolio-trd" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
     <div class="card">
       <div class="section-row">
-        <div class="section-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> 거래내역</div>
-        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
+        <div class="section-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> 거래 기록</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
           <div class="filter-row" style="margin:0;">
-            <button class="filter-btn active" onclick="setPfTradeFilter('all',this)">전체</button>
-            <button class="filter-btn" onclick="setPfTradeFilter('buy',this)">매수</button>
-            <button class="filter-btn" onclick="setPfTradeFilter('sell',this)">매도</button>
+            <button class="filter-btn active" onclick="setTradeFilter('all',this)">전체</button>
+            <button class="filter-btn" onclick="setTradeFilter('buy',this)">매수</button>
+            <button class="filter-btn" onclick="setTradeFilter('sell',this)">매도</button>
           </div>
-          <select id="pfTradeYear" onchange="renderPortfolioTrades()" style="padding:4px 7px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;">
-            <option value="all">전체</option>
-          </select>
-          <input type="text" placeholder="종목 검색..." id="pfTradeSearch" oninput="renderPortfolioTrades()"
-            style="padding:5px 9px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;width:100px;outline:none;">
+          <input type="text" placeholder="종목 검색..." id="tradeSearch" oninput="renderTrades()"
+            style="padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;width:140px;outline:none;">
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> CSV 내보내기</button>
+          <button class="btn btn-sm" id="cleanOrphanBtn" onclick="cleanOrphanedData()" style="display:none;background:var(--red);color:#fff;border:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> 고아 데이터 정리</button>
         </div>
       </div>
-      <div style="overflow-x:auto;margin-top:8px;">
-        <table class="hts-table" style="width:100%;font-size:12px;">
+      <div class="table-wrap">
+        <table>
           <thead>
             <tr>
               <th>날짜</th>
-              <th>종목</th>
+              <th>종목명</th>
               <th>구분</th>
-              <th style="text-align:right">단가</th>
+              <th style="text-align:right">가격</th>
               <th style="text-align:right">수량</th>
-              <th style="text-align:right">금액</th>
-              <th style="text-align:right">손익%</th>
+              <th style="text-align:right">총 금액</th>
+              <th style="text-align:right">비중(%)</th>
+              <th>매수 사유</th>
+              <th>포트 위치</th>
+              <th>매도 사유</th>
+              <th style="text-align:right">수익률(%)</th>
+              <th>멘털</th>
+              <th>비고</th>
             </tr>
           </thead>
-          <tbody id="pfTradeBody"></tbody>
+          <tbody id="tradeBody"></tbody>
         </table>
       </div>
-      <div id="pfTradeEmpty" class="empty-state" style="display:none;">거래 기록이 없습니다</div>
+      <div id="tradeEmpty" class="empty-state" style="display:none">거래 기록이 없습니다</div>
     </div>
+    <datalist id="tStockList"></datalist>
   </div>
   <!-- ── 실현손익 탭 ── -->
   <div class="mdi-ptab-pane" id="mdi-ptc-portfolio-rlz" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
@@ -6532,10 +6483,13 @@ function submitQuickOrder() {
   if (!qty || qty <= 0) { alert('수량을 입력해 주세요.'); return; }
   if (!price || price <= 0) { alert('단가를 입력해 주세요.'); return; }
 
-  let stockIdx = state.portfolio.findIndex(s => s.name === stockName);
-  // 신규 종목 매수: 포트폴리오에 자동 추가
+  // 신용 매수는 항상 새 포트폴리오 항목 생성 (현금·기존 신용과 구분)
+  let stockIdx = (_qoMode === 'buy' && _qoTradeType === 'credit')
+    ? -1
+    : state.portfolio.findIndex(s => s.name === stockName);
   if (stockIdx === -1 && _qoMode === 'buy') {
-    state.portfolio.push({ name: stockName, ticker: stockCode, avgPrice: price, qty: 0, sector: '', position: 'mid', tradeType: _qoTradeType });
+    const creditDate = _qoTradeType === 'credit' ? today : undefined;
+    state.portfolio.push({ name: stockName, ticker: stockCode, avgPrice: price, qty: 0, sector: '', position: 'mid', tradeType: _qoTradeType, creditDate });
     stockIdx = state.portfolio.length - 1;
   }
 
@@ -6588,7 +6542,6 @@ function submitQuickOrder() {
   renderPortfolio();
   renderBalanceSummary();
   renderTrades();
-  renderPortfolioTrades?.();
   renderJournals();
   populateQOStockList();
 
@@ -7013,8 +6966,7 @@ function addStock() {
 
   save();
   renderPortfolio();
-  renderTrades();            // ② 거래기록 탭 즉시 갱신
-  renderPortfolioTrades?.(); // 포트폴리오 패널 거래내역 탭 갱신
+  renderTrades();            // 거래기록 탭 즉시 갱신
   renderJournals();          // 투자일지 초안 즉시 반영
   updateDatalist('jStockList');
   updateDatalist('tStockList');
@@ -7893,7 +7845,7 @@ function renderTradesMini() {
         <span>${fmt(t.price)} × ${fmt(t.qty)}주 ${retHtml}</span>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:11px;color:var(--text3);">${fmt(t.total)}원</span>
+        <span style="font-size:11px;color:var(--text3);">${fmt(t.totalAmt ?? t.total)}원</span>
         <button class="btn btn-ghost btn-sm" style="padding:1px 6px;font-size:11px;" onclick="deleteTrade(${origIdx})">🗑</button>
       </div>
     </div>`;
@@ -7940,7 +7892,7 @@ function renderPortfolioTrades() {
       <td>${badge}</td>
       <td style="text-align:right">${fmt(t.price)}</td>
       <td style="text-align:right">${fmt(t.qty)}</td>
-      <td style="text-align:right">${fmt(t.total)}</td>
+      <td style="text-align:right">${fmt(t.totalAmt ?? t.total)}</td>
       <td style="text-align:right" class="${pnlCls}">${t.pnlPct!=null?fmtPct(t.pnlPct):'-'}</td>
     </tr>`;
   }).join('');
@@ -7978,7 +7930,7 @@ function renderTrades() {
       <td>${typeLabel}</td>
       <td style="text-align:right">${fmt(t.price)}</td>
       <td style="text-align:right">${fmt(t.qty)}</td>
-      <td style="text-align:right">${fmt(t.total)}</td>
+      <td style="text-align:right">${fmt(t.totalAmt ?? t.total)}</td>
       <td style="text-align:right">${t.weight ? t.weight + '%' : '-'}</td>
       <td style="font-size:13px">${(t.buyReason||[]).join(', ')||'-'}</td>
       <td>${posLabel(t.position)}</td>
@@ -8020,9 +7972,32 @@ function cleanOrphanedData() {
 
 function deleteTrade(idx) {
   if (!confirm('이 거래 기록을 삭제할까요?')) return;
+  const t = state.trades[idx];
   state.trades.splice(idx, 1);
+
+  // 매수 거래 삭제 → 포트폴리오 수량 차감 (0 이하면 종목 삭제)
+  if (t && t.type === 'buy') {
+    const pIdx = state.portfolio.findIndex(s => s.name === t.name);
+    if (pIdx >= 0) {
+      state.portfolio[pIdx].qty -= (t.qty || 0);
+      if (state.portfolio[pIdx].qty <= 0) {
+        state.portfolio.splice(pIdx, 1);
+      } else {
+        // 남은 매수 거래로 평균단가 재계산
+        const remaining = state.trades.filter(tr => tr.name === t.name && tr.type === 'buy');
+        if (remaining.length > 0) {
+          const totalAmt = remaining.reduce((s, tr) => s + (tr.totalAmt ?? tr.total ?? 0), 0);
+          const totalQty = remaining.reduce((s, tr) => s + (tr.qty || 0), 0);
+          if (totalQty > 0) state.portfolio[pIdx].avgPrice = Math.round(totalAmt / totalQty);
+        }
+      }
+    }
+  }
+
   save();
+  renderPortfolio();
   renderTrades();
+  showToast('거래 기록이 삭제되었습니다');
 }
 
 // ============================================================
@@ -10186,7 +10161,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     <div class="settings-close-row">
       <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v3.2.3</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v3.2.5</div>
   </div>
 </div>
 
