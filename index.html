@@ -6484,10 +6484,10 @@ function submitQuickOrder() {
   if (!qty || qty <= 0) { alert('수량을 입력해 주세요.'); return; }
   if (!price || price <= 0) { alert('단가를 입력해 주세요.'); return; }
 
-  let stockIdx = state.portfolio.findIndex(s => s.name === stockName);
-  // 신규 종목 매수: 포트폴리오에 자동 추가
+  let stockIdx = state.portfolio.findIndex(s => s.name === stockName && (s.tradeType || 'cash') === (_qoTradeType || 'cash'));
+  // 신규 종목 매수: 포트폴리오에 자동 추가 (현/신 별도 행)
   if (stockIdx === -1 && _qoMode === 'buy') {
-    state.portfolio.push({ name: stockName, ticker: stockCode, avgPrice: price, qty: 0, sector: '', position: 'mid', tradeType: _qoTradeType });
+    state.portfolio.push({ name: stockName, ticker: stockCode, avgPrice: price, qty: 0, sector: '', position: 'mid', tradeType: _qoTradeType || 'cash' });
     stockIdx = state.portfolio.length - 1;
   }
 
@@ -6499,7 +6499,7 @@ function submitQuickOrder() {
     const newTotal = price * qty;
     s.qty     += qty;
     s.avgPrice = (oldTotal + newTotal) / s.qty;
-    if (s.tradeType === undefined) s.tradeType = _qoTradeType;
+    // tradeType은 findIndex에서 이미 매칭됨
     // ★ 거래 기록
     state.trades.unshift({
       id: Date.now(), date: today,
@@ -7983,14 +7983,14 @@ function deleteTrade(idx) {
 
   // 매수 거래 삭제 → 포트폴리오 수량 차감 (0 이하면 종목 삭제)
   if (t && t.type === 'buy') {
-    const pIdx = state.portfolio.findIndex(s => s.name === t.name);
+    const pIdx = state.portfolio.findIndex(s => s.name === t.name && (s.tradeType || 'cash') === (t.tradeType || 'cash'));
     if (pIdx >= 0) {
       state.portfolio[pIdx].qty -= (t.qty || 0);
       if (state.portfolio[pIdx].qty <= 0) {
         state.portfolio.splice(pIdx, 1);
       } else {
-        // 남은 매수 거래로 평균단가 재계산
-        const remaining = state.trades.filter(tr => tr.name === t.name && tr.type === 'buy');
+        // 남은 매수 거래로 평균단가 재계산 (현/신 구분)
+        const remaining = state.trades.filter(tr => tr.name === t.name && tr.type === 'buy' && (tr.tradeType || 'cash') === (t.tradeType || 'cash'));
         if (remaining.length > 0) {
           const totalAmt = remaining.reduce((s, tr) => s + (tr.totalAmt ?? tr.total ?? 0), 0);
           const totalQty = remaining.reduce((s, tr) => s + (tr.qty || 0), 0);
@@ -10167,7 +10167,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     <div class="settings-close-row">
       <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v3.2.7</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v3.2.8</div>
   </div>
 </div>
 
