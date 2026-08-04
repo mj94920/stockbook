@@ -1672,9 +1672,9 @@
 
   /* ── 모바일 포트폴리오 테이블: 종목명 + 평균단가 + 현재가 + 관리만 표시 (768px 이하) ── */
   @media (max-width: 768px) {
-    /* 구분·보유량·주문가능·매입금액·평가금액·손익·수익률·비중 숨기기 (평균단가·현재가는 유지) */
-    .portfolio-table thead th:not(:first-child):not(.col-action):not(:nth-child(5)):not(:nth-child(6)),
-    .portfolio-table tbody tr:not(.sub-row) td:not(:first-child):not(.col-action):not(:nth-child(5)):not(:nth-child(6)) {
+    /* 현/신·구분·보유량·주문가능·매입금액·평가금액·손익·수익률·비중 숨기기 (평균단가·현재가는 유지) */
+    .portfolio-table thead th:not(:first-child):not(.col-action):not(:nth-child(6)):not(:nth-child(7)),
+    .portfolio-table tbody tr:not(.sub-row) td:not(:first-child):not(.col-action):not(:nth-child(6)):not(:nth-child(7)) {
       display: none;
     }
     /* 컬럼 너비 축소 — 4컬럼이 전화기 화면에 맞도록 */
@@ -1682,10 +1682,10 @@
     .portfolio-table td:first-child {
       min-width: 75px !important;
     }
-    .portfolio-table thead th:nth-child(5),
     .portfolio-table thead th:nth-child(6),
-    .portfolio-table tbody td:nth-child(5),
-    .portfolio-table tbody td:nth-child(6) {
+    .portfolio-table thead th:nth-child(7),
+    .portfolio-table tbody td:nth-child(6),
+    .portfolio-table tbody td:nth-child(7) {
       min-width: 62px !important;
       font-size: 12px;
       text-align: right;
@@ -2859,6 +2859,7 @@
         <thead>
           <tr>
             <th style="text-align:left;min-width:120px">종목명</th>
+            <th style="min-width:32px;text-align:center">현/신</th>
             <th style="min-width:40px">구분</th>
             <th style="min-width:55px">보유량</th>
             <th style="min-width:55px">주문가능</th>
@@ -6771,7 +6772,7 @@ function renderPortfolio() {
     if (s.target2) tgtParts.push(`<span class="hts-tgt">▲T2:${fmt(s.target2)}(+${tRate(s.target2)}%)</span>`);
     if (s.target3) tgtParts.push(`<span class="hts-tgt">▲T3:${fmt(s.target3)}(+${tRate(s.target3)}%)</span>`);
     if (s.stop1)   tgtParts.push(`<span class="hts-stp">▼S1:${fmt(s.stop1)}(${tRate(s.stop1)}%)</span>`);
-    const subRow = hasTargets ? `<tr class="sub-row"><td colspan="12">
+    const subRow = hasTargets ? `<tr class="sub-row"><td colspan="13">
       <span style="margin-right:8px;color:var(--text3)">목표/손절:</span>${tgtParts.join('<span style="color:var(--border);margin:0 6px">│</span>')}
     </td></tr>` : '';
     return `<tr>
@@ -6791,6 +6792,7 @@ function renderPortfolio() {
         </div>
         ${s.sector?`<span class="sector">${s.sector}${s.position?` · ${posText(s.position)}`:''}</span>`:''}
       </td>
+      <td style="text-align:center;font-size:11px;font-weight:700;white-space:nowrap">${s.tradeType==='credit'?`<span style="color:#7c3aed">신</span>`:`<span style="color:var(--text3)">현</span>`}</td>
       <td style="text-align:center;font-size:12px;color:var(--text3)">${s.position?posLabel(s.position):'일반'}</td>
       <td ondblclick="startInlineEdit(event,${origIdx},'qty')" style="cursor:text" title="더블클릭으로 수량 수정">${fmt(s.qty)}</td>
       <td style="color:var(--text3)">${fmt(s.qty)}</td>
@@ -6861,7 +6863,7 @@ function renderPortfolio() {
     foot.style.display = p.length ? '' : 'none';
     foot.innerHTML = `<tr>
       <td colspan="4" style="text-align:left;color:var(--text3);font-size:12px;">합계 ${p.length}종목</td>
-      <td></td><td></td>
+      <td></td><td></td><td></td>
       <td>${fmt(totalBuyFoot)}</td>
       <td>${fmt(totalValFoot)}</td>
       <td class="${footCls}">${totalPnlFoot>=0?'+':''}${fmt(totalPnlFoot)}</td>
@@ -10165,7 +10167,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     <div class="settings-close-row">
       <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v3.2.6</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v3.2.7</div>
   </div>
 </div>
 
