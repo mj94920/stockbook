@@ -2857,7 +2857,8 @@
       </div>
       <div class="mdi-body" id="mdi-body-portfolio">
   <div class="mdi-ptab-bar">
-    <button class="mdi-ptab active" onclick="window._MDIPanelTab('portfolio','pf')">포트폴리오</button>
+    <button class="mdi-ptab active" onclick="window._MDIPanelTab('portfolio','pf')">보유종목</button>
+    <button class="mdi-ptab" onclick="window._MDIPanelTab('portfolio','trd');renderPortfolioTrades()">거래내역</button>
     <button class="mdi-ptab" onclick="window._MDIPanelTab('portfolio','rlz')">실현손익</button>
   </div>
   <!-- ── 포트폴리오 탭 ── -->
@@ -2922,6 +2923,44 @@
     </div>
     <div id="portfolioEmpty" class="empty-state" style="display:none">보유 종목이 없습니다. 매수를 등록해보세요.</div>
   </div><!-- /잔고 테이블 -->
+  </div>
+  <!-- ── 실현손익 탭 ── -->
+  <!-- ── 거래내역 탭 ── -->
+  <div class="mdi-ptab-pane" id="mdi-ptc-portfolio-trd" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
+    <div class="card">
+      <div class="section-row">
+        <div class="section-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> 거래내역</div>
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
+          <div class="filter-row" style="margin:0;">
+            <button class="filter-btn active" onclick="setPfTradeFilter('all',this)">전체</button>
+            <button class="filter-btn" onclick="setPfTradeFilter('buy',this)">매수</button>
+            <button class="filter-btn" onclick="setPfTradeFilter('sell',this)">매도</button>
+          </div>
+          <select id="pfTradeYear" onchange="renderPortfolioTrades()" style="padding:4px 7px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;">
+            <option value="all">전체</option>
+          </select>
+          <input type="text" placeholder="종목 검색..." id="pfTradeSearch" oninput="renderPortfolioTrades()"
+            style="padding:5px 9px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;width:100px;outline:none;">
+        </div>
+      </div>
+      <div style="overflow-x:auto;margin-top:8px;">
+        <table class="hts-table" style="width:100%;font-size:12px;">
+          <thead>
+            <tr>
+              <th>날짜</th>
+              <th>종목</th>
+              <th>구분</th>
+              <th style="text-align:right">단가</th>
+              <th style="text-align:right">수량</th>
+              <th style="text-align:right">금액</th>
+              <th style="text-align:right">손익%</th>
+            </tr>
+          </thead>
+          <tbody id="pfTradeBody"></tbody>
+        </table>
+      </div>
+      <div id="pfTradeEmpty" class="empty-state" style="display:none;">거래 기록이 없습니다</div>
+    </div>
   </div>
   <!-- ── 실현손익 탭 ── -->
   <div class="mdi-ptab-pane" id="mdi-ptc-portfolio-rlz" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
@@ -5991,9 +6030,22 @@ function updateQOTotalPreview() {
   if (!el) return;
   const price = parseFloat(priceRaw);
   if (price > 0 && qty > 0) {
-    el.textContent = `합계 ${(price * qty).toLocaleString()}원`;
+    const total = price * qty;
+    let html = `합계 ${total.toLocaleString()}원`;
+    // 매수 모드일 때 예수금 초과 여부 인라인 경고
+    if (_qoMode === 'buy') {
+      const cash = getCashBalance?.() ?? 0;
+      if (cash > 0 && total > cash) {
+        const over = total - cash;
+        html += `<span style="margin-left:8px;color:var(--hts-dn);font-weight:600;">⚠ 예수금 부족 ${over.toLocaleString()}원 초과</span>`;
+      } else if (cash > 0) {
+        const remain = cash - total;
+        html += `<span style="margin-left:8px;color:var(--text3);">잔여 ${remain.toLocaleString()}원</span>`;
+      }
+    }
+    el.innerHTML = html;
   } else {
-    el.textContent = '';
+    el.innerHTML = '';
   }
 }
 
@@ -6268,7 +6320,20 @@ function _qoOpenAnalysis() {
 }
 
 function _qoOpenJournal() {
-  // 투자일지 기능 #3 에서 구현 예정
+  // 투자일지 패널 열기 + 현재 종목 자동 연동
+  const panel = document.getElementById('mdi-panel-journal');
+  if (panel) {
+    if (panel.style.display === 'none' || panel.style.visibility === 'hidden') {
+      if (window._MDI?.open) window._MDI.open('journal');
+      else panel.style.display = '';
+    }
+  }
+  // 현재 선택 종목으로 일지 검색창 자동 세팅
+  const name = document.getElementById('qo_name_input')?.value?.trim() || '';
+  if (name) {
+    const srch = document.getElementById('journalSearch');
+    if (srch) { srch.value = name; renderJournals?.(); }
+  }
 }
 
 /* 호가 단위 (한국 주식 호가창 기준) */
@@ -6861,8 +6926,9 @@ function addStock() {
 
   save();
   renderPortfolio();
-  renderTrades();   // ② 거래기록 탭 즉시 갱신
-  renderJournals(); // 투자일지 초안 즉시 반영
+  renderTrades();            // ② 거래기록 탭 즉시 갱신
+  renderPortfolioTrades?.(); // 포트폴리오 패널 거래내역 탭 갱신
+  renderJournals();          // 투자일지 초안 즉시 반영
   updateDatalist('jStockList');
   updateDatalist('tStockList');
   updateDatalist('newsStockList');
@@ -7700,6 +7766,52 @@ function renderTradesMini() {
         <button class="btn btn-ghost btn-sm" style="padding:1px 6px;font-size:11px;" onclick="deleteTrade(${origIdx})">🗑</button>
       </div>
     </div>`;
+  }).join('');
+}
+
+/* ── 포트폴리오 패널 거래내역 탭 ── */
+let _pfTradeFilter = 'all';
+
+function setPfTradeFilter(f, btn) {
+  _pfTradeFilter = f;
+  document.querySelectorAll('#mdi-ptc-portfolio-trd .filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderPortfolioTrades();
+}
+
+function renderPortfolioTrades() {
+  const yearSel = document.getElementById('pfTradeYear');
+  if (yearSel) {
+    const years = [...new Set((state.trades||[]).map(t => (t.date||'').substring(0,4)).filter(Boolean))].sort().reverse();
+    const cur = yearSel.value;
+    yearSel.innerHTML = '<option value="all">전체</option>' +
+      years.map(y => `<option value="${y}"${cur===y?' selected':''}>${y}년</option>`).join('');
+  }
+  const q  = (document.getElementById('pfTradeSearch')?.value || '').toLowerCase();
+  const yr = document.getElementById('pfTradeYear')?.value || 'all';
+  const trades = (state.trades||[]).filter(t => {
+    if (_pfTradeFilter !== 'all' && t.type !== _pfTradeFilter) return false;
+    if (yr !== 'all' && !(t.date||'').startsWith(yr)) return false;
+    if (q && !t.name.toLowerCase().includes(q)) return false;
+    return true;
+  }).slice().reverse();
+  const body  = document.getElementById('pfTradeBody');
+  const empty = document.getElementById('pfTradeEmpty');
+  if (!body) return;
+  if (!trades.length) { body.innerHTML = ''; if (empty) empty.style.display = 'block'; return; }
+  if (empty) empty.style.display = 'none';
+  body.innerHTML = trades.map(t => {
+    const badge   = t.type === 'buy' ? '<span class="badge badge-buy">매수</span>' : '<span class="badge badge-sell">매도</span>';
+    const pnlCls  = t.pnlPct != null ? (t.pnlPct >= 0 ? 'return-pos' : 'return-neg') : '';
+    return `<tr>
+      <td style="white-space:nowrap;font-size:11px">${t.date||'-'}</td>
+      <td><strong style="font-size:12px">${t.name}</strong>${t.ticker?`<span class="ticker" style="font-size:10px;margin-left:3px">${t.ticker}</span>`:''}</td>
+      <td>${badge}</td>
+      <td style="text-align:right">${fmt(t.price)}</td>
+      <td style="text-align:right">${fmt(t.qty)}</td>
+      <td style="text-align:right">${fmt(t.total)}</td>
+      <td style="text-align:right" class="${pnlCls}">${t.pnlPct!=null?fmtPct(t.pnlPct):'-'}</td>
+    </tr>`;
   }).join('');
 }
 
