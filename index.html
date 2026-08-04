@@ -2609,7 +2609,7 @@
     </div>
     <!-- ─ MDI 패널: trading (매매관리) ─ -->
     <div id="mdi-panel-trading" class="mdi-panel" data-pid="trading" data-mdi-state="open"
-         style="left:284px;top:0;width:700px;height:340px;z-index:102">
+         style="left:0;top:0;width:400px;height:300px;z-index:102;visibility:hidden">
       <div class="mdi-tb">
         <span class="mdi-tb-icon">📊</span>
         <span class="mdi-tb-title">매매관리</span>
@@ -2833,7 +2833,7 @@
     </div>
     <!-- ─ MDI 패널: portfolio (포트폴리오) ─ -->
     <div id="mdi-panel-portfolio" class="mdi-panel" data-pid="portfolio" data-mdi-state="open"
-         style="left:284px;top:344px;width:700px;height:256px;z-index:103">
+         style="left:0;top:0;width:400px;height:300px;z-index:103;visibility:hidden">
       <div class="mdi-tb">
         <span class="mdi-tb-icon">💼</span>
         <span class="mdi-tb-title">포트폴리오</span>
@@ -9237,6 +9237,12 @@ function _toggleCheck(stockKey, checkKey, val) {
       });
       // 전체창 리사이징: 패널 stacking 문제 해결 위해 window 레벨 capture 리스너 사용
       this._initGlobalResize();
+      // 창 크기 변경 시 패널 레이아웃 재계산 (overflow 방지)
+      let _resizeTimer = null;
+      window.addEventListener('resize', () => {
+        clearTimeout(_resizeTimer);
+        _resizeTimer = setTimeout(() => this.resetLayout(), 150);
+      });
     },
 
     // ── 전역 리사이즈 핸들러 ───────────────────────────────────────────────────
@@ -9396,6 +9402,7 @@ function _toggleCheck(stockKey, checkKey, val) {
         if (!el) return;
         el.style.left=l.x+'px'; el.style.top=l.y+'px';
         el.style.width=l.w+'px'; el.style.height=l.h+'px';
+        el.style.visibility = '';
         el.style.display = l.open ? '' : 'none';
         el.dataset.mdiState = l.open ? 'open' : 'closed';
         if (body) body.style.display = '';
