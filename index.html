@@ -2647,18 +2647,30 @@
           <span id="qo_cur_price" style="font-size:20px;font-weight:700;">-</span>
           <span id="qo_cur_change" style="font-size:12px;color:var(--text3);">-</span>
         </div>
-        <!-- 호가창 (KIS 실시간 / 가상 폴백) -->
-        <div id="qo_hoga_wrap" style="display:none;margin:4px 0 8px;border:1px solid var(--border);border-radius:7px;overflow:hidden;">
-          <table style="width:100%;border-collapse:collapse;">
-            <thead>
-              <tr style="background:var(--bg3);border-bottom:1px solid var(--border);">
-                <th style="text-align:right;padding:3px 6px;font-size:10px;font-weight:500;color:var(--hts-dn);width:35%;">매도잔량</th>
-                <th style="text-align:center;padding:3px 4px;font-size:10px;font-weight:500;color:var(--text3);width:30%;">호가</th>
-                <th style="text-align:left;padding:3px 6px;font-size:10px;font-weight:500;color:var(--hts-up);width:35%;">매수잔량</th>
-              </tr>
-            </thead>
-            <tbody id="qo_hoga_body"></tbody>
-          </table>
+        <!-- 빠른 액션 버튼 (포트폴리오 종목 클릭 시 표시) -->
+        <div id="qo_quick_btns" style="display:none;padding:4px 0 6px;border-bottom:1px solid var(--border);">
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button onclick="_qoOpenAnalysis()" style="font-size:11px;padding:3px 10px;border-radius:4px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font-family:inherit;">기업분석</button>
+            <button onclick="_qoOpenJournal()" style="font-size:11px;padding:3px 10px;border-radius:4px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font-family:inherit;">일지</button>
+          </div>
+        </div>
+        <!-- 호가 + 목표/손절가 좌우 분할 -->
+        <div id="qo_hoga_split" style="display:flex;gap:8px;margin:4px 0 8px;align-items:flex-start;">
+          <div id="qo_hoga_col" style="flex:1;min-width:0;">
+            <div id="qo_hoga_wrap" style="display:none;border:1px solid var(--border);border-radius:7px;overflow:hidden;">
+              <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                  <tr style="background:var(--bg3);border-bottom:1px solid var(--border);">
+                    <th style="text-align:right;padding:3px 6px;font-size:10px;font-weight:500;color:var(--hts-dn);width:35%;">매도잔량</th>
+                    <th style="text-align:center;padding:3px 4px;font-size:10px;font-weight:500;color:var(--text3);width:30%;">호가</th>
+                    <th style="text-align:left;padding:3px 6px;font-size:10px;font-weight:500;color:var(--hts-up);width:35%;">매수잔량</th>
+                  </tr>
+                </thead>
+                <tbody id="qo_hoga_body"></tbody>
+              </table>
+            </div>
+          </div>
+          <div id="qo_target_panel" style="display:none;flex:0 0 47%;border:1px solid var(--border);border-radius:7px;padding:10px 12px;background:var(--bg3);"></div>
         </div>
         <!-- 매수/매도 + 입력 영역 -->
         <div style="margin-top:8px;">
@@ -5751,6 +5763,18 @@ function connectToHoga(code, name) {
   if (allPanel) allPanel.style.zIndex = '100';
 }
 
+// ─── 보유종목 클릭 → 호가창 자동 연동 ───────────────────────────────
+function connectStockFromPortfolio(idx) {
+  const s = state.portfolio?.[idx];
+  if (!s) return;
+  const panel = document.getElementById('mdi-panel-trading');
+  if (panel) {
+    if (panel.style.visibility === 'hidden') panel.style.visibility = 'visible';
+    if (window._MDI?.open) window._MDI.open('trading');
+  }
+  connectToHoga(s.ticker || '', s.name || '');
+}
+
 function _toggleAllWatch(code, name) {
   if (!state.watchlist) state.watchlist = [];
   const idx = state.watchlist.findIndex(w => w.ticker === code);
@@ -6122,6 +6146,11 @@ function updateHogaDisplay() {
 
   // 현재가 있으면 호가창 표시: KIS API 우선, 실패 시 가상 폴백
   if (curPrice != null && wrap) {
+    // 빠른 버튼 표시
+    const qb = document.getElementById('qo_quick_btns');
+    if (qb) qb.style.display = 'block';
+    // 목표가/손절가 패널 렌더
+    _renderTargetStopPanel(curPrice);
     if (code && /^\d{6}$/.test(code) && window.electronAPI?.fetchHoga) {
       window.electronAPI.fetchHoga(code).then(hoga => {
         if (hoga && hoga.asks?.length && hoga.bids?.length) {
@@ -6137,7 +6166,109 @@ function updateHogaDisplay() {
   } else if (wrap) {
     wrap.style.display = 'none';
     _stopHogaAutoRefresh();
+    const qb = document.getElementById('qo_quick_btns');
+    if (qb) qb.style.display = 'none';
+    const tp = document.getElementById('qo_target_panel');
+    if (tp) tp.style.display = 'none';
   }
+}
+
+/* ── 목표가/손절가 패널 렌더 (호가창 우측 분할) ── */
+function _renderTargetStopPanel(curPrice) {
+  const panel = document.getElementById('qo_target_panel');
+  if (!panel) return;
+  const nameEl = document.getElementById('qo_name_input');
+  const codeEl = document.getElementById('qo_stock_code');
+  const name = nameEl?.value?.trim() || '';
+  const code = codeEl?.value?.trim() || '';
+  const portIdx = (state.portfolio || []).findIndex(s => s.name === name || s.ticker === code);
+  const s = portIdx >= 0 ? state.portfolio[portIdx] : null;
+  const tgt = s?.target1 || null;
+  const stp = s?.stop1   || null;
+  const tgtPct = (tgt && curPrice) ? ((tgt - curPrice) / curPrice * 100) : null;
+  const stpPct = (stp && curPrice) ? ((stp - curPrice) / curPrice * 100) : null;
+  const riskRatio = (tgt && stp && curPrice && stp < curPrice)
+    ? Math.abs((tgt - curPrice) / (curPrice - stp)).toFixed(1) : null;
+  panel.style.display = 'block';
+  panel.innerHTML = `
+    <div style="font-size:10px;font-weight:600;color:var(--text3);margin-bottom:8px;letter-spacing:0.03em;">목표 / 손절</div>
+    <div style="margin-bottom:8px;">
+      <div style="font-size:10px;color:var(--text3);margin-bottom:3px;">목표가</div>
+      <div style="display:flex;align-items:center;gap:5px;padding:5px 8px;border-radius:5px;background:rgba(180,30,30,0.07);border:0.5px solid rgba(180,30,30,0.2);">
+        <input id="qo_tgt_input" type="text" inputmode="decimal"
+          value="${tgt ? Math.round(tgt).toLocaleString() : ''}" placeholder="입력..."
+          oninput="_qoFmtNum(this);_qoUpdatePcts(${portIdx})" onblur="_qoSaveTarget(${portIdx})"
+          style="flex:1;min-width:0;border:none;background:transparent;color:var(--text);font-size:12px;font-weight:600;text-align:right;outline:none;font-family:inherit;">
+        <span id="qo_tgt_pct" style="font-size:10px;color:${tgtPct!==null?(tgtPct>0?'var(--hts-up)':'var(--hts-dn)'):'var(--text3)'};white-space:nowrap;min-width:38px;text-align:right;">${tgtPct!==null?`${tgtPct>0?'+':''}${tgtPct.toFixed(1)}%`:''}</span>
+      </div>
+    </div>
+    <div style="margin-bottom:8px;">
+      <div style="font-size:10px;color:var(--text3);margin-bottom:3px;">손절가</div>
+      <div style="display:flex;align-items:center;gap:5px;padding:5px 8px;border-radius:5px;background:rgba(24,95,180,0.07);border:0.5px solid rgba(24,95,180,0.2);">
+        <input id="qo_stp_input" type="text" inputmode="decimal"
+          value="${stp ? Math.round(stp).toLocaleString() : ''}" placeholder="입력..."
+          oninput="_qoFmtNum(this);_qoUpdatePcts(${portIdx})" onblur="_qoSaveTarget(${portIdx})"
+          style="flex:1;min-width:0;border:none;background:transparent;color:var(--text);font-size:12px;font-weight:600;text-align:right;outline:none;font-family:inherit;">
+        <span id="qo_stp_pct" style="font-size:10px;color:${stpPct!==null?(stpPct<0?'var(--hts-dn)':'var(--hts-up)'):'var(--text3)'};white-space:nowrap;min-width:38px;text-align:right;">${stpPct!==null?`${stpPct>0?'+':''}${stpPct.toFixed(1)}%`:''}</span>
+      </div>
+    </div>
+    ${riskRatio!==null?`<div style="font-size:10px;color:var(--text3);text-align:right;margin-bottom:4px;">리스크비 <span style="font-weight:700;color:var(--text);">1 : ${riskRatio}</span></div>`:''}
+    ${!s?'<div style="font-size:10px;color:var(--text3);text-align:center;padding-top:4px;">포트 미등록<br>저장 안됨</div>':''}
+  `;
+}
+
+function _qoFmtNum(el) {
+  const v = el.value.replace(/[^0-9]/g, '');
+  el.value = v ? parseInt(v, 10).toLocaleString() : '';
+}
+
+function _qoUpdatePcts(portIdx) {
+  const cur = _hogaCurrentPrice || null;
+  if (!cur) return;
+  const tgtEl = document.getElementById('qo_tgt_input');
+  const stpEl = document.getElementById('qo_stp_input');
+  const tgtPctEl = document.getElementById('qo_tgt_pct');
+  const stpPctEl = document.getElementById('qo_stp_pct');
+  const tgtV = tgtEl ? parseFloat(tgtEl.value.replace(/,/g,'')) : NaN;
+  const stpV = stpEl ? parseFloat(stpEl.value.replace(/,/g,'')) : NaN;
+  if (tgtPctEl) {
+    if (!isNaN(tgtV) && tgtV > 0) {
+      const p = (tgtV - cur) / cur * 100;
+      tgtPctEl.textContent = `${p>0?'+':''}${p.toFixed(1)}%`;
+      tgtPctEl.style.color = p>0?'var(--hts-up)':'var(--hts-dn)';
+    } else { tgtPctEl.textContent = ''; }
+  }
+  if (stpPctEl) {
+    if (!isNaN(stpV) && stpV > 0) {
+      const p = (stpV - cur) / cur * 100;
+      stpPctEl.textContent = `${p>0?'+':''}${p.toFixed(1)}%`;
+      stpPctEl.style.color = p<0?'var(--hts-dn)':'var(--hts-up)';
+    } else { stpPctEl.textContent = ''; }
+  }
+}
+
+function _qoSaveTarget(portIdx) {
+  if (portIdx < 0 || !state.portfolio?.[portIdx]) return;
+  const s = state.portfolio[portIdx];
+  const tgtEl = document.getElementById('qo_tgt_input');
+  const stpEl = document.getElementById('qo_stp_input');
+  const tgtV = tgtEl ? parseFloat(tgtEl.value.replace(/,/g,'')) : NaN;
+  const stpV = stpEl ? parseFloat(stpEl.value.replace(/,/g,'')) : NaN;
+  if (!isNaN(tgtV) && tgtV > 0) s.target1 = tgtV; else if (tgtEl?.value === '') delete s.target1;
+  if (!isNaN(stpV) && stpV > 0) s.stop1   = stpV; else if (stpEl?.value === '') delete s.stop1;
+  save?.();
+  renderPortfolio?.();
+}
+
+function _qoOpenAnalysis() {
+  const name = document.getElementById('qo_name_input')?.value?.trim() || '';
+  const code = document.getElementById('qo_stock_code')?.value?.trim() || '';
+  const idx = (state.portfolio || []).findIndex(s => s.name === name || s.ticker === code);
+  if (idx >= 0) openAnalysisDrawer(idx);
+}
+
+function _qoOpenJournal() {
+  // 투자일지 기능 #3 에서 구현 예정
 }
 
 /* 호가 단위 (한국 주식 호가창 기준) */
@@ -6546,7 +6677,7 @@ function renderPortfolio() {
       <span style="margin-right:8px;color:var(--text3)">목표/손절:</span>${tgtParts.join('<span style="color:var(--border);margin:0 6px">│</span>')}
     </td></tr>` : '';
     return `<tr>
-      <td class="name-cell" onclick="openAnalysisDrawer(${origIdx})" style="cursor:pointer" title="클릭: AI 기업분석">
+      <td class="name-cell" onclick="connectStockFromPortfolio(${origIdx})" style="cursor:pointer" title="클릭: 호가창 연동">
         <strong>${s.name}</strong>${s.ticker?`<span class="ticker">${s.ticker}</span>`:''}
         ${s.tradeType==='credit'?`<span class="badge" style="background:rgba(107,33,168,0.12);color:#7c3aed;border:1px solid rgba(107,33,168,0.25);font-size:10px;padding:1px 5px;margin-left:3px;">신용</span>`:''}
         ${(()=>{const bc=state.trades.filter(t=>t.name===s.name&&t.type==='buy').length;return bc>1?`<span class="badge badge-mid" style="font-size:10px;padding:1px 5px;margin-left:4px;">추매 ${bc-1}회</span>`:'';})()}
