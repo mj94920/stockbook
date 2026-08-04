@@ -6483,13 +6483,10 @@ function submitQuickOrder() {
   if (!qty || qty <= 0) { alert('수량을 입력해 주세요.'); return; }
   if (!price || price <= 0) { alert('단가를 입력해 주세요.'); return; }
 
-  // 신용 매수는 항상 새 포트폴리오 항목 생성 (현금·기존 신용과 구분)
-  let stockIdx = (_qoMode === 'buy' && _qoTradeType === 'credit')
-    ? -1
-    : state.portfolio.findIndex(s => s.name === stockName);
+  let stockIdx = state.portfolio.findIndex(s => s.name === stockName);
+  // 신규 종목 매수: 포트폴리오에 자동 추가
   if (stockIdx === -1 && _qoMode === 'buy') {
-    const creditDate = _qoTradeType === 'credit' ? today : undefined;
-    state.portfolio.push({ name: stockName, ticker: stockCode, avgPrice: price, qty: 0, sector: '', position: 'mid', tradeType: _qoTradeType, creditDate });
+    state.portfolio.push({ name: stockName, ticker: stockCode, avgPrice: price, qty: 0, sector: '', position: 'mid', tradeType: _qoTradeType });
     stockIdx = state.portfolio.length - 1;
   }
 
@@ -7490,13 +7487,18 @@ function calcJPeriod() {
 }
 
 function editTradeDate(idx, cell) {
+  // 이미 편집 중이면 무시
+  if (cell.querySelector('input[type="date"]')) return;
   const t = state.trades[idx];
   if (!t) return;
   const orig = t.date || '';
   const inp = document.createElement('input');
   inp.type = 'date';
   inp.value = orig;
-  inp.style.cssText = 'width:120px;background:var(--bg3);border:1px solid var(--accent);border-radius:4px;color:var(--text);padding:2px 4px;font-size:11px;';
+  inp.style.cssText = 'width:130px;background:var(--bg3);border:1px solid var(--accent);border-radius:4px;color:var(--text);padding:2px 4px;font-size:11px;';
+  // 클릭/마우스다운 버블링 차단 (td onclick 재호출 방지)
+  inp.addEventListener('click',     e => e.stopPropagation());
+  inp.addEventListener('mousedown', e => e.stopPropagation());
   cell.innerHTML = '';
   cell.appendChild(inp);
   inp.focus();
@@ -7511,8 +7513,10 @@ function editTradeDate(idx, cell) {
     }
   };
   inp.addEventListener('change', commit);
-  inp.addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== inp) cell.textContent = state.trades[idx]?.date || '-'; }, 150));
-  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { inp.blur(); } if (e.key === 'Escape') { cell.textContent = orig || '-'; } });
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.stopPropagation(); commit(); }
+    if (e.key === 'Escape') { cell.textContent = orig || '-'; }
+  });
 }
 
 function saveJournal() {
@@ -7926,7 +7930,7 @@ function renderTrades() {
     const retCls = t.pnlPct != null ? (t.pnlPct >= 0 ? 'return-pos' : 'return-neg') : '';
     return `<tr>
       <td style="cursor:pointer;white-space:nowrap;" onclick="editTradeDate(${origIdx},this)" title="클릭하여 날짜 수정">${t.date||'-'}</td>
-      <td><strong>${t.name}</strong>${t.ticker?`<br><span class="ticker" style="font-size:12px">${t.ticker}</span>`:''}</td>
+      <td><strong>${t.name}</strong>${t.ticker?`<br><span class="ticker" style="font-size:12px">${t.ticker}</span>`:''}${t.tradeType==='credit'?`<span class="badge" style="background:rgba(107,33,168,0.12);color:#7c3aed;border:1px solid rgba(107,33,168,0.25);font-size:10px;padding:1px 5px;margin-left:4px;">신용</span>`:''}</td>
       <td>${typeLabel}</td>
       <td style="text-align:right">${fmt(t.price)}</td>
       <td style="text-align:right">${fmt(t.qty)}</td>
@@ -10161,7 +10165,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     <div class="settings-close-row">
       <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v3.2.5</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v3.2.6</div>
   </div>
 </div>
 
