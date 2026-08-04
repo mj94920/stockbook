@@ -2882,10 +2882,10 @@
   <div class="card total-asset-card" style="padding:12px 16px;margin-bottom:12px;">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
       <span style="font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> 총 자산</span>
-      <input type="text" inputmode="decimal" id="totalAssetInput" placeholder="예: 100,000,000 (1억)" min="0" step="any"
-        style="flex:1;min-width:180px;padding:7px 12px;background:var(--bg3);border:1px solid var(--accent);border-radius:6px;color:var(--text);font-size:14px;outline:none;"
-        oninput="formatWithComma(this);previewAssetRatio()" onkeydown="if(event.key==='Enter')saveTotalAsset()">
-      <button class="btn btn-primary btn-sm" onclick="saveTotalAsset()" style="white-space:nowrap;">설정</button>
+      <span id="totalAssetDisplay" onclick="openTotalAssetModal()" title="클릭하여 입력"
+        style="flex:1;min-width:180px;padding:7px 12px;background:var(--bg3);border:1px solid var(--accent);border-radius:6px;color:var(--text3);font-size:14px;cursor:pointer;user-select:none;">
+        클릭하여 입력
+      </span>
       <button class="btn btn-ghost btn-sm" onclick="clearTotalAsset()" style="white-space:nowrap;">초기화</button>
       <span id="assetRatioPreview" style="font-size:13px;color:var(--text3);"></span>
     </div>
@@ -3485,6 +3485,26 @@
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeMcSnapshotModal()">취소</button>
       <button class="btn btn-primary" onclick="confirmMcSnapshot()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOTAL ASSET MODAL -->
+<div class="modal-overlay" id="totalAssetModal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;flex-shrink:0"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> 총 자산 설정</div>
+    <p style="font-size:12px;color:var(--text3);margin:-4px 0 12px;">전체 투자 가능 자산(예수금+주식평가액)을 입력하면 투자 비중 계산에 활용됩니다.</p>
+    <div class="form-group">
+      <label class="form-label">총 자산 금액</label>
+      <input type="text" inputmode="decimal" id="totalAssetModalInput" placeholder="예: 100,000,000"
+        style="width:100%;padding:8px 12px;background:var(--bg3);border:1px solid var(--accent);border-radius:6px;color:var(--text);font-size:15px;outline:none;box-sizing:border-box;"
+        oninput="formatWithComma(this);previewAssetRatio()"
+        onkeydown="if(event.key==='Enter')saveTotalAsset()">
+    </div>
+    <div id="assetRatioPreviewModal" style="font-size:13px;color:var(--text3);min-height:18px;margin-bottom:10px;"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn btn-ghost btn-sm" onclick="closeTotalAssetModal()">취소</button>
+      <button class="btn btn-primary btn-sm" onclick="saveTotalAsset()">저장</button>
     </div>
   </div>
 </div>
@@ -4165,6 +4185,7 @@ function _renderAll() {
   updateDatalist('newsStockList');
   renderExsugeum();
   try { renderSummary(); } catch(e) {}
+  try { updateTotalAssetDisplay(); } catch(e) {}
   // 월복리 시뮬레이터 입력값 복원
   const mc = state.mcSettings || {};
   if (mc.principal) { const el = document.getElementById('mc_principal'); if (el) el.value = Number(mc.principal).toLocaleString('ko-KR'); }
@@ -4208,33 +4229,66 @@ function load() {
 window.addEventListener('beforeunload', () => {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
 });
+function openTotalAssetModal() {
+  const inp = document.getElementById('totalAssetModalInput');
+  inp.value = state.totalAsset > 0 ? state.totalAsset.toLocaleString('ko-KR') : '';
+  document.getElementById('totalAssetModal').classList.add('open');
+  previewAssetRatio();
+  setTimeout(() => inp.focus(), 80);
+}
+function closeTotalAssetModal() {
+  document.getElementById('totalAssetModal').classList.remove('open');
+}
 function saveTotalAsset() {
-  const v = parseFloat(String(document.getElementById('totalAssetInput').value).replace(/,/g,''));
+  const inp = document.getElementById('totalAssetModalInput');
+  const v = parseFloat(String(inp.value).replace(/,/g,''));
   if (isNaN(v) || v <= 0) { showToast('올바른 금액을 입력해 주세요'); return; }
   state.totalAsset = v;
   save();
-  previewAssetRatio();
+  updateTotalAssetDisplay();
+  closeTotalAssetModal();
   renderPortfolio();
   showToast('총 자산이 저장되었습니다 ✅');
 }
 function clearTotalAsset() {
   state.totalAsset = 0;
-  document.getElementById('totalAssetInput').value = '';
+  const inp = document.getElementById('totalAssetModalInput');
+  if (inp) inp.value = '';
   document.getElementById('assetRatioPreview').textContent = '';
+  updateTotalAssetDisplay();
   save();
   renderPortfolio();
   showToast('총 자산 설정이 초기화되었습니다');
 }
+function updateTotalAssetDisplay() {
+  const el = document.getElementById('totalAssetDisplay');
+  if (!el) return;
+  if (state.totalAsset > 0) {
+    el.textContent = '₩' + state.totalAsset.toLocaleString('ko-KR');
+    el.style.color = 'var(--text)';
+  } else {
+    el.textContent = '클릭하여 입력';
+    el.style.color = 'var(--text3)';
+  }
+}
 function previewAssetRatio() {
-  const v = parseFloat(String(document.getElementById('totalAssetInput').value).replace(/,/g,''));
-  const el = document.getElementById('assetRatioPreview');
+  const inp = document.getElementById('totalAssetModalInput');
+  const v = inp ? parseFloat(String(inp.value).replace(/,/g,'')) : NaN;
+  // 프리뷰 대상: 모달 안 + 카드 바깥 두 곳 모두 업데이트
+  const el  = document.getElementById('assetRatioPreview');
+  const el2 = document.getElementById('assetRatioPreviewModal');
   if (!isNaN(v) && v > 0) {
     const totalVal = state.portfolio.reduce((a,s) => a + (s.currentPrice||s.avgPrice)*s.qty, 0);
     const ratio = (totalVal / v * 100).toFixed(1);
     const cash = v - totalVal;
-    el.textContent = '→ 투자비중 ' + ratio + '% / 현금 ₩' + fmt(Math.max(0,cash));
-    el.style.color = ratio > 90 ? 'var(--red)' : ratio > 70 ? 'var(--yellow)' : 'var(--green)';
-  } else { el.textContent = ''; }
+    const txt = '→ 투자비중 ' + ratio + '% / 현금 ₩' + fmt(Math.max(0,cash));
+    const clr = ratio > 90 ? 'var(--red)' : ratio > 70 ? 'var(--yellow)' : 'var(--green)';
+    if (el)  { el.textContent  = txt; el.style.color  = clr; }
+    if (el2) { el2.textContent = txt; el2.style.color = clr; }
+  } else {
+    if (el)  el.textContent  = '';
+    if (el2) el2.textContent = '';
+  }
 }
 
 // ============================================================
@@ -6721,7 +6775,7 @@ function renderPortfolio() {
       : state.totalAsset > 0 ? state.totalAsset : totalVal;
   const body = document.getElementById('portfolioBody');
   const empty = document.getElementById('portfolioEmpty');
-  if (!p.length) { body.innerHTML=''; empty.style.display='block'; return; }
+  if (!p.length) { body.innerHTML=''; empty.style.display='block'; const _f=document.getElementById('portfolioFoot'); if(_f){_f.style.display='none';_f.innerHTML='';} return; }
   empty.style.display='none';
   // HTS 스타일 테이블 렌더
   let totalBuyFoot = 0, totalValFoot = 0, totalPnlFoot = 0;
@@ -7483,6 +7537,32 @@ function calcJPeriod() {
   }
 }
 
+function editTradeDate(idx, cell) {
+  const t = state.trades[idx];
+  if (!t) return;
+  const orig = t.date || '';
+  const inp = document.createElement('input');
+  inp.type = 'date';
+  inp.value = orig;
+  inp.style.cssText = 'width:120px;background:var(--bg3);border:1px solid var(--accent);border-radius:4px;color:var(--text);padding:2px 4px;font-size:11px;';
+  cell.innerHTML = '';
+  cell.appendChild(inp);
+  inp.focus();
+  const commit = () => {
+    if (inp.value && inp.value !== orig) {
+      state.trades[idx].date = inp.value;
+      save();
+      renderTrades();
+      showToast('날짜가 수정되었습니다');
+    } else {
+      cell.textContent = orig || '-';
+    }
+  };
+  inp.addEventListener('change', commit);
+  inp.addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== inp) cell.textContent = state.trades[idx]?.date || '-'; }, 150));
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { inp.blur(); } if (e.key === 'Escape') { cell.textContent = orig || '-'; } });
+}
+
 function saveJournal() {
   const buyDate = document.getElementById('j_buyDate').value;
   const sellDate = document.getElementById('j_sellDate').value;
@@ -7519,6 +7599,24 @@ function saveJournal() {
   };
 
   if (editJournalIdx != null) {
+    const oldEntry = state.journals[editJournalIdx];
+    // 날짜 변경 시 state.trades에도 반영
+    if (oldEntry) {
+      // 매수 날짜 변경
+      if (oldEntry.buyDate && buyDate && oldEntry.buyDate !== buyDate) {
+        const tidx = state.trades.findIndex(t =>
+          t.name === oldEntry.name && t.date === oldEntry.buyDate && t.type === 'buy'
+        );
+        if (tidx >= 0) state.trades[tidx].date = buyDate;
+      }
+      // 매도 날짜 변경
+      if (oldEntry.sellDate && sellDate && oldEntry.sellDate !== sellDate) {
+        const tidx = state.trades.findIndex(t =>
+          t.name === oldEntry.name && t.date === oldEntry.sellDate && t.type === 'sell'
+        );
+        if (tidx >= 0) state.trades[tidx].date = sellDate;
+      }
+    }
     state.journals[editJournalIdx] = entry; // draft 플래그 없음 → 완성 처리
     editJournalIdx = null;
     document.getElementById('journalFormTitle').innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> 새 투자 일지 작성';
@@ -7875,7 +7973,7 @@ function renderTrades() {
     const pnlCls = t.pnl != null ? (t.pnl >= 0 ? 'return-pos' : 'return-neg') : '';
     const retCls = t.pnlPct != null ? (t.pnlPct >= 0 ? 'return-pos' : 'return-neg') : '';
     return `<tr>
-      <td>${t.date||'-'}</td>
+      <td style="cursor:pointer;white-space:nowrap;" onclick="editTradeDate(${origIdx},this)" title="클릭하여 날짜 수정">${t.date||'-'}</td>
       <td><strong>${t.name}</strong>${t.ticker?`<br><span class="ticker" style="font-size:12px">${t.ticker}</span>`:''}</td>
       <td>${typeLabel}</td>
       <td style="text-align:right">${fmt(t.price)}</td>
@@ -9651,16 +9749,27 @@ function _toggleCheck(stockKey, checkKey, val) {
 
     // ── 최대화 / 복구 ───────────────────────────────────────────────────
     maximize(pid) {
-      const el = document.getElementById('mdi-panel-' + pid);
-      const ws = document.getElementById('mdiWorkspace');
+      const el   = document.getElementById('mdi-panel-' + pid);
+      const ws   = document.getElementById('mdiWorkspace');
+      const body = document.getElementById('mdi-body-' + pid);
+      const rzAll = el ? el.querySelectorAll('.mdi-rz') : [];
       if (!el || !ws) return;
       if (el.dataset.mdiState === 'maximized') {
         const pp = this.prevPos[pid];
         if (pp) { el.style.left=pp.x+'px'; el.style.top=pp.y+'px'; el.style.width=pp.w+'px'; el.style.height=pp.h+'px'; }
+        // 최소화 상태에서 최대화로 왔을 수 있으므로 body 항상 복구
+        if (body) body.style.display = '';
+        rzAll.forEach(r => r.style.display = '');
         el.dataset.mdiState = 'open';
       } else {
         if (!this.prevPos[pid]) this.prevPos[pid] = {};
-        Object.assign(this.prevPos[pid], { x:el.offsetLeft, y:el.offsetTop, w:el.offsetWidth, h:el.offsetHeight });
+        // 최소화 상태인 경우 el.offsetHeight가 26px — 진짜 원래 높이는 prevPos.h에 저장돼 있음
+        const isMin = el.dataset.mdiState === 'minimized';
+        const trueH = (isMin && this.prevPos[pid].h) ? this.prevPos[pid].h : el.offsetHeight;
+        Object.assign(this.prevPos[pid], { x:el.offsetLeft, y:el.offsetTop, w:el.offsetWidth, h:trueH });
+        // 최소화 상태의 body도 복구한 뒤 최대화
+        if (body) body.style.display = '';
+        rzAll.forEach(r => r.style.display = '');
         el.style.left='0'; el.style.top='0';
         el.style.width=ws.offsetWidth+'px'; el.style.height=ws.offsetHeight+'px';
         el.dataset.mdiState = 'maximized';
