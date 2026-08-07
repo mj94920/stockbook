@@ -189,38 +189,69 @@
   }
 
   /* ── HEADER ── */
+  /* ════ 헤더 2단 구조 ════ */
   .header {
-    background: linear-gradient(135deg,
-      rgba(79, 70, 229, 0.18) 0%,
-      rgba(59, 130, 246, 0.12) 45%,
-      rgba(17, 24, 39, 0.62) 100%);
+    background: linear-gradient(160deg,
+      rgba(79, 70, 229, 0.22) 0%,
+      rgba(59, 130, 246, 0.14) 50%,
+      rgba(17, 24, 39, 0.70) 100%);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
-    border-bottom: 1px solid rgba(99, 102, 241, 0.20);
-    padding: 0 24px;
+    border-bottom: 1px solid rgba(99, 102, 241, 0.18);
+    padding: 0;
     display: flex;
-    align-items: center;
-    gap: 16px;
-    height: 64px;
+    flex-direction: column;
+    height: auto;
     position: sticky;
     top: 0;
     z-index: 100;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08), 0 1px 0 rgba(99, 102, 241, 0.10);
+    box-shadow: 0 4px 30px rgba(0,0,0,0.10), 0 1px 0 rgba(99,102,241,0.12);
     transition: background 0.3s, border-color 0.3s;
   }
-  
+  /* 1행: 로고 + 우측 액션 버튼 */
+  .hdr-row1 {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 20px;
+    height: 52px; flex-shrink: 0;
+  }
+  /* 2행: 지수 캐러셀 + 자산 요약 */
+  .hdr-row2 {
+    display: flex; align-items: stretch;
+    padding: 0 10px 0 20px;
+    height: 38px; flex-shrink: 0;
+    border-top: 1px solid rgba(99,102,241,0.10);
+  }
+
+  /* ── 캐러셀 ── */
+  .hdr-carousel {
+    flex: 1; display: flex; align-items: center;
+    gap: 14px; overflow: hidden;
+    transition: opacity 0.35s ease;
+    min-width: 0;
+  }
+  .hdr-carousel.fading { opacity: 0; }
+  .hdr-car-item { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .hdr-car-name { font-size: 10px; color: var(--text3); font-weight: 400; }
+  .hdr-car-val  { font-size: 12px; font-weight: 600; color: var(--text2); }
+  .hdr-car-chg  { font-size: 10px; color: var(--text3); }
+  .hdr-car-chg.up { color: var(--hts-up,#e84c6e); }
+  .hdr-car-chg.dn { color: var(--hts-dn,#4c8ff0); }
+  .hdr-car-sep  { color: rgba(255,255,255,0.12); font-size: 13px; font-weight: 300; flex-shrink:0; }
+  .hdr-car-dots { display: flex; align-items: center; gap: 4px; padding: 0 8px; flex-shrink:0; }
+  .hdr-car-dot  { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.2); cursor:pointer; transition: all 0.2s; }
+  .hdr-car-dot.active { background: var(--accent,#6366f1); width: 12px; border-radius: 2px; }
+
   /* ── 헤더 자산 요약 bar ── */
   .hdr-asset-bar {
     display: flex; align-items: stretch; height: 100%;
     border-left: 1px solid rgba(255,255,255,0.08);
-    border-right: 1px solid rgba(255,255,255,0.08);
-    margin: 0 6px;
+    margin-left: 8px;
   }
   .hdr-asset {
     display: flex; flex-direction: column; justify-content: center;
-    padding: 0 11px;
+    padding: 0 12px;
     border-right: 1px solid rgba(255,255,255,0.07);
-    min-width: 70px;
+    min-width: 68px;
   }
   .hdr-asset:last-child { border-right: none; }
   .hdr-asset-k { font-size: 9px; color: var(--text3); line-height: 1; letter-spacing:.02em; }
@@ -229,6 +260,7 @@
   .hdr-asset-v.dn { color: var(--hts-dn,#4c8ff0); }
   body.light-mode .hdr-asset { border-right-color: rgba(0,0,0,.09); }
   body.light-mode .hdr-asset-bar { border-color: rgba(0,0,0,.09); }
+
   /* 관심종목 검색창 */
   .wl-search-wrap { padding: 6px 0 4px; }
   .wl-search-wrap input {
@@ -239,13 +271,17 @@
   }
 
   body.light-mode .header {
-    background: linear-gradient(135deg,
-      rgba(37, 99, 235, 0.09) 0%,
-      rgba(99, 102, 241, 0.06) 50%,
-      rgba(248, 250, 252, 0.90) 100%);
+    background: linear-gradient(160deg,
+      rgba(37, 99, 235, 0.10) 0%,
+      rgba(99, 102, 241, 0.07) 50%,
+      rgba(248, 250, 252, 0.92) 100%);
     border-bottom-color: rgba(37, 99, 235, 0.13);
     box-shadow: 0 4px 24px rgba(37, 99, 235, 0.07);
   }
+  body.light-mode .hdr-row2 { border-top-color: rgba(0,0,0,0.07); }
+  body.light-mode .hdr-car-sep { color: rgba(0,0,0,0.15); }
+  body.light-mode .hdr-car-dot { background: rgba(0,0,0,0.18); }
+  body.light-mode .hdr-car-dot.active { background: var(--accent,#6366f1); }
   .logo {
     font-size: 20px;
     font-weight: 700;
@@ -2176,7 +2212,7 @@
     padding: 0 24px !important;
     border-left: none !important; border-right: none !important; border-top: none !important;
     position: sticky;
-    top: 64px;
+    top: 90px;
     z-index: 90;
     background: rgba(11,15,25,0.98) !important;
     border-bottom: 1px solid rgba(99,102,241,0.18) !important;
@@ -2343,20 +2379,32 @@
 
   /* 패널 버튼 */
   .mdi-sb-btn {
-    display: flex; align-items: center; gap: 9px;
-    padding: 0 0 0 10px;
-    height: 36px; min-height: 36px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 10px 0 10px;
+    height: 50px; min-height: 50px;
     background: none; border: none; border-left: 2px solid transparent;
-    color: #dce8f5; font-size: 12.5px; font-family: inherit;
+    color: #9bb8d4; font-size: 12px; font-family: inherit;
     cursor: pointer; text-align: left; white-space: nowrap;
-    transition: all 0.12s; width: 100%;
+    transition: all 0.15s; width: 100%;
   }
-  .mdi-sb-btn:hover { background: #0d1a2e; color: #b0c8e0; border-left-color: #2a3d55; }
-  .mdi-sb-btn-active { color: #d0e4f5; border-left-color: #2563eb; background: #0c1628; }
-  .mdi-sb-btn-active:hover { background: #0f1e36; border-left-color: #3b82f6; }
+  .mdi-sb-btn:hover { background: rgba(255,255,255,0.04); color: #c8e0f4; }
+  .mdi-sb-btn:hover .mdi-sb-icon-wrap { filter: brightness(1.15); }
+  .mdi-sb-btn-active { color: #e0eef8; border-left-color: #3b82f6; background: rgba(59,130,246,0.08); }
+  .mdi-sb-btn-active .mdi-sb-icon-wrap { filter: brightness(1.2); }
   .mdi-sb-util { color: #c0d4e8; font-size: 12px; }
   .mdi-sb-util:hover { color: #dce8f5; }
-  .mdi-sb-icon { font-size: 14px; min-width: 20px; text-align: center; }
+
+  /* 아이콘 뱃지 */
+  .mdi-sb-icon-wrap {
+    width: 32px; height: 32px; min-width: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: filter 0.15s, transform 0.15s;
+  }
+  .mdi-sb-btn:hover .mdi-sb-icon-wrap { transform: scale(1.05); }
+  .mdi-sb-icon { font-size: 14px; min-width: 20px; text-align: center; } /* 레거시 호환 */
+  .mdi-sb-label { font-size: 12px; font-weight: 500; }
 
   /* 구분선 + 여백 */
   .mdi-sb-sep { height: 1px; background: #1a2840; margin: 6px 10px; flex-shrink: 0; }
@@ -2686,141 +2734,111 @@
 
 <!-- HEADER -->
 <div class="header">
-  <div class="logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="30" height="30" style="border-radius:7px;flex-shrink:0">
-  <rect width="512" height="512" rx="112" ry="112" fill="#0d1f3c"/>
-  <line x1="108" y1="344" x2="108" y2="325" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
-  <line x1="108" y1="402" x2="108" y2="385" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
-  <rect x="87" y="344" width="42" height="42" rx="5" ry="5" fill="white" opacity="0.9"/>
-  <line x1="196" y1="292" x2="196" y2="273" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
-  <line x1="196" y1="354" x2="196" y2="338" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
-  <rect x="175" y="292" width="42" height="58" rx="5" ry="5" fill="white" opacity="0.9"/>
-  <line x1="284" y1="236" x2="284" y2="215" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
-  <line x1="284" y1="314" x2="284" y2="295" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
-  <rect x="263" y="236" width="42" height="74" rx="5" ry="5" fill="white" opacity="0.9"/>
-  <line x1="372" y1="175" x2="372" y2="152" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
-  <line x1="372" y1="285" x2="372" y2="264" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
-  <rect x="351" y="175" width="42" height="96" rx="5" ry="5" fill="white" opacity="0.9"/>
-  <path d="M 88,365 C 135,340 175,305 220,278 C 265,252 315,215 405,168" fill="none" stroke="#4ade80" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
-  <polygon points="405,168 378,172 390,196" fill="#4ade80" opacity="0.95"/>
-</svg>
-  <span style="font-size:15px;font-weight:700;color:#e0eaf5;letter-spacing:.5px;user-select:none;">Stock Book</span></div>
 
-  <!-- 시장 지수 티커 -->
-  <div class="market-ticker" id="marketTickerBar">
-    <span class="mt-item">
-      <span class="mt-name">KOSPI</span>
-      <span class="mt-val" id="tkKospi">--</span>
-      <span class="mt-chg" id="tkKospiChg"></span>
-    </span>
-    <span class="mt-sep">|</span>
-    <span class="mt-item">
-      <span class="mt-name">KOSDAQ</span>
-      <span class="mt-val" id="tkKosdaq">--</span>
-      <span class="mt-chg" id="tkKosdaqChg"></span>
-    </span>
-    <span class="mt-sep">|</span>
-    <span class="mt-item">
-      <span class="mt-name">USD/KRW</span>
-      <span class="mt-val" id="tkUsdKrw">--</span>
-      <span class="mt-chg" id="tkUsdKrwChg"></span>
-    </span>
-    <span class="mt-sep">|</span>
-    <span class="mt-item">
-      <span class="mt-name">NASDAQ</span>
-      <span class="mt-val" id="tkNasdaq">--</span>
-      <span class="mt-chg" id="tkNasdaqChg"></span>
-    </span>
-    <span class="mt-sep">|</span>
-    <span class="mt-item">
-      <span class="mt-name">S&amp;P500</span>
-      <span class="mt-val" id="tkSp500">--</span>
-      <span class="mt-chg" id="tkSp500Chg"></span>
-    </span>
-    <span class="mt-sep">|</span>
-    <span class="mt-item">
-      <span class="mt-name">DOW</span>
-      <span class="mt-val" id="tkDow">--</span>
-      <span class="mt-chg" id="tkDowChg"></span>
-    </span>
-    <span class="mt-sep">|</span>
-    <span class="mt-item">
-      <span class="mt-name">SOX</span>
-      <span class="mt-val" id="tkSox">--</span>
-      <span class="mt-chg" id="tkSoxChg"></span>
-    </span>
-    <span class="mt-sep">|</span>
-    <span class="mt-item">
-      <span class="mt-name">원/100엔</span>
-      <span class="mt-val" id="tkJpyKrw">--</span>
-      <span class="mt-chg" id="tkJpyKrwChg"></span>
-    </span>
-    <span class="mt-sep">|</span>
-    <span class="mt-item">
-      <span class="mt-name">니케이</span>
-      <span class="mt-val" id="tkNikkei">--</span>
-      <span class="mt-chg" id="tkNikkeiChg"></span>
-    </span>
-    <span class="mt-sep">|</span>
-    <span class="mt-item">
-      <span class="mt-name">WTI</span>
-      <span class="mt-val" id="tkWti">--</span>
-      <span class="mt-chg" id="tkWtiChg"></span>
-    </span>
+  <!-- ── 1행: 로고 + 우측 액션 버튼 ── -->
+  <div class="hdr-row1">
+    <div class="logo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="30" height="30" style="border-radius:7px;flex-shrink:0">
+        <rect width="512" height="512" rx="112" ry="112" fill="#0d1f3c"/>
+        <line x1="108" y1="344" x2="108" y2="325" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
+        <line x1="108" y1="402" x2="108" y2="385" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
+        <rect x="87" y="344" width="42" height="42" rx="5" ry="5" fill="white" opacity="0.9"/>
+        <line x1="196" y1="292" x2="196" y2="273" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
+        <line x1="196" y1="354" x2="196" y2="338" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
+        <rect x="175" y="292" width="42" height="58" rx="5" ry="5" fill="white" opacity="0.9"/>
+        <line x1="284" y1="236" x2="284" y2="215" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
+        <line x1="284" y1="314" x2="284" y2="295" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
+        <rect x="263" y="236" width="42" height="74" rx="5" ry="5" fill="white" opacity="0.9"/>
+        <line x1="372" y1="175" x2="372" y2="152" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
+        <line x1="372" y1="285" x2="372" y2="264" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
+        <rect x="351" y="175" width="42" height="96" rx="5" ry="5" fill="white" opacity="0.9"/>
+        <path d="M 88,365 C 135,340 175,305 220,278 C 265,252 315,215 405,168" fill="none" stroke="#4ade80" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
+        <polygon points="405,168 378,172 390,196" fill="#4ade80" opacity="0.95"/>
+      </svg>
+      <span style="font-size:15px;font-weight:700;color:#e0eaf5;letter-spacing:.5px;user-select:none;">Stock Book</span>
+    </div>
+
+    <div style="margin-left:auto;display:flex;align-items:center;gap:6px;flex-wrap:nowrap;">
+      <!-- 계좌 관리 -->
+      <button onclick="openAccountPanel()" title="계좌 관리"
+        style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);cursor:pointer;font-size:12px;font-family:inherit;color:var(--text2);white-space:nowrap;transition:all .2s;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        <span id="acctCountLabel">계좌 <span id="acctCount">0</span></span>
+      </button>
+      <!-- API 연결 상태 -->
+      <button id="apiStatusBtn" onclick="openApiPanel()" title="API 설정"
+        style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);cursor:pointer;font-size:12px;font-family:inherit;color:var(--text2);white-space:nowrap;transition:all .2s;">
+        <span id="apiStatusDot" style="width:7px;height:7px;border-radius:50%;background:#ef4444;display:inline-block;flex-shrink:0;"></span>
+        <span id="apiStatusLabel">KIS 미연결</span>
+      </button>
+      <!-- 테마 -->
+      <button onclick="toggleTheme()" title="라이트/다크 테마 전환" class="theme-toggle-btn" id="settingsBtn">
+        <svg id="themeToggleIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <!-- 백업 -->
+      <button onclick="exportBackup()" title="데이터 백업" class="header-action-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span class="header-btn-text">백업</span>
+      </button>
+      <!-- 복원 -->
+      <label title="JSON 파일로 복원" class="header-action-btn" style="cursor:pointer;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span class="header-btn-text">복원</span>
+        <input type="file" accept=".json" onchange="importBackup(event)" style="display:none;">
+      </label>
+      <!-- 날짜 -->
+      <div style="font-size:12px;color:var(--text3);white-space:nowrap;padding:0 4px;" id="headerDate" class="header-date"></div>
+      <!-- 캘린더 -->
+      <button id="calDdayBadge" onclick="toggleCalendarPanel()" title="경제·주식 캘린더">
+        📅 <span id="calDdayText">캘린더</span>
+      </button>
+    </div>
   </div>
 
+  <!-- ── 2행: 지수 로테이션 캐러셀 + 자산 요약 ── -->
+  <div class="hdr-row2">
+    <!-- 지수 캐러셀 (페이드 방식) -->
+    <div id="hdrCarousel" class="hdr-carousel"></div>
+    <!-- 페이지 도트 -->
+    <div class="hdr-car-dots" id="hdrCarDots"></div>
 
-  <!-- 자산 요약 (헤더 고정) -->
-  <div class="hdr-asset-bar" id="headerAssetBar">
-    <div class="hdr-asset">
-      <span class="hdr-asset-k">총자산</span>
-      <span class="hdr-asset-v" id="hdTotalAsset">-</span>
-    </div>
-    <div class="hdr-asset">
-      <span class="hdr-asset-k">예수금</span>
-      <span class="hdr-asset-v" id="hdCash">-</span>
-    </div>
-    <div class="hdr-asset">
-      <span class="hdr-asset-k">평가손익</span>
-      <span class="hdr-asset-v" id="hdEvalPnl">-</span>
-    </div>
-    <div class="hdr-asset">
-      <span class="hdr-asset-k">수익률</span>
-      <span class="hdr-asset-v" id="hdRetRate">-</span>
-    </div>
-    <div class="hdr-asset">
-      <span class="hdr-asset-k">당일손익</span>
-      <span class="hdr-asset-v" id="hdDayPnl">-</span>
+    <!-- 자산 요약 -->
+    <div class="hdr-asset-bar" id="headerAssetBar">
+      <div class="hdr-asset">
+        <span class="hdr-asset-k">총자산</span>
+        <span class="hdr-asset-v" id="hdTotalAsset">-</span>
+      </div>
+      <div class="hdr-asset">
+        <span class="hdr-asset-k">예수금</span>
+        <span class="hdr-asset-v" id="hdCash">-</span>
+      </div>
+      <div class="hdr-asset">
+        <span class="hdr-asset-k">평가손익</span>
+        <span class="hdr-asset-v" id="hdEvalPnl">-</span>
+      </div>
+      <div class="hdr-asset">
+        <span class="hdr-asset-k">수익률</span>
+        <span class="hdr-asset-v" id="hdRetRate">-</span>
+      </div>
+      <div class="hdr-asset">
+        <span class="hdr-asset-k">당일손익</span>
+        <span class="hdr-asset-v" id="hdDayPnl">-</span>
+      </div>
     </div>
   </div>
-  <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
-    <!-- 계좌 관리 -->
-    <button onclick="openAccountPanel()" title="계좌 관리"
-      style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);cursor:pointer;font-size:12px;font-family:inherit;color:var(--text2);white-space:nowrap;transition:all .2s;">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-      <span id="acctCountLabel">계좌 <span id="acctCount">0</span></span>
-    </button>
-    <!-- API 연결 상태 인디케이터 -->
-    <button id="apiStatusBtn" onclick="openApiPanel()" title="API 설정"
-      style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);cursor:pointer;font-size:12px;font-family:inherit;color:var(--text2);white-space:nowrap;transition:all .2s;">
-      <span id="apiStatusDot" style="width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block;flex-shrink:0;"></span>
-      <span id="apiStatusLabel">KIS 미연결</span>
-    </button>
-    <button onclick="toggleTheme()" title="라이트/다크 테마 전환" class="theme-toggle-btn" id="settingsBtn">
-      <svg id="themeToggleIcon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
-    <button onclick="exportBackup()" title="데이터를 JSON 파일로 저장" class="header-action-btn">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      <span class="header-btn-text">백업</span>
-    </button>
-    <label title="JSON 파일로 복원" class="header-action-btn" style="cursor:pointer;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      <span class="header-btn-text">복원</span>
-      <input type="file" accept=".json" onchange="importBackup(event)" style="display:none;">
-    </label>
-    <div style="font-size:13px;color:var(--text3);white-space:nowrap;" id="headerDate" class="header-date"></div>
-    <button id="calDdayBadge" onclick="toggleCalendarPanel()" title="경제·주식 캘린더 — 다음 주요 일정">
-      📅 <span id="calDdayText">캘린더</span>
-    </button>
+
+  <!-- 숨겨진 지수 원본 (fetchMarketTicker가 여기에 값을 씀) -->
+  <div id="marketTickerBar" style="display:none;">
+    <span class="mt-item"><span class="mt-name">KOSPI</span><span class="mt-val" id="tkKospi">--</span><span class="mt-chg" id="tkKospiChg"></span></span>
+    <span class="mt-item"><span class="mt-name">KOSDAQ</span><span class="mt-val" id="tkKosdaq">--</span><span class="mt-chg" id="tkKosdaqChg"></span></span>
+    <span class="mt-item"><span class="mt-name">USD/KRW</span><span class="mt-val" id="tkUsdKrw">--</span><span class="mt-chg" id="tkUsdKrwChg"></span></span>
+    <span class="mt-item"><span class="mt-name">NASDAQ</span><span class="mt-val" id="tkNasdaq">--</span><span class="mt-chg" id="tkNasdaqChg"></span></span>
+    <span class="mt-item"><span class="mt-name">S&amp;P500</span><span class="mt-val" id="tkSp500">--</span><span class="mt-chg" id="tkSp500Chg"></span></span>
+    <span class="mt-item"><span class="mt-name">DOW</span><span class="mt-val" id="tkDow">--</span><span class="mt-chg" id="tkDowChg"></span></span>
+    <span class="mt-item"><span class="mt-name">SOX</span><span class="mt-val" id="tkSox">--</span><span class="mt-chg" id="tkSoxChg"></span></span>
+    <span class="mt-item"><span class="mt-name">원/100엔</span><span class="mt-val" id="tkJpyKrw">--</span><span class="mt-chg" id="tkJpyKrwChg"></span></span>
+    <span class="mt-item"><span class="mt-name">니케이</span><span class="mt-val" id="tkNikkei">--</span><span class="mt-chg" id="tkNikkeiChg"></span></span>
+    <span class="mt-item"><span class="mt-name">WTI</span><span class="mt-val" id="tkWti">--</span><span class="mt-chg" id="tkWtiChg"></span></span>
   </div>
 </div>
 
@@ -2835,35 +2853,79 @@
     <span class="mdi-sb-toggle-icon">◀</span>
   </button>
 
+  <!-- 종목탐색: 파랑 -->
   <button class="mdi-sb-btn mdi-sb-btn-active" data-pid="watchlist"
           onclick="window._MDI.toggle('watchlist')" title="종목탐색">
-    <span class="mdi-sb-icon">★</span>
+    <span class="mdi-sb-icon-wrap" style="background:rgba(59,130,246,0.18);">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      </svg>
+    </span>
     <span class="mdi-sb-label">종목탐색</span>
   </button>
+
+  <!-- 매매관리: 초록 -->
   <button class="mdi-sb-btn mdi-sb-btn-active" data-pid="trading"
           onclick="window._MDI.toggle('trading')" title="매매관리">
-    <span class="mdi-sb-icon">📊</span>
+    <span class="mdi-sb-icon-wrap" style="background:rgba(16,185,129,0.18);">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+        <polyline points="16 7 22 7 22 13"/>
+      </svg>
+    </span>
     <span class="mdi-sb-label">매매관리</span>
   </button>
+
+  <!-- 포트폴리오: 보라 -->
   <button class="mdi-sb-btn mdi-sb-btn-active" data-pid="portfolio"
           onclick="window._MDI.toggle('portfolio')" title="포트폴리오">
-    <span class="mdi-sb-icon">💼</span>
+    <span class="mdi-sb-icon-wrap" style="background:rgba(139,92,246,0.18);">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="7" width="20" height="14" rx="2"/>
+        <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+        <line x1="12" y1="12" x2="12" y2="16"/>
+        <line x1="10" y1="14" x2="14" y2="14"/>
+      </svg>
+    </span>
     <span class="mdi-sb-label">포트폴리오</span>
   </button>
 
+  <!-- 뉴스·시황: 주황 -->
   <button class="mdi-sb-btn" data-pid="news"
           onclick="window._MDI.toggle('news')" title="뉴스·시황">
-    <span class="mdi-sb-icon">📰</span>
+    <span class="mdi-sb-icon-wrap" style="background:rgba(245,158,11,0.18);">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
+        <path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/>
+      </svg>
+    </span>
     <span class="mdi-sb-label">뉴스·시황</span>
   </button>
+
+  <!-- 투자일지: 분홍 -->
   <button class="mdi-sb-btn" data-pid="journal"
           onclick="window._MDI.toggle('journal')" title="투자일지">
-    <span class="mdi-sb-icon">📒</span>
+    <span class="mdi-sb-icon-wrap" style="background:rgba(236,72,153,0.18);">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10 9 9 9 8 9"/>
+      </svg>
+    </span>
     <span class="mdi-sb-label">투자일지</span>
   </button>
+
+  <!-- 캘린더: 인디고 -->
   <button class="mdi-sb-btn" id="sbCalBtn"
           onclick="toggleCalendarPanel()" title="경제·주식 캘린더">
-    <span class="mdi-sb-icon">📅</span>
+    <span class="mdi-sb-icon-wrap" style="background:rgba(99,102,241,0.18);">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+    </span>
     <span class="mdi-sb-label">캘린더</span>
   </button>
 
@@ -3052,6 +3114,13 @@
           </div>
           <!-- 우: 주문폼 + 목표/손절 -->
           <div style="flex:0 0 47%;display:flex;flex-direction:column;gap:5px;overflow-y:auto;max-height:100%;">
+            <!-- 계좌 선택 -->
+            <div>
+              <label style="font-size:10px;color:var(--text3);margin-bottom:2px;display:block;">계좌</label>
+              <select id="qo_account" style="width:100%;padding:5px 7px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:12px;box-sizing:border-box;font-family:inherit;">
+                <option value="">계좌 미지정</option>
+              </select>
+            </div>
             <!-- 매수/매도 -->
             <div style="display:flex;gap:4px;">
               <button id="qo_buy_btn" onclick="setQOMode('buy')" style="flex:1;padding:7px 4px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;background:var(--hts-up);color:#fff;">매수</button>
@@ -6932,10 +7001,11 @@ function submitQuickOrder() {
   if (!qty || qty <= 0) { alert('수량을 입력해 주세요.'); return; }
   if (!price || price <= 0) { alert('단가를 입력해 주세요.'); return; }
 
+  const selectedAccountId = document.getElementById('qo_account')?.value || '';
   let stockIdx = state.portfolio.findIndex(s => s.name === stockName && (s.tradeType || 'cash') === (_qoTradeType || 'cash'));
   // 신규 종목 매수: 포트폴리오에 자동 추가 (현/신 별도 행)
   if (stockIdx === -1 && _qoMode === 'buy') {
-    state.portfolio.push({ name: stockName, ticker: stockCode, avgPrice: price, qty: 0, sector: '', position: 'mid', tradeType: _qoTradeType || 'cash' });
+    state.portfolio.push({ name: stockName, ticker: stockCode, avgPrice: price, qty: 0, sector: '', position: 'mid', tradeType: _qoTradeType || 'cash', accountId: selectedAccountId });
     stockIdx = state.portfolio.length - 1;
   }
 
@@ -6943,17 +7013,23 @@ function submitQuickOrder() {
   if (_qoMode === 'buy') {
     // 평균단가 재계산
     const s = state.portfolio[stockIdx];
+    if (selectedAccountId && !s.accountId) s.accountId = selectedAccountId;
     const oldTotal = s.avgPrice * s.qty;
     const newTotal = price * qty;
     s.qty     += qty;
     s.avgPrice = (oldTotal + newTotal) / s.qty;
-    // tradeType은 findIndex에서 이미 매칭됨
+    // ★ 예수금 차감 (계좌에 cash가 있으면)
+    if (selectedAccountId) {
+      const acct = (state.accounts || []).find(a => a.id === selectedAccountId);
+      if (acct) { acct.cash = Math.max(0, (parseFloat(acct.cash) || 0) - price * qty); }
+    }
     // ★ 거래 기록
     state.trades.unshift({
       id: Date.now(), date: today,
       name: s.name, ticker: s.ticker || '', type: 'buy',
       price, qty, totalAmt: price * qty,
       tradeType: _qoTradeType, pnl: null,
+      accountId: selectedAccountId,
       memo: '빠른 주문 입력'
     });
     // ★ 투자일지 초안 (중복 방지)
@@ -6973,11 +7049,18 @@ function submitQuickOrder() {
     const s = state.portfolio[stockIdx];
     if (qty > s.qty) { alert(`보유 수량(${s.qty})보다 많습니다.`); return; }
     const pnl = (price - s.avgPrice) * qty;
+    const sellAcctId = selectedAccountId || s.accountId || '';
+    // ★ 예수금 증가 (계좌에 cash가 있으면)
+    if (sellAcctId) {
+      const acct = (state.accounts || []).find(a => a.id === sellAcctId);
+      if (acct) { acct.cash = (parseFloat(acct.cash) || 0) + price * qty; }
+    }
     state.trades.unshift({
       id: Date.now(), date: today,
       name: s.name, ticker: s.ticker || '', type: 'sell',
       price, qty, totalAmt: price * qty,
       tradeType: _qoTradeType, pnl,
+      accountId: sellAcctId,
       memo: '빠른 주문 입력'
     });
     s.qty -= qty;
@@ -7108,6 +7191,8 @@ async function fetchMarketTicker() {
       setTicker('tkJpyKrw', 'tkJpyKrwChg', jpyKrw100, prevJpyKrw100, fmtFx);
     }
   }
+  // 지수 데이터 갱신 후 캐러셀 즉시 업데이트
+  try { renderHeaderCarousel(); } catch(e) {}
 }
 
 
@@ -8805,7 +8890,8 @@ const BROKER_INFO = {
   kis:     { name: '한국투자증권', color: '#8B3A2A', hasApi: true  },
   kiwoom:  { name: '키움증권',     color: '#C2407A', hasApi: true  },
   ls:      { name: 'LS증권',       color: '#003087', hasApi: true  },
-  toss:    { name: '토스증권',     color: '#2563EB', hasApi: true  },
+  toss:    { name: '토스증권',       color: '#2563EB', hasApi: true  },
+  kakao:   { name: '카카오페이증권', color: '#FFCD00', hasApi: false },
 };
 
 let _acctFilter = '';   // '' = 전체, 'accountId' = 해당 계좌만
@@ -8842,6 +8928,7 @@ function openAccountPanel() {
   overlay.style.display = 'block';
   requestAnimationFrame(() => { panel.classList.add('open'); overlay.classList.add('open'); });
   renderAccountPanel();
+  try { populateQOAccountSelect(); } catch(e) {}
 }
 
 function closeAccountPanel() {
@@ -8885,7 +8972,8 @@ function renderAccountPanel() {
       </div>
       <div class="acct-card-actions">
         <button class="acct-action-btn" onclick="showAccountForm('${a.id}')">편집</button>
-        <button class="acct-action-btn" onclick="showCashEditForm('${a.id}')">예수금 수정</button>
+        <button class="acct-action-btn" onclick="showCashEditForm('${a.id}')">예수금</button>
+        <button class="acct-action-btn" onclick="openTransferModal('${a.id}')">이체</button>
         <button class="acct-action-btn del" onclick="confirmDeleteAccount('${a.id}')">삭제</button>
       </div>
     </div>`;
@@ -9035,6 +9123,149 @@ function setAcctFilter(id) {
 
 function escHtml(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  지수 로테이션 캐러셀
+// ══════════════════════════════════════════════════════════════════
+const _CAR_GROUPS = [
+  [['KOSPI','tkKospi','tkKospiChg'], ['KOSDAQ','tkKosdaq','tkKosdaqChg'], ['USD/KRW','tkUsdKrw','tkUsdKrwChg']],
+  [['NASDAQ','tkNasdaq','tkNasdaqChg'], ['S&P500','tkSp500','tkSp500Chg'], ['DOW','tkDow','tkDowChg'], ['SOX','tkSox','tkSoxChg']],
+  [['니케이','tkNikkei','tkNikkeiChg'], ['원/100엔','tkJpyKrw','tkJpyKrwChg'], ['WTI','tkWti','tkWtiChg']],
+];
+let _carIdx = 0;
+let _carTimer = null;
+
+function _carGetClass(chgEl) {
+  if (!chgEl) return '';
+  const t = chgEl.textContent || '';
+  if (t.startsWith('+') || t.startsWith('▲')) return 'up';
+  if (t.startsWith('-') || t.startsWith('▼')) return 'dn';
+  return '';
+}
+
+function renderHeaderCarousel(idx) {
+  if (idx !== undefined) _carIdx = idx;
+  const car = document.getElementById('hdrCarousel');
+  const dots = document.getElementById('hdrCarDots');
+  if (!car) return;
+  const group = _CAR_GROUPS[_carIdx];
+  car.innerHTML = group.map(([name, valId, chgId], i) => {
+    const valEl = document.getElementById(valId);
+    const chgEl = document.getElementById(chgId);
+    const val = valEl ? valEl.textContent : '--';
+    const chg = chgEl ? chgEl.textContent : '';
+    const cls = _carGetClass(chgEl);
+    return (i > 0 ? '<span class="hdr-car-sep">|</span>' : '') +
+      `<span class="hdr-car-item">` +
+        `<span class="hdr-car-name">${name}</span>` +
+        `<span class="hdr-car-val">${val}</span>` +
+        (chg ? `<span class="hdr-car-chg ${cls}">${chg}</span>` : '') +
+      `</span>`;
+  }).join('');
+  // 도트 업데이트
+  if (dots) {
+    dots.innerHTML = _CAR_GROUPS.map((_, i) =>
+      `<span class="hdr-car-dot${i===_carIdx?' active':''}" onclick="renderHeaderCarousel(${i})"></span>`
+    ).join('');
+  }
+}
+
+function _carNext() {
+  const car = document.getElementById('hdrCarousel');
+  if (!car) return;
+  car.classList.add('fading');
+  setTimeout(() => {
+    _carIdx = (_carIdx + 1) % _CAR_GROUPS.length;
+    renderHeaderCarousel();
+    car.classList.remove('fading');
+  }, 320);
+}
+
+function startCarouselTimer() {
+  if (_carTimer) clearInterval(_carTimer);
+  _carTimer = setInterval(_carNext, 6000);
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  주문창 계좌 드롭다운 채우기
+// ══════════════════════════════════════════════════════════════════
+function populateQOAccountSelect() {
+  const sel = document.getElementById('qo_account');
+  if (!sel) return;
+  const accts = state.accounts || [];
+  sel.innerHTML = '<option value="">계좌 미지정</option>' +
+    accts.map(a => {
+      const bi = BROKER_INFO[a.broker] || {};
+      return `<option value="${escHtml(a.id)}">${escHtml(a.nickname || bi.name)}</option>`;
+    }).join('');
+  // 활성 계좌 또는 첫 계좌를 기본 선택
+  if (accts.length > 0) sel.value = accts[0].id;
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  계좌간 이체 (Transfer)
+// ══════════════════════════════════════════════════════════════════
+function openTransferModal(fromId) {
+  const accts = (state.accounts || []).filter(a => a.isActive !== false);
+  if (accts.length < 2) { showToast('이체하려면 계좌가 2개 이상 필요합니다.'); return; }
+  const fromAc = accts.find(a => a.id === fromId) || accts[0];
+  const fromCash = parseFloat(fromAc.cash) || 0;
+
+  // 기존 모달 제거
+  const old = document.getElementById('transferModal');
+  if (old) old.remove();
+
+  const toOptions = accts.filter(a => a.id !== fromAc.id).map(a => {
+    const bi = BROKER_INFO[a.broker] || {};
+    return `<option value="${escHtml(a.id)}">${escHtml(a.nickname || bi.name)}</option>`;
+  }).join('');
+
+  const modal = document.createElement('div');
+  modal.id = 'transferModal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);';
+  modal.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;min-width:300px;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:16px;">💸 계좌 간 이체</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:4px;">출금 계좌</div>
+      <div style="font-size:13px;color:var(--text2);font-weight:600;margin-bottom:12px;padding:8px 10px;background:var(--bg3);border-radius:7px;">
+        ${escHtml(fromAc.nickname || (BROKER_INFO[fromAc.broker]||{}).name || fromAc.broker)}
+        <span style="color:var(--text3);font-weight:400;margin-left:6px;">예수금 ${fromCash.toLocaleString()}원</span>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:4px;">입금 계좌</div>
+      <select id="tf_to" style="width:100%;padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;margin-bottom:12px;box-sizing:border-box;">${toOptions}</select>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:4px;">이체 금액 (원)</div>
+      <input type="text" id="tf_amount" inputmode="decimal" placeholder="0"
+        oninput="this.value=this.value.replace(/[^0-9]/g,'').replace(/\\B(?=(\\d{3})+(?!\\d))/g,',')"
+        style="width:100%;padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;box-sizing:border-box;margin-bottom:6px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:14px;">최대 ${fromCash.toLocaleString()}원</div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="document.getElementById('transferModal').remove()"
+          style="flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:13px;font-family:inherit;">취소</button>
+        <button onclick="execTransfer('${fromId}')"
+          style="flex:2;padding:9px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;">이체 실행</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  document.getElementById('tf_amount').focus();
+}
+
+function execTransfer(fromId) {
+  const toId  = document.getElementById('tf_to')?.value;
+  const amtRaw = (document.getElementById('tf_amount')?.value || '').replace(/,/g,'');
+  const amt   = parseFloat(amtRaw) || 0;
+  if (!toId || !amt || amt <= 0) { showToast('금액을 입력해 주세요.'); return; }
+  const fromAc = (state.accounts||[]).find(a => a.id === fromId);
+  const toAc   = (state.accounts||[]).find(a => a.id === toId);
+  if (!fromAc || !toAc) { showToast('계좌를 찾을 수 없습니다.'); return; }
+  if ((parseFloat(fromAc.cash)||0) < amt) { showToast('예수금이 부족합니다.'); return; }
+  fromAc.cash = (parseFloat(fromAc.cash)||0) - amt;
+  toAc.cash   = (parseFloat(toAc.cash)||0) + amt;
+  save();
+  renderAccountPanel();
+  try { updateHeaderAsset(); } catch(e) {}
+  document.getElementById('transferModal')?.remove();
+  showToast(`✅ ${amt.toLocaleString()}원 이체 완료`);
 }
 
 // ── API 설정 패널 ─────────────────────────────────────────────────────────────
@@ -9538,6 +9769,13 @@ _preloadAllStockData(); // 전종목 백그라운드 프리로드 (호가창 검
 // ── 시장 지수 티커 초기화 ──
 fetchMarketTicker();
 setInterval(fetchMarketTicker, 60000); // 1분마다 갱신
+
+// ── 지수 캐러셀 초기화 ──
+renderHeaderCarousel();
+startCarouselTimer();
+
+// ── 주문창 계좌 드롭다운 초기화 ──
+try { populateQOAccountSelect(); } catch(e) {}
 
 // ── 빠른 주문 입력: 합계 실시간 미리보기 ──
 function attachQOPreview() {
@@ -10901,8 +11139,12 @@ function _toggleCheck(stockKey, checkKey, val) {
         costTotal += cost;
         dayPnl   += (cur - prev) * qty;
       });
-      const totalAsset = parseFloat(s.totalAsset) || 0;
-      const cash = totalAsset - evalTotal;
+      // 계좌별 예수금 합산 (계좌 없으면 totalAsset-evalTotal 폴백)
+      const accts = s.accounts || [];
+      const totalCash = accts.length > 0
+        ? accts.reduce((sum, a) => sum + (parseFloat(a.cash) || 0), 0)
+        : Math.max(0, (parseFloat(s.totalAsset) || 0) - evalTotal);
+      const totalAsset = totalCash + evalTotal;
       const pnl  = evalTotal - costTotal;
       const rate = costTotal > 0 ? (pnl / costTotal * 100) : 0;
       const fmt = v => Math.abs(v) >= 1e8 ? (v/1e8).toFixed(1)+'억'
@@ -10915,7 +11157,7 @@ function _toggleCheck(stockKey, checkKey, val) {
         if (isNum) { el.className = 'hdr-asset-v ' + (val >= 0 ? 'up' : 'dn'); }
       }
       setEl('hdTotalAsset', totalAsset, false);
-      setEl('hdCash', cash, false);
+      setEl('hdCash', totalCash, false);
       setEl('hdEvalPnl', pnl, true);
       const rEl = document.getElementById('hdRetRate');
       if (rEl) { rEl.textContent = (rate >= 0 ? '+' : '') + rate.toFixed(2) + '%'; rEl.className = 'hdr-asset-v ' + (rate >= 0 ? 'up' : 'dn'); }
@@ -10945,7 +11187,7 @@ function _toggleCheck(stockKey, checkKey, val) {
 
 
 /* ═══════════════════════════════════════════════════════════════
-   경제·주식 캘린더 슬라이드 패널  (Stock Book v1.1.0)
+   경제·주식 캘린더 슬라이드 패널  (Stock Book v1.2.0)
    ─ MAJOR_ECON_EVENTS: 한국/미국 주요 경제지표 하드코딩 (2026)
    ─ state.calEvents: 사용자 추가 기업이벤트 (localStorage 영속)
 ═══════════════════════════════════════════════════════════════ */
@@ -11710,7 +11952,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     <div class="settings-close-row">
       <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.1.0</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.2.0</div>
   </div>
 </div>
 
