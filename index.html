@@ -337,6 +337,55 @@
     border-color: rgba(0,0,0,0.10);
     color: #4f46e5;
   }
+
+  /* ── 계좌 관리 패널 ── */
+  #accountPanelOverlay { position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:8999; display:none; opacity:0; transition:opacity 0.28s; cursor:pointer; }
+  #accountPanelOverlay.open { opacity:1; }
+  #accountPanel { position:fixed; top:0; right:0; bottom:0; width:420px; max-width:100vw; background:var(--bg2); border-left:1px solid var(--border); z-index:9000; display:flex; flex-direction:column; transform:translateX(105%); transition:transform 0.28s cubic-bezier(0.4,0,0.2,1); box-shadow:-6px 0 32px rgba(0,0,0,0.35); }
+  #accountPanel.open { transform:translateX(0); }
+  .acct-panel-hdr { display:flex; align-items:center; justify-content:space-between; padding:16px 18px 12px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .acct-panel-hdr-title { font-size:15px; font-weight:700; color:var(--text); }
+  .acct-panel-close-btn { background:none; border:none; cursor:pointer; color:var(--text3); font-size:18px; padding:2px 6px; border-radius:4px; }
+  .acct-panel-close-btn:hover { background:var(--bg3); color:var(--text); }
+  .acct-panel-body { flex:1; overflow-y:auto; padding:14px 16px; }
+  .acct-panel-add-btn { width:100%; padding:9px; border:1.5px dashed var(--border); border-radius:8px; background:none; color:var(--text3); font-size:13px; cursor:pointer; margin-bottom:14px; transition:all .2s; }
+  .acct-panel-add-btn:hover { border-color:var(--accent); color:var(--accent); background:color-mix(in srgb, var(--accent) 8%, transparent); }
+  .acct-card { border:1px solid var(--border); border-radius:10px; margin-bottom:10px; overflow:hidden; border-left:3px solid var(--acct-color, var(--accent)); background:var(--bg1); }
+  .acct-card-top { display:flex; align-items:center; gap:10px; padding:10px 12px 8px; }
+  .acct-card-dot { width:10px; height:10px; border-radius:50%; background:var(--acct-color, var(--accent)); flex-shrink:0; }
+  .acct-card-info { flex:1; min-width:0; }
+  .acct-card-nick { font-size:13px; font-weight:700; color:var(--text); }
+  .acct-card-sub  { font-size:11px; color:var(--text3); margin-top:2px; }
+  .acct-card-badges { display:flex; gap:5px; align-items:center; flex-shrink:0; }
+  .acct-badge { font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px; }
+  .acct-badge-manual { background:color-mix(in srgb, #94a3b8 15%, transparent); color:#94a3b8; }
+  .acct-badge-api    { background:color-mix(in srgb, var(--accent) 15%, transparent); color:var(--accent); }
+  .acct-badge-type   { background:var(--bg3); color:var(--text3); }
+  .acct-card-cash { display:flex; align-items:center; justify-content:space-between; padding:6px 12px 10px; }
+  .acct-card-cash-label { font-size:11px; color:var(--text3); }
+  .acct-card-cash-val   { font-size:13px; font-weight:600; color:var(--text); }
+  .acct-card-actions { display:flex; gap:6px; padding:0 12px 10px; }
+  .acct-action-btn { flex:1; font-size:11px; font-weight:600; padding:5px 0; border-radius:6px; border:1px solid var(--border); background:var(--bg3); color:var(--text2); cursor:pointer; font-family:inherit; }
+  .acct-action-btn:hover { background:var(--bg2); }
+  .acct-action-btn.del { color:#ef4444; border-color:color-mix(in srgb, #ef4444 30%, transparent); }
+  .acct-action-btn.del:hover { background:color-mix(in srgb, #ef4444 10%, transparent); }
+  /* 계좌 추가/편집 폼 */
+  .acct-form { background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:14px; }
+  .acct-form-title { font-size:13px; font-weight:700; color:var(--text); margin-bottom:12px; }
+  .acct-form-row { margin-bottom:10px; }
+  .acct-form-label { font-size:11px; font-weight:600; color:var(--text3); margin-bottom:4px; display:block; }
+  .acct-form-input, .acct-form-select { width:100%; padding:7px 10px; background:var(--bg2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:13px; font-family:inherit; box-sizing:border-box; outline:none; }
+  .acct-form-input:focus, .acct-form-select:focus { border-color:var(--accent); }
+  .acct-form-hint { font-size:10px; color:var(--text3); margin-top:3px; }
+  .acct-form-btns { display:flex; gap:8px; margin-top:14px; }
+  .acct-form-save-btn { flex:1; padding:8px; background:var(--accent); border:none; border-radius:7px; color:#fff; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .acct-form-cancel-btn { padding:8px 14px; background:var(--bg2); border:1px solid var(--border); border-radius:7px; color:var(--text2); font-size:13px; cursor:pointer; font-family:inherit; }
+  /* 포트폴리오 계좌 필터 */
+  .acct-filter-bar { display:flex; gap:5px; flex-wrap:wrap; align-items:center; padding:4px 0 8px; }
+  .acct-filter-chip { font-size:11px; font-weight:600; padding:3px 10px; border-radius:12px; border:1px solid var(--border); background:var(--bg3); color:var(--text3); cursor:pointer; white-space:nowrap; transition:all .15s; }
+  .acct-filter-chip.active { border-color:var(--acct-chip-color, var(--accent)); color:var(--acct-chip-color, var(--accent)); background:color-mix(in srgb, var(--acct-chip-color, var(--accent)) 12%, transparent); }
+  /* 포트폴리오 계좌 뱃지 */
+  .port-acct-badge { font-size:9px; font-weight:700; padding:1px 5px; border-radius:4px; margin-left:4px; opacity:0.8; vertical-align:middle; }
   body.light-mode .header-action-btn {
     background: rgba(0,0,0,0.04);
     border-color: rgba(0,0,0,0.10);
@@ -2744,6 +2793,12 @@
     </div>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
+    <!-- 계좌 관리 -->
+    <button onclick="openAccountPanel()" title="계좌 관리"
+      style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);cursor:pointer;font-size:12px;font-family:inherit;color:var(--text2);white-space:nowrap;transition:all .2s;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      <span id="acctCountLabel">계좌 <span id="acctCount">0</span></span>
+    </button>
     <!-- API 연결 상태 인디케이터 -->
     <button id="apiStatusBtn" onclick="openApiPanel()" title="API 설정"
       style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);cursor:pointer;font-size:12px;font-family:inherit;color:var(--text2);white-space:nowrap;transition:all .2s;">
@@ -3159,6 +3214,7 @@
 
   <!-- 잔고 테이블 -->
   <div class="card" style="min-height:300px;">
+    <div id="acctFilterBar" class="acct-filter-bar" style="padding:6px 0 4px;"></div>
     <div class="section-row">
       <div class="section-title">보유 종목</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
@@ -4020,7 +4076,7 @@
 // STATE
 // ============================================================
 const STORAGE_KEY = 'stockbook_v1';
-let state = { portfolio: [], trades: [], journals: [], totalAsset: 0, mcChecks: {}, cashflows: [], mcSettings: {}, monthlySnapshots: [], cashManual: null, analysisChecks: {} };
+let state = { portfolio: [], trades: [], journals: [], totalAsset: 0, mcChecks: {}, cashflows: [], mcSettings: {}, monthlySnapshots: [], cashManual: null, analysisChecks: {}, accounts: [] };
 let currentSubTab = 'main'; // 현재 활성 서브탭 추적 (재접속 시 복원용)
 let sellTargetIdx = null;
 let priceTargetIdx = null;
@@ -4514,7 +4570,8 @@ function save() {
 
 function _applyState(raw) {
   try {
-    if (raw) state = { portfolio:[], trades:[], journals:[], totalAsset:0, mcChecks:{}, cashflows:[], mcSettings:{}, monthlySnapshots:[], cashManual:null, ...JSON.parse(raw) };
+    if (raw) state = { portfolio:[], trades:[], journals:[], totalAsset:0, mcChecks:{}, cashflows:[], mcSettings:{}, monthlySnapshots:[], cashManual:null, accounts:[], ...JSON.parse(raw) };
+    migrateAccountsDefault();
   } catch(e) {}
 }
 
@@ -7110,8 +7167,13 @@ let prevPricesMap = {};
 function renderPortfolio() {
   try { updateHeaderAsset(); } catch(e) {}
   renderSummary();
+  renderAcctFilterBar();
+  updateAcctCountLabel();
   const q = (document.getElementById('stockSearch').value||'').toLowerCase();
-  const p = state.portfolio.filter(s => !q || s.name.toLowerCase().includes(q) || (s.ticker||'').toLowerCase().includes(q));
+  const p = state.portfolio.filter(s =>
+    (!q || s.name.toLowerCase().includes(q) || (s.ticker||'').toLowerCase().includes(q)) &&
+    (!_acctFilter || s.accountId === _acctFilter)
+  );
   const totalVal = state.portfolio.reduce((a,s) => a + (s.currentPrice||s.avgPrice)*s.qty, 0);
   const weightBase = state.cashManual != null ? state.cashManual + totalVal
       : state.totalAsset > 0 ? state.totalAsset : totalVal;
@@ -7170,6 +7232,7 @@ function renderPortfolio() {
       <td class="name-cell" onclick="connectStockFromPortfolio(${origIdx})" style="cursor:pointer">
         <div class="port-name-wrap">
           <strong>${s.name}</strong>${s.ticker?`<span class="ticker">${s.ticker}</span>`:''}
+          ${(()=>{ const ac=(state.accounts||[]).find(a=>a.id===s.accountId); if(!ac) return ''; const bi=BROKER_INFO[ac.broker]||{}; return `<span class="port-acct-badge" style="background:color-mix(in srgb,${bi.color||'#888'} 15%,transparent);color:${bi.color||'#888'}">${ac.nickname||bi.name}</span>`; })()}
           ${s.tradeType==='credit'?`<span class="badge" style="background:rgba(107,33,168,0.12);color:#7c3aed;border:1px solid rgba(107,33,168,0.25);font-size:10px;padding:1px 5px;margin-left:3px;">신용</span>`:''}
           ${(()=>{const bc=state.trades.filter(t=>t.name===s.name&&t.type==='buy').length;return bc>1?`<span class="badge badge-mid" style="font-size:10px;padding:1px 5px;margin-left:4px;">추매 ${bc-1}회</span>`:'';})()}
           ${(()=>{
@@ -8445,7 +8508,8 @@ function importBackup(e) {
       const ok = window.electronAPI ? await window.electronAPI.showConfirm(msg) : confirm(msg);
       if (!ok) { e.target.value = ''; return; }
 
-      state = { portfolio:[], trades:[], journals:[], totalAsset:0, mcChecks:{}, cashflows:[], mcSettings:{}, monthlySnapshots:[], cashManual:null, ...parsed };
+      state = { portfolio:[], trades:[], journals:[], totalAsset:0, mcChecks:{}, cashflows:[], mcSettings:{}, monthlySnapshots:[], cashManual:null, accounts:[], ...parsed };
+      migrateAccountsDefault();
       save();
       renderPortfolio();
       renderTrades();
@@ -8727,6 +8791,250 @@ function toggleTheme() {
       icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
     }
   }
+}
+
+// ── 계좌 관리 ─────────────────────────────────────────────────────────────────
+const BROKER_INFO = {
+  mirae:   { name: '미래에셋증권', color: '#00A8E8', hasApi: false },
+  samsung: { name: '삼성증권',     color: '#1428A0', hasApi: false },
+  kb:      { name: 'KB증권',       color: '#F9AE00', hasApi: false },
+  nh:      { name: 'NH투자증권',   color: '#004A31', hasApi: false },
+  shinhan: { name: '신한투자증권', color: '#0036A2', hasApi: false },
+  daeshin: { name: '대신증권',     color: '#C8001C', hasApi: false },
+  hyundai: { name: '현대차증권',   color: '#002C5F', hasApi: false },
+  kis:     { name: '한국투자증권', color: '#8B3A2A', hasApi: true  },
+  kiwoom:  { name: '키움증권',     color: '#C2407A', hasApi: true  },
+  ls:      { name: 'LS증권',       color: '#003087', hasApi: true  },
+  toss:    { name: '토스증권',     color: '#2563EB', hasApi: true  },
+};
+
+let _acctFilter = '';   // '' = 전체, 'accountId' = 해당 계좌만
+
+function _acctId() {
+  return 'acct_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+}
+
+function migrateAccountsDefault() {
+  if (!state.accounts) state.accounts = [];
+  // 계좌가 하나도 없고 포트폴리오 항목이 있으면 미래에셋 기본 계좌 생성
+  if (state.accounts.length === 0 && state.portfolio && state.portfolio.length > 0) {
+    const defaultId = _acctId();
+    state.accounts.push({
+      id: defaultId, broker: 'mirae', number: '', nickname: '메인 위탁 (미래에셋)',
+      type: '위탁', isManual: true, isActive: true, cash: 0,
+      createdAt: new Date().toISOString().slice(0, 10),
+    });
+    state.portfolio.forEach(s => { if (!s.accountId) s.accountId = defaultId; });
+    state.trades.forEach(t => { if (!t.accountId) t.accountId = defaultId; });
+    save();
+  }
+}
+
+function updateAcctCountLabel() {
+  const el = document.getElementById('acctCount');
+  if (el) el.textContent = (state.accounts || []).length;
+}
+
+function openAccountPanel() {
+  const panel   = document.getElementById('accountPanel');
+  const overlay = document.getElementById('accountPanelOverlay');
+  if (!panel) return;
+  overlay.style.display = 'block';
+  requestAnimationFrame(() => { panel.classList.add('open'); overlay.classList.add('open'); });
+  renderAccountPanel();
+}
+
+function closeAccountPanel() {
+  const panel   = document.getElementById('accountPanel');
+  const overlay = document.getElementById('accountPanelOverlay');
+  if (!panel) return;
+  panel.classList.remove('open');
+  overlay.classList.remove('open');
+  setTimeout(() => { overlay.style.display = 'none'; }, 300);
+}
+
+function renderAccountPanel() {
+  const list = document.getElementById('acctCardList');
+  if (!list) return;
+  const accounts = state.accounts || [];
+  if (!accounts.length) {
+    list.innerHTML = '<div style="text-align:center;padding:32px 0;color:var(--text3);font-size:13px;">등록된 계좌가 없습니다.<br>아래 버튼으로 계좌를 추가하세요.</div>';
+    return;
+  }
+  list.innerHTML = accounts.map(a => {
+    const bi = BROKER_INFO[a.broker] || { name: a.broker, color: '#888', hasApi: false };
+    const color = bi.color;
+    const typeBadge = `<span class="acct-badge acct-badge-type">${a.type || '위탁'}</span>`;
+    const modeBadge = a.isManual
+      ? `<span class="acct-badge acct-badge-manual">수동</span>`
+      : `<span class="acct-badge acct-badge-api">API</span>`;
+    const portCnt = (state.portfolio || []).filter(s => s.accountId === a.id).length;
+    const cashStr = a.cash > 0 ? fmt(a.cash) + '원' : '0원';
+    return `<div class="acct-card" style="--acct-color:${color}">
+      <div class="acct-card-top">
+        <div class="acct-card-dot"></div>
+        <div class="acct-card-info">
+          <div class="acct-card-nick">${escHtml(a.nickname || bi.name)}</div>
+          <div class="acct-card-sub">${bi.name}${a.number ? ' · ' + escHtml(a.number) : ''} · 종목 ${portCnt}개</div>
+        </div>
+        <div class="acct-card-badges">${typeBadge}${modeBadge}</div>
+      </div>
+      <div class="acct-card-cash">
+        <span class="acct-card-cash-label">예수금</span>
+        <span class="acct-card-cash-val">${cashStr}</span>
+      </div>
+      <div class="acct-card-actions">
+        <button class="acct-action-btn" onclick="showAccountForm('${a.id}')">편집</button>
+        <button class="acct-action-btn" onclick="showCashEditForm('${a.id}')">예수금 수정</button>
+        <button class="acct-action-btn del" onclick="confirmDeleteAccount('${a.id}')">삭제</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let _editingAcctId = null;
+
+function showAccountForm(id) {
+  _editingAcctId = id || null;
+  const area = document.getElementById('acctFormArea');
+  if (!area) return;
+  const a = id ? (state.accounts || []).find(x => x.id === id) : null;
+  const brokerOptions = Object.entries(BROKER_INFO).map(([k, v]) =>
+    `<option value="${k}" ${(a?.broker || 'mirae') === k ? 'selected' : ''}>${v.name}${v.hasApi ? ' (API 지원)' : ''}</option>`
+  ).join('');
+  const typeOptions = ['위탁','ISA','연금IRP','CMA'].map(t =>
+    `<option value="${t}" ${(a?.type || '위탁') === t ? 'selected' : ''}>${t}</option>`
+  ).join('');
+  area.innerHTML = `<div class="acct-form">
+    <div class="acct-form-title">${id ? '계좌 편집' : '새 계좌 추가'}</div>
+    <div class="acct-form-row">
+      <label class="acct-form-label">증권사</label>
+      <select class="acct-form-select" id="acctFormBroker" onchange="updateFormApiHint()">${brokerOptions}</select>
+    </div>
+    <div class="acct-form-row">
+      <label class="acct-form-label">계좌 별칭</label>
+      <input class="acct-form-input" id="acctFormNick" placeholder="예: 메인 위탁, ISA 절세계좌" value="${escHtml(a?.nickname || '')}">
+    </div>
+    <div class="acct-form-row">
+      <label class="acct-form-label">계좌번호 (선택)</label>
+      <input class="acct-form-input" id="acctFormNumber" placeholder="예: 12345678-01" value="${escHtml(a?.number || '')}">
+    </div>
+    <div class="acct-form-row">
+      <label class="acct-form-label">계좌 유형</label>
+      <select class="acct-form-select" id="acctFormType">${typeOptions}</select>
+    </div>
+    <div id="acctFormApiHint" style="font-size:11px;padding:6px 8px;border-radius:6px;margin-top:4px;"></div>
+    <div class="acct-form-btns">
+      <button class="acct-form-cancel-btn" onclick="hideAccountForm()">취소</button>
+      <button class="acct-form-save-btn" onclick="saveAccount()">저장</button>
+    </div>
+  </div>`;
+  updateFormApiHint();
+}
+
+function updateFormApiHint() {
+  const el = document.getElementById('acctFormApiHint');
+  if (!el) return;
+  const broker = document.getElementById('acctFormBroker')?.value;
+  const bi = BROKER_INFO[broker];
+  if (!bi) return;
+  if (bi.hasApi) {
+    el.style.cssText = 'background:color-mix(in srgb,var(--accent) 10%,transparent);color:var(--accent);font-size:11px;padding:6px 8px;border-radius:6px;margin-top:4px;';
+    el.textContent = '✓ 이 증권사는 API 연동을 지원합니다. API 패널에서 키를 등록하면 잔고 자동 싱크가 가능합니다.';
+  } else {
+    el.style.cssText = 'background:var(--bg3);color:var(--text3);font-size:11px;padding:6px 8px;border-radius:6px;margin-top:4px;';
+    el.textContent = '수동 계좌 — 거래 기록과 예수금을 직접 입력합니다.';
+  }
+}
+
+function hideAccountForm() {
+  const area = document.getElementById('acctFormArea');
+  if (area) area.innerHTML = '';
+  _editingAcctId = null;
+}
+
+function saveAccount() {
+  const broker  = document.getElementById('acctFormBroker')?.value || 'mirae';
+  const nick    = document.getElementById('acctFormNick')?.value.trim() || '';
+  const number  = document.getElementById('acctFormNumber')?.value.trim() || '';
+  const type    = document.getElementById('acctFormType')?.value || '위탁';
+  const bi      = BROKER_INFO[broker] || {};
+  if (!nick) { showToast('⚠️ 계좌 별칭을 입력해주세요'); return; }
+  if (!state.accounts) state.accounts = [];
+  if (_editingAcctId) {
+    const idx = state.accounts.findIndex(a => a.id === _editingAcctId);
+    if (idx >= 0) {
+      state.accounts[idx] = { ...state.accounts[idx], broker, nickname: nick, number, type, isManual: !bi.hasApi };
+    }
+  } else {
+    state.accounts.push({
+      id: _acctId(), broker, number, nickname: nick, type,
+      isManual: !bi.hasApi, isActive: true, cash: 0,
+      createdAt: new Date().toISOString().slice(0, 10),
+    });
+  }
+  save();
+  hideAccountForm();
+  renderAccountPanel();
+  renderAcctFilterBar();
+  updateAcctCountLabel();
+  showToast('✅ 계좌 저장 완료');
+}
+
+function showCashEditForm(id) {
+  const a = (state.accounts || []).find(x => x.id === id);
+  if (!a) return;
+  const newCash = prompt(`[${a.nickname}] 예수금 입력 (현재: ${fmt(a.cash || 0)}원)`, a.cash || 0);
+  if (newCash === null) return;
+  const val = parseInt(String(newCash).replace(/,/g, ''), 10);
+  if (isNaN(val) || val < 0) { showToast('⚠️ 올바른 금액을 입력해주세요'); return; }
+  a.cash = val;
+  save();
+  renderAccountPanel();
+  showToast('✅ 예수금 업데이트 완료');
+}
+
+async function confirmDeleteAccount(id) {
+  const a = (state.accounts || []).find(x => x.id === id);
+  if (!a) return;
+  const portCnt = (state.portfolio || []).filter(s => s.accountId === id).length;
+  const msg = portCnt > 0
+    ? `[${a.nickname}] 계좌를 삭제하면 연결된 종목 ${portCnt}개의 계좌 연결이 해제됩니다.\n계속할까요?`
+    : `[${a.nickname}] 계좌를 삭제할까요?`;
+  const ok = window.electronAPI ? await window.electronAPI.showConfirm(msg) : confirm(msg);
+  if (!ok) return;
+  state.accounts = (state.accounts || []).filter(x => x.id !== id);
+  // 연결 해제 (accountId 제거)
+  (state.portfolio || []).forEach(s => { if (s.accountId === id) delete s.accountId; });
+  (state.trades    || []).forEach(t => { if (t.accountId === id) delete t.accountId; });
+  if (_acctFilter === id) { _acctFilter = ''; renderAcctFilterBar(); renderPortfolio(); }
+  save();
+  renderAccountPanel();
+  updateAcctCountLabel();
+  showToast('🗑️ 계좌 삭제 완료');
+}
+
+function renderAcctFilterBar() {
+  const bar = document.getElementById('acctFilterBar');
+  if (!bar) return;
+  const accounts = state.accounts || [];
+  if (accounts.length <= 1) { bar.innerHTML = ''; return; }
+  const chips = [{ id: '', label: '전체', color: 'var(--accent)' }]
+    .concat(accounts.map(a => ({ id: a.id, label: a.nickname, color: (BROKER_INFO[a.broker] || {}).color || '#888' })));
+  bar.innerHTML = chips.map(c => {
+    const active = _acctFilter === c.id ? 'active' : '';
+    return `<span class="acct-filter-chip ${active}" style="--acct-chip-color:${c.color}" onclick="setAcctFilter('${c.id}')">${escHtml(c.label)}</span>`;
+  }).join('');
+}
+
+function setAcctFilter(id) {
+  _acctFilter = id;
+  renderAcctFilterBar();
+  renderPortfolio();
+}
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── API 설정 패널 ─────────────────────────────────────────────────────────────
@@ -10637,7 +10945,7 @@ function _toggleCheck(stockKey, checkKey, val) {
 
 
 /* ═══════════════════════════════════════════════════════════════
-   경제·주식 캘린더 슬라이드 패널  (Stock Book v1.0.5)
+   경제·주식 캘린더 슬라이드 패널  (Stock Book v1.1.0)
    ─ MAJOR_ECON_EVENTS: 한국/미국 주요 경제지표 하드코딩 (2026)
    ─ state.calEvents: 사용자 추가 기업이벤트 (localStorage 영속)
 ═══════════════════════════════════════════════════════════════ */
@@ -11138,6 +11446,20 @@ function _toggleCheck(stockKey, checkKey, val) {
 </div>
 
 <!-- ─── API 설정 패널 (우측 드로어) ─── -->
+<!-- ── 계좌 관리 패널 드로어 ── -->
+<div id="accountPanelOverlay" onclick="closeAccountPanel()"></div>
+<div id="accountPanel">
+  <div class="acct-panel-hdr">
+    <div class="acct-panel-hdr-title">🏦 계좌 관리</div>
+    <button class="acct-panel-close-btn" onclick="closeAccountPanel()">✕</button>
+  </div>
+  <div class="acct-panel-body">
+    <div id="acctFormArea"></div>
+    <button class="acct-panel-add-btn" onclick="showAccountForm()">＋ 새 계좌 추가</button>
+    <div id="acctCardList"></div>
+  </div>
+</div>
+
 <div id="apiPanelOverlay" onclick="closeApiPanel()"></div>
 <div id="apiPanel">
   <div class="api-panel-hdr">
@@ -11388,7 +11710,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     <div class="settings-close-row">
       <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.0.5</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.1.0</div>
   </div>
 </div>
 
