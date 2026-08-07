@@ -1271,6 +1271,44 @@
   .api-key-input:focus { outline: none; border-color: var(--accent); }
   .api-key-input::placeholder { color: var(--text3); }
   .api-key-actions { display: flex; gap: 6px; margin-top: 8px; }
+  /* API 발급 안내 가이드 박스 */
+  .broker-guide-box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+  }
+  .broker-guide-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text3);
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+  }
+  .broker-guide-desc {
+    font-size: 11px;
+    color: var(--text2);
+    line-height: 1.6;
+    margin-bottom: 8px;
+  }
+  .broker-guide-link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+    border-radius: 5px;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .broker-guide-link-btn:hover {
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+  }
 
   .settings-close-row {
     display: flex;
@@ -8527,6 +8565,7 @@ async function loadApiKeysUI() {
   const kiwoomOk = await window.electronAPI.checkApiKey('kiwoom');
   const lsOk     = await window.electronAPI.checkApiKey('ls');
   const tossOk   = await window.electronAPI.checkApiKey('toss');
+  const dartOk   = await window.electronAPI.checkApiKey('dart').catch(() => false);
 
   // 상단바 인디케이터 (연결된 첫 번째 증권사 표시)
   const anyOk = kisOk || kiwoomOk || lsOk || tossOk;
@@ -8539,8 +8578,8 @@ async function loadApiKeysUI() {
     if (label) label.textContent = `${connected} 연결됨`;
   }
 
-  // 증권사 카드 배지 (✓) 업데이트
-  const badges = { kis: kisOk, kiwoom: kiwoomOk, ls: lsOk, toss: tossOk };
+  // 증권사/DART 카드 배지 (✓) 업데이트
+  const badges = { kis: kisOk, kiwoom: kiwoomOk, ls: lsOk, toss: tossOk, dart: dartOk };
   Object.entries(badges).forEach(([b, ok]) => {
     const el = document.getElementById('brokerCheck_' + b);
     if (el) el.textContent = ok ? '✓' : '';
@@ -8561,7 +8600,7 @@ function selectBroker(broker) {
 function openApiKeyPopup(broker) {
   const popup = document.getElementById('apiKeyPopup');
   if (!popup) { renderBrokerFields(broker); return; }
-  const names = { kis:'한국투자증권 API 키', kiwoom:'키움증권 API 키', ls:'LS증권 API 키', toss:'토스증권 API 키' };
+  const names = { kis:'한국투자증권 API 키', kiwoom:'키움증권 API 키', ls:'LS증권 API 키', toss:'토스증권 API 키', dart:'DART OpenAPI 인증키' };
   const titleEl = document.getElementById('apiKeyPopupTitle');
   if (titleEl) titleEl.textContent = names[broker] || 'API 키 설정';
   renderBrokerFields(broker);
@@ -8684,6 +8723,11 @@ function renderBrokerFields(broker) {
   if (!panel) return;
   if (broker === 'kis') {
     panel.innerHTML = `
+      <div class="broker-guide-box">
+        <div class="broker-guide-label">📋 API 발급 안내</div>
+        <div class="broker-guide-desc">실시간 시세 조회, 잔고 확인, 매수·매도 주문 실행에 사용됩니다.<br>KIS Developers 포털에서 앱을 등록하고 APP Key / Secret을 발급받으세요.</div>
+        <button class="broker-guide-link-btn" onclick="openCalLink('https://apiportal.koreainvestment.com/')">🔗 KIS Developers 포털 열기 ↗</button>
+      </div>
       <div class="broker-fields-hint">APP Key / Secret / 계좌번호를 입력하세요. 기존 저장값은 빈칸으로 두면 유지됩니다.</div>
       <div class="api-key-input-row"><input class="api-key-input" id="kisAppKey" type="password" placeholder="APP Key" autocomplete="off"></div>
       <div class="api-key-input-row"><input class="api-key-input" id="kisAppSecret" type="password" placeholder="APP Secret" autocomplete="off"></div>
@@ -8706,6 +8750,11 @@ function renderBrokerFields(broker) {
     }
   } else if (broker === 'kiwoom') {
     panel.innerHTML = `
+      <div class="broker-guide-box">
+        <div class="broker-guide-label">📋 API 발급 안내</div>
+        <div class="broker-guide-desc">실시간 시세 조회, 잔고 확인, Open API+ REST 주문 실행에 사용됩니다.<br>키움증권 홈페이지에서 Open API 신청 후 App Key / Secret을 발급받으세요. <b>IP 주소 등록</b>이 필요합니다.</div>
+        <button class="broker-guide-link-btn" onclick="openCalLink('https://www1.kiwoom.com/h/customer/apiManage/VOpApiKP1P')">🔗 키움 Open API 신청 페이지 ↗</button>
+      </div>
       <div class="broker-fields-hint">키움증권 Open API+ REST 키입니다. 기존 저장값은 빈칸으로 두면 유지됩니다.</div>
       <div class="api-key-input-row"><input class="api-key-input" id="kiwoomAppKey" type="password" placeholder="App Key" autocomplete="off"></div>
       <div class="api-key-input-row"><input class="api-key-input" id="kiwoomAppSecret" type="password" placeholder="App Secret" autocomplete="off"></div>
@@ -8724,6 +8773,11 @@ function renderBrokerFields(broker) {
     }
   } else if (broker === 'ls') {
     panel.innerHTML = `
+      <div class="broker-guide-box">
+        <div class="broker-guide-label">📋 API 발급 안내</div>
+        <div class="broker-guide-desc">실시간 시세 조회, 잔고 확인, EBest REST 주문 실행에 사용됩니다.<br>LS증권 OpenAPI 포털에서 앱을 등록하고 App Key / Secret을 발급받으세요.</div>
+        <button class="broker-guide-link-btn" onclick="openCalLink('https://openapi.ls-sec.co.kr/')">🔗 LS증권 OpenAPI 포털 열기 ↗</button>
+      </div>
       <div class="broker-fields-hint">LS증권 EBest OpenAPI 키입니다. 기존 저장값은 빈칸으로 두면 유지됩니다.</div>
       <div class="api-key-input-row"><input class="api-key-input" id="lsAppKey" type="password" placeholder="App Key" autocomplete="off"></div>
       <div class="api-key-input-row"><input class="api-key-input" id="lsAppSecret" type="password" placeholder="App Secret" autocomplete="off"></div>
@@ -8742,6 +8796,11 @@ function renderBrokerFields(broker) {
     }
   } else if (broker === 'toss') {
     panel.innerHTML = `
+      <div class="broker-guide-box">
+        <div class="broker-guide-label">📋 API 발급 안내</div>
+        <div class="broker-guide-desc">실시간 시세 조회 및 주문 실행에 사용됩니다.<br>토스증권 개발자 센터에서 앱을 등록하고 Client ID / Secret을 발급받으세요.</div>
+        <button class="broker-guide-link-btn" onclick="openCalLink('https://securities.toss.im/trading-api/docs')">🔗 토스증권 개발자 센터 열기 ↗</button>
+      </div>
       <div class="broker-fields-hint">client_id는 앱키와 같은 개념입니다. 기존 저장값은 빈칸으로 두면 유지됩니다.</div>
       <div class="api-key-input-row"><input class="api-key-input" id="tossClientId" type="password" placeholder="Client ID" autocomplete="off"></div>
       <div class="api-key-input-row"><input class="api-key-input" id="tossClientSecret" type="password" placeholder="Client Secret" autocomplete="off"></div>
@@ -8758,11 +8817,48 @@ function renderBrokerFields(broker) {
         if (sc && data.clientSecret) sc.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)';
       });
     }
+  } else if (broker === 'dart') {
+    panel.innerHTML = `
+      <div class="broker-guide-box">
+        <div class="broker-guide-label">📋 API 발급 안내</div>
+        <div class="broker-guide-desc">기업 공시 및 재무제표 자동 조회에 사용됩니다.<br>금융감독원 DART 포털에서 <b>무료</b>로 인증키를 발급받을 수 있습니다. 회원가입 후 마이페이지 → OpenAPI 인증키 신청에서 즉시 발급됩니다.</div>
+        <button class="broker-guide-link-btn" onclick="openCalLink('https://opendart.fss.or.kr/intro/main.do')">🔗 DART OpenAPI 신청 페이지 열기 ↗</button>
+      </div>
+      <div class="broker-fields-hint">발급받은 인증키를 입력하세요. 기존 저장값은 빈칸으로 두면 유지됩니다.</div>
+      <div class="api-key-input-row"><input class="api-key-input" id="dartApiKey" type="password" placeholder="DART OpenAPI 인증키" autocomplete="off"></div>
+      <div class="api-key-actions">
+        <button class="btn btn-primary" style="flex:1;font-size:12px;padding:7px 0;" onclick="saveApiKey('dart')">저장</button>
+        <button class="btn btn-ghost" style="font-size:12px;padding:7px 12px;" onclick="deleteApiKey('dart')">삭제</button>
+      </div>`;
+    if (window.electronAPI?.loadApiKey) {
+      window.electronAPI.loadApiKey('dart').then(data => {
+        if (!data) return;
+        const k = document.getElementById('dartApiKey');
+        if (k && data.apiKey) k.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)';
+      });
+    }
   }
 }
 
 async function saveApiKey(broker) {
   if (!window.electronAPI?.saveApiKey) return alert('Electron 환경에서만 사용 가능합니다.');
+  if (broker === 'dart') {
+    const keyEl  = document.getElementById('dartApiKey');
+    const newKey = keyEl?.value.trim() || '';
+    const existing = (await window.electronAPI.loadApiKey('dart').catch(() => null)) || {};
+    const fields = { apiKey: newKey || existing.apiKey || '' };
+    if (!fields.apiKey) { alert('DART OpenAPI 인증키를 입력해주세요.'); return; }
+    const result = await window.electronAPI.saveApiKey('dart', fields);
+    if (result?.ok) {
+      loadApiKeysUI();
+      renderBrokerFields('dart');
+      closeApiKeyPopup();
+      showToast('✅ DART OpenAPI 인증키 저장 완료');
+    } else {
+      alert('저장 실패: ' + (result?.error || '알 수 없는 오류'));
+    }
+    return;
+  }
   if (broker === 'toss') {
     const idEl  = document.getElementById('tossClientId');
     const secEl = document.getElementById('tossClientSecret');
@@ -8869,7 +8965,7 @@ async function saveApiKey(broker) {
 
 async function deleteApiKey(broker) {
   if (!window.electronAPI?.deleteApiKey) return;
-  const nameMap = { kis: '한국투자증권 (KIS)', kiwoom: '키움증권', ls: 'LS증권', toss: '토스증권' };
+  const nameMap = { kis: '한국투자증권 (KIS)', kiwoom: '키움증권', ls: 'LS증권', toss: '토스증권', dart: 'DART OpenAPI' };
   const name = nameMap[broker] || broker;
   const confirmed = await window.electronAPI.showConfirm(`${name} API 키를 삭제하시겠습니까?`);
   if (!confirmed) return;
@@ -10307,7 +10403,7 @@ function _toggleCheck(stockKey, checkKey, val) {
 
 
 /* ═══════════════════════════════════════════════════════════════
-   경제·주식 캘린더 슬라이드 패널  (Stock Book v1.0.3)
+   경제·주식 캘린더 슬라이드 패널  (Stock Book v1.0.4)
    ─ MAJOR_ECON_EVENTS: 한국/미국 주요 경제지표 하드코딩 (2026)
    ─ state.calEvents: 사용자 추가 기업이벤트 (localStorage 영속)
 ═══════════════════════════════════════════════════════════════ */
@@ -10882,10 +10978,29 @@ function _toggleCheck(stockKey, checkKey, val) {
       </div>
     </div>
 
+    <!-- 공시·재무제표 API (DART) -->
+    <div class="settings-section">
+      <div class="settings-section-label">공시·재무제표 API</div>
+      <div class="broker-tab-group" style="grid-template-columns:1fr;">
+        <button type="button" class="broker-tab-btn" id="brokerTab_dart"
+          style="--broker-color:#C47400;flex-direction:row;gap:10px;padding:10px 14px;height:auto;min-height:54px;" onclick="selectBroker('dart')">
+          <div class="broker-logo-box" style="font-size:9px;font-weight:800;background:#C47400;letter-spacing:0;flex-shrink:0;">DART</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:1;min-width:0;">
+            <span class="broker-tab-name" style="font-size:11px;">금융감독원 DART OpenAPI</span>
+            <span style="font-size:10px;color:var(--text3);line-height:1.3;">공시·재무제표 자동 조회 (무료)</span>
+          </div>
+          <span class="broker-tab-check" id="brokerCheck_dart"></span>
+        </button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;padding:6px 8px;background:var(--bg3);border-radius:6px;">
+        💡 DART 카드를 클릭하면 인증키 등록 팝업이 열립니다.
+      </div>
+    </div>
+
     <div class="settings-close-row">
       <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.0.3</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.0.4</div>
   </div>
 </div>
 
