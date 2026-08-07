@@ -1310,6 +1310,120 @@
     background: color-mix(in srgb, var(--accent) 20%, transparent);
   }
 
+  /* ── API 설정 패널 (우측 드로어) ── */
+  #apiPanelOverlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 8999;
+    display: none; opacity: 0;
+    transition: opacity 0.28s;
+    cursor: pointer;
+  }
+  #apiPanelOverlay.open { opacity: 1; }
+  #apiPanel {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: 440px; max-width: 100vw;
+    background: var(--bg2);
+    border-left: 1px solid var(--border);
+    z-index: 9000;
+    display: flex; flex-direction: column;
+    transform: translateX(105%);
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: -6px 0 32px rgba(0,0,0,0.35);
+  }
+  #apiPanel.open { transform: translateX(0); }
+  .api-panel-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0; background: var(--bg2);
+  }
+  .api-panel-hdr-title {
+    font-size: 15px; font-weight: 700; color: var(--text1);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .api-panel-close-btn {
+    background: none; border: none;
+    color: var(--text3); font-size: 20px;
+    cursor: pointer; padding: 2px 6px;
+    border-radius: 6px; line-height: 1;
+    transition: background 0.15s; font-family: inherit;
+  }
+  .api-panel-close-btn:hover { background: var(--bg3); color: var(--text); }
+  .api-panel-body {
+    flex: 1; overflow-y: auto;
+    padding: 4px 16px 32px;
+    scroll-behavior: smooth;
+  }
+  .api-panel-sec-label {
+    font-size: 10px; font-weight: 700;
+    color: var(--text3); letter-spacing: 1px; text-transform: uppercase;
+    padding: 16px 0 8px;
+  }
+  .api-bcard {
+    border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
+    margin-bottom: 10px;
+    border-left: 3px solid var(--bcard-color, var(--accent));
+  }
+  .api-bcard-top {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 14px; background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .api-bcard-logo {
+    width: 34px; height: 34px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 800;
+    color: #fff; flex-shrink: 0; letter-spacing: 0;
+    background: var(--bcard-color, var(--accent));
+  }
+  .api-bcard-info { flex: 1; min-width: 0; }
+  .api-bcard-name { font-size: 12px; font-weight: 700; color: var(--text1); }
+  .api-bcard-desc { font-size: 10px; color: var(--text3); margin-top: 2px; line-height: 1.4; }
+  .api-bcard-status { font-size: 11px; color: #22c55e; font-weight: 600; flex-shrink: 0; }
+  .api-bcard-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .api-bcard-link-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 600;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+    border-radius: 5px; padding: 5px 11px;
+    cursor: pointer; font-family: inherit; align-self: flex-start;
+    transition: background 0.15s;
+  }
+  .api-bcard-link-btn:hover { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+  .api-bcard-input-row { display: flex; flex-direction: column; gap: 3px; }
+  .api-bcard-label { font-size: 10px; color: var(--text3); }
+  .api-bcard-input {
+    width: 100%; padding: 7px 10px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text1); font-size: 12px;
+    font-family: monospace; box-sizing: border-box; outline: none;
+    transition: border-color 0.15s;
+  }
+  .api-bcard-input:focus { border-color: var(--accent); }
+  .api-bcard-input::placeholder { color: var(--text3); }
+  .api-bcard-actions { display: flex; gap: 6px; align-items: center; margin-top: 2px; }
+  .api-bcard-save-btn {
+    flex: 1; padding: 7px 0; font-size: 12px; font-weight: 600;
+    font-family: inherit; cursor: pointer;
+    border-radius: 6px; border: none;
+    background: var(--accent); color: #fff;
+    transition: opacity 0.15s;
+  }
+  .api-bcard-save-btn:hover { opacity: 0.85; }
+  .api-bcard-del-btn {
+    padding: 7px 14px; font-size: 12px;
+    font-family: inherit; cursor: pointer; border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--text2);
+    transition: background 0.15s;
+  }
+  .api-bcard-del-btn:hover { background: var(--bg3); }
+
   .settings-close-row {
     display: flex;
     justify-content: flex-end;
@@ -2631,13 +2745,13 @@
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
     <!-- API 연결 상태 인디케이터 -->
-    <button id="apiStatusBtn" title="API 연결 상태"
+    <button id="apiStatusBtn" onclick="openApiPanel()" title="API 설정"
       style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);cursor:pointer;font-size:12px;font-family:inherit;color:var(--text2);white-space:nowrap;transition:all .2s;">
       <span id="apiStatusDot" style="width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block;flex-shrink:0;"></span>
       <span id="apiStatusLabel">KIS 미연결</span>
     </button>
-    <button onclick="openSettings()" title="설정" class="theme-toggle-btn" id="settingsBtn">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <button onclick="toggleTheme()" title="라이트/다크 테마 전환" class="theme-toggle-btn" id="settingsBtn">
+      <svg id="themeToggleIcon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
     <button onclick="exportBackup()" title="데이터를 JSON 파일로 저장" class="header-action-btn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -8578,11 +8692,13 @@ async function loadApiKeysUI() {
     if (label) label.textContent = `${connected} 연결됨`;
   }
 
-  // 증권사/DART 카드 배지 (✓) 업데이트
+  // 증권사/DART 카드 배지 (✓) 업데이트 — 설정 패널 + API 패널
   const badges = { kis: kisOk, kiwoom: kiwoomOk, ls: lsOk, toss: tossOk, dart: dartOk };
   Object.entries(badges).forEach(([b, ok]) => {
-    const el = document.getElementById('brokerCheck_' + b);
-    if (el) el.textContent = ok ? '✓' : '';
+    const el1 = document.getElementById('brokerCheck_' + b);
+    if (el1) el1.textContent = ok ? '✓' : '';
+    const el2 = document.getElementById('apiBadge_' + b);
+    if (el2) el2.textContent = ok ? '✓ 저장됨' : '';
   });
 }
 
@@ -8595,6 +8711,124 @@ function selectBroker(broker) {
   const tab = document.getElementById('brokerTab_' + broker);
   if (tab) tab.classList.add('active');
   openApiKeyPopup(broker);
+}
+
+// ── 테마 토글 ────────────────────────────────────────────────────────────────
+function toggleTheme() {
+  const current = localStorage.getItem('theme') || 'dark';
+  const next = current === 'light' ? 'dark' : 'light';
+  setTheme(next);
+  // 아이콘 전환: 다크=달, 라이트=해
+  const icon = document.getElementById('themeToggleIcon');
+  if (icon) {
+    if (next === 'light') {
+      icon.innerHTML = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+    } else {
+      icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+    }
+  }
+}
+
+// ── API 설정 패널 ─────────────────────────────────────────────────────────────
+function openApiPanel() {
+  const panel   = document.getElementById('apiPanel');
+  const overlay = document.getElementById('apiPanelOverlay');
+  if (!panel) return;
+  overlay.style.display = 'block';
+  requestAnimationFrame(() => {
+    panel.classList.add('open');
+    overlay.classList.add('open');
+  });
+  renderApiPanel();
+}
+
+function closeApiPanel() {
+  const panel   = document.getElementById('apiPanel');
+  const overlay = document.getElementById('apiPanelOverlay');
+  if (!panel) return;
+  panel.classList.remove('open');
+  overlay.classList.remove('open');
+  setTimeout(() => { overlay.style.display = 'none'; }, 300);
+}
+
+async function renderApiPanel() {
+  if (!window.electronAPI?.loadApiKey) return;
+  const brokerMap = {
+    kis:    { badge:'apiBadge_kis',    check: d => d.appKey && d.appSecret,
+              fields: [ ['apisKisAppKey','appKey','APP Key'], ['apisKisAppSecret','appSecret','APP Secret'] ],
+              extra: () => { const a = document.getElementById('apisKisAccount'); if (a) window.electronAPI.loadApiKey('kis').then(d => { if (d?.account) a.value = d.account; }); } },
+    kiwoom: { badge:'apiBadge_kiwoom', check: d => d.appKey && d.appSecret,
+              fields: [ ['apisKiwoomAppKey','appKey','App Key'], ['apisKiwoomAppSecret','appSecret','App Secret'] ] },
+    ls:     { badge:'apiBadge_ls',     check: d => d.appKey && d.appSecret,
+              fields: [ ['apisLsAppKey','appKey','App Key'], ['apisLsAppSecret','appSecret','App Secret'] ] },
+    toss:   { badge:'apiBadge_toss',   check: d => d.clientId && d.clientSecret,
+              fields: [ ['apisTossClientId','clientId','Client ID'], ['apisTossClientSecret','clientSecret','Client Secret'] ] },
+    dart:   { badge:'apiBadge_dart',   check: d => d.apiKey,
+              fields: [ ['apisDartApiKey','apiKey','DART OpenAPI 인증키'] ] },
+  };
+  for (const [broker, cfg] of Object.entries(brokerMap)) {
+    const data = await window.electronAPI.loadApiKey(broker).catch(() => null) || {};
+    const badge = document.getElementById(cfg.badge);
+    if (badge) badge.textContent = cfg.check(data) ? '✓ 저장됨' : '';
+    for (const [elId, field, placeholder] of cfg.fields) {
+      const el = document.getElementById(elId);
+      if (el) el.placeholder = data[field] ? '●●●●●●●● (저장됨 — 변경 시만 입력)' : placeholder;
+    }
+    if (cfg.extra) cfg.extra();
+  }
+}
+
+async function saveApiKeyPanel(broker) {
+  if (!window.electronAPI?.saveApiKey) return alert('Electron 환경에서만 사용 가능합니다.');
+  const existing = (await window.electronAPI.loadApiKey(broker).catch(() => null)) || {};
+  let fields = {};
+  if (broker === 'kis') {
+    const nk = document.getElementById('apisKisAppKey')?.value.trim()    || '';
+    const ns = document.getElementById('apisKisAppSecret')?.value.trim() || '';
+    const na = document.getElementById('apisKisAccount')?.value.trim()   || '';
+    fields = { appKey: nk || existing.appKey || '', appSecret: ns || existing.appSecret || '', account: na || existing.account || '' };
+    if (!fields.appKey || !fields.appSecret) { alert('APP Key와 APP Secret을 입력해주세요.'); return; }
+  } else if (broker === 'kiwoom') {
+    const nk = document.getElementById('apisKiwoomAppKey')?.value.trim()    || '';
+    const ns = document.getElementById('apisKiwoomAppSecret')?.value.trim() || '';
+    fields = { appKey: nk || existing.appKey || '', appSecret: ns || existing.appSecret || '' };
+    if (!fields.appKey || !fields.appSecret) { alert('App Key와 App Secret을 입력해주세요.'); return; }
+  } else if (broker === 'ls') {
+    const nk = document.getElementById('apisLsAppKey')?.value.trim()    || '';
+    const ns = document.getElementById('apisLsAppSecret')?.value.trim() || '';
+    fields = { appKey: nk || existing.appKey || '', appSecret: ns || existing.appSecret || '' };
+    if (!fields.appKey || !fields.appSecret) { alert('App Key와 App Secret을 입력해주세요.'); return; }
+  } else if (broker === 'toss') {
+    const nk = document.getElementById('apisTossClientId')?.value.trim()     || '';
+    const ns = document.getElementById('apisTossClientSecret')?.value.trim() || '';
+    fields = { clientId: nk || existing.clientId || '', clientSecret: ns || existing.clientSecret || '' };
+    if (!fields.clientId || !fields.clientSecret) { alert('Client ID와 Client Secret을 입력해주세요.'); return; }
+  } else if (broker === 'dart') {
+    const nk = document.getElementById('apisDartApiKey')?.value.trim() || '';
+    fields = { apiKey: nk || existing.apiKey || '' };
+    if (!fields.apiKey) { alert('DART OpenAPI 인증키를 입력해주세요.'); return; }
+  }
+  const result = await window.electronAPI.saveApiKey(broker, fields);
+  if (result?.ok) {
+    loadApiKeysUI();
+    renderApiPanel();
+    if (broker === 'kis' && typeof startRealtimePrices === 'function') setTimeout(() => startRealtimePrices(), 1000);
+    const names = { kis:'한국투자증권', kiwoom:'키움증권', ls:'LS증권', toss:'토스증권', dart:'DART OpenAPI' };
+    showToast('✅ ' + (names[broker] || broker) + ' API 키 저장 완료');
+  } else {
+    alert('저장 실패: ' + (result?.error || '알 수 없는 오류'));
+  }
+}
+
+async function deleteApiKeyPanel(broker) {
+  if (!window.electronAPI?.deleteApiKey) return;
+  const names = { kis:'한국투자증권', kiwoom:'키움증권', ls:'LS증권', toss:'토스증권', dart:'DART OpenAPI' };
+  const confirmed = await window.electronAPI.showConfirm(`${names[broker] || broker} API 키를 삭제하시겠습니까?`);
+  if (!confirmed) return;
+  await window.electronAPI.deleteApiKey(broker);
+  if (broker === 'toss') { _tossToken = null; _tossTokenExpiry = 0; }
+  loadApiKeysUI();
+  renderApiPanel();
 }
 
 function openApiKeyPopup(broker) {
@@ -10403,7 +10637,7 @@ function _toggleCheck(stockKey, checkKey, val) {
 
 
 /* ═══════════════════════════════════════════════════════════════
-   경제·주식 캘린더 슬라이드 패널  (Stock Book v1.0.4)
+   경제·주식 캘린더 슬라이드 패널  (Stock Book v1.0.5)
    ─ MAJOR_ECON_EVENTS: 한국/미국 주요 경제지표 하드코딩 (2026)
    ─ state.calEvents: 사용자 추가 기업이벤트 (localStorage 영속)
 ═══════════════════════════════════════════════════════════════ */
@@ -10903,6 +11137,160 @@ function _toggleCheck(stockKey, checkKey, val) {
   </div>
 </div>
 
+<!-- ─── API 설정 패널 (우측 드로어) ─── -->
+<div id="apiPanelOverlay" onclick="closeApiPanel()"></div>
+<div id="apiPanel">
+  <div class="api-panel-hdr">
+    <div class="api-panel-hdr-title">🔑 API 설정</div>
+    <button class="api-panel-close-btn" onclick="closeApiPanel()">✕</button>
+  </div>
+  <div class="api-panel-body">
+
+    <div class="api-panel-sec-label">증권사 트레이딩 API</div>
+
+    <!-- 한국투자증권 -->
+    <div class="api-bcard" style="--bcard-color:#8B3A2A;">
+      <div class="api-bcard-top">
+        <div class="api-bcard-logo" style="font-size:13px;letter-spacing:-1px;">友</div>
+        <div class="api-bcard-info">
+          <div class="api-bcard-name">한국투자증권 (KIS)</div>
+          <div class="api-bcard-desc">실시간 시세 · 잔고 · 매수/매도 주문 실행</div>
+        </div>
+        <span class="api-bcard-status" id="apiBadge_kis"></span>
+      </div>
+      <div class="api-bcard-body">
+        <button class="api-bcard-link-btn" onclick="openCalLink('https://apiportal.koreainvestment.com/')">🔗 KIS Developers 포털 열기 ↗</button>
+        <div class="api-bcard-input-row">
+          <span class="api-bcard-label">APP Key</span>
+          <input class="api-bcard-input" id="apisKisAppKey" type="password" placeholder="APP Key" autocomplete="off">
+        </div>
+        <div class="api-bcard-input-row">
+          <span class="api-bcard-label">APP Secret</span>
+          <input class="api-bcard-input" id="apisKisAppSecret" type="password" placeholder="APP Secret" autocomplete="off">
+        </div>
+        <div class="api-bcard-input-row">
+          <span class="api-bcard-label">계좌번호</span>
+          <input class="api-bcard-input" id="apisKisAccount" type="text" placeholder="예: 50123456-01" autocomplete="off">
+        </div>
+        <div class="api-bcard-actions">
+          <button class="api-bcard-save-btn" onclick="saveApiKeyPanel('kis')">저장</button>
+          <button class="api-bcard-del-btn" onclick="deleteApiKeyPanel('kis')">삭제</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 키움증권 -->
+    <div class="api-bcard" style="--bcard-color:#C2407A;">
+      <div class="api-bcard-top">
+        <div class="api-bcard-logo" style="font-size:11px;">키움</div>
+        <div class="api-bcard-info">
+          <div class="api-bcard-name">키움증권</div>
+          <div class="api-bcard-desc">실시간 시세 · 잔고 · Open API+ REST 주문 <b style="color:var(--text2)">· IP 등록 필요</b></div>
+        </div>
+        <span class="api-bcard-status" id="apiBadge_kiwoom"></span>
+      </div>
+      <div class="api-bcard-body">
+        <button class="api-bcard-link-btn" onclick="openCalLink('https://www1.kiwoom.com/h/customer/apiManage/VOpApiKP1P')">🔗 키움 Open API 신청 ↗</button>
+        <div class="api-bcard-input-row">
+          <span class="api-bcard-label">App Key</span>
+          <input class="api-bcard-input" id="apisKiwoomAppKey" type="password" placeholder="App Key" autocomplete="off">
+        </div>
+        <div class="api-bcard-input-row">
+          <span class="api-bcard-label">App Secret</span>
+          <input class="api-bcard-input" id="apisKiwoomAppSecret" type="password" placeholder="App Secret" autocomplete="off">
+        </div>
+        <div class="api-bcard-actions">
+          <button class="api-bcard-save-btn" onclick="saveApiKeyPanel('kiwoom')">저장</button>
+          <button class="api-bcard-del-btn" onclick="deleteApiKeyPanel('kiwoom')">삭제</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LS증권 -->
+    <div class="api-bcard" style="--bcard-color:#003087;">
+      <div class="api-bcard-top">
+        <div class="api-bcard-logo" style="font-size:13px;letter-spacing:0;">LS</div>
+        <div class="api-bcard-info">
+          <div class="api-bcard-name">LS증권 (EBest)</div>
+          <div class="api-bcard-desc">실시간 시세 · 잔고 · EBest Xing REST 주문</div>
+        </div>
+        <span class="api-bcard-status" id="apiBadge_ls"></span>
+      </div>
+      <div class="api-bcard-body">
+        <button class="api-bcard-link-btn" onclick="openCalLink('https://openapi.ls-sec.co.kr/')">🔗 LS증권 OpenAPI 포털 ↗</button>
+        <div class="api-bcard-input-row">
+          <span class="api-bcard-label">App Key</span>
+          <input class="api-bcard-input" id="apisLsAppKey" type="password" placeholder="App Key" autocomplete="off">
+        </div>
+        <div class="api-bcard-input-row">
+          <span class="api-bcard-label">App Secret</span>
+          <input class="api-bcard-input" id="apisLsAppSecret" type="password" placeholder="App Secret" autocomplete="off">
+        </div>
+        <div class="api-bcard-actions">
+          <button class="api-bcard-save-btn" onclick="saveApiKeyPanel('ls')">저장</button>
+          <button class="api-bcard-del-btn" onclick="deleteApiKeyPanel('ls')">삭제</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 토스증권 -->
+    <div class="api-bcard" style="--bcard-color:#2563EB;">
+      <div class="api-bcard-top">
+        <div class="api-bcard-logo" style="font-size:9px;background:linear-gradient(135deg,#2563EB,#4F46E5);">toss</div>
+        <div class="api-bcard-info">
+          <div class="api-bcard-name">토스증권</div>
+          <div class="api-bcard-desc">실시간 시세 · 잔고 · 주문 실행</div>
+        </div>
+        <span class="api-bcard-status" id="apiBadge_toss"></span>
+      </div>
+      <div class="api-bcard-body">
+        <button class="api-bcard-link-btn" onclick="openCalLink('https://securities.toss.im/trading-api/docs')">🔗 토스증권 개발자 센터 ↗</button>
+        <div class="api-bcard-input-row">
+          <span class="api-bcard-label">Client ID</span>
+          <input class="api-bcard-input" id="apisTossClientId" type="password" placeholder="Client ID" autocomplete="off">
+        </div>
+        <div class="api-bcard-input-row">
+          <span class="api-bcard-label">Client Secret</span>
+          <input class="api-bcard-input" id="apisTossClientSecret" type="password" placeholder="Client Secret" autocomplete="off">
+        </div>
+        <div class="api-bcard-actions">
+          <button class="api-bcard-save-btn" onclick="saveApiKeyPanel('toss')">저장</button>
+          <button class="api-bcard-del-btn" onclick="deleteApiKeyPanel('toss')">삭제</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="api-panel-sec-label">공시·재무제표 API</div>
+
+    <!-- DART OpenAPI -->
+    <div class="api-bcard" style="--bcard-color:#C47400;">
+      <div class="api-bcard-top">
+        <div class="api-bcard-logo" style="font-size:9px;font-weight:800;background:#C47400;">DART</div>
+        <div class="api-bcard-info">
+          <div class="api-bcard-name">금융감독원 DART OpenAPI</div>
+          <div class="api-bcard-desc">기업 공시 · 재무제표 자동 조회 · 무료 발급</div>
+        </div>
+        <span class="api-bcard-status" id="apiBadge_dart"></span>
+      </div>
+      <div class="api-bcard-body">
+        <button class="api-bcard-link-btn" onclick="openCalLink('https://opendart.fss.or.kr/intro/main.do')">🔗 DART OpenAPI 신청 페이지 ↗</button>
+        <div style="font-size:11px;color:var(--text3);line-height:1.5;padding:2px 0;">
+          회원가입 후 마이페이지 → OpenAPI 인증키 신청 → 즉시 무료 발급됩니다.
+        </div>
+        <div class="api-bcard-input-row">
+          <span class="api-bcard-label">인증키</span>
+          <input class="api-bcard-input" id="apisDartApiKey" type="password" placeholder="DART OpenAPI 인증키" autocomplete="off">
+        </div>
+        <div class="api-bcard-actions">
+          <button class="api-bcard-save-btn" onclick="saveApiKeyPanel('dart')">저장</button>
+          <button class="api-bcard-del-btn" onclick="deleteApiKeyPanel('dart')">삭제</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <!-- ─── 설정 모달에서 API 키 입력 팝업 ─── -->
 <div id="apiKeyPopup" onclick="if(event.target===this)closeApiKeyPopup()" style="display:none;position:fixed;inset:0;z-index:10002;background:rgba(0,0,0,.75);align-items:center;justify-content:center;">
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px 22px 18px;width:380px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.5);">
@@ -11000,7 +11388,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     <div class="settings-close-row">
       <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.0.4</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.0.5</div>
   </div>
 </div>
 
