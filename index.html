@@ -164,7 +164,7 @@
     background: #dce6f0;
     border-right-color: #c0ccd8;
   }
-  body.light-mode .mdi-sb-btn { color: #2a4060 !important; }
+  body.light-mode .mdi-sb-btn { color: #0d1a2e !important; }
   body.light-mode .mdi-sb-btn:hover { background: #c8d4e0; }
   body.light-mode .mdi-sb-btn-active { color: #1a4fd6 !important; border-left-color: #2563eb; background: rgba(37,99,235,0.08); }
   body.light-mode .mdi-sb-btn-active:hover { background: rgba(37,99,235,0.14); }
@@ -2146,15 +2146,15 @@
     padding: 0 0 0 10px;
     height: 36px; min-height: 36px;
     background: none; border: none; border-left: 2px solid transparent;
-    color: #7aa0be; font-size: 12.5px; font-family: inherit;
+    color: #dce8f5; font-size: 12.5px; font-family: inherit;
     cursor: pointer; text-align: left; white-space: nowrap;
     transition: all 0.12s; width: 100%;
   }
   .mdi-sb-btn:hover { background: #0d1a2e; color: #b0c8e0; border-left-color: #2a3d55; }
   .mdi-sb-btn-active { color: #d0e4f5; border-left-color: #2563eb; background: #0c1628; }
   .mdi-sb-btn-active:hover { background: #0f1e36; border-left-color: #3b82f6; }
-  .mdi-sb-util { color: #6a90b0; font-size: 12px; }
-  .mdi-sb-util:hover { color: #8aabb0; }
+  .mdi-sb-util { color: #c0d4e8; font-size: 12px; }
+  .mdi-sb-util:hover { color: #dce8f5; }
   .mdi-sb-icon { font-size: 14px; min-width: 20px; text-align: center; }
 
   /* 구분선 + 여백 */
@@ -2421,7 +2421,7 @@
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
     <!-- API 연결 상태 인디케이터 -->
-    <button id="apiStatusBtn" onclick="openSettings()" title="API 연결 상태 — 클릭하여 설정"
+    <button id="apiStatusBtn" title="API 연결 상태"
       style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);cursor:pointer;font-size:12px;font-family:inherit;color:var(--text2);white-space:nowrap;transition:all .2s;">
       <span id="apiStatusDot" style="width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block;flex-shrink:0;"></span>
       <span id="apiStatusLabel">KIS 미연결</span>
@@ -2453,8 +2453,6 @@
     <span class="mdi-sb-toggle-icon">◀</span>
   </button>
 
-  <div class="mdi-sb-section-label">투자패널</div>
-
   <button class="mdi-sb-btn mdi-sb-btn-active" data-pid="watchlist"
           onclick="window._MDI.toggle('watchlist')" title="종목탐색">
     <span class="mdi-sb-icon">★</span>
@@ -2471,9 +2469,6 @@
     <span class="mdi-sb-label">포트폴리오</span>
   </button>
 
-  <div class="mdi-sb-sep"></div>
-  <div class="mdi-sb-section-label">정보</div>
-
   <button class="mdi-sb-btn" data-pid="news"
           onclick="window._MDI.toggle('news')" title="뉴스·시황">
     <span class="mdi-sb-icon">📰</span>
@@ -2486,16 +2481,6 @@
   </button>
 
   <div class="mdi-sb-spacer"></div>
-
-  <button class="mdi-sb-btn mdi-sb-util" onclick="openSettings()" title="환경설정">
-    <span class="mdi-sb-icon">⚙</span>
-    <span class="mdi-sb-label">환경설정</span>
-  </button>
-  <button class="mdi-sb-btn mdi-sb-util" onclick="if(typeof maybeShowLoginModal==='function')maybeShowLoginModal()" title="로그인">
-    <span class="mdi-sb-icon">🔐</span>
-    <span class="mdi-sb-label">로그인</span>
-  </button>
-
 
 </aside>
 
@@ -6262,7 +6247,7 @@ function _renderTargetStopPanel(curPrice) {
         <input id="qo_tgt_input" type="text" inputmode="decimal"
           value="${tgt ? Math.round(tgt).toLocaleString() : ''}" placeholder="입력..."
           oninput="_qoFmtNum(this);_qoUpdatePcts(${portIdx})" onblur="_qoSaveTarget(${portIdx})"
-          style="flex:1;min-width:0;border:none;background:transparent;color:var(--text);font-size:12px;font-weight:600;text-align:right;outline:none;font-family:inherit;">
+          style="flex:1;min-width:0;border:none;background:transparent;color:var(--text);font-size:12px;font-weight:600;text-align:left;outline:none;font-family:inherit;">
         <span id="qo_tgt_pct" style="font-size:10px;color:${tgtPct!==null?(tgtPct>0?'var(--hts-up)':'var(--hts-dn)'):'var(--text3)'};white-space:nowrap;min-width:38px;text-align:right;">${tgtPct!==null?`${tgtPct>0?'+':''}${tgtPct.toFixed(1)}%`:''}</span>
       </div>
     </div>
@@ -6272,7 +6257,7 @@ function _renderTargetStopPanel(curPrice) {
         <input id="qo_stp_input" type="text" inputmode="decimal"
           value="${stp ? Math.round(stp).toLocaleString() : ''}" placeholder="입력..."
           oninput="_qoFmtNum(this);_qoUpdatePcts(${portIdx})" onblur="_qoSaveTarget(${portIdx})"
-          style="flex:1;min-width:0;border:none;background:transparent;color:var(--text);font-size:12px;font-weight:600;text-align:right;outline:none;font-family:inherit;">
+          style="flex:1;min-width:0;border:none;background:transparent;color:var(--text);font-size:12px;font-weight:600;text-align:left;outline:none;font-family:inherit;">
         <span id="qo_stp_pct" style="font-size:10px;color:${stpPct!==null?(stpPct<0?'var(--hts-dn)':'var(--hts-up)'):'var(--text3)'};white-space:nowrap;min-width:38px;text-align:right;">${stpPct!==null?`${stpPct>0?'+':''}${stpPct.toFixed(1)}%`:''}</span>
       </div>
     </div>
@@ -7576,6 +7561,14 @@ function saveJournal() {
       }
     }
     state.journals[editJournalIdx] = entry; // draft 플래그 없음 → 완성 처리
+    // 보유종목의 목표가/손절가도 동기화 (매매창 _renderTargetStopPanel이 portfolio에서 읽음)
+    const portIdx = state.portfolio.findIndex(s => s.name === entry.name && (s.tradeType || 'cash') === (entry.tradeType || 'cash'));
+    if (portIdx >= 0) {
+      if (entry.target1 != null) state.portfolio[portIdx].target1 = entry.target1;
+      if (entry.target2 != null) state.portfolio[portIdx].target2 = entry.target2;
+      if (entry.target3 != null) state.portfolio[portIdx].target3 = entry.target3;
+      if (entry.stop1   != null) state.portfolio[portIdx].stop1   = entry.stop1;
+    }
     editJournalIdx = null;
     document.getElementById('journalFormTitle').innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> 새 투자 일지 작성';
   } else {
@@ -7730,6 +7723,16 @@ function renderJournals() {
       </div>
     </div>`;
   }).join('');
+}
+
+function deleteJournal(idx) {
+  const j = state.journals[idx];
+  if (!j) return;
+  if (!confirm(`'${j.name}' 투자일지를 삭제할까요?\n(보유종목·거래내역은 그대로 유지됩니다)`)) return;
+  state.journals.splice(idx, 1);
+  save();
+  renderJournals();
+  showToast('투자일지가 삭제되었습니다');
 }
 
 function toggleJournalDetail(idx, card) {
@@ -10167,7 +10170,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     <div class="settings-close-row">
       <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.0.0</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.0.1</div>
   </div>
 </div>
 
