@@ -2368,6 +2368,7 @@
 .cal-ev-dot.iss   { background: #ef4444; }
 .cal-ev-dot.misc  { background: #8b5cf6; }
 .cal-ev-dot.econ  { background: #e0a020; }
+.cal-ev-dot.econ-mid { background: #f59e0b; }
 /* 이벤트 리스트 */
 .cal-evlist { flex: 1; overflow-y: auto; padding: 8px 12px; }
 .cal-evlist::-webkit-scrollbar { width: 4px; }
@@ -2454,17 +2455,9 @@
   background-color: #09111e;
 }
 .cal-eco-link:hover { border-color: #2563eb; color: #90bfff; background: #0d1a2e; }
-.cal-eco-iframe-wrap {
-  flex: 1; overflow: hidden; position: relative; background: #fff;
-}
-.cal-eco-iframe-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
-.cal-eco-err {
-  position: absolute; inset: 0; display: none;
-  flex-direction: column; align-items: center; justify-content: center;
-  gap: 14px; background: #070c16; color: #5a7a9a; font-size: 13px;
-  text-align: center; padding: 24px;
-}
-.cal-eco-err.show { display: flex; }
+/* 경제지표 탭 — iframe 제거 후 달력 그리드 레이아웃 */
+.cal-eco .cal-evlist { border-top: 1px solid #1a2840; }
+.cal-eco .cal-eco-nav { margin-top: auto; }
 /* 헤더 D-day 뱃지 */
 #calDdayBadge {
   display: flex; align-items: center; gap: 5px;
@@ -3565,29 +3558,21 @@
 
   <!-- ── 경제지표 탭 ── -->
   <div class="cal-eco" id="calTabEco">
+    <div class="cal-cnav">
+      <button class="cal-cnav-btn" onclick="calEcoPrevMonth()">‹</button>
+      <span class="cal-cnav-month" id="calEcoMonthLabel">2026년 8월</span>
+      <button class="cal-cnav-btn" onclick="calEcoNextMonth()">›</button>
+    </div>
+    <div class="cal-grid-wrap"><div class="cal-grid" id="calEcoGrid"></div></div>
+    <div class="cal-evlist" id="calEcoEvList">
+      <div class="cal-evlist-hdr" id="calEcoEvListHdr">날짜를 선택하세요</div>
+      <div id="calEcoEvListBody"></div>
+    </div>
     <div class="cal-eco-nav">
       <span style="font-size:11px;color:#3a5070;align-self:center">바로가기:</span>
       <button class="cal-eco-link" onclick="openCalLink('https://www.investing.com/economic-calendar/')">Investing.com ↗</button>
-      <button class="cal-eco-link" onclick="openCalLink('https://finance.naver.com/news/news_list.nhn?mode=LSS2D&section_id=101')">네이버증권 ↗</button>
       <button class="cal-eco-link" onclick="openCalLink('https://www.bok.or.kr/portal/main/main.do')">한국은행 ↗</button>
-    </div>
-    <div class="cal-eco-iframe-wrap" id="calEcoWrap">
-      <iframe id="calEcoIframe"
-        src="https://sslecal2.investing.com/?columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timezone&countries=5,11&calType=week&timeZone=88&lang=18"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
-        loading="lazy" title="investing.com 경제 캘린더">
-      </iframe>
-      <div class="cal-eco-err" id="calEcoErr">
-        <span style="font-size:32px">📅</span>
-        <span style="color:#7aa0be;font-weight:600">경제지표 캘린더</span>
-        <span style="font-size:11px;line-height:1.6;color:#4a6080">iframe 임베드가 차단된 경우<br>아래 링크에서 직접 확인하세요</span>
-        <button class="cal-eco-link" onclick="openCalLink('https://www.investing.com/economic-calendar/')">
-          Investing.com 열기 ↗
-        </button>
-        <button class="cal-eco-link" style="margin-top:-6px" onclick="openCalLink('https://kr.investing.com/economic-calendar/')">
-          한국어 버전 열기 ↗
-        </button>
-      </div>
+      <button class="cal-eco-link" onclick="openCalLink('https://www.bok.or.kr/portal/main/contents.do?menuNo=200656')">금통위 일정 ↗</button>
     </div>
   </div>
 </div>
@@ -10322,7 +10307,7 @@ function _toggleCheck(stockKey, checkKey, val) {
 
 
 /* ═══════════════════════════════════════════════════════════════
-   경제·주식 캘린더 슬라이드 패널  (Stock Book v1.0.2)
+   경제·주식 캘린더 슬라이드 패널  (Stock Book v1.0.3)
    ─ MAJOR_ECON_EVENTS: 한국/미국 주요 경제지표 하드코딩 (2026)
    ─ state.calEvents: 사용자 추가 기업이벤트 (localStorage 영속)
 ═══════════════════════════════════════════════════════════════ */
@@ -10359,14 +10344,82 @@ function _toggleCheck(stockKey, checkKey, val) {
     { date:'2026-12-29', name:'한국은행 금통위',           country:'KR', impact:'high' },
   ];
 
+  /* ── KOSPI200/KOSDAQ150 주요 기업 이벤트 (하드코딩) ─────── */
+  const CORP_EVENTS = [
+    // ===== Q2 2026 실적발표 =====
+    { date:'2026-07-07', name:'삼성전자 Q2 잠정실적',       cat:'earn', ticker:'005930' },
+    { date:'2026-07-22', name:'POSCO홀딩스 Q2 실적',        cat:'earn', ticker:'005490' },
+    { date:'2026-07-23', name:'LG화학 Q2 실적',             cat:'earn', ticker:'051910' },
+    { date:'2026-07-23', name:'삼성SDI Q2 실적',            cat:'earn', ticker:'006400' },
+    { date:'2026-07-24', name:'LG에너지솔루션 Q2 실적',     cat:'earn', ticker:'373220' },
+    { date:'2026-07-24', name:'현대차 Q2 실적',             cat:'earn', ticker:'005380' },
+    { date:'2026-07-24', name:'기아 Q2 실적',               cat:'earn', ticker:'000270' },
+    { date:'2026-07-24', name:'LG전자 Q2 실적',             cat:'earn', ticker:'066570' },
+    { date:'2026-07-29', name:'SK하이닉스 Q2 실적',         cat:'earn', ticker:'000660' },
+    { date:'2026-07-30', name:'삼성전자 Q2 확정실적',       cat:'earn', ticker:'005930' },
+    { date:'2026-07-31', name:'HD현대중공업 Q2 실적',       cat:'earn', ticker:'329180' },
+    { date:'2026-07-31', name:'한화에어로스페이스 Q2 실적', cat:'earn', ticker:'012450' },
+    { date:'2026-08-05', name:'NAVER Q2 실적',              cat:'earn', ticker:'035420' },
+    { date:'2026-08-06', name:'카카오 Q2 실적',             cat:'earn', ticker:'035720' },
+    { date:'2026-08-06', name:'HMM Q2 실적',                cat:'earn', ticker:'011200' },
+    { date:'2026-08-06', name:'고려아연 Q2 실적',           cat:'earn', ticker:'010130' },
+    { date:'2026-08-06', name:'LIG넥스원 Q2 실적',          cat:'earn', ticker:'079550' },
+    { date:'2026-08-07', name:'현대모비스 Q2 실적',         cat:'earn', ticker:'012330' },
+    { date:'2026-08-07', name:'LG유플러스 Q2 실적',         cat:'earn', ticker:'032640' },
+    { date:'2026-08-12', name:'삼성바이오로직스 Q2 실적',   cat:'earn', ticker:'207940' },
+    { date:'2026-08-12', name:'셀트리온 Q2 실적',           cat:'earn', ticker:'068270' },
+    { date:'2026-08-12', name:'크래프톤 Q2 실적',           cat:'earn', ticker:'259960' },
+    { date:'2026-08-13', name:'에코프로비엠 Q2 실적',       cat:'earn', ticker:'247540' },
+    { date:'2026-08-14', name:'KB금융 Q2 실적',             cat:'earn', ticker:'105560' },
+    { date:'2026-08-14', name:'신한지주 Q2 실적',           cat:'earn', ticker:'055550' },
+    { date:'2026-08-14', name:'하나금융지주 Q2 실적',       cat:'earn', ticker:'086790' },
+    { date:'2026-08-14', name:'우리금융 Q2 실적',           cat:'earn', ticker:'316140' },
+    { date:'2026-08-20', name:'레인보우로보틱스 Q2 실적',   cat:'earn', ticker:'277810' },
+    // ===== Q3 2026 실적발표 (예상) =====
+    { date:'2026-10-07', name:'삼성전자 Q3 잠정실적 *예상', cat:'earn', ticker:'005930' },
+    { date:'2026-10-22', name:'POSCO홀딩스 Q3 실적 *예상',  cat:'earn', ticker:'005490' },
+    { date:'2026-10-22', name:'삼성SDI Q3 실적 *예상',      cat:'earn', ticker:'006400' },
+    { date:'2026-10-22', name:'LG화학 Q3 실적 *예상',       cat:'earn', ticker:'051910' },
+    { date:'2026-10-22', name:'SK하이닉스 Q3 실적 *예상',   cat:'earn', ticker:'000660' },
+    { date:'2026-10-22', name:'하나금융지주 Q3 실적 *예상', cat:'earn', ticker:'086790' },
+    { date:'2026-10-23', name:'현대차 Q3 실적 *예상',       cat:'earn', ticker:'005380' },
+    { date:'2026-10-23', name:'기아 Q3 실적 *예상',         cat:'earn', ticker:'000270' },
+    { date:'2026-10-23', name:'LG에너지솔루션 Q3 실적 *예상',cat:'earn',ticker:'373220' },
+    { date:'2026-10-24', name:'LG전자 Q3 실적 *예상',       cat:'earn', ticker:'066570' },
+    { date:'2026-10-24', name:'KB금융 Q3 실적 *예상',       cat:'earn', ticker:'105560' },
+    { date:'2026-10-24', name:'신한지주 Q3 실적 *예상',     cat:'earn', ticker:'055550' },
+    { date:'2026-10-24', name:'현대모비스 Q3 실적 *예상',   cat:'earn', ticker:'012330' },
+    { date:'2026-10-25', name:'우리금융 Q3 실적 *예상',     cat:'earn', ticker:'316140' },
+    { date:'2026-10-29', name:'HD현대중공업 Q3 실적 *예상', cat:'earn', ticker:'329180' },
+    { date:'2026-10-29', name:'한화에어로스페이스 Q3 실적 *예상',cat:'earn',ticker:'012450' },
+    { date:'2026-10-29', name:'SK이노베이션 Q3 실적 *예상', cat:'earn', ticker:'096770' },
+    { date:'2026-10-30', name:'삼성전자 Q3 확정실적 *예상', cat:'earn', ticker:'005930' },
+    { date:'2026-11-05', name:'NAVER Q3 실적 *예상',        cat:'earn', ticker:'035420' },
+    { date:'2026-11-06', name:'KT&G Q3 실적 *예상',         cat:'earn', ticker:'033780' },
+    { date:'2026-11-07', name:'카카오 Q3 실적 *예상',       cat:'earn', ticker:'035720' },
+    { date:'2026-11-12', name:'삼성바이오로직스 Q3 실적 *예상',cat:'earn',ticker:'207940' },
+    { date:'2026-11-12', name:'셀트리온 Q3 실적 *예상',     cat:'earn', ticker:'068270' },
+    { date:'2026-11-12', name:'크래프톤 Q3 실적 *예상',     cat:'earn', ticker:'259960' },
+    { date:'2026-11-12', name:'레인보우로보틱스 Q3 실적 *예상',cat:'earn',ticker:'277810' },
+    // ===== 배당기준일 (예정) =====
+    { date:'2026-12-29', name:'코스피 배당락일 *예정',      cat:'div',  ticker:'' },
+    { date:'2026-12-31', name:'삼성전자 배당기준일 *예정',  cat:'div',  ticker:'005930' },
+    { date:'2026-12-31', name:'SK하이닉스 배당기준일 *예정',cat:'div',  ticker:'000660' },
+    { date:'2026-12-31', name:'현대차 배당기준일 *예정',    cat:'div',  ticker:'005380' },
+    { date:'2026-12-31', name:'POSCO홀딩스 배당기준일 *예정',cat:'div', ticker:'005490' },
+  ];
+
   /* ── 상태 변수 ─────────────────────────────────────────── */
-  let _open       = false;
-  let _tab        = 'corp';
-  let _year       = new Date().getFullYear();
-  let _month      = new Date().getMonth(); // 0-indexed
-  let _selDate    = null;
-  let _addOpen    = false;
-  let _ecoChecked = false;
+  let _open     = false;
+  let _tab      = 'corp';
+  let _year     = new Date().getFullYear();
+  let _month    = new Date().getMonth(); // 0-indexed
+  let _selDate  = null;
+  let _addOpen  = false;
+  // 경제지표 탭 전용 상태
+  let _ecoYear  = new Date().getFullYear();
+  let _ecoMonth = new Date().getMonth();
+  let _ecoSelDate = null;
 
   /* ── state.calEvents 초기화 보장 ──────────────────────── */
   function ensureCalEvents() {
@@ -10389,7 +10442,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     _year = parseInt(y); _month = parseInt(m) - 1;
     renderCalCorpGrid();
     renderCalEvList();
-    if (_tab === 'eco' && !_ecoChecked) checkEcoIframe();
+    if (_tab === 'eco') { renderCalEcoGrid(); renderCalEcoEvList(); }
   };
 
   window.closeCalendarPanel = function () {
@@ -10407,29 +10460,8 @@ function _toggleCheck(stockKey, checkKey, val) {
     document.getElementById('calTabEco').style.display  = tab === 'eco'  ? 'flex' : 'none';
     document.getElementById('calTbCorp').classList.toggle('active', tab === 'corp');
     document.getElementById('calTbEco').classList.toggle('active',  tab === 'eco');
-    if (tab === 'eco' && !_ecoChecked) checkEcoIframe();
+    if (tab === 'eco') { renderCalEcoGrid(); renderCalEcoEvList(); }
   };
-
-  /* ── investing.com iframe 로드 체크 ─────────────────── */
-  function checkEcoIframe() {
-    _ecoChecked = true;
-    const iframe = document.getElementById('calEcoIframe');
-    const err    = document.getElementById('calEcoErr');
-    if (!iframe || !err) return;
-    iframe.onload = null;
-    setTimeout(function () {
-      try {
-        const doc = iframe.contentDocument;
-        // 접근 가능하고 빈 body → 차단된 것
-        if (doc && doc.body && doc.body.innerHTML.trim().length < 10) {
-          err.classList.add('show');
-        }
-      } catch (e) {
-        // cross-origin error → 정상 로드됨
-        err.classList.remove('show');
-      }
-    }, 4000);
-  }
 
   /* ── 외부 링크 열기 ─────────────────────────────────── */
   window.openCalLink = function (url) {
@@ -10465,8 +10497,8 @@ function _toggleCheck(stockKey, checkKey, val) {
       const dateStr = `${_year}-${mm}-${dd}`;
       const dow     = new Date(dateStr).getDay();
       const userEv  = state.calEvents.filter(e => e.date === dateStr);
-      const econEv  = ECON.filter(e => e.date === dateStr);
-      const hasEv   = userEv.length > 0 || econEv.length > 0;
+      const corpEv  = CORP_EVENTS.filter(e => e.date === dateStr);
+      const hasEv   = userEv.length > 0 || corpEv.length > 0;
       const isTod   = dateStr === today;
       const isSel   = dateStr === _selDate;
       let cls = 'cal-day' + (isTod ? ' today' : '') + (isSel ? ' sel' : '') + (hasEv ? ' has-ev' : '');
@@ -10474,7 +10506,7 @@ function _toggleCheck(stockKey, checkKey, val) {
       let style = dow === 0 ? ' style="color:#8a4050"' : dow === 6 ? ' style="color:#3a5080"' : '';
       if (isTod || isSel || hasEv) style = '';  // 클래스 색상 우선
       let dots = '';
-      if (econEv.length) dots += `<div class="cal-ev-dot econ"></div>`;
+      corpEv.forEach(e => { dots += `<div class="cal-ev-dot ${e.cat || 'earn'}"></div>`; });
       userEv.forEach(e => { dots += `<div class="cal-ev-dot ${e.cat || 'misc'}"></div>`; });
       html += `<div class="${cls}"${style} onclick="calSelectDay('${dateStr}')">${d}${dots ? `<div class="cal-ev-dots">${dots}</div>` : ''}</div>`;
     }
@@ -10502,28 +10534,26 @@ function _toggleCheck(stockKey, checkKey, val) {
     const dow       = dayNames[new Date(_selDate).getDay()];
     hdr.textContent = `${parseInt(y)}년 ${parseInt(m)}월 ${parseInt(d)}일 (${dow})`;
 
-    const econEvs = ECON.filter(e => e.date === _selDate);
-    const userEvs = state.calEvents.filter(e => e.date === _selDate);
-
+    const catMap = { earn:'실적발표', div:'배당기준일', split:'액면분할', iss:'증자·소각', misc:'기타' };
     let html = '';
 
-    econEvs.forEach(function (e) {
-      const flag      = e.country === 'US' ? '🇺🇸' : '🇰🇷';
-      const impColor  = e.impact === 'high' ? '#ef4444' : '#f59e0b';
-      const impLabel  = e.impact === 'high' ? '고영향' : '중영향';
+    // 하드코딩 기업 이벤트 (KOSPI200/KOSDAQ150)
+    CORP_EVENTS.filter(e => e.date === _selDate).forEach(function (e) {
+      const catLabel = catMap[e.cat] || '실적발표';
+      const isEst    = e.name.includes('*예상') || e.name.includes('*예정');
+      const dispName = e.name.replace(' *예상', '').replace(' *예정', '');
       html += `<div class="cal-ev-item">
         <div class="cal-ev-row">
-          <span style="font-size:14px;flex-shrink:0">${flag}</span>
-          <span class="cal-ev-name">${e.name}</span>
-          <span style="width:7px;height:7px;border-radius:50%;background:${impColor};flex-shrink:0;display:inline-block"></span>
+          <span class="cal-ev-name">${dispName}${e.ticker ? `<span style="color:#3a5070;font-size:10px;margin-left:4px">(${e.ticker})</span>` : ''}</span>
+          <span class="cal-ev-badge ${e.cat || 'earn'}">${catLabel}</span>
         </div>
-        <div class="cal-ev-sub">경제지표 · ${impLabel} · ${e.country === 'US' ? '미국' : '한국'}</div>
+        ${isEst ? `<div class="cal-ev-sub">예상 일정 · 변동 가능</div>` : ''}
       </div>`;
     });
 
+    // 사용자 추가 이벤트
     state.calEvents.forEach(function (e, i) {
       if (e.date !== _selDate) return;
-      const catMap   = { earn:'실적발표', div:'배당기준일', split:'액면분할', iss:'증자·소각', misc:'기타' };
       const catLabel = catMap[e.cat] || '기타';
       html += `<div class="cal-ev-item">
         <div class="cal-ev-row">
@@ -10550,6 +10580,98 @@ function _toggleCheck(stockKey, checkKey, val) {
     if (_month > 11) { _month = 0; _year++; }
     renderCalCorpGrid();
     renderCalEvList();
+  };
+
+  /* ── 경제지표 탭: 달력 그리드 렌더링 ───────────────── */
+  window.renderCalEcoGrid = function () {
+    const grid  = document.getElementById('calEcoGrid');
+    const label = document.getElementById('calEcoMonthLabel');
+    if (!grid) return;
+    label.textContent = `${_ecoYear}년 ${_ecoMonth + 1}월`;
+
+    const dows = ['일','월','화','수','목','금','토'];
+    let html = dows.map(d =>
+      `<div class="cal-dow${d === '일' ? '" style="color:#6a3040' : d === '토' ? '" style="color:#2a4070' : ''}">${d}</div>`
+    ).join('');
+
+    const firstDay    = new Date(_ecoYear, _ecoMonth, 1).getDay();
+    const daysInMonth = new Date(_ecoYear, _ecoMonth + 1, 0).getDate();
+    const today       = new Date().toISOString().slice(0, 10);
+
+    for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const mm      = String(_ecoMonth + 1).padStart(2, '0');
+      const dd      = String(d).padStart(2, '0');
+      const dateStr = `${_ecoYear}-${mm}-${dd}`;
+      const dow     = new Date(dateStr).getDay();
+      const evs     = ECON.filter(e => e.date === dateStr);
+      const hasEv   = evs.length > 0;
+      const isTod   = dateStr === today;
+      const isSel   = dateStr === _ecoSelDate;
+      let cls = 'cal-day' + (isTod ? ' today' : '') + (isSel ? ' sel' : '') + (hasEv ? ' has-ev' : '');
+      let style = dow === 0 ? ' style="color:#8a4050"' : dow === 6 ? ' style="color:#3a5080"' : '';
+      if (isTod || isSel || hasEv) style = '';
+      let dots = '';
+      evs.forEach(e => {
+        dots += `<div class="cal-ev-dot ${e.impact === 'high' ? 'econ' : 'econ-mid'}"></div>`;
+      });
+      html += `<div class="${cls}"${style} onclick="calEcoSelectDay('${dateStr}')">${d}${dots ? `<div class="cal-ev-dots">${dots}</div>` : ''}</div>`;
+    }
+    grid.innerHTML = html;
+  };
+
+  /* ── 경제지표 탭: 날짜 선택 ─────────────────────────── */
+  window.calEcoSelectDay = function (dateStr) {
+    _ecoSelDate = dateStr;
+    renderCalEcoGrid();
+    renderCalEcoEvList();
+  };
+
+  /* ── 경제지표 탭: 이벤트 리스트 렌더링 ─────────────── */
+  window.renderCalEcoEvList = function () {
+    const hdr  = document.getElementById('calEcoEvListHdr');
+    const body = document.getElementById('calEcoEvListBody');
+    if (!hdr || !body) return;
+
+    if (!_ecoSelDate) { hdr.textContent = '날짜를 선택하세요'; body.innerHTML = ''; return; }
+
+    const [y, m, d] = _ecoSelDate.split('-');
+    const dayNames  = ['일','월','화','수','목','금','토'];
+    const dow       = dayNames[new Date(_ecoSelDate).getDay()];
+    hdr.textContent = `${parseInt(y)}년 ${parseInt(m)}월 ${parseInt(d)}일 (${dow})`;
+
+    const evs = ECON.filter(e => e.date === _ecoSelDate);
+    let html = '';
+    evs.forEach(function (e) {
+      const flag     = e.country === 'US' ? '🇺🇸' : '🇰🇷';
+      const impColor = e.impact === 'high' ? '#ef4444' : '#f59e0b';
+      const impLabel = e.impact === 'high' ? '고영향' : '중영향';
+      html += `<div class="cal-ev-item">
+        <div class="cal-ev-row">
+          <span style="font-size:14px;flex-shrink:0">${flag}</span>
+          <span class="cal-ev-name">${e.name}</span>
+          <span style="width:7px;height:7px;border-radius:50%;background:${impColor};flex-shrink:0;display:inline-block"></span>
+        </div>
+        <div class="cal-ev-sub">경제지표 · ${impLabel} · ${e.country === 'US' ? '미국' : '한국'}</div>
+      </div>`;
+    });
+    if (!html) html = `<div style="color:#2a3a4a;font-size:12px;text-align:center;padding:22px 0">이 날의 경제지표 일정이 없습니다</div>`;
+    body.innerHTML = html;
+  };
+
+  /* ── 경제지표 탭: 월 이동 ───────────────────────────── */
+  window.calEcoPrevMonth = function () {
+    _ecoMonth--;
+    if (_ecoMonth < 0) { _ecoMonth = 11; _ecoYear--; }
+    renderCalEcoGrid();
+    renderCalEcoEvList();
+  };
+  window.calEcoNextMonth = function () {
+    _ecoMonth++;
+    if (_ecoMonth > 11) { _ecoMonth = 0; _ecoYear++; }
+    renderCalEcoGrid();
+    renderCalEcoEvList();
   };
 
   /* ── 이벤트 추가 폼 토글 ────────────────────────────── */
@@ -10609,6 +10731,7 @@ function _toggleCheck(stockKey, checkKey, val) {
 
     const all = [
       ...ECON.map(e => ({ date: e.date, name: e.name })),
+      ...CORP_EVENTS.map(e => ({ date: e.date, name: e.name.replace(' *예상','').replace(' *예정','') })),
       ...state.calEvents.map(e => ({ date: e.date, name: e.name })),
     ];
 
@@ -10632,6 +10755,8 @@ function _toggleCheck(stockKey, checkKey, val) {
     // 탭 초기 상태 적용
     document.getElementById('calTabCorp').style.display = 'flex';
     document.getElementById('calTabEco').style.display  = 'none';
+    // 경제지표 그리드 사전 렌더 (탭 전환 시 즉시 표시용)
+    renderCalEcoGrid();
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', _calInit);
@@ -10760,7 +10885,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     <div class="settings-close-row">
       <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.0.2</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.0.3</div>
   </div>
 </div>
 
