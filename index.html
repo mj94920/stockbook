@@ -4029,6 +4029,10 @@
           <option>건설/기계장비</option>
           <option>조선/해양산업</option>
           <option>운송</option>
+          <option>금융/은행</option>
+          <option>지주</option>
+          <option>화학/소재</option>
+          <option>철강/금속</option>
           <option>기타</option>
         </select>
       </div>
@@ -4672,6 +4676,7 @@ function load() {
 // 앱 닫기 전 반드시 localStorage에 동기 저장
 window.addEventListener('beforeunload', () => {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+  try { if (window._MDI) window._MDI.saveMdiLayout(); } catch(e) {}
 });
 function openTotalAssetModal() {
   const inp = document.getElementById('totalAssetModalInput');
@@ -5619,19 +5624,19 @@ function _getAutoSector(name, industry) {
   if (/한미반도체|주성엔지|원익ips|이오테크닉스|테스나|피에스케이|리노공업|hpsp|인텍플러스|동진쎄미켐|솔브레인|티씨케이|에스앤에스텍|케이씨텍|나노신소재|레이크머티리얼즈|티이엠씨|한솔케미칼|sk머티리얼즈|원익msp|하나머티리얼즈/.test(n) || /반도체장비|반도체소재|웨이퍼/.test(ind)) return '전기전자/반도체';
 
   // 게임
-  if (/크래프톤|넥슨|엔씨소프트|펄어비스|카카오게임즈|네오위즈|컴투스|위메이드|넷마블|시프트업|웹젠|데브시스터즈/.test(n) || /게임개발|게임소프트/.test(ind)) return '게임';
+  if (/크래프톤|krafton|넥슨|엔씨소프트|펄어비스|카카오게임즈|네오위즈|컴투스|위메이드|넷마블|시프트업|웹젠|데브시스터즈/.test(n) || /게임개발|게임소프트/.test(ind)) return '게임';
 
   // 엔터테인먼트
-  if (/하이브|sm엔터|jyp엔터|yg엔터|와이지엔터|cjenm|쇼박스|스튜디오드래곤/.test(n) || /엔터테인먼트|음반|연예기획/.test(ind)) return '엔터테인먼트';
+  if (/하이브|hybe|sm엔터|jyp엔터|yg엔터|와이지엔터|cjenm|쇼박스|스튜디오드래곤/.test(n) || /엔터테인먼트|음반|연예기획/.test(ind)) return '엔터테인먼트';
 
   // 인공지능/로봇
   if (/레인보우로보틱스|두산로보틱스|현대로보틱스|티로보틱스|유진로봇|로보스타|솔트룩스|코난테크놀로지|씨이랩|래블업|스캐터랩/.test(n) || /로봇|인공지능|ai솔루션/.test(ind)) return '인공지능/로봇';
 
   // IT/플랫폼
-  if (/네이버|카카오|nhn|더존비즈온|카카오페이|한글과컴퓨터|웹케시|더존|에스더블유엠/.test(n) || /인터넷서비스|플랫폼|소프트웨어|it서비스/.test(ind)) return 'IT/플랫폼';
+  if (/네이버|naver|카카오|kakao|nhn|더존비즈온|카카오페이|한글과컴퓨터|웹케시|더존|에스더블유엠/.test(n) || /인터넷서비스|플랫폼|소프트웨어|it서비스/.test(ind)) return 'IT/플랫폼';
 
   // 통신/보안/서버
-  if (/sk텔레콤|kt|lg유플러스|삼성sds|kt클라우드|에스원|sk인포섹|시큐아이|안랩|이글루시큐리티/.test(n) || /통신서비스|보안솔루션|서버|데이터센터/.test(ind)) return '통신/보안/서버';
+  if (/sk텔레콤|skt|kt$|ktcorp|lg유플러스|삼성sds|kt클라우드|에스원|sk인포섹|시큐아이|안랩|이글루시큐리티/.test(n) || /통신서비스|보안솔루션|서버|데이터센터/.test(ind)) return '통신/보안/서버';
 
   // 항공우주
   if (/한국항공우주|kai|한화에어로스페이스/.test(n) || /항공우주|위성/.test(ind)) return '항공우주';
@@ -5640,10 +5645,10 @@ function _getAutoSector(name, industry) {
   if (/한화에어로|한화시스템|현대로템|lig넥스원|풍산|빅텍|퍼스텍|한국방위/.test(n) || /방산|방위산업/.test(ind)) return '방위산업';
 
   // 자동차
-  if (/현대차|기아|현대모비스|만도|현대위아|현대트랜시스|hl만도|세방전지|현대오토에버/.test(n) || /완성차|자동차부품/.test(ind)) return '자동차';
+  if (/현대차|기아$|현대모비스|만도|현대위아|현대트랜시스|hl만도|세방전지|현대오토에버/.test(n) || /완성차|자동차부품/.test(ind)) return '자동차';
 
   // 원자력/에너지
-  if (/두산에너빌|한국원자력|한전기술|한전kps|우리기술|비에이치아이|두산중공업|제룡전기|가온전선|ls전선|대한전선|일진전기|효성중공업|ls일렉트릭|현대일렉트릭|제일전기/.test(n) || /원자력|핵연료|전력기기|전선|변압기/.test(ind)) return '원자력/에너지';
+  if (/두산에너빌|한국원자력|한전기술|한전kps|우리기술|비에이치아이|두산중공업|제룡전기|가온전선|ls전선|대한전선|일진전기|효성중공업|ls일렉트릭|lselectric|현대일렉트릭|hdelectric|제일전기/.test(n) || /원자력|핵연료|전력기기|전선|변압기/.test(ind)) return '원자력/에너지';
 
   // 수소/가스
   if (/일진하이솔루스|sk가스|하이리움산업|수소에너지네트워크|에이치엔지|대성산업/.test(n) || /수소|연료전지|lng|lpg/.test(ind)) return '수소/가스';
@@ -5665,6 +5670,18 @@ function _getAutoSector(name, industry) {
 
   // 운송
   if (/대한항공|아시아나항공|제주항공|진에어|에어부산|현대글로비스|cj대한통운|한진|팬오션|흥아해운/.test(n) || /항공운송|해운|화물운송|물류/.test(ind)) return '운송';
+
+  // 금융/은행 (신규)
+  if (/kb금융|신한지주|신한금융|하나금융지주|하나금융|우리금융지주|우리금융|삼성생명|한화생명|삼성화재|현대해상|db손해보험|메리츠금융지주|메리츠금융|미래에셋증권|삼성증권|키움증권|nh투자증권|한국투자증권|ibk기업은행|카카오뱅크|케이뱅크|토스뱅크/.test(n) || /금융지주|은행업|보험업|증권업|저축은행/.test(ind)) return '금융/은행';
+
+  // 지주 (신규) — 위에서 걸리지 않은 순수 지주사
+  if (/sk\(주\)|^lg$|롯데지주|^gs$|^cj$|^한화$|코오롱인더|^두산$|^oci$/.test(n) || /지주회사|holding/.test(ind)) return '지주';
+
+  // 화학/소재 (신규)
+  if (/lg화학|롯데케미칼|금호석유|skc$|효성화학|롯데정밀화학|이수화학|태광산업|코오롱플라스틱|엔켐|동성화학|금호폴리켐|한화임팩트|코오롱인더스트리/.test(n) || /정밀화학|화학소재|특수화학|기초화학/.test(ind)) return '화학/소재';
+
+  // 철강/금속 (신규)
+  if (/포스코홀딩스|poscoholdings|posco|현대제철|고려아연|영풍|kg스틸|동국제강|세아제강|포스코스틸리온|문배철강|동국씨엠|현대비앤지스틸/.test(n) || /철강|금속제련|특수강|압연/.test(ind)) return '철강/금속';
 
   // 4차산업 (fallback)
   if (ind.includes('클라우드') || ind.includes('iot') || ind.includes('빅데이터') || ind.includes('스마트팩토리')) return '4차산업';
@@ -8832,15 +8849,23 @@ async function loadApiKeysUI() {
     const el2 = document.getElementById('apiBadge_' + b);
     if (el2) el2.textContent = ok ? '✓ 저장됨' : '';
   });
-  syncApiAccounts({ kis: kisOk, kiwoom: kiwoomOk, ls: lsOk, toss: tossOk });
+  await syncApiAccounts({ kis: kisOk, kiwoom: kiwoomOk, ls: lsOk, toss: tossOk });
 }
 
 // ── API 연결 계좌 자동 등록 ───────────────────────────────────────────────
-function syncApiAccounts(connected) {
+async function syncApiAccounts(connected) {
   if (!state.accounts) state.accounts = [];
   let needsSave = false;
-  Object.entries(connected).forEach(([broker, ok]) => {
-    if (!ok) return;
+  for (const [broker, ok] of Object.entries(connected)) {
+    if (!ok) continue;
+    // 저장된 API 키에서 계좌번호 읽기 (1계좌 1API 원칙)
+    let storedNumber = '';
+    if (window.electronAPI?.loadApiKey) {
+      try {
+        const data = await window.electronAPI.loadApiKey(broker);
+        storedNumber = data?.account || '';
+      } catch(e) {}
+    }
     const existing = state.accounts.find(a => a.broker === broker && !a.isManual);
     if (!existing) {
       const bi = (typeof BROKER_INFO !== 'undefined' && BROKER_INFO[broker]) || {};
@@ -8848,7 +8873,7 @@ function syncApiAccounts(connected) {
         id: (typeof _acctId === 'function') ? _acctId() : ('api_' + broker + '_' + Date.now()),
         broker,
         nickname: (bi.name || broker) + ' (API)',
-        number: '',
+        number: storedNumber,
         type: '위탁',
         isManual: false,
         isActive: true,
@@ -8856,13 +8881,18 @@ function syncApiAccounts(connected) {
         createdAt: new Date().toISOString().slice(0, 10),
       });
       needsSave = true;
+    } else if (storedNumber && existing.number !== storedNumber) {
+      // 계좌번호가 바뀐 경우 업데이트
+      existing.number = storedNumber;
+      needsSave = true;
     }
-  });
+  }
   if (needsSave) {
     save();
     try { updateAcctCountLabel(); } catch(e) {}
     try { populateQOAccountSelect(); } catch(e) {}
     try { renderAccountPanel(); } catch(e) {}
+    try { renderAcctFilterBar(); } catch(e) {}
   }
 }
 
@@ -9121,12 +9151,29 @@ function renderAcctFilterBar() {
   const bar = document.getElementById('acctFilterBar');
   if (!bar) return;
   const accounts = state.accounts || [];
-  if (accounts.length <= 1) { bar.innerHTML = ''; return; }
-  const chips = [{ id: '', label: '전체', color: 'var(--accent)' }]
-    .concat(accounts.map(a => ({ id: a.id, label: a.nickname + (a.number ? ' (' + a.number + ')' : ''), color: (BROKER_INFO[a.broker] || {}).color || '#888' })));
-  bar.innerHTML = chips.map(c => {
-    const active = _acctFilter === c.id ? 'active' : '';
-    return `<span class="acct-filter-chip ${active}" style="--acct-chip-color:${c.color}" onclick="setAcctFilter('${c.id}')">${escHtml(c.label)}</span>`;
+  if (accounts.length === 0) { bar.innerHTML = ''; bar.style.cssText = ''; return; }
+  // 수직 목록형 레이아웃
+  bar.style.cssText = 'display:flex;flex-direction:column;gap:2px;padding:4px 0 6px;';
+  const items = [{ id: '', nickname: '모아보기', number: '', color: 'var(--accent)' }]
+    .concat(accounts.map(a => ({
+      id: a.id, nickname: a.nickname, number: a.number || '',
+      color: (BROKER_INFO[a.broker] || {}).color || '#888'
+    })));
+  bar.innerHTML = items.map(item => {
+    const active = _acctFilter === item.id;
+    const bg     = active ? `color-mix(in srgb,${item.color} 14%,transparent)` : 'transparent';
+    const bc     = active ? item.color : 'var(--border)';
+    const tc     = active ? item.color : 'var(--text2)';
+    const fw     = active ? '700' : '500';
+    const dot    = item.id
+      ? `<span style="width:7px;height:7px;border-radius:50%;background:${item.color};flex-shrink:0;margin-right:6px;display:inline-block;"></span>`
+      : `<span style="width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-right:6px;display:inline-block;"></span>`;
+    const numSpan = item.number
+      ? `<span style="font-size:10px;opacity:0.65;margin-left:5px;">${escHtml(item.number)}</span>` : '';
+    return `<div onclick="setAcctFilter('${escHtml(item.id)}')"
+      style="display:flex;align-items:center;padding:4px 10px;border-radius:7px;border:1px solid ${bc};cursor:pointer;font-size:12px;font-weight:${fw};color:${tc};background:${bg};transition:all .12s;">
+      ${dot}<span>${escHtml(item.nickname)}</span>${numSpan}
+    </div>`;
   }).join('');
 }
 
@@ -9432,14 +9479,17 @@ function renderLoginFields() {
     kiwoom: [
       { id:'lf_kiwoomAppKey',    label:'App Key',    type:'password', placeholder:'키움 App Key' },
       { id:'lf_kiwoomAppSecret', label:'App Secret', type:'password', placeholder:'App Secret' },
+      { id:'lf_kiwoomAccount',   label:'계좌번호',   type:'text',     placeholder:'예: 12345678-01' },
     ],
     ls: [
       { id:'lf_lsAppKey',    label:'App Key',    type:'password', placeholder:'LS증권 App Key' },
       { id:'lf_lsAppSecret', label:'App Secret', type:'password', placeholder:'App Secret' },
+      { id:'lf_lsAccount',   label:'계좌번호',   type:'text',     placeholder:'예: 12345678-01' },
     ],
     toss: [
       { id:'lf_tossClientId',     label:'Client ID',     type:'password', placeholder:'Client ID' },
       { id:'lf_tossClientSecret', label:'Client Secret', type:'password', placeholder:'Client Secret' },
+      { id:'lf_tossAccount',      label:'계좌번호',      type:'text',     placeholder:'예: 12345678-01' },
     ],
   };
   const fields = fieldMap[broker] || [];
@@ -9464,9 +9514,9 @@ async function loginSaveKey() {
   const broker = document.getElementById('loginBrokerSel')?.value || 'kis';
   const fieldMap = {
     kis:    { appKey:'lf_kisAppKey', appSecret:'lf_kisAppSecret', account:'lf_kisAccount' },
-    kiwoom: { appKey:'lf_kiwoomAppKey', appSecret:'lf_kiwoomAppSecret' },
-    ls:     { appKey:'lf_lsAppKey', appSecret:'lf_lsAppSecret' },
-    toss:   { clientId:'lf_tossClientId', clientSecret:'lf_tossClientSecret' },
+    kiwoom: { appKey:'lf_kiwoomAppKey', appSecret:'lf_kiwoomAppSecret', account:'lf_kiwoomAccount' },
+    ls:     { appKey:'lf_lsAppKey', appSecret:'lf_lsAppSecret', account:'lf_lsAccount' },
+    toss:   { clientId:'lf_tossClientId', clientSecret:'lf_tossClientSecret', account:'lf_tossAccount' },
   };
   const keyMap  = fieldMap[broker] || {};
   const data    = {};
@@ -9546,6 +9596,7 @@ function renderBrokerFields(broker) {
       <div class="broker-fields-hint">키움증권 Open API+ REST 키입니다. 기존 저장값은 빈칸으로 두면 유지됩니다.</div>
       <div class="api-key-input-row"><input class="api-key-input" id="kiwoomAppKey" type="password" placeholder="App Key" autocomplete="off"></div>
       <div class="api-key-input-row"><input class="api-key-input" id="kiwoomAppSecret" type="password" placeholder="App Secret" autocomplete="off"></div>
+      <div class="api-key-input-row"><input class="api-key-input" id="kiwoomAccount" type="text" placeholder="계좌번호 (예: 12345678-01)" autocomplete="off"></div>
       <div class="api-key-actions">
         <button class="btn btn-primary" style="flex:1;font-size:12px;padding:7px 0;" onclick="saveApiKey('kiwoom')">저장</button>
         <button class="btn btn-ghost" style="font-size:12px;padding:7px 12px;" onclick="deleteApiKey('kiwoom')">삭제</button>
@@ -9555,8 +9606,10 @@ function renderBrokerFields(broker) {
         if (!data) return;
         const k = document.getElementById('kiwoomAppKey');
         const s = document.getElementById('kiwoomAppSecret');
+        const a = document.getElementById('kiwoomAccount');
         if (k && data.appKey)    k.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)';
         if (s && data.appSecret) s.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)';
+        if (a && data.account)   a.value = data.account;
       });
     }
   } else if (broker === 'ls') {
@@ -9569,6 +9622,7 @@ function renderBrokerFields(broker) {
       <div class="broker-fields-hint">LS증권 EBest OpenAPI 키입니다. 기존 저장값은 빈칸으로 두면 유지됩니다.</div>
       <div class="api-key-input-row"><input class="api-key-input" id="lsAppKey" type="password" placeholder="App Key" autocomplete="off"></div>
       <div class="api-key-input-row"><input class="api-key-input" id="lsAppSecret" type="password" placeholder="App Secret" autocomplete="off"></div>
+      <div class="api-key-input-row"><input class="api-key-input" id="lsAccount" type="text" placeholder="계좌번호 (예: 12345678-01)" autocomplete="off"></div>
       <div class="api-key-actions">
         <button class="btn btn-primary" style="flex:1;font-size:12px;padding:7px 0;" onclick="saveApiKey('ls')">저장</button>
         <button class="btn btn-ghost" style="font-size:12px;padding:7px 12px;" onclick="deleteApiKey('ls')">삭제</button>
@@ -9578,8 +9632,10 @@ function renderBrokerFields(broker) {
         if (!data) return;
         const k = document.getElementById('lsAppKey');
         const s = document.getElementById('lsAppSecret');
+        const a = document.getElementById('lsAccount');
         if (k && data.appKey)    k.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)';
         if (s && data.appSecret) s.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)';
+        if (a && data.account)   a.value = data.account;
       });
     }
   } else if (broker === 'toss') {
@@ -9592,6 +9648,7 @@ function renderBrokerFields(broker) {
       <div class="broker-fields-hint">client_id는 앱키와 같은 개념입니다. 기존 저장값은 빈칸으로 두면 유지됩니다.</div>
       <div class="api-key-input-row"><input class="api-key-input" id="tossClientId" type="password" placeholder="Client ID" autocomplete="off"></div>
       <div class="api-key-input-row"><input class="api-key-input" id="tossClientSecret" type="password" placeholder="Client Secret" autocomplete="off"></div>
+      <div class="api-key-input-row"><input class="api-key-input" id="tossAccount" type="text" placeholder="계좌번호 (예: 12345678-01)" autocomplete="off"></div>
       <div class="api-key-actions">
         <button class="btn btn-primary" style="flex:1;font-size:12px;padding:7px 0;" onclick="saveApiKey('toss')">저장</button>
         <button class="btn btn-ghost" style="font-size:12px;padding:7px 12px;" onclick="deleteApiKey('toss')">삭제</button>
@@ -9601,8 +9658,10 @@ function renderBrokerFields(broker) {
         if (!data) return;
         const id = document.getElementById('tossClientId');
         const sc = document.getElementById('tossClientSecret');
+        const a  = document.getElementById('tossAccount');
         if (id && data.clientId)     id.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)';
         if (sc && data.clientSecret) sc.placeholder = '●●●●●●●● (저장됨 — 변경 시만 입력)';
+        if (a  && data.account)      a.value = data.account;
       });
     }
   } else if (broker === 'dart') {
@@ -9650,13 +9709,16 @@ async function saveApiKey(broker) {
   if (broker === 'toss') {
     const idEl  = document.getElementById('tossClientId');
     const secEl = document.getElementById('tossClientSecret');
-    const newId  = idEl?.value.trim()  || '';
-    const newSec = secEl?.value.trim() || '';
+    const acctEl = document.getElementById('tossAccount');
+    const newId  = idEl?.value.trim()   || '';
+    const newSec = secEl?.value.trim()  || '';
+    const newAcct = acctEl?.value.trim() || '';
     (async () => {
       const existing = (await window.electronAPI.loadApiKey('toss')) || {};
       const fields = {
         clientId:     newId  || existing.clientId     || '',
         clientSecret: newSec || existing.clientSecret || '',
+        account:      newAcct || existing.account     || '',
       };
       if (!fields.clientId || !fields.clientSecret) {
         alert('Client ID와 Client Secret을 모두 입력해주세요.');
@@ -9704,12 +9766,15 @@ async function saveApiKey(broker) {
   if (broker === 'kiwoom') {
     const keyEl    = document.getElementById('kiwoomAppKey');
     const secretEl = document.getElementById('kiwoomAppSecret');
+    const acctEl   = document.getElementById('kiwoomAccount');
     const newKey    = keyEl?.value.trim()    || '';
     const newSecret = secretEl?.value.trim() || '';
+    const newAcct   = acctEl?.value.trim()   || '';
     const existing = (await window.electronAPI.loadApiKey('kiwoom')) || {};
     const fields = {
       appKey:    newKey    || existing.appKey    || '',
       appSecret: newSecret || existing.appSecret || '',
+      account:   newAcct   || existing.account   || '',
     };
     if (!fields.appKey || !fields.appSecret) {
       alert('App Key와 App Secret을 모두 입력해주세요.');
@@ -9728,12 +9793,15 @@ async function saveApiKey(broker) {
   if (broker === 'ls') {
     const keyEl    = document.getElementById('lsAppKey');
     const secretEl = document.getElementById('lsAppSecret');
+    const acctEl   = document.getElementById('lsAccount');
     const newKey    = keyEl?.value.trim()    || '';
     const newSecret = secretEl?.value.trim() || '';
+    const newAcct   = acctEl?.value.trim()   || '';
     const existing = (await window.electronAPI.loadApiKey('ls')) || {};
     const fields = {
       appKey:    newKey    || existing.appKey    || '',
       appSecret: newSecret || existing.appSecret || '',
+      account:   newAcct   || existing.account   || '',
     };
     if (!fields.appKey || !fields.appSecret) {
       alert('App Key와 App Secret을 모두 입력해주세요.');
@@ -10697,11 +10765,15 @@ function _toggleCheck(stockKey, checkKey, val) {
         const pid = el.dataset.pid;
         if (!pid) return;
         // offsetLeft/Width는 display:none 시 0 반환 → style 값을 우선 사용
-        const x = parseInt(el.style.left) || el.offsetLeft;
-        const y = parseInt(el.style.top)  || el.offsetTop;
+        const x = parseInt(el.style.left) || el.offsetLeft || 0;
+        const y = parseInt(el.style.top)  || el.offsetTop  || 0;
         const w = parseInt(el.style.width)  || el.offsetWidth  || 480;
-        const h = parseInt(el.style.height) || el.offsetHeight || 400;
-        data[pid] = { state: el.dataset.mdiState || 'closed', x, y, w, h };
+        // 최소화 상태면 prevPos에 저장된 확장 높이를 사용 (26px 저장 방지)
+        const st = el.dataset.mdiState || 'closed';
+        const hRaw = parseInt(el.style.height) || el.offsetHeight || 400;
+        const h = (st === 'minimized' && this.prevPos[pid] && this.prevPos[pid].h)
+                  ? this.prevPos[pid].h : hRaw;
+        data[pid] = { state: st, x, y, w, h: Math.max(80, h) };
       });
       try { localStorage.setItem(this.MDI_KEY, JSON.stringify(data)); } catch(e) {}
     },
@@ -10726,11 +10798,24 @@ function _toggleCheck(stockKey, checkKey, val) {
           const w = Math.max(200, Math.min(l.w, wsW));
           const h = Math.max(80, Math.min(l.h, wsH));
           el.style.left = x+'px'; el.style.top = y+'px';
-          el.style.width = w+'px'; el.style.height = h+'px';
-          el.style.visibility = ''; el.style.display = isOpen ? '' : 'none';
-          el.dataset.mdiState = isOpen ? (l.state === 'minimized' ? 'minimized' : 'open') : 'closed';
-          if (body) body.style.display = (l.state === 'minimized' ? 'none' : '');
-          rzAll.forEach(r => r.style.display = isOpen ? '' : 'none');
+          el.style.width = w+'px';
+          el.style.visibility = '';
+          if (l.state === 'minimized') {
+            // 최소화: 확장 높이를 prevPos에 보존하고 타이틀바만 표시
+            if (!this.prevPos[pid]) this.prevPos[pid] = {};
+            this.prevPos[pid].h = h;
+            el.style.height = '26px';
+            el.style.display = '';
+            el.dataset.mdiState = 'minimized';
+            if (body) body.style.display = 'none';
+            rzAll.forEach(r => r.style.display = 'none');
+          } else {
+            el.style.height = h+'px';
+            el.style.display = isOpen ? '' : 'none';
+            el.dataset.mdiState = isOpen ? 'open' : 'closed';
+            if (body) body.style.display = '';
+            rzAll.forEach(r => r.style.display = isOpen ? '' : 'none');
+          }
           restored = true;
         });
         if (restored) {
@@ -11014,7 +11099,7 @@ function _toggleCheck(stockKey, checkKey, val) {
       sb.classList.toggle('sb-collapsed');
       const col = sb.classList.contains('sb-collapsed');
       if (btn) btn.textContent = col ? '▶' : '◀';
-      setTimeout(() => this.resetLayout(), 220);
+      setTimeout(() => { if (!this.restoreMdiLayout()) this.resetLayout(); }, 220);
     },
 
     // ── Z 순서 ──────────────────────────────────────────────────────────
@@ -11266,7 +11351,7 @@ function _toggleCheck(stockKey, checkKey, val) {
 
 
 /* ═══════════════════════════════════════════════════════════════
-   경제·주식 캘린더 슬라이드 패널  (Stock Book v1.4.0)
+   경제·주식 캘린더 슬라이드 패널  (Stock Book v1.4.1)
    ─ MAJOR_ECON_EVENTS: 한국/미국 주요 경제지표 하드코딩 (2026)
    ─ state.calEvents: 사용자 추가 기업이벤트 (localStorage 영속)
 ═══════════════════════════════════════════════════════════════ */
@@ -12031,7 +12116,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     <div class="settings-close-row">
       <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.4.0</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.4.1</div>
   </div>
 </div>
 
