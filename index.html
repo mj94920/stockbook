@@ -210,9 +210,9 @@
   }
   /* 1행: 로고 + 우측 액션 버튼 */
   .hdr-row1 {
-    display: flex; align-items: center; gap: 10px;
+    display: flex; align-items: center; gap: 12px;
     padding: 0 20px;
-    height: 52px; flex-shrink: 0;
+    height: 64px; flex-shrink: 0;
   }
   /* 2행: 지수 캐러셀 + 자산 요약 */
   .hdr-row2 {
@@ -1757,18 +1757,18 @@
 
   /* ── SCROLLBAR ── */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: var(--border);
+    background: rgba(99,102,241,0.28);
     border-radius: 10px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--text3);
+    background: rgba(99,102,241,0.52);
   }
   /* 수평 스크롤바: 창 폭이 좁아질 때 눈에 띄도록 강조 */
   ::-webkit-scrollbar:horizontal {
@@ -2212,7 +2212,7 @@
     padding: 0 24px !important;
     border-left: none !important; border-right: none !important; border-top: none !important;
     position: sticky;
-    top: 90px;
+    top: 102px;
     z-index: 90;
     background: rgba(11,15,25,0.98) !important;
     border-bottom: 1px solid rgba(99,102,241,0.18) !important;
@@ -2758,7 +2758,7 @@
       <span style="font-size:15px;font-weight:700;color:#e0eaf5;letter-spacing:.5px;user-select:none;">Stock Book</span>
     </div>
 
-    <div style="margin-left:auto;display:flex;align-items:center;gap:6px;flex-wrap:nowrap;">
+    <div style="margin-left:auto;display:flex;align-items:center;gap:12px;flex-wrap:nowrap;">
       <!-- 계좌 관리 -->
       <button onclick="openAccountPanel()" title="계좌 관리"
         style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);cursor:pointer;font-size:12px;font-family:inherit;color:var(--text2);white-space:nowrap;transition:all .2s;">
@@ -2802,29 +2802,6 @@
     <!-- 페이지 도트 -->
     <div class="hdr-car-dots" id="hdrCarDots"></div>
 
-    <!-- 자산 요약 -->
-    <div class="hdr-asset-bar" id="headerAssetBar">
-      <div class="hdr-asset">
-        <span class="hdr-asset-k">총자산</span>
-        <span class="hdr-asset-v" id="hdTotalAsset">-</span>
-      </div>
-      <div class="hdr-asset">
-        <span class="hdr-asset-k">예수금</span>
-        <span class="hdr-asset-v" id="hdCash">-</span>
-      </div>
-      <div class="hdr-asset">
-        <span class="hdr-asset-k">평가손익</span>
-        <span class="hdr-asset-v" id="hdEvalPnl">-</span>
-      </div>
-      <div class="hdr-asset">
-        <span class="hdr-asset-k">수익률</span>
-        <span class="hdr-asset-v" id="hdRetRate">-</span>
-      </div>
-      <div class="hdr-asset">
-        <span class="hdr-asset-k">당일손익</span>
-        <span class="hdr-asset-v" id="hdDayPnl">-</span>
-      </div>
-    </div>
   </div>
 
   <!-- 숨겨진 지수 원본 (fetchMarketTicker가 여기에 값을 씀) -->
@@ -7336,31 +7313,7 @@ function renderPortfolio() {
       <td ondblclick="startInlineEdit(event,${origIdx},'qty')" style="cursor:text" title="더블클릭으로 수량 수정">${fmt(s.qty)}</td>
       <td style="color:var(--text3)">${fmt(s.qty)}</td>
       <td ondblclick="startInlineEdit(event,${origIdx},'avgPrice')" style="cursor:text" title="더블클릭으로 평단가 수정">${fmt(s.avgPrice)}</td>
-      <td class="${curCls} ${highlightCls}" style="cursor:pointer" onclick="openPriceModal(${origIdx})" title="클릭 → 현재가 업데이트">
-        ${s.currentPrice ? fmt(s.currentPrice) : '<span style="font-size:11px;text-decoration:underline dotted">미입력</span>'}
-        ${(()=>{
-        if (!s.currentPrice) return '';
-        // 1순위: _allStockRaw 에서 갱신된 일일 등락률 (60초 갱신)
-        const allS = (Object.values(_allStockRaw||{}).flat()).find(a=>(a.code||a.ISU_SRT_CD)===s.ticker);
-        let dp = null, diff = null;
-        if (allS) {
-          if (typeof allS.changePct === 'number') { dp = allS.changePct; diff = allS.change ?? null; }
-          else if (allS.FLUC_RT) { dp = parseFloat(allS.FLUC_RT); diff = allS.CMPPREVDD_PRC ? parseFloat(allS.CMPPREVDD_PRC) : null; }
-        }
-        // 2순위: prevClose 기반 (최근 시세 조회 시 저장된 값)
-        if (dp === null && s.prevClose && s.currentPrice) {
-          const pc = s.prevClose;
-          diff = s.currentPrice - pc;
-          dp = diff / pc * 100;
-          // 변동폭이 5% 미만이어야 당일 등락률로 신뢰 가능 (stale 방지)
-          if (Math.abs(dp) > 30) { dp = null; diff = null; }
-        }
-        if (dp === null) return '';
-        const dc = dp>0?'up':dp<0?'dn':'eq';
-        const diffStr = diff !== null ? `${diff>0?'+':''}${Math.round(diff).toLocaleString('ko-KR')} ` : '';
-        return `<div class="${dc}" style="font-size:10px;line-height:1.3">${diffStr}(${dp>0?'+':''}${dp.toFixed(2)}%)</div>`;
-      })()}
-      </td>
+      <td class="${curCls} ${highlightCls}" style="cursor:pointer" onclick="openPriceModal(${origIdx})" title="클릭 → 현재가 업데이트">${s.currentPrice ? fmt(s.currentPrice) : '<span style="font-size:11px;text-decoration:underline dotted">미입력</span>'}</td>
       <td>${fmt(buyAmt)}</td>
       <td>${fmt(valAmt)}</td>
       <td class="${pnlCls}">${pnl>0?'+':''}${fmt(pnl)}</td>
@@ -7394,22 +7347,9 @@ function renderPortfolio() {
     }
   });
 
-  // 합계 행
-  const footPnlPct = totalBuyFoot > 0 ? (totalPnlFoot/totalBuyFoot*100) : 0;
-  const footCls = totalPnlFoot>=0?'up':'dn';
+  // 합계 행 (비표시)
   const foot = document.getElementById('portfolioFoot');
-  if (foot) {
-    foot.style.display = p.length ? '' : 'none';
-    foot.innerHTML = `<tr>
-      <td colspan="4" style="text-align:left;color:var(--text3);font-size:12px;">합계 ${p.length}종목</td>
-      <td></td><td></td><td></td>
-      <td>${fmt(totalBuyFoot)}</td>
-      <td>${fmt(totalValFoot)}</td>
-      <td class="${footCls}">${totalPnlFoot>=0?'+':''}${fmt(totalPnlFoot)}</td>
-      <td class="${footCls}">${footPnlPct>=0?'+':''}${footPnlPct.toFixed(2)}%</td>
-      <td colspan="2"></td>
-    </tr>`;
-  }
+  if (foot) { foot.style.display = 'none'; foot.innerHTML = ''; }
 
   // Update datalists
   updateDatalist('stockNameList');
@@ -8849,6 +8789,38 @@ async function loadApiKeysUI() {
     const el2 = document.getElementById('apiBadge_' + b);
     if (el2) el2.textContent = ok ? '✓ 저장됨' : '';
   });
+  syncApiAccounts({ kis: kisOk, kiwoom: kiwoomOk, ls: lsOk, toss: tossOk });
+}
+
+// ── API 연결 계좌 자동 등록 ───────────────────────────────────────────────
+function syncApiAccounts(connected) {
+  if (!state.accounts) state.accounts = [];
+  let needsSave = false;
+  Object.entries(connected).forEach(([broker, ok]) => {
+    if (!ok) return;
+    const existing = state.accounts.find(a => a.broker === broker && !a.isManual);
+    if (!existing) {
+      const bi = (typeof BROKER_INFO !== 'undefined' && BROKER_INFO[broker]) || {};
+      state.accounts.push({
+        id: (typeof _acctId === 'function') ? _acctId() : ('api_' + broker + '_' + Date.now()),
+        broker,
+        nickname: (bi.name || broker) + ' (API)',
+        number: '',
+        type: '위탁',
+        isManual: false,
+        isActive: true,
+        cash: 0,
+        createdAt: new Date().toISOString().slice(0, 10),
+      });
+      needsSave = true;
+    }
+  });
+  if (needsSave) {
+    save();
+    try { updateAcctCountLabel(); } catch(e) {}
+    try { populateQOAccountSelect(); } catch(e) {}
+    try { renderAccountPanel(); } catch(e) {}
+  }
 }
 
 // ── 증권사 탭 선택 ──
@@ -10673,6 +10645,58 @@ function _toggleCheck(stockKey, checkKey, val) {
     topZ: 110,
     prevPos: {},   // pid -> {x,y,w,h}
     OPEN_DEFAULT: ['watchlist','trading','portfolio'],
+    MDI_KEY: 'sb_mdi_layout_v1',
+
+    // ── 레이아웃 저장 (localStorage) ──────────────────────────────────
+    saveMdiLayout() {
+      const data = {};
+      document.querySelectorAll('.mdi-panel').forEach(el => {
+        const pid = el.dataset.pid;
+        if (!pid) return;
+        data[pid] = {
+          state: el.dataset.mdiState || 'closed',
+          x: el.offsetLeft, y: el.offsetTop,
+          w: el.offsetWidth, h: el.offsetHeight,
+        };
+      });
+      try { localStorage.setItem(this.MDI_KEY, JSON.stringify(data)); } catch(e) {}
+    },
+
+    // ── 레이아웃 복원 (localStorage) ──────────────────────────────────
+    restoreMdiLayout() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(this.MDI_KEY) || 'null');
+        if (!saved) return false;
+        const ws = document.getElementById('mdiWorkspace');
+        const wsW = ws ? ws.offsetWidth : window.innerWidth;
+        const wsH = ws ? ws.offsetHeight : window.innerHeight;
+        let restored = false;
+        Object.entries(saved).forEach(([pid, l]) => {
+          const el = document.getElementById('mdi-panel-' + pid);
+          const body = document.getElementById('mdi-body-' + pid);
+          const rzAll = el ? el.querySelectorAll('.mdi-rz') : [];
+          if (!el) return;
+          const isOpen = l.state !== 'closed';
+          const x = Math.max(0, Math.min(l.x, wsW - 100));
+          const y = Math.max(0, Math.min(l.y, wsH - 30));
+          const w = Math.max(200, Math.min(l.w, wsW));
+          const h = Math.max(80, Math.min(l.h, wsH));
+          el.style.left = x+'px'; el.style.top = y+'px';
+          el.style.width = w+'px'; el.style.height = h+'px';
+          el.style.visibility = ''; el.style.display = isOpen ? '' : 'none';
+          el.dataset.mdiState = isOpen ? (l.state === 'minimized' ? 'minimized' : 'open') : 'closed';
+          if (body) body.style.display = (l.state === 'minimized' ? 'none' : '');
+          rzAll.forEach(r => r.style.display = isOpen ? '' : 'none');
+          restored = true;
+        });
+        if (restored) {
+          document.querySelectorAll('.mdi-panel').forEach((el, i) => { el.style.zIndex = 101 + i; });
+          this.topZ = 101 + document.querySelectorAll('.mdi-panel').length;
+          this._syncAllBtns();
+        }
+        return restored;
+      } catch(e) { return false; }
+    },
 
     // ── 기본 레이아웃 계산 ─────────────────────────────────────────────
     _layout() {
@@ -10715,7 +10739,7 @@ function _toggleCheck(stockKey, checkKey, val) {
       function _tryLayout(retry) {
         const ws = document.getElementById('mdiWorkspace');
         if (ws && ws.offsetWidth > 50 && ws.offsetHeight > 50) {
-          _self.resetLayout();
+          if (!_self.restoreMdiLayout()) _self.resetLayout();
         } else if (retry < 20) {
           setTimeout(function(){ _tryLayout(retry + 1); }, 50);
         }
@@ -10786,6 +10810,7 @@ function _toggleCheck(stockKey, checkKey, val) {
             window.removeEventListener('pointermove', move);
             window.removeEventListener('pointerup', up);
             ov.remove();
+            try { window._MDI.saveMdiLayout(); } catch(e) {}
           };
           window.addEventListener('pointermove', move);
           window.addEventListener('pointerup', up);
@@ -10819,6 +10844,7 @@ function _toggleCheck(stockKey, checkKey, val) {
       this._front(pid);
       this._render(pid);
       this._syncBtn(pid);
+      try { this.saveMdiLayout(); } catch(e) {}
     },
 
     // ── 닫기 ────────────────────────────────────────────────────────────
@@ -10829,6 +10855,7 @@ function _toggleCheck(stockKey, checkKey, val) {
       el.dataset.mdiState = 'closed';
       if (pid === 'allstock') try { _stopAllStockAutoRefresh && _stopAllStockAutoRefresh(); } catch(e) {}
       this._syncBtn(pid);
+      try { this.saveMdiLayout(); } catch(e) {}
     },
 
     // ── 토글 ────────────────────────────────────────────────────────────
@@ -10851,6 +10878,7 @@ function _toggleCheck(stockKey, checkKey, val) {
         body.style.display = '';
         rzAll.forEach(r => r.style.display = '');
         el.dataset.mdiState = 'open';
+        try { this.saveMdiLayout(); } catch(e) {}
       } else {
         if (!this.prevPos[pid]) this.prevPos[pid] = {};
         this.prevPos[pid].h = el.offsetHeight;
@@ -10858,6 +10886,7 @@ function _toggleCheck(stockKey, checkKey, val) {
         rzAll.forEach(r => r.style.display = 'none');
         el.style.height = '26px';
         el.dataset.mdiState = 'minimized';
+        try { this.saveMdiLayout(); } catch(e) {}
       }
     },
 
@@ -10875,6 +10904,7 @@ function _toggleCheck(stockKey, checkKey, val) {
         if (body) body.style.display = '';
         rzAll.forEach(r => r.style.display = '');
         el.dataset.mdiState = 'open';
+        try { this.saveMdiLayout(); } catch(e) {}
       } else {
         if (!this.prevPos[pid]) this.prevPos[pid] = {};
         // 최소화 상태인 경우 el.offsetHeight가 26px — 진짜 원래 높이는 prevPos.h에 저장돼 있음
@@ -10887,6 +10917,7 @@ function _toggleCheck(stockKey, checkKey, val) {
         el.style.left='0'; el.style.top='0';
         el.style.width=ws.offsetWidth+'px'; el.style.height=ws.offsetHeight+'px';
         el.dataset.mdiState = 'maximized';
+        try { this.saveMdiLayout(); } catch(e) {}
       }
       this._front(pid);
     },
@@ -10983,6 +11014,7 @@ function _toggleCheck(stockKey, checkKey, val) {
         const up = () => {
           document.removeEventListener('mousemove', move);
           document.removeEventListener('mouseup',   up);
+          try { window._MDI.saveMdiLayout(); } catch(e) {}
         };
         document.addEventListener('mousemove', move);
         document.addEventListener('mouseup',   up);
@@ -11028,6 +11060,7 @@ function _toggleCheck(stockKey, checkKey, val) {
           document.removeEventListener('mousemove', move);
           document.removeEventListener('mouseup',   up);
           ov.remove();
+          try { window._MDI.saveMdiLayout(); } catch(e) {}
         };
         document.addEventListener('mousemove', move);
         document.addEventListener('mouseup',   up);
@@ -11187,7 +11220,7 @@ function _toggleCheck(stockKey, checkKey, val) {
 
 
 /* ═══════════════════════════════════════════════════════════════
-   경제·주식 캘린더 슬라이드 패널  (Stock Book v1.2.0)
+   경제·주식 캘린더 슬라이드 패널  (Stock Book v1.3.0)
    ─ MAJOR_ECON_EVENTS: 한국/미국 주요 경제지표 하드코딩 (2026)
    ─ state.calEvents: 사용자 추가 기업이벤트 (localStorage 영속)
 ═══════════════════════════════════════════════════════════════ */
@@ -11952,7 +11985,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     <div class="settings-close-row">
       <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.2.0</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.3.0</div>
   </div>
 </div>
 
