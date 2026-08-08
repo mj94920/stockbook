@@ -4007,31 +4007,29 @@
         <label>섹터</label>
         <select id="es_sector">
           <option value="">선택</option>
-          <optgroup label="테크·첨단">
-            <option>반도체</option><option>IT/플랫폼</option><option>AI/소프트웨어</option>
-            <option>로봇</option><option>우주항공</option><option>보안/사이버</option>
-          </optgroup>
-          <optgroup label="에너지·소재">
-            <option>2차전지</option><option>원자력</option><option>에너지</option>
-            <option>철강/소재</option><option>화학</option>
-          </optgroup>
-          <optgroup label="산업·방산">
-            <option>방산</option><option>조선</option><option>자동차</option>
-            <option>기계/장비</option>
-          </optgroup>
-          <optgroup label="바이오·헬스">
-            <option>바이오/헬스</option><option>의료기기</option><option>제약</option>
-          </optgroup>
-          <optgroup label="금융·부동산">
-            <option>금융</option><option>보험</option><option>부동산/건설</option>
-          </optgroup>
-          <optgroup label="소비·서비스">
-            <option>소비재</option><option>유통/물류</option><option>식품/음료</option>
-            <option>통신</option><option>게임/엔터</option><option>미디어</option>
-          </optgroup>
-          <optgroup label="기타">
-            <option>ETF/리츠</option><option>해외주식</option><option>기타</option>
-          </optgroup>
+          <option>전기전자/반도체</option>
+          <option>반도체</option>
+          <option>이차전지/배터리</option>
+          <option>전자부품</option>
+          <option>디스플레이</option>
+          <option>인공지능/로봇</option>
+          <option>IT/플랫폼</option>
+          <option>게임</option>
+          <option>엔터테인먼트</option>
+          <option>4차산업</option>
+          <option>통신/보안/서버</option>
+          <option>항공우주</option>
+          <option>방위산업</option>
+          <option>자동차</option>
+          <option>원자력/에너지</option>
+          <option>수소/가스</option>
+          <option>석유에너지</option>
+          <option>제약/바이오</option>
+          <option>의료장비</option>
+          <option>건설/기계장비</option>
+          <option>조선/해양산업</option>
+          <option>운송</option>
+          <option>기타</option>
         </select>
       </div>
       <div class="form-group">
@@ -5604,28 +5602,73 @@ function renderRealizedMini() {
 function _getAutoSector(name, industry) {
   const n = (name||'').replace(/\s/g,'').toLowerCase();
   const ind = (industry||'').toLowerCase();
-  if (/두산에너빌|한국원자력|한전기술|한전kps|우리기술|비에이치아이|두산중공업/.test(n) || /원자력|핵연료/.test(ind)) return '원자력';
-  if (/제룡전기|가온전선|ls전선|대한전선|일진전기|효성중공업|ls일렉트릭|현대일렉|제일전기/.test(n) || /전선|전력기기/.test(ind)) return '전력/에너지';
-  if (/한미반도체|주성엔지|원익ips|이오테크닉스|테스나|피에스케이|리노공업|hpsp|인텍플러스/.test(n) || /반도체장비/.test(ind)) return '반도체장비';
-  if (/삼성전자|sk하이닉스/.test(n) || /반도체제조/.test(ind)) return '반도체';
-  if (/에코프로비엠|에코프로|엘앤에프|코스모신소재|포스코퓨처엠|삼성sdi|lg에너지|sk온/.test(n) || /이차전지|배터리/.test(ind)) return '2차전지';
-  if (/레인보우로보틱스|두산로보틱스|현대로보틱스|티로보틱스|유진로봇|로보스타/.test(n) || /로봇/.test(ind)) return '로보틱스';
-  if (/한화에어로|한화시스템|현대로템|한국항공우주|lig넥스원|풍산|빅텍/.test(n) || /방산|항공우주/.test(ind)) return '방산/항공';
-  if (/현대차|기아|현대모비스|만도|현대위아|현대트랜시스|hl만도/.test(n) || /완성차|자동차부품/.test(ind)) return '자동차';
-  if (/삼성바이오로직스|셀트리온|한미약품|유한양행|녹십자|동아제약|대웅제약|종근당/.test(n) || /제약|바이오/.test(ind)) return '바이오/제약';
-  if (/네이버|카카오|nhn|크래프톤|넥슨|엔씨소프트|펄어비스/.test(n) || /인터넷|게임/.test(ind)) return 'IT/인터넷·게임';
-  if (/현대중공업|한국조선|삼성중공업|대우조선해양|hd한국조선/.test(n) || /조선/.test(ind)) return '조선';
-  if (/posco|포스코|현대제철|고려아연/.test(n) || /철강|금속/.test(ind)) return '소재/철강';
-  if (/kb금융|신한지주|하나금융|우리금융|삼성화재|메리츠|삼성생명|키움/.test(n) || /은행|증권|보험/.test(ind)) return '금융';
-  if (/삼성물산|현대건설|대우건설|gs건설|hdc/.test(n) || /건설/.test(ind)) return '건설';
-  if (/sk텔레콤|kt|lg유플러스|삼성sds/.test(n) || /통신|it서비스/.test(ind)) return 'IT/통신';
-  if (ind) {
-    if (ind.includes('화학')) return '화학';
-    if (ind.includes('유통')||ind.includes('소매')) return '유통/소비재';
-    if (ind.includes('음식')||ind.includes('식품')) return '음식료';
-    if (ind.includes('기계')) return '기계';
-    if (ind.includes('운수')||ind.includes('물류')) return '물류/운수';
-  }
+
+  // 반도체 (메모리 팹)
+  if (/삼성전자|sk하이닉스|매그나칩|키파운드리/.test(n) || /반도체제조|메모리반도체/.test(ind)) return '반도체';
+
+  // 이차전지/배터리
+  if (/에코프로비엠|에코프로|엘앤에프|코스모신소재|포스코퓨처엠|삼성sdi|lg에너지솔루션|sk온|일진머티리얼즈|천보|나라엠앤디|이엔에프테크|솔루스첨단소재/.test(n) || /이차전지|배터리|2차전지/.test(ind)) return '이차전지/배터리';
+
+  // 디스플레이
+  if (/lg디스플레이|덕산네오룩스|피엔에이치테크|동운아나텍|icd|와이엠씨|아이씨디/.test(n) || /디스플레이|oled|lcd/.test(ind)) return '디스플레이';
+
+  // 전자부품
+  if (/삼성전기|엠씨넥스|코텍|자화전자|파트론|대덕전자|심텍|이수페타시스|코리아써키트|해성디에스|엘지이노텍/.test(n) || /pcb|mlcc|전자부품|세라믹커패/.test(ind)) return '전자부품';
+
+  // 전기전자/반도체 (장비·소재·측정)
+  if (/한미반도체|주성엔지|원익ips|이오테크닉스|테스나|피에스케이|리노공업|hpsp|인텍플러스|동진쎄미켐|솔브레인|티씨케이|에스앤에스텍|케이씨텍|나노신소재|레이크머티리얼즈|티이엠씨|한솔케미칼|sk머티리얼즈|원익msp|하나머티리얼즈/.test(n) || /반도체장비|반도체소재|웨이퍼/.test(ind)) return '전기전자/반도체';
+
+  // 게임
+  if (/크래프톤|넥슨|엔씨소프트|펄어비스|카카오게임즈|네오위즈|컴투스|위메이드|넷마블|시프트업|웹젠|데브시스터즈/.test(n) || /게임개발|게임소프트/.test(ind)) return '게임';
+
+  // 엔터테인먼트
+  if (/하이브|sm엔터|jyp엔터|yg엔터|와이지엔터|cjenm|쇼박스|스튜디오드래곤/.test(n) || /엔터테인먼트|음반|연예기획/.test(ind)) return '엔터테인먼트';
+
+  // 인공지능/로봇
+  if (/레인보우로보틱스|두산로보틱스|현대로보틱스|티로보틱스|유진로봇|로보스타|솔트룩스|코난테크놀로지|씨이랩|래블업|스캐터랩/.test(n) || /로봇|인공지능|ai솔루션/.test(ind)) return '인공지능/로봇';
+
+  // IT/플랫폼
+  if (/네이버|카카오|nhn|더존비즈온|카카오페이|한글과컴퓨터|웹케시|더존|에스더블유엠/.test(n) || /인터넷서비스|플랫폼|소프트웨어|it서비스/.test(ind)) return 'IT/플랫폼';
+
+  // 통신/보안/서버
+  if (/sk텔레콤|kt|lg유플러스|삼성sds|kt클라우드|에스원|sk인포섹|시큐아이|안랩|이글루시큐리티/.test(n) || /통신서비스|보안솔루션|서버|데이터센터/.test(ind)) return '통신/보안/서버';
+
+  // 항공우주
+  if (/한국항공우주|kai|한화에어로스페이스/.test(n) || /항공우주|위성/.test(ind)) return '항공우주';
+
+  // 방위산업
+  if (/한화에어로|한화시스템|현대로템|lig넥스원|풍산|빅텍|퍼스텍|한국방위/.test(n) || /방산|방위산업/.test(ind)) return '방위산업';
+
+  // 자동차
+  if (/현대차|기아|현대모비스|만도|현대위아|현대트랜시스|hl만도|세방전지|현대오토에버/.test(n) || /완성차|자동차부품/.test(ind)) return '자동차';
+
+  // 원자력/에너지
+  if (/두산에너빌|한국원자력|한전기술|한전kps|우리기술|비에이치아이|두산중공업|제룡전기|가온전선|ls전선|대한전선|일진전기|효성중공업|ls일렉트릭|현대일렉트릭|제일전기/.test(n) || /원자력|핵연료|전력기기|전선|변압기/.test(ind)) return '원자력/에너지';
+
+  // 수소/가스
+  if (/일진하이솔루스|sk가스|하이리움산업|수소에너지네트워크|에이치엔지|대성산업/.test(n) || /수소|연료전지|lng|lpg/.test(ind)) return '수소/가스';
+
+  // 석유에너지
+  if (/sk이노베이션|에쓰오일|gs칼텍스|현대오일뱅크|한화솔루션/.test(n) || /정유|석유화학|에너지화학/.test(ind)) return '석유에너지';
+
+  // 제약/바이오
+  if (/삼성바이오로직스|셀트리온|한미약품|유한양행|녹십자|동아제약|대웅제약|종근당|부광약품|일동제약|jw중외|보령|광동제약|휴젤|메디톡스|클래시스/.test(n) || /제약|바이오|의약품/.test(ind)) return '제약/바이오';
+
+  // 의료장비
+  if (/뷰노|루닛|코어라인소프트|힘스|인바디|오스템임플란트|덴티움|레이|바텍|파나진|제이브이엠|비트컴퓨터/.test(n) || /의료기기|의료장비|진단기기/.test(ind)) return '의료장비';
+
+  // 건설/기계장비
+  if (/삼성물산|현대건설|대우건설|gs건설|hdc현대산업|두산밥캣|hd현대인프라코어|태영건설|sk에코플랜트|포스코건설/.test(n) || /건설|기계|중장비/.test(ind)) return '건설/기계장비';
+
+  // 조선/해양산업
+  if (/현대중공업|한국조선해양|삼성중공업|대우조선해양|hd한국조선|hd현대|현대미포조선|한화오션|케이조선/.test(n) || /조선|해양플랜트/.test(ind)) return '조선/해양산업';
+
+  // 운송
+  if (/대한항공|아시아나항공|제주항공|진에어|에어부산|현대글로비스|cj대한통운|한진|팬오션|흥아해운/.test(n) || /항공운송|해운|화물운송|물류/.test(ind)) return '운송';
+
+  // 4차산업 (fallback)
+  if (ind.includes('클라우드') || ind.includes('iot') || ind.includes('빅데이터') || ind.includes('스마트팩토리')) return '4차산업';
+
   return '기타';
 }
 
@@ -9080,7 +9123,7 @@ function renderAcctFilterBar() {
   const accounts = state.accounts || [];
   if (accounts.length <= 1) { bar.innerHTML = ''; return; }
   const chips = [{ id: '', label: '전체', color: 'var(--accent)' }]
-    .concat(accounts.map(a => ({ id: a.id, label: a.nickname, color: (BROKER_INFO[a.broker] || {}).color || '#888' })));
+    .concat(accounts.map(a => ({ id: a.id, label: a.nickname + (a.number ? ' (' + a.number + ')' : ''), color: (BROKER_INFO[a.broker] || {}).color || '#888' })));
   bar.innerHTML = chips.map(c => {
     const active = _acctFilter === c.id ? 'active' : '';
     return `<span class="acct-filter-chip ${active}" style="--acct-chip-color:${c.color}" onclick="setAcctFilter('${c.id}')">${escHtml(c.label)}</span>`;
@@ -9169,7 +9212,7 @@ function populateQOAccountSelect() {
   sel.innerHTML = '<option value="">계좌 미지정</option>' +
     accts.map(a => {
       const bi = BROKER_INFO[a.broker] || {};
-      return `<option value="${escHtml(a.id)}">${escHtml(a.nickname || bi.name)}</option>`;
+      return `<option value="${escHtml(a.id)}">${escHtml(a.nickname || bi.name)}${a.number ? ' (' + escHtml(a.number) + ')' : ''}</option>`;
     }).join('');
   // 활성 계좌 또는 첫 계좌를 기본 선택
   if (accts.length > 0) sel.value = accts[0].id;
@@ -11223,7 +11266,7 @@ function _toggleCheck(stockKey, checkKey, val) {
 
 
 /* ═══════════════════════════════════════════════════════════════
-   경제·주식 캘린더 슬라이드 패널  (Stock Book v1.3.0)
+   경제·주식 캘린더 슬라이드 패널  (Stock Book v1.4.0)
    ─ MAJOR_ECON_EVENTS: 한국/미국 주요 경제지표 하드코딩 (2026)
    ─ state.calEvents: 사용자 추가 기업이벤트 (localStorage 영속)
 ═══════════════════════════════════════════════════════════════ */
@@ -11988,7 +12031,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     <div class="settings-close-row">
       <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.3.1</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.4.0</div>
   </div>
 </div>
 
