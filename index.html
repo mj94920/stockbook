@@ -4033,6 +4033,7 @@
           <option>지주</option>
           <option>화학/소재</option>
           <option>철강/금속</option>
+          <option>ETF/인덱스</option>
           <option>기타</option>
         </select>
       </div>
@@ -5608,6 +5609,11 @@ function _getAutoSector(name, industry) {
   const n = (name||'').replace(/\s/g,'').toLowerCase();
   const ind = (industry||'').toLowerCase();
 
+  // ETF/인덱스 (최우선)
+  if (/^kodex|^tiger|^kindex|^kbstar|^kb스타|^ace|^plus|^sol|^hanaro|^arirang|^kosef|^smart|^timefolio/.test(n) ||
+      /레버리지|인버스/.test(n) ||
+      /집합투자/.test(ind)) return 'ETF/인덱스';
+
   // 반도체 (메모리 팹)
   if (/삼성전자|sk하이닉스|매그나칩|키파운드리/.test(n) || /반도체제조|메모리반도체/.test(ind)) return '반도체';
 
@@ -5688,6 +5694,22 @@ function _getAutoSector(name, industry) {
 
   // 4차산업 (fallback)
   if (ind.includes('클라우드') || ind.includes('iot') || ind.includes('빅데이터') || ind.includes('스마트팩토리')) return '4차산업';
+
+  // 업종 기반 폴백 (전체종목 기타 최소화)
+  if (/전기전자/.test(ind)) return '전기전자/반도체';
+  if (/화학/.test(ind)) return '화학/소재';
+  if (/철강|금속/.test(ind)) return '철강/금속';
+  if (/의약품|바이오/.test(ind)) return '제약/바이오';
+  if (/의료|정밀기기/.test(ind)) return '의료장비';
+  if (/기계/.test(ind)) return '건설/기계장비';
+  if (/건설업/.test(ind)) return '건설/기계장비';
+  if (/운수장비/.test(ind)) return '자동차';
+  if (/조선/.test(ind)) return '조선/해양산업';
+  if (/운수|창고/.test(ind)) return '운송';
+  if (/통신/.test(ind)) return '통신/보안/서버';
+  if (/금융|은행|증권|보험/.test(ind)) return '금융/은행';
+  if (/전기|가스/.test(ind)) return '원자력/에너지';
+  if (/소프트웨어|서비스업/.test(ind)) return 'IT/플랫폼';
 
   return '기타';
 }
@@ -7240,31 +7262,41 @@ async function fetchMarketTicker() {
 // TAB 1: PORTFOLIO
 // ============================================================
 function renderSummary() {
-  const p = state.portfolio;
+  const filterAcct = _acctFilter ? (state.accounts||[]).find(a => a.id === _acctFilter) : null;
+  const p = filterAcct ? state.portfolio.filter(s => s.accountId === _acctFilter) : state.portfolio;
   const totalBuy = p.reduce((a,s) => a + s.avgPrice * s.qty, 0);
   const totalVal = p.reduce((a,s) => a + (s.currentPrice || s.avgPrice) * s.qty, 0);
   const pnl = totalVal - totalBuy;
   const pnlPct = totalBuy > 0 ? (pnl/totalBuy)*100 : 0;
-  const realized = state.trades.filter(t=>t.type==='sell' && t.pnl!=null).reduce((a,t)=>a+t.pnl,0);
+  const realized = state.trades.filter(t => t.type==='sell' && t.pnl!=null && (!filterAcct || t.accountId===_acctFilter)).reduce((a,t)=>a+t.pnl,0);
   const cashflowAdj = (state.cashflows||[]).reduce((s,c) =>
     c.type==='withdraw' ? s-c.amount : c.type==='deposit' ? s+c.amount : s, 0);
-  // 예수금 직접입력 시 역산: 총자산 = 예수금 + 총평가금액
-  const netAsset = state.cashManual != null
-    ? state.cashManual + totalVal
-    : state.totalAsset > 0 ? state.totalAsset + cashflowAdj : totalVal;
-  const cash = state.cashManual != null
-    ? state.cashManual
-    : state.totalAsset > 0 ? Math.max(0, state.totalAsset + cashflowAdj - totalVal) : 0;
-  const investRatio = netAsset > 0 ? (totalVal/netAsset*100) : 0;
+  let netAsset, cash, exAmt, hasEx, investRatio;
+  if (filterAcct) {
+    cash = filterAcct.cash || 0;
+    netAsset = cash + totalVal;
+    exAmt = cash;
+    hasEx = true;
+    investRatio = netAsset > 0 ? (totalVal/netAsset*100) : 0;
+  } else {
+    // 예수금 직접입력 시 역산: 총자산 = 예수금 + 총평가금액
+    netAsset = state.cashManual != null
+      ? state.cashManual + totalVal
+      : state.totalAsset > 0 ? state.totalAsset + cashflowAdj : totalVal;
+    cash = state.cashManual != null
+      ? state.cashManual
+      : state.totalAsset > 0 ? Math.max(0, state.totalAsset + cashflowAdj - totalVal) : 0;
+    exAmt = getCashBalance();
+    hasEx = (state.cashflows||[]).length > 0 || state.totalAsset > 0 || state.cashManual != null;
+    investRatio = netAsset > 0 ? (totalVal/netAsset*100) : 0;
+  }
   const pnlCls = pnl>=0?'up':'dn';
   const realCls = realized>=0?'up':'dn';
-  const exAmt = getCashBalance();
-  const hasEx = (state.cashflows||[]).length > 0 || state.totalAsset > 0 || state.cashManual != null;
   const exCls = exAmt >= 0 ? '' : 'dn';
   const cells = [
-    { label:'예수금' + (state.cashManual != null ? ' <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>' : ''), val: hasEx ? (exAmt<0?'-':'')+'₩'+fmt(Math.abs(exAmt)) : '클릭하여 입력', cls:exCls, click:'openCashModal()' },
-    ...(state.totalAsset > 0 || state.cashManual != null ? [{
-      label:'순자산총액' + (state.cashManual != null ? '<span style="font-size:9px;font-weight:400;color:var(--text3);margin-left:3px">↑역산</span>' : ''),
+    { label:'예수금' + (!filterAcct && state.cashManual != null ? ' <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>' : ''), val: hasEx ? (exAmt<0?'-':'')+'₩'+fmt(Math.abs(exAmt)) : '클릭하여 입력', cls:exCls, click: filterAcct ? null : 'openCashModal()' },
+    ...(filterAcct || state.totalAsset > 0 || state.cashManual != null ? [{
+      label:'순자산총액' + (filterAcct ? '<span style="font-size:9px;font-weight:400;color:var(--text3);margin-left:3px">계좌</span>' : state.cashManual != null ? '<span style="font-size:9px;font-weight:400;color:var(--text3);margin-left:3px">↑역산</span>' : ''),
       val:'₩'+fmt(netAsset), cls:''
     }] : []),
     { label:'총평가금액', val:'₩'+fmt(totalVal), cls:'' },
@@ -7273,7 +7305,7 @@ function renderSummary() {
     { label:'총수익률', val:(pnlPct>=0?'+':'')+pnlPct.toFixed(2)+'%', cls:pnlCls },
     { label:'실현손익', val:(realized>=0?'+':'')+fmt(realized), cls:realCls },
     { label:'투자비중', val:investRatio.toFixed(1)+'%', cls: investRatio>90?'up':'' },
-    { label:'보유종목', val:p.length+'개 · 거래 '+state.trades.length+'건', cls:'' },
+    { label:'보유종목', val:p.length+'개' + (filterAcct ? '' : ' · 거래 '+state.trades.length+'건'), cls:'' },
   ];
   const el = document.getElementById('htsSummary');
   if (!el) return;
