@@ -212,7 +212,7 @@
   .hdr-row1 {
     display: flex; align-items: center; gap: 12px;
     padding: 0 20px;
-    height: 64px; flex-shrink: 0;
+    height: 72px; flex-shrink: 0;
   }
   /* 2행: 지수 캐러셀 + 자산 요약 */
   .hdr-row2 {
@@ -2212,7 +2212,7 @@
     padding: 0 24px !important;
     border-left: none !important; border-right: none !important; border-top: none !important;
     position: sticky;
-    top: 102px;
+    top: 110px;
     z-index: 90;
     background: rgba(11,15,25,0.98) !important;
     border-bottom: 1px solid rgba(99,102,241,0.18) !important;
@@ -2761,13 +2761,13 @@
     <div style="margin-left:auto;display:flex;align-items:center;gap:12px;flex-wrap:nowrap;">
       <!-- 계좌 관리 -->
       <button onclick="openAccountPanel()" title="계좌 관리"
-        style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);cursor:pointer;font-size:12px;font-family:inherit;color:var(--text2);white-space:nowrap;transition:all .2s;">
+        style="display:flex;align-items:center;gap:5px;padding:8px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);cursor:pointer;font-size:12px;font-family:inherit;color:var(--text2);white-space:nowrap;transition:all .2s;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
         <span id="acctCountLabel">계좌 <span id="acctCount">0</span></span>
       </button>
       <!-- API 연결 상태 -->
       <button id="apiStatusBtn" onclick="openApiPanel()" title="API 설정"
-        style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);cursor:pointer;font-size:12px;font-family:inherit;color:var(--text2);white-space:nowrap;transition:all .2s;">
+        style="display:flex;align-items:center;gap:5px;padding:8px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);cursor:pointer;font-size:12px;font-family:inherit;color:var(--text2);white-space:nowrap;transition:all .2s;">
         <span id="apiStatusDot" style="width:7px;height:7px;border-radius:50%;background:#ef4444;display:inline-block;flex-shrink:0;"></span>
         <span id="apiStatusLabel">KIS 미연결</span>
       </button>
@@ -10653,11 +10653,12 @@ function _toggleCheck(stockKey, checkKey, val) {
       document.querySelectorAll('.mdi-panel').forEach(el => {
         const pid = el.dataset.pid;
         if (!pid) return;
-        data[pid] = {
-          state: el.dataset.mdiState || 'closed',
-          x: el.offsetLeft, y: el.offsetTop,
-          w: el.offsetWidth, h: el.offsetHeight,
-        };
+        // offsetLeft/Width는 display:none 시 0 반환 → style 값을 우선 사용
+        const x = parseInt(el.style.left) || el.offsetLeft;
+        const y = parseInt(el.style.top)  || el.offsetTop;
+        const w = parseInt(el.style.width)  || el.offsetWidth  || 480;
+        const h = parseInt(el.style.height) || el.offsetHeight || 400;
+        data[pid] = { state: el.dataset.mdiState || 'closed', x, y, w, h };
       });
       try { localStorage.setItem(this.MDI_KEY, JSON.stringify(data)); } catch(e) {}
     },
@@ -10749,11 +10750,13 @@ function _toggleCheck(stockKey, checkKey, val) {
       });
       // 전체창 리사이징: 패널 stacking 문제 해결 위해 window 레벨 capture 리스너 사용
       this._initGlobalResize();
-      // 창 크기 변경 시 패널 레이아웃 재계산 (overflow 방지)
+      // 창 크기 변경 시 저장된 레이아웃 복원 (없으면 기본 배치)
       let _resizeTimer = null;
       window.addEventListener('resize', () => {
         clearTimeout(_resizeTimer);
-        _resizeTimer = setTimeout(() => this.resetLayout(), 150);
+        _resizeTimer = setTimeout(() => {
+          if (!this.restoreMdiLayout()) this.resetLayout();
+        }, 200);
       });
     },
 
@@ -11093,7 +11096,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     window.addEventListener('resize', function() {
       clearTimeout(window._mdiResizeTimer);
       window._mdiResizeTimer = setTimeout(function() {
-        if (window._MDI) window._MDI.resetLayout();
+        if (window._MDI) { if (!window._MDI.restoreMdiLayout()) window._MDI.resetLayout(); }
       }, 300);
     });
   })();
@@ -11985,7 +11988,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     <div class="settings-close-row">
       <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.3.0</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.3.1</div>
   </div>
 </div>
 
