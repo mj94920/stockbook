@@ -5620,8 +5620,11 @@ function _getAutoSector(name, industry) {
   // 전자부품
   if (/삼성전기|엠씨넥스|코텍|자화전자|파트론|대덕전자|심텍|이수페타시스|코리아써키트|해성디에스|엘지이노텍/.test(n) || /pcb|mlcc|전자부품|세라믹커패/.test(ind)) return '전자부품';
 
-  // 전기전자/반도체 (장비·소재·측정)
-  if (/한미반도체|주성엔지|원익ips|이오테크닉스|테스나|피에스케이|리노공업|hpsp|인텍플러스|동진쎄미켐|솔브레인|티씨케이|에스앤에스텍|케이씨텍|나노신소재|레이크머티리얼즈|티이엠씨|한솔케미칼|sk머티리얼즈|원익msp|하나머티리얼즈/.test(n) || /반도체장비|반도체소재|웨이퍼/.test(ind)) return '전기전자/반도체';
+  // 전기전자/반도체 (장비·소재·측정·가전)
+  if (/한미반도체|주성엔지|원익ips|이오테크닉스|테스나|피에스케이|리노공업|hpsp|인텍플러스|동진쎄미켐|솔브레인|티씨케이|에스앤에스텍|케이씨텍|나노신소재|레이크머티리얼즈|티이엠씨|한솔케미칼|sk머티리얼즈|원익msp|하나머티리얼즈|lg전자|lgelectronics|삼성전기|코웨이|위니아|쿠쿠홀딩스/.test(n) || /반도체장비|반도체소재|웨이퍼|가전/.test(ind)) return '전기전자/반도체';
+
+  // 전자부품 (LG이노텍 영문명 포함)
+  if (/lg이노텍|lginnotek/.test(n)) return '전자부품';
 
   // 게임
   if (/크래프톤|krafton|넥슨|엔씨소프트|펄어비스|카카오게임즈|네오위즈|컴투스|위메이드|넷마블|시프트업|웹젠|데브시스터즈/.test(n) || /게임개발|게임소프트/.test(ind)) return '게임';
@@ -5636,7 +5639,7 @@ function _getAutoSector(name, industry) {
   if (/네이버|naver|카카오|kakao|nhn|더존비즈온|카카오페이|한글과컴퓨터|웹케시|더존|에스더블유엠/.test(n) || /인터넷서비스|플랫폼|소프트웨어|it서비스/.test(ind)) return 'IT/플랫폼';
 
   // 통신/보안/서버
-  if (/sk텔레콤|skt|kt$|ktcorp|lg유플러스|삼성sds|kt클라우드|에스원|sk인포섹|시큐아이|안랩|이글루시큐리티/.test(n) || /통신서비스|보안솔루션|서버|데이터센터/.test(ind)) return '통신/보안/서버';
+  if (/sk텔레콤|skt|kt$|ktcorp|lg유플러스|삼성sds|삼성에스디에스|kt클라우드|에스원|sk인포섹|시큐아이|안랩|이글루시큐리티/.test(n) || /통신서비스|보안솔루션|서버|데이터센터/.test(ind)) return '통신/보안/서버';
 
   // 항공우주
   if (/한국항공우주|kai|한화에어로스페이스/.test(n) || /항공우주|위성/.test(ind)) return '항공우주';
@@ -5648,40 +5651,40 @@ function _getAutoSector(name, industry) {
   if (/현대차|기아$|현대모비스|만도|현대위아|현대트랜시스|hl만도|세방전지|현대오토에버/.test(n) || /완성차|자동차부품/.test(ind)) return '자동차';
 
   // 원자력/에너지
-  if (/두산에너빌|한국원자력|한전기술|한전kps|우리기술|비에이치아이|두산중공업|제룡전기|가온전선|ls전선|대한전선|일진전기|효성중공업|ls일렉트릭|lselectric|현대일렉트릭|hdelectric|제일전기/.test(n) || /원자력|핵연료|전력기기|전선|변압기/.test(ind)) return '원자력/에너지';
+  if (/두산에너빌|한국원자력|한전기술|한전kps|한국전력|kepco|한국수력원자력|khnp|우리기술|비에이치아이|두산중공업|제룡전기|가온전선|ls전선|대한전선|일진전기|효성중공업|ls일렉트릭|lselectric|현대일렉트릭|hdelectric|제일전기/.test(n) || /원자력|핵연료|전력기기|전선|변압기|전기공급/.test(ind)) return '원자력/에너지';
 
   // 수소/가스
   if (/일진하이솔루스|sk가스|하이리움산업|수소에너지네트워크|에이치엔지|대성산업/.test(n) || /수소|연료전지|lng|lpg/.test(ind)) return '수소/가스';
 
   // 석유에너지
-  if (/sk이노베이션|에쓰오일|gs칼텍스|현대오일뱅크|한화솔루션/.test(n) || /정유|석유화학|에너지화학/.test(ind)) return '석유에너지';
+  if (/sk이노베이션|에쓰오일|s-oil|soil|gs칼텍스|현대오일뱅크|한화솔루션/.test(n) || /정유|석유화학|에너지화학/.test(ind)) return '석유에너지';
 
   // 제약/바이오
-  if (/삼성바이오로직스|셀트리온|한미약품|유한양행|녹십자|동아제약|대웅제약|종근당|부광약품|일동제약|jw중외|보령|광동제약|휴젤|메디톡스|클래시스/.test(n) || /제약|바이오|의약품/.test(ind)) return '제약/바이오';
+  if (/삼성바이오로직스|삼성에피스홀딩스|삼성바이오에피스|셀트리온|한미약품|유한양행|녹십자|동아제약|대웅제약|종근당|부광약품|일동제약|jw중외|보령|광동제약|휴젤|메디톡스|클래시스|알테오젠|오스코텍|동국제약|대화제약|한독|동아에스티|jwholdings|오리온홀딩스|보로노이|한올바이오파마/.test(n) || /제약|바이오|의약품/.test(ind)) return '제약/바이오';
 
   // 의료장비
   if (/뷰노|루닛|코어라인소프트|힘스|인바디|오스템임플란트|덴티움|레이|바텍|파나진|제이브이엠|비트컴퓨터/.test(n) || /의료기기|의료장비|진단기기/.test(ind)) return '의료장비';
 
   // 건설/기계장비
-  if (/삼성물산|현대건설|대우건설|gs건설|hdc현대산업|두산밥캣|hd현대인프라코어|태영건설|sk에코플랜트|포스코건설/.test(n) || /건설|기계|중장비/.test(ind)) return '건설/기계장비';
+  if (/삼성물산|삼성e&a|삼성엔지니어링|현대건설|대우건설|gs건설|hdc현대산업|두산밥캣|hd현대인프라코어|태영건설|sk에코플랜트|포스코건설|포스코인터내셔널/.test(n) || /건설|기계|중장비|엔지니어링/.test(ind)) return '건설/기계장비';
 
   // 조선/해양산업
   if (/현대중공업|한국조선해양|삼성중공업|대우조선해양|hd한국조선|hd현대|현대미포조선|한화오션|케이조선/.test(n) || /조선|해양플랜트/.test(ind)) return '조선/해양산업';
 
   // 운송
-  if (/대한항공|아시아나항공|제주항공|진에어|에어부산|현대글로비스|cj대한통운|한진|팬오션|흥아해운/.test(n) || /항공운송|해운|화물운송|물류/.test(ind)) return '운송';
+  if (/대한항공|아시아나항공|제주항공|진에어|에어부산|현대글로비스|cj대한통운|한진|팬오션|흥아해운|hmm|현대머스크|hmmco|에이치엠엠/.test(n) || /항공운송|해운|화물운송|물류/.test(ind)) return '운송';
 
   // 금융/은행 (신규)
-  if (/kb금융|신한지주|신한금융|하나금융지주|하나금융|우리금융지주|우리금융|삼성생명|한화생명|삼성화재|현대해상|db손해보험|메리츠금융지주|메리츠금융|미래에셋증권|삼성증권|키움증권|nh투자증권|한국투자증권|ibk기업은행|카카오뱅크|케이뱅크|토스뱅크/.test(n) || /금융지주|은행업|보험업|증권업|저축은행/.test(ind)) return '금융/은행';
+  if (/kb금융|신한지주|신한금융|하나금융지주|하나금융|우리금융지주|우리금융|삼성생명|한화생명|삼성화재|현대해상|db손해보험|메리츠금융지주|메리츠금융|미래에셋증권|삼성증권|키움증권|nh투자증권|한국투자증권|ibk기업은행|기업은행|카카오뱅크|케이뱅크|토스뱅크|한국금융지주|우리은행|국민은행|신한은행|하나은행|대구은행|부산은행|제주은행|전북은행|광주은행|경남은행/.test(n) || /금융지주|은행업|보험업|증권업|저축은행|금융서비스/.test(ind)) return '금융/은행';
 
   // 지주 (신규) — 위에서 걸리지 않은 순수 지주사
-  if (/sk\(주\)|^lg$|롯데지주|^gs$|^cj$|^한화$|코오롱인더|^두산$|^oci$/.test(n) || /지주회사|holding/.test(ind)) return '지주';
+  if (/sk\(주\)|^sk$|sk스퀘어|^lg$|롯데지주|^gs$|^cj$|^한화$|코오롱인더|^두산$|^ls$|lx홀딩스|^lx$|hd현대지주/.test(n) || /지주회사|holding/.test(ind)) return '지주';
 
   // 화학/소재 (신규)
   if (/lg화학|롯데케미칼|금호석유|skc$|효성화학|롯데정밀화학|이수화학|태광산업|코오롱플라스틱|엔켐|동성화학|금호폴리켐|한화임팩트|코오롱인더스트리/.test(n) || /정밀화학|화학소재|특수화학|기초화학/.test(ind)) return '화학/소재';
 
   // 철강/금속 (신규)
-  if (/포스코홀딩스|poscoholdings|posco|현대제철|고려아연|영풍|kg스틸|동국제강|세아제강|포스코스틸리온|문배철강|동국씨엠|현대비앤지스틸/.test(n) || /철강|금속제련|특수강|압연/.test(ind)) return '철강/금속';
+  if (/포스코홀딩스|poscoholdings|^posco$|현대제철|고려아연|영풍|kg스틸|동국제강|세아제강|포스코스틸리온|문배철강|동국씨엠|현대비앤지스틸|성우하이텍/.test(n) || /철강|금속제련|특수강|압연/.test(ind)) return '철강/금속';
 
   // 4차산업 (fallback)
   if (ind.includes('클라우드') || ind.includes('iot') || ind.includes('빅데이터') || ind.includes('스마트팩토리')) return '4차산업';
@@ -5710,7 +5713,7 @@ function renderThemeTab() {
   if (_themeMode === 'sector') {
     const sectors = {};
     (state.portfolio||[]).forEach(s => {
-      const sec = _getAutoSector(s.name, s.industry||'');
+      const sec = s.theme || _getAutoSector(s.name, s.industry||'');
       if (!sectors[sec]) sectors[sec] = [];
       sectors[sec].push(s);
     });
@@ -5756,7 +5759,7 @@ function showThemeStocks(theme, btn) {
   let stocks;
   if (theme.startsWith('__sec__')) {
     const sec = theme.slice(7);
-    stocks = (state.portfolio||[]).filter(s => _getAutoSector(s.name, s.industry||'') === sec);
+    stocks = (state.portfolio||[]).filter(s => (s.theme || _getAutoSector(s.name, s.industry||'')) === sec);
   } else {
     stocks = (state.portfolio||[]).filter(s => (s.theme || '미분류') === theme);
   }
@@ -9152,29 +9155,57 @@ function renderAcctFilterBar() {
   if (!bar) return;
   const accounts = state.accounts || [];
   if (accounts.length === 0) { bar.innerHTML = ''; bar.style.cssText = ''; return; }
-  // 수직 목록형 레이아웃
-  bar.style.cssText = 'display:flex;flex-direction:column;gap:2px;padding:4px 0 6px;';
-  const items = [{ id: '', nickname: '모아보기', number: '', color: 'var(--accent)' }]
+
+  const items = [{ id: '', nickname: '모아보기', number: '', broker: '' }]
     .concat(accounts.map(a => ({
-      id: a.id, nickname: a.nickname, number: a.number || '',
-      color: (BROKER_INFO[a.broker] || {}).color || '#888'
+      id: a.id, nickname: a.nickname, number: a.number || '', broker: a.broker
     })));
-  bar.innerHTML = items.map(item => {
-    const active = _acctFilter === item.id;
-    const bg     = active ? `color-mix(in srgb,${item.color} 14%,transparent)` : 'transparent';
-    const bc     = active ? item.color : 'var(--border)';
-    const tc     = active ? item.color : 'var(--text2)';
-    const fw     = active ? '700' : '500';
-    const dot    = item.id
-      ? `<span style="width:7px;height:7px;border-radius:50%;background:${item.color};flex-shrink:0;margin-right:6px;display:inline-block;"></span>`
-      : `<span style="width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-right:6px;display:inline-block;"></span>`;
-    const numSpan = item.number
-      ? `<span style="font-size:10px;opacity:0.65;margin-left:5px;">${escHtml(item.number)}</span>` : '';
-    return `<div onclick="setAcctFilter('${escHtml(item.id)}')"
-      style="display:flex;align-items:center;padding:4px 10px;border-radius:7px;border:1px solid ${bc};cursor:pointer;font-size:12px;font-weight:${fw};color:${tc};background:${bg};transition:all .12s;">
-      ${dot}<span>${escHtml(item.nickname)}</span>${numSpan}
-    </div>`;
-  }).join('');
+
+  const cur = items.find(i => i.id === _acctFilter) || items[0];
+  const curColor = cur.id ? ((BROKER_INFO[cur.broker] || {}).color || '#888') : 'var(--accent)';
+  const curNum   = cur.number ? ` <span style="opacity:0.5;font-size:10px;">${escHtml(cur.number)}</span>` : '';
+
+  bar.style.cssText = 'position:relative;padding:4px 8px 6px;';
+  bar.innerHTML = `
+    <div id="acctDropBtn" onclick="_toggleAcctDrop(event)"
+      style="display:flex;align-items:center;gap:7px;padding:6px 10px;border-radius:8px;border:1px solid ${curColor};cursor:pointer;font-size:12px;font-weight:600;color:${curColor};background:color-mix(in srgb,${curColor} 10%,transparent);user-select:none;">
+      <span style="width:7px;height:7px;border-radius:50%;background:${curColor};flex-shrink:0;display:inline-block;"></span>
+      <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(cur.nickname)}${curNum}</span>
+      <span style="font-size:9px;opacity:0.6;">▼</span>
+    </div>
+    <div id="acctDropList" style="display:none;position:absolute;left:8px;right:8px;top:calc(100% - 2px);z-index:9999;background:var(--bg1);border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.35);overflow:hidden;">
+      ${items.map(item => {
+        const ic = item.id ? ((BROKER_INFO[item.broker]||{}).color||'#888') : 'var(--accent)';
+        const active = _acctFilter === item.id;
+        const abg = active ? `color-mix(in srgb,${ic} 14%,transparent)` : 'transparent';
+        return `<div onclick="_selectAcct('${escHtml(item.id)}')"
+          style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;font-size:12px;font-weight:${active?'700':'400'};color:${active?ic:'var(--text1)'};background:${abg};"
+          onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='${abg}'">
+          <span style="width:7px;height:7px;border-radius:50%;background:${ic};flex-shrink:0;display:inline-block;"></span>
+          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(item.nickname)}</span>
+          ${item.number ? `<span style="font-size:10px;opacity:0.5;flex-shrink:0;white-space:nowrap;">${escHtml(item.number)}</span>` : ''}
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+function _toggleAcctDrop(e) {
+  e.stopPropagation();
+  const dl = document.getElementById('acctDropList');
+  if (!dl) return;
+  const isOpen = dl.style.display !== 'none';
+  dl.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    const close = () => { dl.style.display='none'; document.removeEventListener('click',close); };
+    setTimeout(() => document.addEventListener('click', close), 0);
+  }
+}
+
+function _selectAcct(id) {
+  const dl = document.getElementById('acctDropList');
+  if (dl) dl.style.display = 'none';
+  setAcctFilter(id);
 }
 
 function setAcctFilter(id) {
@@ -11351,7 +11382,7 @@ function _toggleCheck(stockKey, checkKey, val) {
 
 
 /* ═══════════════════════════════════════════════════════════════
-   경제·주식 캘린더 슬라이드 패널  (Stock Book v1.4.1)
+   경제·주식 캘린더 슬라이드 패널  (Stock Book v1.4.2)
    ─ MAJOR_ECON_EVENTS: 한국/미국 주요 경제지표 하드코딩 (2026)
    ─ state.calEvents: 사용자 추가 기업이벤트 (localStorage 영속)
 ═══════════════════════════════════════════════════════════════ */
@@ -12116,7 +12147,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     <div class="settings-close-row">
       <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.4.1</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.4.2</div>
   </div>
 </div>
 
