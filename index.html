@@ -4650,6 +4650,9 @@ function _renderAll() {
 function load() {
   console.log('[StockBook] load() 시작 — electronAPI:', !!window.electronAPI);
 
+  // UI 상태 선복원 (계좌 필터·테마모드·사이드바 접힘 등)
+  try { restoreUiState(); } catch(e) {}
+
   // 1) localStorage (동기) — 즉시 렌더
   try {
     const d = localStorage.getItem(STORAGE_KEY);
@@ -4678,6 +4681,7 @@ function load() {
 window.addEventListener('beforeunload', () => {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
   try { if (window._MDI) window._MDI.saveMdiLayout(); } catch(e) {}
+  try { saveUiState(); } catch(e) {}
 });
 function openTotalAssetModal() {
   const inp = document.getElementById('totalAssetModalInput');
@@ -5765,6 +5769,7 @@ function renderThemeTab() {
 function _setThemeMode(mode) {
   _themeMode = mode;
   renderThemeTab();
+  try { saveUiState(); } catch(e) {}
 }
 
 function showThemeStocks(theme, btn) {
@@ -8369,6 +8374,17 @@ function editJournal(idx) {
   document.getElementById('j_name').focus();
 }
 
+// ── 잔고·시세 수동 새로고침 버튼 ───────────────────────────────────────────────
+async function refreshPortfolioData(btn) {
+  if (btn) { btn.style.opacity = '0.4'; btn.disabled = true; }
+  showToast('시세 업데이트 중…');
+  try { await refreshWatchlist(); } catch(e) {}
+  try { renderPortfolio(); } catch(e) {}
+  try { renderSummary();   } catch(e) {}
+  if (btn) { btn.style.opacity = ''; btn.disabled = false; }
+  showToast('✅ 시세가 업데이트되었습니다');
+}
+
 // ── 예수금 새로고침 ────────────────────────────────────────────────────────────
 function refreshCashDisplay() {
   if (state.cashManual != null) {
@@ -8976,6 +8992,34 @@ const BROKER_INFO = {
 
 let _acctFilter = '';   // '' = 전체, 'accountId' = 해당 계좌만
 
+// ── UI 상태 저장/복원 (마지막 화면 유지) ────────────────────────────────────
+const UI_KEY = 'sb_ui_v1';
+function saveUiState() {
+  const sb  = document.getElementById('mdiSidebar');
+  try {
+    localStorage.setItem(UI_KEY, JSON.stringify({
+      acctFilter:       _acctFilter,
+      themeMode:        _themeMode,
+      sidebarCollapsed: sb ? sb.classList.contains('sb-collapsed') : false
+    }));
+  } catch(e) {}
+}
+function restoreUiState() {
+  try {
+    const d = JSON.parse(localStorage.getItem(UI_KEY) || '{}');
+    if (d.acctFilter  !== undefined) _acctFilter = d.acctFilter;
+    if (d.themeMode)                 _themeMode  = d.themeMode;
+    if (d.sidebarCollapsed) {
+      const sb  = document.getElementById('mdiSidebar');
+      const btn = document.querySelector('.mdi-sb-toggle-icon');
+      if (sb)  sb.classList.add('sb-collapsed');
+      if (btn) btn.textContent = '▶';
+    }
+    // 복원 후 필터바 재렌더 (선택된 계좌 표시)
+    try { renderAcctFilterBar(); } catch(e) {}
+  } catch(e) {}
+}
+
 function _acctId() {
   return 'acct_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
 }
@@ -9197,15 +9241,17 @@ function renderAcctFilterBar() {
   const curColor = cur.id ? ((BROKER_INFO[cur.broker] || {}).color || '#888') : 'var(--accent)';
   const curNum   = cur.number ? ` <span style="opacity:0.5;font-size:10px;">${escHtml(cur.number)}</span>` : '';
 
-  bar.style.cssText = 'position:relative;padding:4px 8px 6px;';
+  bar.style.cssText = 'position:relative;padding:4px 8px 6px;display:flex;align-items:center;gap:5px;';
   bar.innerHTML = `
     <div id="acctDropBtn" onclick="_toggleAcctDrop(event)"
-      style="display:flex;align-items:center;gap:7px;padding:6px 10px;border-radius:8px;border:1px solid ${curColor};cursor:pointer;font-size:12px;font-weight:600;color:${curColor};background:color-mix(in srgb,${curColor} 10%,transparent);user-select:none;">
+      style="flex:1;display:flex;align-items:center;gap:7px;padding:6px 10px;border-radius:8px;border:1px solid ${curColor};cursor:pointer;font-size:12px;font-weight:600;color:${curColor};background:color-mix(in srgb,${curColor} 10%,var(--bg2));user-select:none;min-width:0;">
       <span style="width:7px;height:7px;border-radius:50%;background:${curColor};flex-shrink:0;display:inline-block;"></span>
       <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(cur.nickname)}${curNum}</span>
       <span style="font-size:9px;opacity:0.6;">▼</span>
     </div>
-    <div id="acctDropList" style="display:none;position:absolute;left:8px;right:8px;top:calc(100% - 2px);z-index:9999;background:var(--bg1);border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.35);overflow:hidden;">
+    <button onclick="refreshPortfolioData(this)" title="잔고·시세 새로고침"
+      style="flex-shrink:0;width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .15s;">↻</button>
+    <div id="acctDropList" style="display:none;position:absolute;left:8px;right:8px;top:calc(100% - 2px);z-index:9999;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.45);overflow:hidden;">
       ${items.map(item => {
         const ic = item.id ? ((BROKER_INFO[item.broker]||{}).color||'#888') : 'var(--accent)';
         const active = _acctFilter === item.id;
@@ -9244,6 +9290,7 @@ function setAcctFilter(id) {
   _acctFilter = id;
   renderAcctFilterBar();
   renderPortfolio();
+  try { saveUiState(); } catch(e) {}
 }
 
 function escHtml(s) {
@@ -11162,6 +11209,7 @@ function _toggleCheck(stockKey, checkKey, val) {
       sb.classList.toggle('sb-collapsed');
       const col = sb.classList.contains('sb-collapsed');
       if (btn) btn.textContent = col ? '▶' : '◀';
+      try { saveUiState(); } catch(e) {}
       setTimeout(() => { if (!this.restoreMdiLayout()) this.resetLayout(); }, 220);
     },
 
