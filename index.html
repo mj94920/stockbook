@@ -2976,7 +2976,7 @@
     <div style="display:flex;gap:0;border-bottom:1px solid var(--border);">
       <button id="allMktTab-KOSPI"  onclick="switchAllMarket('KOSPI')"  style="padding:5px 12px;background:none;border:none;border-bottom:2px solid var(--accent);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;">KOSPI</button>
       <button id="allMktTab-KOSDAQ" onclick="switchAllMarket('KOSDAQ')" style="padding:5px 12px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:12px;font-weight:400;cursor:pointer;">KOSDAQ</button>
-      <button id="allMktTab-ETF"    onclick="switchAllMarket('ETF')"    style="padding:5px 12px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:12px;font-weight:400;cursor:pointer;">ETF</button>
+
       <button id="allMktTab-SECTOR" onclick="switchAllMarket('SECTOR')" style="padding:5px 12px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:12px;font-weight:400;cursor:pointer;">섹터별</button>
     </div>
     <div id="allStockStatus" style="font-size:10px;color:var(--text3);padding:2px 0;min-height:14px;"></div>
@@ -4034,6 +4034,9 @@
           <option>화학/소재</option>
           <option>철강/금속</option>
           <option>ETF/인덱스</option>
+          <option>식품/유통</option>
+          <option>소비재</option>
+          <option>부동산/임대</option>
           <option>기타</option>
         </select>
       </div>
@@ -4645,6 +4648,12 @@ function _renderAll() {
   if (mc.principal || mc.rate || mc.months) { try { calcMonthlyCompound(); } catch(e) { console.warn('[_renderAll] calcMonthlyCompound 오류:', e.message); } }
   // 현재 활성 서브탭 복원 (재접속·push-state 이후에도 탭 상태 유지)
   try { switchSubTab(currentSubTab); } catch(e) {}
+  // MDI 레이아웃: state.mdiLayout → localStorage 동기화 (Electron 파일 저장소 기반 복원 지원)
+  try {
+    if (state.mdiLayout) {
+      localStorage.setItem('sb_mdi_layout_v1', JSON.stringify(state.mdiLayout));
+    }
+  } catch(e) {}
 }
 
 function load() {
@@ -4679,8 +4688,8 @@ function load() {
 
 // 앱 닫기 전 반드시 localStorage에 동기 저장
 window.addEventListener('beforeunload', () => {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
-  try { if (window._MDI) window._MDI.saveMdiLayout(); } catch(e) {}
+  try { if (window._MDI) window._MDI.saveMdiLayout(); } catch(e) {}  // state.mdiLayout 먼저 업데이트
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}  // mdiLayout 포함하여 저장
   try { saveUiState(); } catch(e) {}
 });
 function openTotalAssetModal() {
@@ -5699,7 +5708,7 @@ function _getAutoSector(name, industry) {
   // 4차산업 (fallback)
   if (ind.includes('클라우드') || ind.includes('iot') || ind.includes('빅데이터') || ind.includes('스마트팩토리')) return '4차산업';
 
-  // 업종 기반 폴백 (전체종목 기타 최소화)
+  // 업종 기반 폴백 (전체종목 기타 최소화) — 영위 산업 기준 전방위 커버
   if (/전기전자/.test(ind)) return '전기전자/반도체';
   if (/화학/.test(ind)) return '화학/소재';
   if (/철강|금속/.test(ind)) return '철강/금속';
@@ -5714,6 +5723,24 @@ function _getAutoSector(name, industry) {
   if (/금융|은행|증권|보험/.test(ind)) return '금융/은행';
   if (/전기|가스/.test(ind)) return '원자력/에너지';
   if (/소프트웨어|서비스업/.test(ind)) return 'IT/플랫폼';
+  // 확장 폴백 — 기존 패턴에서 누락된 업종
+  if (/음식료/.test(ind)) return '식품/유통';
+  if (/섬유|의복/.test(ind)) return '소비재';
+  if (/종이|목재|제지/.test(ind)) return '화학/소재';
+  if (/비금속/.test(ind)) return '화학/소재';
+  if (/유통|도소매|상사/.test(ind)) return '식품/유통';
+  if (/농업|임업|수산|어업/.test(ind)) return '식품/유통';
+  if (/숙박|음식점|관광|레저/.test(ind)) return '소비재';
+  if (/부동산/.test(ind)) return '부동산/임대';
+  if (/교육|출판|방송/.test(ind)) return 'IT/플랫폼';
+  if (/오락|문화|스포츠/.test(ind)) return '엔터테인먼트';
+  if (/환경|폐기|재활용/.test(ind)) return '건설/기계장비';
+  if (/렌탈|임대/.test(ind)) return '소비재';
+  // 이름 기반 보조 매핑 (업종 정보 없는 경우 대비)
+  if (/이마트|롯데쇼핑|현대백화점|bgf리테일|gs리테일|신세계|홈플러스|롯데마트/.test(n)) return '식품/유통';
+  if (/cj제일제당|오뚜기|농심|삼양식품|롯데웰푸드|하이트진로|오비맥주|매일유업/.test(n)) return '식품/유통';
+  if (/아모레퍼시픽|lg생활건강|한국콜마|코스맥스|에이블씨엔씨|애경산업/.test(n)) return '소비재';
+  if (/한샘|현대리바트|퍼시스/.test(n)) return '소비재';
 
   return '기타';
 }
@@ -5729,41 +5756,23 @@ function renderThemeTab() {
     tableEl.innerHTML = '';
     return;
   }
-  const btnStyle = (active) =>
-    `padding:4px 14px;border-radius:14px;font-size:12px;cursor:pointer;border:1px solid var(--border);` +
-    `background:${active?'var(--accent)':'var(--bg3)'};color:${active?'#fff':'var(--text2)'};`;
-  const modeBar = `<div style="display:flex;gap:6px;margin-bottom:10px;">
-    <button onclick="_setThemeMode('theme')" style="${btnStyle(_themeMode==='theme')}">내 테마</button>
-    <button onclick="_setThemeMode('sector')" style="${btnStyle(_themeMode==='sector')}">섹터별</button>
-  </div>`;
-  if (_themeMode === 'sector') {
-    const sectors = {};
-    (state.portfolio||[]).forEach(s => {
-      const sec = s.theme || _getAutoSector(s.name, s.industry||'');
-      if (!sectors[sec]) sectors[sec] = [];
-      sectors[sec].push(s);
-    });
-    const secNames = Object.keys(sectors).sort();
-    themeListEl.innerHTML = modeBar + secNames.map(t =>
-      `<button onclick="showThemeStocks('__sec__${t.replace(/'/g,"\\'")}',this)"
-        style="padding:6px 12px;border:1px solid var(--border);border-radius:20px;background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;"
-      >${t} <span style="color:var(--text3)">(${sectors[t].length})</span></button>`
-    ).join('');
-  } else {
-    const themes = {};
-    (state.portfolio||[]).forEach(s => {
-      const th = s.theme || '미분류';
-      if (!themes[th]) themes[th] = [];
-      themes[th].push(s);
-    });
-    const themeNames = Object.keys(themes);
-    themeListEl.innerHTML = modeBar + themeNames.map(t =>
-      `<button onclick="showThemeStocks('${t.replace(/'/g,"\\'")}',this)"
-        style="padding:6px 12px;border:1px solid var(--border);border-radius:20px;background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;"
-      >${t} <span style="color:var(--text3)">(${themes[t].length})</span></button>`
-    ).join('');
-  }
-  tableEl.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:40px 0;">테마/섹터를 선택하세요.</div>';
+  // 세부탭 제거 — 항상 섹터별 자동분류 표시
+  const sectors = {};
+  (state.portfolio||[]).forEach(s => {
+    const sec = s.theme || _getAutoSector(s.name, s.industry||'');
+    if (!sectors[sec]) sectors[sec] = [];
+    sectors[sec].push(s);
+  });
+  const secNames = Object.keys(sectors).sort((a,b) => {
+    if (a==='기타') return 1; if (b==='기타') return -1;
+    return a.localeCompare(b,'ko');
+  });
+  themeListEl.innerHTML = secNames.map(t =>
+    `<button onclick="showThemeStocks('__sec__${t.replace(/'/g,"\\'")}',this)"
+      style="padding:6px 12px;border:1px solid var(--border);border-radius:20px;background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;"
+    >${t} <span style="color:var(--text3)">(${sectors[t].length})</span></button>`
+  ).join('');
+  tableEl.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:40px 0;">섹터를 선택하세요.</div>';
 }
 
 function _setThemeMode(mode) {
@@ -5873,8 +5882,9 @@ function renderAllStockTab() {
 }
 
 function switchAllMarket(mkt) {
+  if (mkt === 'ETF') mkt = 'KOSPI'; // ETF 탭 제거됨 → KOSPI로 폴백
   _allMkt = mkt;
-  ['KOSPI','KOSDAQ','ETF','SECTOR'].forEach(m => {
+  ['KOSPI','KOSDAQ','SECTOR'].forEach(m => {
     const btn = document.getElementById('allMktTab-' + m);
     if (!btn) return;
     const active = m === mkt;
@@ -5973,7 +5983,10 @@ function renderAllStockSectorView() {
     if (!sectors[sec]) sectors[sec] = [];
     sectors[sec].push(s);
   });
-  const secNames = Object.keys(sectors).sort();
+  const secNames = Object.keys(sectors).sort((a,b) => {
+    if (a==='기타') return 1; if (b==='기타') return -1;
+    return a.localeCompare(b,'ko');
+  });
   const countEl = document.getElementById('allStockCount');
   if (countEl) countEl.textContent = `(${allData.length.toLocaleString()}종목 / ${secNames.length}섹터)`;
 
@@ -10886,12 +10899,19 @@ function _toggleCheck(stockKey, checkKey, val) {
         data[pid] = { state: st, x, y, w, h: Math.max(80, h) };
       });
       try { localStorage.setItem(this.MDI_KEY, JSON.stringify(data)); } catch(e) {}
+      // Electron 파일 저장소에도 함께 기록 (beforeunload 경쟁 조건 방지)
+      try { if (typeof state !== 'undefined') state.mdiLayout = data; } catch(e) {}
     },
 
     // ── 레이아웃 복원 (localStorage) ──────────────────────────────────
     restoreMdiLayout() {
       try {
-        const saved = JSON.parse(localStorage.getItem(this.MDI_KEY) || 'null');
+        let saved = JSON.parse(localStorage.getItem(this.MDI_KEY) || 'null');
+        // 폴백: Electron 파일 저장소 기반 state.mdiLayout에서 복원
+        if (!saved && typeof state !== 'undefined' && state.mdiLayout) {
+          saved = state.mdiLayout;
+          try { localStorage.setItem(this.MDI_KEY, JSON.stringify(saved)); } catch(e) {}
+        }
         if (!saved) return false;
         const ws = document.getElementById('mdiWorkspace');
         const wsW = ws ? ws.offsetWidth : window.innerWidth;
@@ -10970,7 +10990,12 @@ function _toggleCheck(stockKey, checkKey, val) {
         });
         panel.addEventListener('mousedown', () => this._front(pid), true);
       });
-      this.resetLayout();
+      // 저장된 레이아웃이 없을 때만 기본 배치 (있으면 _tryLayout이 복원하므로 깜빡임 방지)
+      {
+        const _hasSaved = !!(localStorage.getItem(this.MDI_KEY) ||
+                             (typeof state !== 'undefined' && state.mdiLayout));
+        if (!_hasSaved) this.resetLayout();
+      }
       // 메뉴버튼 초기 active 상태 동기화 (레이아웃은 워크스페이스 크기 확인 후 적용)
       this._syncAllBtns();
       // resetLayout은 workspace가 실제 크기를 갖춘 뒤 실행
