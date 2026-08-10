@@ -5765,6 +5765,47 @@ function _getAutoSector(name, industry) {
   if (/에스엠|sm엔터|빅히트|판타지오|키이스트|초록뱀|팬엔터|에이스토리/.test(n)) return '엔터테인먼트';
   if (/^한화$|^한화에어로$/.test(n)) return '방위산업';
 
+  // ── 업종 추가 폴백 (Naver API 기타제조 등 누락 업종 대응) ──────────────
+  if (/기타제조/.test(ind)) return '소비재';
+  if (/전기통신/.test(ind)) return '통신/보안/서버';
+  if (/광업/.test(ind)) return '화학/소재';
+  if (/출판|방송|광고/.test(ind)) return '엔터테인먼트';
+  if (/도소매|무역|상사/.test(ind)) return '식품/유통';
+  if (/숙박|음식점/.test(ind)) return '소비재';
+  if (/교육/.test(ind)) return 'IT/플랫폼';
+  if (/복합기업|지주/.test(ind)) return '지주';
+
+  // ── 종목명 키워드 보조 매핑 (industry 빈 종목 구제) ────────────────────
+  if (/바이오|bio/.test(n) && !/자동차/.test(n)) return '제약/바이오';
+  if (/제약|pharma/.test(n)) return '제약/바이오';
+  if (/헬스케어|헬스|health/.test(n)) return '제약/바이오';
+  if (/케미칼$|chemical/.test(n)) return '화학/소재';
+  if (/소재$|materials?$/.test(n)) return '화학/소재';
+  if (/로보틱스$|robotics?$/.test(n)) return '인공지능/로봇';
+  if (/모터스$|motors?$/.test(n)) return '자동차';
+  if (/에너지$|energy$/.test(n)) return '원자력/에너지';
+  if (/솔라$|solar$|태양광/.test(n)) return '원자력/에너지';
+  if (/부동산$|리츠$/.test(n)) return '부동산/임대';
+  if (/홀딩스$|지주$/.test(n)) return '지주';
+  if (/게임$|game$/.test(n)) return '게임';
+  if (/엔터$|엔터테인먼트$|entertainment$/.test(n)) return '엔터테인먼트';
+  if (/시스템즈?$|systems?$/.test(n) && !/건설|기계/.test(n)) return 'IT/플랫폼';
+  if (/테크놀로지$|technology$|테크$|tech$/.test(n)) return 'IT/플랫폼';
+  if (/소프트웨어$|software$/.test(n)) return 'IT/플랫폼';
+  if (/인터넷$|internet$/.test(n)) return 'IT/플랫폼';
+  if (/네트웍스?$|networks?$/.test(n)) return 'IT/플랫폼';
+  if (/은행$|bank$/.test(n)) return '금융/은행';
+  if (/보험$|insurance$/.test(n)) return '금융/은행';
+  if (/증권$|securities?$/.test(n)) return '금융/은행';
+  if (/캐피탈$|capital$|파이낸스$|finance$/.test(n)) return '금융/은행';
+  if (/건설$|construction$/.test(n)) return '건설/기계장비';
+  if (/엔지니어링$|engineering$/.test(n)) return '건설/기계장비';
+  if (/조선$|중공업$/.test(n)) return '조선/해양산업';
+  if (/물류$|logistics$|화물$/.test(n)) return '운송';
+  if (/항공$|airline$|항공사$/.test(n)) return '운송';
+  if (/스틸$|steel$|철강$/.test(n)) return '철강/금속';
+  if (/전선$|케이블$|cable$/.test(n)) return '원자력/에너지';
+
   return '기타';
 }
 
@@ -9386,6 +9427,10 @@ async function confirmDeleteAccount(id) {
 }
 
 function renderAcctFilterBar() {
+  // 드롭다운이 열려있는 동안 재렌더하면 DOM이 파괴됨 → skip
+  const _existingDl = document.getElementById('acctDropList');
+  if (_existingDl && _existingDl.style.display !== 'none') return;
+
   const bar = document.getElementById('acctFilterBar');
   if (!bar) return;
   const accounts = state.accounts || [];
@@ -9427,13 +9472,23 @@ function renderAcctFilterBar() {
   `;
 }
 
+let _acctDropClose = null; // stale 리스너 추적용
+
 function _toggleAcctDrop(e) {
   e.stopPropagation();
   const dl  = document.getElementById('acctDropList');
   const btn = document.getElementById('acctDropBtn');
   if (!dl) return;
+
+  // 기존 stale 리스너 정리 (재렌더로 인해 누적된 리스너 방지)
+  if (_acctDropClose) {
+    document.removeEventListener('pointerdown', _acctDropClose, true);
+    _acctDropClose = null;
+  }
+
   const isOpen = dl.style.display !== 'none';
   if (isOpen) { dl.style.display = 'none'; return; }
+
   // position:fixed — overflow:auto 부모에 의한 클리핑 방지
   if (btn) {
     const r = btn.getBoundingClientRect();
@@ -9443,13 +9498,14 @@ function _toggleAcctDrop(e) {
     dl.style.right = 'auto';
   }
   dl.style.display = 'block';
-  // 다음 프레임에 pointerdown 캡처 리스너 등록 (현재 클릭 이벤트 완료 후)
-  const close = (ev) => {
+
+  _acctDropClose = (ev) => {
     if (dl.contains(ev.target) || (btn && btn.contains(ev.target))) return;
     dl.style.display = 'none';
-    document.removeEventListener('pointerdown', close, true);
+    document.removeEventListener('pointerdown', _acctDropClose, true);
+    _acctDropClose = null;
   };
-  requestAnimationFrame(() => document.addEventListener('pointerdown', close, true));
+  requestAnimationFrame(() => document.addEventListener('pointerdown', _acctDropClose, true));
 }
 
 function _selectAcct(id) {
@@ -10416,8 +10472,25 @@ function renderCashList() {
 // ESC 키로 모달 닫기
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
+    // 1) 설정 모달 우선
     const sm = document.getElementById('settingsModal');
     if (sm && sm.classList.contains('open')) { closeSettings(); return; }
+    // 2) 입력 필드 포커스 시 무시
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    // 3) 포트폴리오 계좌 드롭다운 닫기
+    const dl = document.getElementById('acctDropList');
+    if (dl && dl.style.display !== 'none') { dl.style.display = 'none'; return; }
+    // 4) 최상위 z-index 열린 MDI 패널 닫기
+    if (window._MDI) {
+      let topPid = null, topZ = -1;
+      document.querySelectorAll('.mdi-panel').forEach(el => {
+        if (el.dataset.mdiState === 'closed') return;
+        const z = parseInt(el.style.zIndex || 0, 10);
+        if (z > topZ) { topZ = z; topPid = el.dataset.pid; }
+      });
+      if (topPid) { window._MDI.close(topPid); return; }
+    }
   }
 });
 
@@ -11173,7 +11246,8 @@ function _toggleCheck(stockKey, checkKey, val) {
       function _tryLayout(retry) {
         const ws = document.getElementById('mdiWorkspace');
         if (ws && ws.offsetWidth > 50 && ws.offsetHeight > 50) {
-          if (!_self.restoreMdiLayout()) _self.resetLayout();
+          // 항상 기본 레이아웃으로 시작 (저장된 레이아웃 무시)
+          _self.resetLayout();
         } else if (retry < 20) {
           setTimeout(function(){ _tryLayout(retry + 1); }, 50);
         }
@@ -11412,7 +11486,7 @@ function _toggleCheck(stockKey, checkKey, val) {
       const col = sb.classList.contains('sb-collapsed');
       if (btn) btn.textContent = col ? '▶' : '◀';
       try { saveUiState(); } catch(e) {}
-      setTimeout(() => { if (!this.restoreMdiLayout()) this.resetLayout(); }, 220);
+      setTimeout(() => { this.resetLayout(); }, 220);
     },
 
     // ── Z 순서 ──────────────────────────────────────────────────────────
