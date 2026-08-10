@@ -3056,7 +3056,7 @@
               oninput="_qoOnInput()" onkeydown="_qoKeydown(event)" autocomplete="off"
               style="width:100%;padding:6px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;">
             <datalist id="qoNameList"></datalist>
-            <div id="qoDropdown" style="display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:9999;background:var(--bg2);border:1px solid var(--border);border-radius:8px;max-height:220px;overflow-y:auto;box-shadow:0 6px 24px rgba(0,0,0,.45);"></div>
+            <div id="qoDropdown" style="display:none;position:fixed;z-index:99999;background:var(--bg2);border:1px solid var(--border);border-radius:8px;max-height:220px;overflow-y:auto;box-shadow:0 6px 24px rgba(0,0,0,.45);"></div>
           </div>
           <input type="hidden" id="qo_stock_code">
         </div>
@@ -3415,140 +3415,87 @@
       </div>
       <div class="mdi-body" id="mdi-body-news">
 
-      <!-- 종목 검색 -->
-      <div class="card">
-        <div class="card-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> 종목 공시 · 뉴스 검색</div>
-        <div class="alert alert-info"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg> 종목명 또는 종목코드를 입력하면 DART 공시, 네이버 증권 뉴스, Investing.com에서 직접 검색합니다.</div>
-        <div class="news-search-box" style="position:relative;">
+      <!-- ① 검색창 (드롭다운: position:fixed 로 overflow:auto 극복) -->
+      <div style="padding:12px 14px 0;">
+        <div style="display:flex;align-items:center;gap:8px;">
           <input type="text" id="sn_newsQuery" placeholder="삼성전자 / 005930 / AAPL"
             oninput="_newsQueryOnInput()" onkeydown="_newsQueryKeydown(event)" autocomplete="off"
-            style="flex:1;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:16px;outline:none;">
-          <div id="newsQueryDropdown" style="display:none;position:absolute;top:calc(100% + 2px);left:0;right:90px;z-index:9999;background:var(--bg2);border:1px solid var(--border);border-radius:8px;max-height:220px;overflow-y:auto;box-shadow:0 6px 24px rgba(0,0,0,.45);"></div>
+            style="flex:1;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;outline:none;">
           <button class="btn btn-primary" onclick="searchNews()">검색</button>
         </div>
+        <div id="newsQueryDropdown" style="display:none;position:fixed;z-index:99999;background:var(--bg2);border:1px solid var(--border);border-radius:8px;max-height:220px;overflow-y:auto;box-shadow:0 6px 24px rgba(0,0,0,.45);"></div>
       </div>
 
-      <!-- 보유 종목별 바로가기 -->
-      <div class="card" id="sn_portfolioNewsCard" style="display:none;">
-        <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> 보유 종목별 공시·뉴스 바로가기</div>
-        <div id="sn_portfolioNewsLinks" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;margin-top:4px;"></div>
+      <!-- ② 보유종목 바로가기 -->
+      <div id="sn_portfolioNewsCard" style="display:none;padding:8px 14px 4px;">
+        <div style="font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--text3);text-transform:uppercase;margin-bottom:5px;">&#x26A1; 보유종목 바로가기</div>
+        <div id="sn_portfolioNewsLinks" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;"></div>
       </div>
 
-      <!-- 공시 · 뉴스 링크 그리드 -->
-      <div class="news-grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));">
+      <!-- ③ B안: 좌(DART) / 우(국내+해외) 2열 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;padding:8px 0 12px;">
 
-        <!-- DART -->
-        <div>
-          <div class="card">
-            <div class="card-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg> DART 전자공시</div>
-            <div class="news-links">
-              <div class="news-link-item" onclick="openDart()">
-                <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-                <div class="nl-info"><h4>DART 공시 검색</h4><p>금융감독원 전자공시시스템 · 사업보고서, 분기보고서, 주요사항보고서</p></div>
-                <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-              </div>
-              <div class="news-link-item" onclick="openUrl('https://dart.fss.or.kr/dsac001/mainY.do')">
-                <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
-                <div class="nl-info"><h4>오늘의 공시</h4><p>당일 제출된 최신 공시 모아보기</p></div>
-                <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-              </div>
-              <div class="news-link-item" onclick="openUrl('https://dart.fss.or.kr/dsab007/main.do')">
-                <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
-                <div class="nl-info"><h4>DART 고급 검색</h4><p>기업명·보고서 종류·기간 지정 검색</p></div>
-                <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-              </div>
-              <div class="news-link-item" onclick="openUrl('https://kind.krx.co.kr/disclosure/todaydisclosure.do?method=searchTodayDisclListInit')">
-                <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
-                <div class="nl-info"><h4>KRX KIND 실시간 공시</h4><p>한국거래소 · 실시간 주요 공시 모니터링</p></div>
-                <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-              </div>
-            </div>
+        <!-- 좌열: DART -->
+        <div style="padding:0 10px 0 14px;border-right:1px solid var(--border);">
+          <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:4px 0 6px;border-bottom:1px solid var(--border);margin-bottom:4px;display:flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg> DART 전자공시</div>
+          <div class="news-link-item" onclick="openDart()">
+            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div class="nl-info"><h4>DART 공시 검색</h4><p>금융감독원 전자공시시스템</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">&#x2197;</span>
+          </div>
+          <div class="news-link-item" onclick="openUrl('https://dart.fss.or.kr/dsac001/mainY.do')">
+            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+            <div class="nl-info"><h4>오늘의 공시</h4><p>당일 최신 공시 모아보기</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">&#x2197;</span>
+          </div>
+          <div class="news-link-item" onclick="openUrl('https://dart.fss.or.kr/dsab007/main.do')">
+            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+            <div class="nl-info"><h4>DART 고급 검색</h4><p>기업명·보고서 종류·기간 지정</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">&#x2197;</span>
+          </div>
+          <div class="news-link-item" onclick="openUrl('https://kind.krx.co.kr/disclosure/todaydisclosure.do?method=searchTodayDisclListInit')">
+            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+            <div class="nl-info"><h4>KRX KIND 실시간 공시</h4><p>한국거래소 실시간 공시 모니터링</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">&#x2197;</span>
           </div>
         </div>
 
-        <!-- 국내 증시 뉴스 -->
-        <div>
-          <div class="card">
-            <div class="card-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> 국내 증시 뉴스</div>
-            <div class="news-links">
-              <div class="news-link-item" onclick="openUrl('https://stock.naver.com/news')">
-                <div class="nl-icon"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#03c75a"></span></div>
-                <div class="nl-info"><h4>네이버 증권 뉴스</h4><p>국내 증시 속보 · 분석 · 종목 리포트</p></div>
-                <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-              </div>
-              <div class="news-link-item" onclick="openUrl('https://www.hankyung.com/finance')">
-                <div class="nl-icon"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e31937"></span></div>
-                <div class="nl-info"><h4>한국경제</h4><p>증시·기업·채권 뉴스</p></div>
-                <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-              </div>
-              <div class="news-link-item" onclick="openUrl('https://www.mk.co.kr/news/stock/')">
-                <div class="nl-icon"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#0070c0"></span></div>
-                <div class="nl-info"><h4>매일경제 주식</h4><p>국내외 주식 뉴스</p></div>
-                <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-              </div>
-              <div class="news-link-item" onclick="openUrl('https://www.edaily.co.kr/news/newsList.asp?newsId=&mediacodeNo=257&OutLnkChk=Y')">
-                <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
-                <div class="nl-info"><h4>이데일리 증권</h4><p>실시간 주식·채권·파생 뉴스</p></div>
-                <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-              </div>
-            </div>
+        <!-- 우열: 국내뉴스 + 해외증시 -->
+        <div style="padding:0 14px 0 10px;">
+          <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:4px 0 6px;border-bottom:1px solid var(--border);margin-bottom:4px;display:flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> 국내 증시 뉴스</div>
+          <div class="news-link-item" onclick="openUrl('https://stock.naver.com/news')">
+            <div class="nl-icon"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#03c75a"></span></div>
+            <div class="nl-info"><h4>네이버 증권 뉴스</h4><p>국내 증시 속보 · 종목 리포트</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">&#x2197;</span>
+          </div>
+          <div class="news-link-item" onclick="openUrl('https://www.hankyung.com/finance')">
+            <div class="nl-icon"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e31937"></span></div>
+            <div class="nl-info"><h4>한국경제</h4><p>증시·기업·채권 뉴스</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">&#x2197;</span>
+          </div>
+          <div class="news-link-item" onclick="openUrl('https://www.mk.co.kr/news/stock/')">
+            <div class="nl-icon"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#0070c0"></span></div>
+            <div class="nl-info"><h4>매일경제 주식</h4><p>국내외 주식 뉴스</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">&#x2197;</span>
+          </div>
+          <div class="news-link-item" onclick="openUrl('https://www.edaily.co.kr/news/newsList.asp?newsId=&mediacodeNo=257&OutLnkChk=Y')">
+            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+            <div class="nl-info"><h4>이데일리 증권</h4><p>실시간 주식·채권·파생 뉴스</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">&#x2197;</span>
+          </div>
+          <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:10px 0 6px;border-bottom:1px solid var(--border);margin-bottom:4px;display:flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> 해외 증시</div>
+          <div class="news-link-item" onclick="openUrl('https://stock.naver.com/market/stock/usa')">
+            <div class="nl-icon"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#03c75a"></span></div>
+            <div class="nl-info"><h4>네이버 글로벌·미국</h4><p>stock.naver.com/market/stock/usa</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">&#x2197;</span>
+          </div>
+          <div class="news-link-item" onclick="openUrl('https://finance.yahoo.com')">
+            <div class="nl-icon"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#7c3aed"></span></div>
+            <div class="nl-info"><h4>Yahoo Finance</h4><p>미국 주식 뉴스·실적·재무제표</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">&#x2197;</span>
           </div>
         </div>
-
-        <!-- Investing.com -->
-        <div>
-          <div class="card">
-            <div class="card-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> Investing.com</div>
-            <div class="news-links">
-              <div class="news-link-item" onclick="openInvesting()">
-                <div class="nl-icon"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e87722"></span></div>
-                <div class="nl-info"><h4>Investing.com 종목 검색</h4><p>검색창 키워드로 Investing.com에서 조회</p></div>
-                <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-              </div>
-              <div class="news-link-item" onclick="openUrl('https://kr.investing.com/economic-calendar/')">
-                <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
-                <div class="nl-info"><h4>경제 캘린더</h4><p>FOMC·CPI·GDP 등 주요 경제 지표 일정</p></div>
-                <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-              </div>
-              <div class="news-link-item" onclick="openUrl('https://kr.investing.com/news/stock-market-news')">
-                <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-                <div class="nl-info"><h4>글로벌 증시 뉴스</h4><p>해외 주요 시장 분석 리포트</p></div>
-                <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 해외 리소스 -->
-        <div>
-          <div class="card">
-            <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> 해외 증시 리소스</div>
-            <div class="news-links">
-              <div class="news-link-item" onclick="openUrl('https://finance.yahoo.com')">
-                <div class="nl-icon"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#7c3aed"></span></div>
-                <div class="nl-info"><h4>Yahoo Finance</h4><p>미국 주식 뉴스·실적·재무제표</p></div>
-                <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-              </div>
-              <div class="news-link-item" onclick="openUrl('https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany')">
-                <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></div>
-                <div class="nl-info"><h4>SEC EDGAR</h4><p>미국 기업 10-K·10-Q·8-K 공시</p></div>
-                <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-              </div>
-              <div class="news-link-item" onclick="openUrl('https://seekingalpha.com')">
-                <div class="nl-icon"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3b82f6"></span></div>
-                <div class="nl-info"><h4>Seeking Alpha</h4><p>미국 주식 분석·아이디어</p></div>
-                <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-              </div>
-              <div class="news-link-item" onclick="openUrl('https://www.macrotrends.net')">
-                <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
-                <div class="nl-info"><h4>Macrotrends</h4><p>주식·거시경제 장기 데이터 차트</p></div>
-                <span style="margin-left:auto;color:var(--text3);font-size:13px;">↗</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div><!-- /news-grid -->
+      </div>
     </div>
       <div class="mdi-rz mdi-rz-n"  title="위 크기조절"></div>
       <div class="mdi-rz mdi-rz-s"  title="아래 크기조절"></div>
@@ -4650,12 +4597,7 @@ function _renderAll() {
   if (mc.principal || mc.rate || mc.months) { try { calcMonthlyCompound(); } catch(e) { console.warn('[_renderAll] calcMonthlyCompound 오류:', e.message); } }
   // 현재 활성 서브탭 복원 (재접속·push-state 이후에도 탭 상태 유지)
   try { switchSubTab(currentSubTab); } catch(e) {}
-  // MDI 레이아웃: state.mdiLayout → localStorage 동기화 (Electron 파일 저장소 기반 복원 지원)
-  try {
-    if (state.mdiLayout) {
-      localStorage.setItem('sb_mdi_layout_v1', JSON.stringify(state.mdiLayout));
-    }
-  } catch(e) {}
+  // MDI 레이아웃: state.mdiLayout 폴백 제거됨 (sb_mdi_layout_v2 만 사용)
 }
 
 function load() {
@@ -6553,6 +6495,11 @@ function _qoRefreshDropdown() {
        <span style="color:var(--text3);font-family:monospace;font-size:11px;">${s.code}</span>
      </div>`
   ).join('');
+  // position:fixed: mdi-body overflow:auto 극복 — 검색창 위치로 동적 계산
+  const rect = inp.getBoundingClientRect();
+  dd.style.top   = (rect.bottom + 2) + 'px';
+  dd.style.left  = rect.left + 'px';
+  dd.style.width = rect.width + 'px';
   dd.style.display = 'block';
 }
 
@@ -8801,6 +8748,11 @@ function _newsQueryOnInput() {
        <span style="color:var(--text3);font-family:monospace;font-size:11px;">${s.code||''}</span>
      </div>`
   ).join('');
+  // position:fixed: mdi-body overflow:auto 극복 — 검색창 위치로 동적 계산
+  const rect = inp.getBoundingClientRect();
+  dd.style.top   = (rect.bottom + 2) + 'px';
+  dd.style.left  = rect.left + 'px';
+  dd.style.width = rect.width + 'px';
   dd.style.display = 'block';
 }
 
@@ -8914,7 +8866,7 @@ function renderNewsPortfolioLinks() {
 
     // 네이버 금융 (국내 6자리 코드 → 종목 메인 페이지, 기타 → 네이버 검색 주가)
     const naverFinUrl = isKrCode(ticker)
-      ? `https://finance.naver.com/item/main.naver?code=${ticker}`
+      ? `https://stock.naver.com/domestic/stock/${ticker}/price`
       : `https://search.naver.com/search.naver?where=nexearch&query=${enc}+주가`;
 
     // 해외 종목 Investing.com
@@ -11041,11 +10993,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     restoreMdiLayout() {
       try {
         let saved = JSON.parse(localStorage.getItem(this.MDI_KEY) || 'null');
-        // 폴백: Electron 파일 저장소 기반 state.mdiLayout에서 복원
-        if (!saved && typeof state !== 'undefined' && state.mdiLayout) {
-          saved = state.mdiLayout;
-          try { localStorage.setItem(this.MDI_KEY, JSON.stringify(saved)); } catch(e) {}
-        }
+        // state.mdiLayout 폴백 제거 — 오래된 레이아웃 복원 방지
         if (!saved) return false;
         const ws = document.getElementById('mdiWorkspace');
         const wsW = ws ? ws.offsetWidth : window.innerWidth;
@@ -11126,8 +11074,7 @@ function _toggleCheck(stockKey, checkKey, val) {
       });
       // 저장된 레이아웃이 없을 때만 기본 배치 (있으면 _tryLayout이 복원하므로 깜빡임 방지)
       {
-        const _hasSaved = !!(localStorage.getItem(this.MDI_KEY) ||
-                             (typeof state !== 'undefined' && state.mdiLayout));
+        const _hasSaved = !!(localStorage.getItem(this.MDI_KEY));
         if (!_hasSaved) this.resetLayout();
       }
       // 메뉴버튼 초기 active 상태 동기화 (레이아웃은 워크스페이스 크기 확인 후 적용)
