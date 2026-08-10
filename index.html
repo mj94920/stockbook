@@ -2523,14 +2523,61 @@
 
   /* ── MDI 리사이즈 핸들 ── */
   .mdi-rz { position: absolute; z-index: 9999; pointer-events: auto; }
-  .mdi-rz-n  { top:-4px;    left:4px;    right:4px;    height:10px; cursor:n-resize; }
-  .mdi-rz-s  { bottom:-4px; left:4px;    right:4px;    height:10px; cursor:s-resize; }
-  .mdi-rz-e  { top:4px;     right:-4px;  bottom:4px;   width:10px;  cursor:e-resize; }
-  .mdi-rz-w  { top:4px;     left:-4px;   bottom:4px;   width:10px;  cursor:w-resize; }
-  .mdi-rz-ne { top:-4px;    right:-4px;  width:14px;   height:14px; cursor:ne-resize; }
-  .mdi-rz-nw { top:-4px;    left:-4px;   width:14px;   height:14px; cursor:nw-resize; }
-  .mdi-rz-se { bottom:-4px; right:-4px;  width:14px;   height:14px; cursor:se-resize; }
-  .mdi-rz-sw { bottom:-4px; left:-4px;   width:14px;   height:14px; cursor:sw-resize; }
+
+  /* 호버 시 엣지 하이라이트 바 */
+  .mdi-rz::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(37,99,235,0.75);
+    border-radius: 3px;
+    opacity: 0;
+    transition: opacity 0.13s;
+    pointer-events: none;
+  }
+  .mdi-rz:hover::before { opacity: 1; }
+
+  /* 호버 시 방향 화살표 */
+  .mdi-rz::after {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    opacity: 0;
+    transition: opacity 0.13s;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+    font-size: 9px;
+    line-height: 1;
+    pointer-events: none;
+  }
+  .mdi-rz:hover::after { opacity: 1; }
+
+  /* 핸들 위치·크기 */
+  .mdi-rz-n  { top:-5px;    left:8px;    right:8px;    height:10px; cursor:n-resize; }
+  .mdi-rz-s  { bottom:-5px; left:8px;    right:8px;    height:10px; cursor:s-resize; }
+  .mdi-rz-e  { top:8px;     right:-5px;  bottom:8px;   width:10px;  cursor:e-resize; }
+  .mdi-rz-w  { top:8px;     left:-5px;   bottom:8px;   width:10px;  cursor:w-resize; }
+  .mdi-rz-ne { top:-5px;    right:-5px;  width:14px;   height:14px; cursor:ne-resize; }
+  .mdi-rz-nw { top:-5px;    left:-5px;   width:14px;   height:14px; cursor:nw-resize; }
+  .mdi-rz-se { bottom:-5px; right:-5px;  width:14px;   height:14px; cursor:se-resize; }
+  .mdi-rz-sw { bottom:-5px; left:-5px;   width:14px;   height:14px; cursor:sw-resize; }
+
+  /* 하이라이트 바 크기 */
+  .mdi-rz-n::before, .mdi-rz-s::before { width:36px; height:3px; }
+  .mdi-rz-e::before, .mdi-rz-w::before { width:3px; height:36px; }
+  .mdi-rz-ne::before, .mdi-rz-nw::before,
+  .mdi-rz-se::before, .mdi-rz-sw::before { width:7px; height:7px; border-radius:1px; }
+
+  /* 방향 화살표 문자 */
+  .mdi-rz-n::after  { content: '▲'; }
+  .mdi-rz-s::after  { content: '▼'; }
+  .mdi-rz-e::after  { content: '▶'; }
+  .mdi-rz-w::after  { content: '◀'; }
+  .mdi-rz-ne::after { content: '↗'; font-size:11px; }
+  .mdi-rz-nw::after { content: '↖'; font-size:11px; }
+  .mdi-rz-se::after { content: '↘'; font-size:11px; }
+  .mdi-rz-sw::after { content: '↙'; font-size:11px; }
 
   
 /* 전종목 테이블 행 키보드 포커스 */
@@ -11346,6 +11393,11 @@ function _toggleCheck(stockKey, checkKey, val) {
         document.addEventListener('mousemove', move);
         document.addEventListener('mouseup',   up);
         ev.preventDefault();
+      });
+      // ── 더블클릭: 최대화 / 복구 토글 ─────────────────────────────────
+      tb.addEventListener('dblclick', ev => {
+        if (ev.target.closest('.mdi-tb-btns')) return;
+        window._MDI.maximize(panel.dataset.pid);
       });
     },
 
