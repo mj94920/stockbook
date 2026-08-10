@@ -323,14 +323,22 @@ async function fetchNaverStockList(market) {
   const isEtf   = market === 'ETF';
   const results = [];
 
+  // ETF는 finance.naver.com API 사용 (m.stock.naver.com ETF 엔드포인트 폐지됨)
+  const ETF_HEADERS = {
+    'User-Agent':      NAVER_MOBILE_UA,
+    'Accept':          'application/json, */*',
+    'Referer':         'https://finance.naver.com/',
+    'Accept-Language': 'ko-KR,ko;q=0.9',
+  };
+
   for (let page = 1; page <= 30; page++) {
     const url = isEtf
-      ? `https://m.stock.naver.com/api/stock/etf/overview?page=${page}&pageSize=${PAGE_SZ}`
+      ? `https://finance.naver.com/api/sise/etfItemList.nhn?page=${page}&pageSize=${PAGE_SZ}`
       : `https://m.stock.naver.com/api/stocks/marketValue/${market}?page=${page}&pageSize=${PAGE_SZ}`;
 
     let body;
     try {
-      body = await httpsGet(url, 20000, NAVER_HEADERS);
+      body = await httpsGet(url, 20000, isEtf ? ETF_HEADERS : NAVER_HEADERS);
     } catch(e) {
       console.error(`[StockBook] 네이버 ${market} p${page} 요청 실패:`, e.message);
       break;
@@ -343,7 +351,34 @@ async function fetchNaverStockList(market) {
       break;
     }
 
-    // 가능한 배열 키 모두 시도
+    // ETF 전용 파싱 (finance.naver.com: { result: { etfItemList: [...] } })
+    if (isEtf) {
+      const etfList = parsed?.result?.etfItemList || [];
+      if (!etfList.length) {
+        console.warn(`[StockBook] ETF p${page} 종목 없음`);
+        break;
+      }
+      for (const s of etfList) {
+        // marketSum 단위: 억 원 → 원으로 변환
+        const cap = (s.marketSum || 0) * 100_000_000;
+        results.push({
+          code:      s.itemcode || '',
+          name:      s.itemname || '',
+          industry:  '',
+          market,
+          price:     s.nowVal || 0,
+          change:    s.changeVal || 0,
+          changePct: s.changeRate || 0,
+          volume:    s.quant || 0,
+          marketCap: cap,
+          nav:       s.nav || 0,
+        });
+      }
+      if (etfList.length < PAGE_SZ) break;
+      continue; // ETF는 아래 KOSPI/KOSDAQ 로직 건너뜀
+    }
+
+    // KOSPI/KOSDAQ: 가능한 배열 키 모두 시도
     const items = parsed.stocks || parsed.etfs || parsed.etfItems || parsed.items
                || parsed.list   || parsed.data  || [];
     if (!items.length) {
@@ -357,7 +392,7 @@ async function fetchNaverStockList(market) {
       const cap = parseInt(s.marketValueRaw || '0', 10)
         || (parseInt((s.marketValue || s.marketCap || s.marketCapitalization ||
             s.totalMarketCap || s.marketAmount || '0').replace(/,/g, ''), 10) * 100_000_000);
-      if (!isEtf && cap > 0 && cap < MIN_CAP) { reachedMin = true; break; }
+      if (cap > 0 && cap < MIN_CAP) { reachedMin = true; break; }
       results.push({
         code:      s.stockCode || s.itemCode || s.etfCode || s.code || s.reutersCode?.split('.')[0] || '',
         name:      s.stockName || s.itemName || s.etfName || s.name || '',
