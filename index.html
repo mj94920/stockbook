@@ -3047,7 +3047,7 @@
     <div style="display:flex;gap:0;border-bottom:1px solid var(--border);">
       <button id="allMktTab-KOSPI"  onclick="switchAllMarket('KOSPI')"  style="padding:5px 12px;background:none;border:none;border-bottom:2px solid var(--accent);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;">KOSPI</button>
       <button id="allMktTab-KOSDAQ" onclick="switchAllMarket('KOSDAQ')" style="padding:5px 12px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:12px;font-weight:400;cursor:pointer;">KOSDAQ</button>
-
+      <button id="allMktTab-ETF"    onclick="switchAllMarket('ETF')"    style="padding:5px 12px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:12px;font-weight:400;cursor:pointer;">ETF</button>
       <button id="allMktTab-SECTOR" onclick="switchAllMarket('SECTOR')" style="padding:5px 12px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:12px;font-weight:400;cursor:pointer;">섹터별</button>
     </div>
     <div id="allStockStatus" style="font-size:10px;color:var(--text3);padding:2px 0;min-height:14px;"></div>
@@ -5951,9 +5951,8 @@ function renderAllStockTab() {
 }
 
 function switchAllMarket(mkt) {
-  if (mkt === 'ETF') mkt = 'KOSPI'; // ETF 탭 제거됨 → KOSPI로 폴백
   _allMkt = mkt;
-  ['KOSPI','KOSDAQ','SECTOR'].forEach(m => {
+  ['KOSPI','KOSDAQ','ETF','SECTOR'].forEach(m => {
     const btn = document.getElementById('allMktTab-' + m);
     if (!btn) return;
     const active = m === mkt;
@@ -5963,6 +5962,8 @@ function switchAllMarket(mkt) {
   });
   if (mkt === 'SECTOR') {
     renderAllStockSectorView();
+  } else if (mkt === 'ETF') {
+    _loadEtfData();
   } else {
     loadAllStocks();
   }
@@ -6016,8 +6017,8 @@ async function loadAllStocks(forceRefresh) {
 
 function filterAndRenderAll() {
   const q = (document.getElementById('allStockSearch')?.value || '').toLowerCase();
-  // 섹터별 탭에서는 별도 렌더링
-  if (_allMkt === 'SECTOR') {
+  // 섹터별·ETF 탭에서는 그룹 뷰로 렌더링
+  if (_allMkt === 'SECTOR' || _allMkt === 'ETF') {
     renderAllStockSectorView(q);
     return;
   }
@@ -6034,21 +6035,96 @@ function filterAndRenderAll() {
   renderAllStockTable();
 }
 
-// 전종목 섹터별 그룹 뷰
+// ETF 테마 자동분류
+function _getAutoETFTheme(name) {
+  const n = (name||'').toLowerCase().replace(/\s/g,'');
+  if (/레버리지/.test(n)) return '레버리지';
+  if (/인버스/.test(n)) return '인버스';
+  if (/2차전지|이차전지|배터리/.test(n)) return '2차전지';
+  if (/반도체/.test(n)) return '반도체';
+  if (/ai|인공지능/.test(n)) return 'AI/로봇';
+  if (/로봇|robotics/.test(n)) return 'AI/로봇';
+  if (/방산|항공우주/.test(n)) return '방산/우주';
+  if (/바이오|헬스케어|헬스|제약/.test(n)) return '바이오/헬스';
+  if (/게임/.test(n)) return '게임/엔터';
+  if (/엔터|미디어/.test(n)) return '게임/엔터';
+  if (/미국|us&p|s&p|sp500|나스닥|nasdaq|다우/.test(n)) return '미국주식';
+  if (/중국|china/.test(n)) return '중국주식';
+  if (/일본|japan/.test(n)) return '일본주식';
+  if (/인도|india/.test(n)) return '인도주식';
+  if (/베트남|vietnam/.test(n)) return '신흥국주식';
+  if (/글로벌|global|세계/.test(n)) return '글로벌주식';
+  if (/코스피200/.test(n)) return '코스피200';
+  if (/코스닥150/.test(n)) return '코스닥150';
+  if (/채권|bond|국채|회사채/.test(n)) return '채권';
+  if (/금$|gold/.test(n)) return '원자재';
+  if (/원유|oil|천연가스/.test(n)) return '원자재';
+  if (/리츠|reit/.test(n)) return '리츠';
+  if (/배당|dividend/.test(n)) return '배당';
+  if (/mmf|단기|머니마켓/.test(n)) return '단기/현금';
+  return '기타ETF';
+}
+
+// ETF 데이터 로드
+async function _loadEtfData() {
+  if (!window.electronAPI?.fetchNaverStocks) return;
+  const bodyEl   = document.getElementById('allStockBody');
+  const statusEl = document.getElementById('allStockStatus');
+  const countEl  = document.getElementById('allStockCount');
+  if (!bodyEl) return;
+
+  // 캐시 있으면 즉시 렌더
+  if (_allStockRaw['ETF']?.length) {
+    renderAllStockSectorView();
+    return;
+  }
+
+  bodyEl.innerHTML = `<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:48px 20px;">
+    <div style="margin-bottom:8px;">네이버 증권에서 <strong>ETF</strong> 데이터를 불러오는 중...</div>
+    <div style="font-size:11px;">잠시 기다려주세요</div>
+  </td></tr>`;
+  if (statusEl) statusEl.textContent = '';
+
+  try {
+    const result = await window.electronAPI.fetchNaverStocks('ETF');
+    if (!result?.ok) throw new Error(result?.error || '알 수 없는 오류');
+    _allStockRaw['ETF'] = result.data;
+    const ts = result.cachedAt ? new Date(result.cachedAt).toLocaleTimeString('ko-KR') : '';
+    const src = result.fromCache ? '캐시' : '실시간';
+    if (statusEl) statusEl.textContent = `${src} · ${ts} 기준`;
+    renderAllStockSectorView();
+  } catch(e) {
+    bodyEl.innerHTML = `<tr><td colspan="13" style="text-align:center;color:var(--hts-dn);padding:40px 20px;">
+      <div style="margin-bottom:10px;">ETF 데이터 로드 실패: ${e.message}</div>
+      <button onclick="_loadEtfData()" style="padding:7px 16px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">다시 시도</button>
+    </td></tr>`;
+    if (statusEl) statusEl.textContent = '오류 발생';
+  }
+}
+
+// 전종목 섹터별/ETF 그룹 뷰
 function renderAllStockSectorView(searchQ) {
   const bodyEl = document.getElementById('allStockBody');
   if (!bodyEl) return;
   const q = (searchQ !== undefined ? searchQ : (document.getElementById('allStockSearch')?.value||'')).toLowerCase().trim();
 
-  // KOSPI+KOSDAQ 합산 (없으면 로드)
-  const rawData = [...(_allStockRaw['KOSPI']||[]), ...(_allStockRaw['KOSDAQ']||[])];
-  if (!rawData.length) {
-    bodyEl.closest('table').parentElement.innerHTML =
-      `<div style="text-align:center;padding:40px;color:var(--text3);">
-        섹터별 분류를 위해 KOSPI/KOSDAQ 데이터를 먼저 불러옵니다...<br>
-        <button onclick="_loadSectorData()" style="margin-top:12px;padding:7px 18px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">데이터 불러오기</button>
-      </div>`;
-    return;
+  const isEtfMode = (_allMkt === 'ETF');
+
+  // 데이터 소스 분기
+  let rawData;
+  if (isEtfMode) {
+    rawData = _allStockRaw['ETF'] || [];
+    if (!rawData.length) { _loadEtfData(); return; }
+  } else {
+    rawData = [...(_allStockRaw['KOSPI']||[]), ...(_allStockRaw['KOSDAQ']||[])];
+    if (!rawData.length) {
+      bodyEl.closest('table').parentElement.innerHTML =
+        `<div style="text-align:center;padding:40px;color:var(--text3);">
+          섹터별 분류를 위해 KOSPI/KOSDAQ 데이터를 먼저 불러옵니다...<br>
+          <button onclick="_loadSectorData()" style="margin-top:12px;padding:7px 18px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">데이터 불러오기</button>
+        </div>`;
+      return;
+    }
   }
 
   // 검색 필터 적용
@@ -6058,20 +6134,29 @@ function renderAllStockSectorView(searchQ) {
     (s.industry||'').toLowerCase().includes(q)
   ) : rawData;
 
-  // 섹터 분류
+  // 분류 함수 분기
   const sectors = {};
   allData.forEach(s => {
-    const sec = _getAutoSector(s.name || s.ISU_ABBRV || '', s.industry || '');
+    let sec;
+    if (isEtfMode) {
+      sec = _getAutoETFTheme(s.name || '');
+    } else {
+      sec = _getAutoSector(s.name || s.ISU_ABBRV || '', s.industry || '');
+      // 섹터 모드에서 ETF/인덱스 그룹 제거 (ETF 탭으로 이동)
+      if (sec === 'ETF/인덱스') return;
+    }
     if (!sectors[sec]) sectors[sec] = [];
     sectors[sec].push(s);
   });
+  const lastKey = isEtfMode ? '기타ETF' : '기타';
   const secNames = Object.keys(sectors).sort((a,b) => {
-    if (a==='기타') return 1; if (b==='기타') return -1;
+    if (a===lastKey) return 1; if (b===lastKey) return -1;
     return a.localeCompare(b,'ko');
   });
   const countEl = document.getElementById('allStockCount');
   const countSuffix = q ? ` · "${q}" 검색` : '';
-  if (countEl) countEl.textContent = `(${allData.length.toLocaleString()}종목 / ${secNames.length}섹터${countSuffix})`;
+  const groupLabel = isEtfMode ? '테마' : '섹터';
+  if (countEl) countEl.textContent = `(${allData.length.toLocaleString()}종목 / ${secNames.length}${groupLabel}${countSuffix})`;
 
   const fmt = n => n > 0 ? n.toLocaleString('ko-KR') : '-';
   const capStr = mc => mc > 0 ? Math.round(mc/100000000).toLocaleString()+'억' : '-';
