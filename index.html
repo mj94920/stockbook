@@ -9519,7 +9519,12 @@ function renderAcctFilterBar() {
   const bar = document.getElementById('acctFilterBar');
   if (!bar) return;
   const accounts = state.accounts || [];
-  if (accounts.length === 0) { bar.innerHTML = ''; bar.style.cssText = ''; return; }
+  if (accounts.length === 0) {
+    bar.innerHTML = ''; bar.style.cssText = '';
+    // 기존 body 직속 드롭다운 제거
+    if (_existingDl) _existingDl.remove();
+    return;
+  }
 
   const items = [{ id: '', nickname: '모아보기', number: '', broker: '' }]
     .concat(accounts.map(a => ({
@@ -9530,6 +9535,7 @@ function renderAcctFilterBar() {
   const curColor = cur.id ? ((BROKER_INFO[cur.broker] || {}).color || '#888') : 'var(--accent)';
   const curNum   = cur.number ? ` <span style="opacity:0.5;font-size:10px;">${escHtml(cur.number)}</span>` : '';
 
+  // 버튼만 bar에 렌더 (드롭다운은 body 직속으로 따로 관리)
   bar.style.cssText = 'position:relative;padding:4px 8px 6px;display:flex;align-items:center;gap:5px;';
   bar.innerHTML = `
     <div id="acctDropBtn" onclick="_toggleAcctDrop(event)"
@@ -9540,21 +9546,31 @@ function renderAcctFilterBar() {
     </div>
     <button onclick="refreshPortfolioData(this)" title="잔고·시세 새로고침"
       style="flex-shrink:0;width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .15s;">↻</button>
-    <div id="acctDropList" style="display:none;position:fixed;z-index:9999;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.45);overflow:hidden;min-width:160px;">
-      ${items.map(item => {
-        const ic = item.id ? ((BROKER_INFO[item.broker]||{}).color||'#888') : 'var(--accent)';
-        const active = _acctFilter === item.id;
-        const abg = active ? `color-mix(in srgb,${ic} 14%,transparent)` : 'transparent';
-        return `<div onclick="_selectAcct('${escHtml(item.id)}')"
-          style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;font-size:12px;font-weight:${active?'700':'400'};color:${active?ic:'var(--text1)'};background:${abg};"
-          onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='${abg}'">
-          <span style="width:7px;height:7px;border-radius:50%;background:${ic};flex-shrink:0;display:inline-block;"></span>
-          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(item.nickname)}</span>
-          ${item.number ? `<span style="font-size:10px;opacity:0.5;flex-shrink:0;white-space:nowrap;">${escHtml(item.number)}</span>` : ''}
-        </div>`;
-      }).join('')}
-    </div>
   `;
+
+  // 드롭다운을 document.body 직속으로 생성 (position:fixed 좌표가 어떤 조상 transform에도 영향 받지 않도록)
+  const dropHTML = items.map(item => {
+    const ic = item.id ? ((BROKER_INFO[item.broker]||{}).color||'#888') : 'var(--accent)';
+    const active = _acctFilter === item.id;
+    const abg = active ? `color-mix(in srgb,${ic} 14%,transparent)` : 'transparent';
+    return `<div onclick="_selectAcct('${escHtml(item.id)}')"
+      style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;font-size:12px;font-weight:${active?'700':'400'};color:${active?ic:'var(--text1)'};background:${abg};"
+      onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='${abg}'">
+      <span style="width:7px;height:7px;border-radius:50%;background:${ic};flex-shrink:0;display:inline-block;"></span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(item.nickname)}</span>
+      ${item.number ? `<span style="font-size:10px;opacity:0.5;flex-shrink:0;white-space:nowrap;">${escHtml(item.number)}</span>` : ''}
+    </div>`;
+  }).join('');
+
+  // 기존 드롭다운 교체 또는 신규 생성
+  let dl = document.getElementById('acctDropList');
+  if (!dl) {
+    dl = document.createElement('div');
+    dl.id = 'acctDropList';
+    document.body.appendChild(dl);
+  }
+  dl.style.cssText = 'display:none;position:fixed;z-index:99999;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.45);overflow:hidden;min-width:160px;';
+  dl.innerHTML = dropHTML;
 }
 
 let _acctDropClose = null; // stale 리스너 추적용
