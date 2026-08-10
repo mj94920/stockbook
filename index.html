@@ -2926,39 +2926,35 @@
       </div>
       <div class="mdi-body" id="mdi-body-watchlist">
   <div class="mdi-ptab-bar">
-    <button class="mdi-ptab active" onclick="window._MDIPanelTab('watchlist','wl')">★ 관심종목</button>
     <button class="mdi-ptab" onclick="window._MDIPanelTab('watchlist','as')">전종목</button>
-    <button class="mdi-ptab" onclick="window._MDIPanelTab('watchlist','tm')">테마별</button>
+    <button class="mdi-ptab active" onclick="window._MDIPanelTab('watchlist','wl')">★ 관심종목</button>
   </div>
-  <div class="mdi-ptab-pane" id="mdi-ptc-watchlist-wl" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto">
-  <div class="wl-search-wrap">
-    <input id="wlSearchInput" type="text" placeholder="🔍 관심종목 검색..."
-      oninput="filterWatchlistDisplay(this.value)">
-  </div>
-      <div class="card" style="margin-bottom:12px;">
-        <div class="card-title" style="margin-bottom:10px;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          관심종목
-          <button class="btn btn-sm" style="margin-left:auto;padding:4px 10px;font-size:12px;" onclick="refreshWatchlist()">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-            시세 갱신
-          </button>
+  <div class="mdi-ptab-pane" id="mdi-ptc-watchlist-wl" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden">
+    <!-- ① 통합 검색창 (종목 추가 + 관심종목 필터) -->
+    <div style="padding:8px 10px 4px;flex-shrink:0;">
+      <div style="display:flex;gap:6px;align-items:center;">
+        <div style="position:relative;flex:1;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input id="wlSearchInput" type="text" autocomplete="off"
+            placeholder="종목명·코드 검색 또는 추가"
+            oninput="_wlOnInput()" onkeydown="_wlKeydown(event)"
+            style="width:100%;box-sizing:border-box;padding:7px 10px 7px 28px;border:1px solid var(--border);border-radius:7px;background:var(--bg3);color:var(--text);font-size:12px;font-family:inherit;outline:none;">
+          <div id="wlDropdown" style="display:none;position:fixed;z-index:99999;background:var(--bg2);border:1px solid var(--border);border-radius:8px;max-height:200px;overflow-y:auto;box-shadow:0 6px 24px rgba(0,0,0,.4);"></div>
         </div>
-        <!-- 종목 추가 입력 -->
-        <div style="display:flex;gap:6px;margin-bottom:10px;">
-          <input id="watchlistInput" type="text" placeholder="종목코드 또는 종목명 (예: 005930, AAPL)"
-            style="flex:1;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:13px;font-family:inherit;"
-            onkeydown="if(event.key==='Enter') addWatchlistItem()">
-          <button class="btn btn-primary" style="padding:7px 14px;font-size:12px;" onclick="addWatchlistItem()">추가</button>
-        </div>
-        <!-- 관심종목 리스트 -->
-        <div id="watchlistBody" style="display:flex;flex-direction:column;gap:6px;">
-          <div style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0;">
-            관심종목을 추가해 보세요.
-          </div>
-        </div>
+        <button class="btn btn-sm" onclick="refreshWatchlist()" title="시세 갱신"
+          style="padding:5px 9px;flex-shrink:0;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        </button>
       </div>
     </div>
+    <!-- ② 그룹 태그 필터 (C안 + A안) -->
+    <div id="wlGroupBar" style="padding:4px 10px 2px;flex-shrink:0;display:flex;gap:5px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--border);min-height:30px;"></div>
+    <!-- ③ 관심종목 리스트 -->
+    <div id="watchlistBody" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:5px;padding:6px 10px 8px;min-height:0;"></div>
+  </div>
   <div class="mdi-ptab-pane" id="mdi-ptc-watchlist-as" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
   <!-- 고정 헤더 -->
   <div style="flex-shrink:0;padding:6px 8px 0;">
@@ -3011,21 +3007,6 @@
   <!-- 페이지네이션 고정 하단 -->
   <div style="flex-shrink:0;display:flex;justify-content:center;align-items:center;gap:4px;padding:5px 8px;border-top:1px solid var(--border);" id="allStockPagination"></div>
 </div>
-  <div class="mdi-ptab-pane" id="mdi-ptc-watchlist-tm" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:auto">
-
-      <div class="card" style="max-width:860px;margin:0 auto;">
-        <div class="card-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-          테마별 종목
-        </div>
-        <div id="themeList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;"></div>
-        <div id="themeStockTable">
-          <div style="color:var(--text3);font-size:13px;text-align:center;padding:40px 0;">
-            왼쪽에서 테마를 선택하면 해당 종목이 표시됩니다.
-          </div>
-        </div>
-      </div>
-    </div>
       </div>
     </div>
     <!-- ─ MDI 패널: trading (매매관리) ─ -->
@@ -3453,11 +3434,6 @@
             <div class="nl-info"><h4>DART 고급 검색</h4><p>기업명·보고서 종류·기간 지정</p></div>
             <span style="margin-left:auto;color:var(--text3);font-size:13px;">&#x2197;</span>
           </div>
-          <div class="news-link-item" onclick="openUrl('https://kind.krx.co.kr/disclosure/todaydisclosure.do?method=searchTodayDisclListInit')">
-            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
-            <div class="nl-info"><h4>KRX KIND 실시간 공시</h4><p>한국거래소 실시간 공시 모니터링</p></div>
-            <span style="margin-left:auto;color:var(--text3);font-size:13px;">&#x2197;</span>
-          </div>
         </div>
 
         <!-- 우열: 국내뉴스 + 해외증시 -->
@@ -3468,7 +3444,7 @@
             <div class="nl-info"><h4>네이버 증권 뉴스</h4><p>국내 증시 속보 · 종목 리포트</p></div>
             <span style="margin-left:auto;color:var(--text3);font-size:13px;">&#x2197;</span>
           </div>
-          <div class="news-link-item" onclick="openUrl('https://www.hankyung.com/finance')">
+          <div class="news-link-item" onclick="openUrl('https://www.hankyung.com/')">
             <div class="nl-icon"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e31937"></span></div>
             <div class="nl-info"><h4>한국경제</h4><p>증시·기업·채권 뉴스</p></div>
             <span style="margin-left:auto;color:var(--text3);font-size:13px;">&#x2197;</span>
@@ -3476,11 +3452,6 @@
           <div class="news-link-item" onclick="openUrl('https://www.mk.co.kr/news/stock/')">
             <div class="nl-icon"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#0070c0"></span></div>
             <div class="nl-info"><h4>매일경제 주식</h4><p>국내외 주식 뉴스</p></div>
-            <span style="margin-left:auto;color:var(--text3);font-size:13px;">&#x2197;</span>
-          </div>
-          <div class="news-link-item" onclick="openUrl('https://www.edaily.co.kr/news/newsList.asp?newsId=&mediacodeNo=257&OutLnkChk=Y')">
-            <div class="nl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
-            <div class="nl-info"><h4>이데일리 증권</h4><p>실시간 주식·채권·파생 뉴스</p></div>
             <span style="margin-left:auto;color:var(--text3);font-size:13px;">&#x2197;</span>
           </div>
           <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:10px 0 6px;border-bottom:1px solid var(--border);margin-bottom:4px;display:flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> 해외 증시</div>
@@ -10394,7 +10365,7 @@ function saveWatchlist(list) {
 }
 
 function addWatchlistItem() {
-  const inp = document.getElementById('watchlistInput');
+  const inp = document.getElementById('wlSearchInput');
   const raw = (inp?.value || '').trim();
   if (!raw) return;
   // state.watchlist 기준으로 중복 체크
@@ -10421,44 +10392,52 @@ function removeWatchlistItem(idx) {
 function renderWatchlist() {
   const body = document.getElementById('watchlistBody');
   if (!body) return;
-  // state.watchlist 우선, 없으면 localStorage 마이그레이션
   if (!state.watchlist || state.watchlist.length === 0) {
     const legacy = (() => { try { return JSON.parse(localStorage.getItem('sb_watchlist_v1') || '[]'); } catch { return []; } })();
-    if (legacy.length > 0) {
-      state.watchlist = legacy;
-      save();
-      localStorage.removeItem('sb_watchlist_v1'); // 마이그레이션 후 삭제
-    }
+    if (legacy.length > 0) { state.watchlist = legacy; save(); localStorage.removeItem('sb_watchlist_v1'); }
   }
-  const list = state.watchlist || [];
+  const activeGrp = window._wlActiveGroup || '전체';
+  const filterKw  = (document.getElementById('wlSearchInput')?.value || '').trim().toLowerCase();
+  let list = state.watchlist || [];
+  if (activeGrp !== '전체') list = list.filter(w => (w.group||'미분류') === activeGrp);
+  if (filterKw) list = list.filter(w =>
+    (w.name||'').toLowerCase().includes(filterKw) || (w.ticker||'').toLowerCase().includes(filterKw));
   if (!list.length) {
-    body.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0;">관심종목을 추가해 보세요.</div>';
-    return;
+    body.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0;">'+(filterKw||activeGrp!=='전체'?'검색 결과가 없습니다.':'관심종목을 추가해 보세요.')+'</div>';
+    wlRenderGroupBar(); return;
   }
-  body.innerHTML = list.map((w, i) => {
-    const priceStr = w.price != null ? w.price.toLocaleString('ko-KR') + '원' : '-';
+  const fullList = state.watchlist || [];
+  body.innerHTML = list.map(w => {
+    const i = fullList.indexOf(w);
+    const priceStr = w.price != null ? w.price.toLocaleString('ko-KR')+'원' : '-';
     const chg      = w.change;
     const chgColor = chg == null ? 'var(--text3)' : chg > 0 ? 'var(--hts-up)' : chg < 0 ? 'var(--hts-dn)' : 'var(--text2)';
     const chgStr   = chg == null ? '-' : (chg > 0 ? '+' : '') + chg.toFixed(2) + '%';
     const label    = w.name || w.ticker;
     const sub      = w.name && w.ticker ? `<span style="font-size:11px;color:var(--text3);margin-left:5px;">${w.ticker}</span>` : '';
-    return `
-    <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg3);border-radius:10px;border:1px solid var(--border);">
+    const grps     = (state.watchlistGroups||[]);
+    const grpSel   = grps.length ? `<select onchange="wlAssignGroup(${i},this.value)" style="font-size:10px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text2);padding:1px 3px;cursor:pointer;" title="그룹 지정">
+      <option value="">미분류</option>
+      ${grps.map(g=>`<option value="${g}" ${(w.group===g)?'selected':''}>${g}</option>`).join('')}
+    </select>` : '';
+    return `<div data-name="${label}" style="display:flex;align-items:center;gap:7px;padding:7px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--border);">
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:600;color:var(--text);">${label}${sub}</div>
-        ${w.per != null ? `<div style="font-size:11px;color:var(--text3);margin-top:2px;">PER ${w.per} · PBR ${w.pbr ?? '-'} · ROE ${w.roe ?? '-'}%</div>` : ''}
+        <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+          ${w.per != null ? `<span style="font-size:10px;color:var(--text3);">PER ${w.per} · ROE ${w.roe??'-'}%</span>` : ''}
+          ${grpSel}
+        </div>
       </div>
       <div style="text-align:right;flex-shrink:0;">
-        <div style="font-size:14px;font-weight:700;color:var(--text);">${priceStr}</div>
-        <div style="font-size:12px;color:${chgColor};">${chgStr}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text);">${priceStr}</div>
+        <div style="font-size:11px;color:${chgColor};">${chgStr}</div>
       </div>
-      <button onclick="removeWatchlistItem(${i})" title="삭제"
-        style="background:none;border:none;cursor:pointer;color:var(--text3);padding:4px;border-radius:6px;flex-shrink:0;"
-        onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      <button onclick="removeWatchlistItem(${i})" title="삭제" style="background:none;border:none;cursor:pointer;color:var(--text3);padding:3px;border-radius:5px;flex-shrink:0;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>`;
   }).join('');
+  wlRenderGroupBar();
 }
 
 async function refreshWatchlist() {
@@ -11548,23 +11527,121 @@ function _toggleCheck(stockKey, checkKey, val) {
 
   // ── 관심종목 검색 필터 ─────────────────────────────────────────────
   function filterWatchlistDisplay(q) {
-    const kw = (q || '').trim().toLowerCase();
-    const rows = document.querySelectorAll('#watchlistBody > div[data-name]');
-    if (!rows.length) {
-      // watchlistBody가 div가 아닌 다른 구조일 수 있으므로 모든 자식 순회
-      const body = document.getElementById('watchlistBody');
-      if (!body) return;
-      Array.from(body.children).forEach(el => {
-        const nm = (el.dataset.name || el.textContent || '').toLowerCase();
-        el.style.display = (!kw || nm.includes(kw)) ? '' : 'none';
-      });
-      return;
-    }
-    rows.forEach(el => {
-      const nm = (el.dataset.name || '').toLowerCase();
-      el.style.display = (!kw || nm.includes(kw)) ? '' : 'none';
-    });
+    renderWatchlist();
   }
+// ── 관심종목 통합 검색 드롭다운 ───────────────────────────────────
+window._wlActiveGroup = '전체';
+let _wlItems = [], _wlActive = -1;
+
+function _wlOnInput() {
+  const inp = document.getElementById('wlSearchInput');
+  const dd  = document.getElementById('wlDropdown');
+  if (!inp || !dd) return;
+  const q = inp.value.trim().toLowerCase();
+  // 입력 없으면 필터만 적용
+  if (!q) { dd.style.display='none'; _wlItems=[]; _wlActive=-1; renderWatchlist(); return; }
+  renderWatchlist(); // 실시간 필터
+  // 드롭다운: 전종목에서 가나다 정렬 검색
+  const port = (state.portfolio||[]).map(s=>({name:s.name||'',code:s.ticker||'',market:s.market||''}));
+  const all  = Object.values(_allStockRaw||{}).flat();
+  const seen = new Set();
+  _wlItems = [...port,...all].filter(s=>{
+    const key = s.code||s.name;
+    if (!s.name&&!s.code) return false;
+    if (seen.has(key)) return false; seen.add(key);
+    return (s.name&&s.name.toLowerCase().includes(q))||(s.code&&s.code.toLowerCase().startsWith(q));
+  }).sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko')).slice(0,30);
+  if (!_wlItems.length) { dd.style.display='none'; _wlActive=-1; return; }
+  _wlActive = -1;
+  dd.innerHTML = _wlItems.map((s,i)=>
+    `<div class="qo-dd-item" data-i="${i}" style="padding:6px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:12px;border-bottom:1px solid var(--border);"
+      onmousedown="event.preventDefault();_wlDropSelect(${i})"
+      onmouseenter="this.style.background='var(--bg3)'" onmouseleave="this.style.background=''">
+      <span style="font-weight:600;">${_cleanName(s.name||'')}</span>
+      <span style="color:var(--text3);font-family:monospace;font-size:11px;">${s.code||''}</span>
+    </div>`).join('');
+  const rect = inp.getBoundingClientRect();
+  dd.style.top   = (rect.bottom+2)+'px';
+  dd.style.left  = rect.left+'px';
+  dd.style.width = rect.width+'px';
+  dd.style.display='block';
+}
+
+function _wlKeydown(e) {
+  const dd = document.getElementById('wlDropdown');
+  const items = dd?.querySelectorAll('.qo-dd-item');
+  if (!items?.length || dd?.style.display==='none') {
+    if (e.key==='Enter') { addWatchlistItem(); return; }
+    return;
+  }
+  if (e.key==='ArrowDown') { e.preventDefault(); _wlActive=Math.min(_wlActive+1,items.length-1); items.forEach((el,i)=>el.style.background=i===_wlActive?'var(--bg3)':''); }
+  else if (e.key==='ArrowUp') { e.preventDefault(); _wlActive=Math.max(_wlActive-1,0); items.forEach((el,i)=>el.style.background=i===_wlActive?'var(--bg3)':''); }
+  else if (e.key==='Enter') { e.preventDefault(); if (_wlActive>=0) _wlDropSelect(_wlActive); else addWatchlistItem(); }
+  else if (e.key==='Escape') { dd.style.display='none'; _wlItems=[]; _wlActive=-1; }
+}
+
+function _wlDropSelect(i) {
+  const s = _wlItems[i];
+  if (!s) return;
+  const dd = document.getElementById('wlDropdown');
+  if (dd) dd.style.display='none';
+  _wlItems=[]; _wlActive=-1;
+  const code = s.code||''; const name = _cleanName(s.name||'')||code;
+  if (!code&&!name) return;
+  if (!state.watchlist) state.watchlist=[];
+  if (state.watchlist.find(w=>w.ticker===code||(w.name===name&&!code))) { showToast('이미 추가된 종목입니다.'); return; }
+  const activeGrp = (window._wlActiveGroup!=='전체') ? window._wlActiveGroup : '';
+  state.watchlist.push({ticker:code,name,market:s.market||'',group:activeGrp,price:null,change:null,addedAt:Date.now()});
+  save();
+  const inp = document.getElementById('wlSearchInput');
+  if (inp) inp.value='';
+  renderWatchlist(); refreshWatchlist();
+}
+
+// ── 그룹 태그바 ───────────────────────────────────────────────────
+function wlRenderGroupBar() {
+  const bar = document.getElementById('wlGroupBar');
+  if (!bar) return;
+  if (!state.watchlistGroups) state.watchlistGroups=[];
+  const grps = state.watchlistGroups;
+  const active = window._wlActiveGroup||'전체';
+  const all_groups = ['전체',...grps];
+  const btnStyle = (g) => g===active
+    ? 'font-size:11px;padding:3px 9px;border-radius:12px;cursor:pointer;background:rgba(var(--accent-rgb,59,130,246),.18);color:var(--accent);border:1px solid rgba(var(--accent-rgb,59,130,246),.4);'
+    : 'font-size:11px;padding:3px 9px;border-radius:12px;cursor:pointer;background:var(--bg3);color:var(--text2);border:1px solid var(--border);';
+  bar.innerHTML = all_groups.map(g=>`<button onclick="wlSetGroup('${g}')" style="${btnStyle(g)}">${g}</button>`).join('') +
+    `<button onclick="wlAddGroup()" style="font-size:11px;padding:3px 8px;border-radius:12px;cursor:pointer;background:transparent;color:var(--accent);border:1px dashed var(--border);display:inline-flex;align-items:center;gap:2px;">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 그룹
+    </button>` +
+    (grps.length&&active!=='전체' ? `<button onclick="wlDeleteGroup('${active}')" style="font-size:10px;padding:2px 7px;border-radius:10px;cursor:pointer;background:transparent;color:var(--text3);border:1px solid var(--border);margin-left:auto;" title="이 그룹 삭제">삭제</button>` : '');
+}
+
+function wlSetGroup(g) { window._wlActiveGroup=g; renderWatchlist(); }
+
+function wlAddGroup() {
+  const name = prompt('새 그룹 이름을 입력하세요');
+  if (!name||!name.trim()) return;
+  const n = name.trim();
+  if (!state.watchlistGroups) state.watchlistGroups=[];
+  if (state.watchlistGroups.includes(n)) { showToast('이미 있는 그룹입니다.'); return; }
+  state.watchlistGroups.push(n); save();
+  window._wlActiveGroup=n; renderWatchlist();
+}
+
+function wlDeleteGroup(gName) {
+  if (!confirm(`'${gName}' 그룹을 삭제하시겠습니까?
+(종목은 삭제되지 않으며 미분류로 이동합니다.)`)) return;
+  state.watchlistGroups=(state.watchlistGroups||[]).filter(g=>g!==gName);
+  (state.watchlist||[]).forEach(w=>{ if(w.group===gName) w.group=''; });
+  save(); window._wlActiveGroup='전체'; renderWatchlist();
+}
+
+function wlAssignGroup(idx, gName) {
+  if (!state.watchlist||!state.watchlist[idx]) return;
+  state.watchlist[idx].group = gName||'';
+  save(); renderWatchlist();
+}
+
 
 
 /* ═══════════════════════════════════════════════════════════════
