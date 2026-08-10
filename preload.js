@@ -25,6 +25,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   fetchMarketTickers: () => ipcRenderer.invoke('fetch-market-tickers'),
   // KIS 실시간 호가 (매도5+매수5 잔량)
   fetchHoga: (code) => ipcRenderer.invoke('fetch-hoga', code),
+  // KIS 계좌 잔고 조회 (예수금 + 보유종목)
+  fetchKisBalance: () => ipcRenderer.invoke('fetch-kis-balance'),
   // main 프로세스가 did-finish-load 후 파일 데이터를 직접 push하는 채널
   onPushState: (callback)  => ipcRenderer.once('push-state', (_event, data) => callback(data)),
 

@@ -24,11 +24,20 @@ function httpsGet(url, timeoutMs = 8000, extraHeaders = {}) {
         ...extraHeaders,
       }
     }, res => {
-      let body = '';
-      res.on('data', chunk => { body += chunk; });
+      const chunks = [];
+      res.on('data', chunk => { chunks.push(chunk); });
       res.on('end',  () => {
-        if (res.statusCode >= 200 && res.statusCode < 300) resolve(body);
-        else reject(new Error(`HTTP ${res.statusCode}`));
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          const buf = Buffer.concat(chunks);
+          // Content-Type에 EUC-KR이 명시된 경우 TextDecoder로 올바르게 디코딩
+          const ct = (res.headers['content-type'] || '').toLowerCase();
+          if (/charset=(euc-kr|euc_kr|x-windows-949|cp949|ks_c_5601)/.test(ct)) {
+            try { resolve(new TextDecoder('EUC-KR').decode(buf)); return; } catch (_) {}
+          }
+          resolve(buf.toString('utf8'));
+        } else {
+          reject(new Error(`HTTP ${res.statusCode}`));
+        }
       });
     });
     req.on('error', reject);
@@ -319,26 +328,66 @@ const NAVER_HEADERS   = {
 
 async function fetchNaverStockList(market) {
   const MIN_CAP = 100_000_000_000; // 시총 1,000억 (원)
-  const PAGE_SZ = 60;
+  const PAGE_SZ = 120;             // 한 번에 더 많이 가져와 요청 횟수 절감
   const isEtf   = market === 'ETF';
   const results = [];
 
-  // ETF는 finance.naver.com API 사용 (m.stock.naver.com ETF 엔드포인트 폐지됨)
-  const ETF_HEADERS = {
-    'User-Agent':      NAVER_MOBILE_UA,
-    'Accept':          'application/json, */*',
-    'Referer':         'https://finance.naver.com/',
-    'Accept-Language': 'ko-KR,ko;q=0.9',
-  };
+  // ── ETF: finance.naver.com API (page/pageSize 파라미터 무시 — 매번 전체 반환)
+  //         단일 호출 후 코드 기준 중복제거
+  if (isEtf) {
+    const ETF_HEADERS = {
+      'User-Agent':      NAVER_MOBILE_UA,
+      'Accept':          'application/json, */*',
+      'Referer':         'https://finance.naver.com/',
+      'Accept-Language': 'ko-KR,ko;q=0.9',
+    };
+    let body;
+    try {
+      body = await httpsGet(
+        'https://finance.naver.com/api/sise/etfItemList.nhn',
+        25000, ETF_HEADERS
+      );
+    } catch(e) {
+      console.error('[StockBook] ETF 목록 요청 실패:', e.message);
+      return [];
+    }
+    let parsed;
+    try { parsed = JSON.parse(body); }
+    catch(pe) {
+      console.error('[StockBook] ETF JSON 파싱 실패, 첫200자:', body?.slice(0, 200));
+      return [];
+    }
+    const etfList = parsed?.result?.etfItemList || [];
+    const seen = new Set();
+    for (const s of etfList) {
+      const code = s.itemcode || '';
+      if (!code || seen.has(code)) continue;
+      seen.add(code);
+      const cap = (s.marketSum || 0) * 100_000_000;
+      results.push({
+        code,
+        name:      s.itemname || '',
+        industry:  '',
+        market,
+        price:     s.nowVal || 0,
+        change:    s.changeVal || 0,
+        changePct: s.changeRate || 0,
+        volume:    s.quant || 0,
+        marketCap: cap,
+        nav:       s.nav || 0,
+      });
+    }
+    console.log(`[StockBook] ETF 로드 완료: ${results.length}종목`);
+    return results;
+  }
 
+  // ── KOSPI / KOSDAQ: m.stock.naver.com 페이지 순차 조회
   for (let page = 1; page <= 30; page++) {
-    const url = isEtf
-      ? `https://finance.naver.com/api/sise/etfItemList.nhn?page=${page}&pageSize=${PAGE_SZ}`
-      : `https://m.stock.naver.com/api/stocks/marketValue/${market}?page=${page}&pageSize=${PAGE_SZ}`;
+    const url = `https://m.stock.naver.com/api/stocks/marketValue/${market}?page=${page}&pageSize=${PAGE_SZ}`;
 
     let body;
     try {
-      body = await httpsGet(url, 20000, isEtf ? ETF_HEADERS : NAVER_HEADERS);
+      body = await httpsGet(url, 20000, NAVER_HEADERS);
     } catch(e) {
       console.error(`[StockBook] 네이버 ${market} p${page} 요청 실패:`, e.message);
       break;
@@ -349,33 +398,6 @@ async function fetchNaverStockList(market) {
     catch(pe) {
       console.error(`[StockBook] 네이버 ${market} p${page} JSON 파싱 실패, 응답 첫200자:`, body?.slice(0,200));
       break;
-    }
-
-    // ETF 전용 파싱 (finance.naver.com: { result: { etfItemList: [...] } })
-    if (isEtf) {
-      const etfList = parsed?.result?.etfItemList || [];
-      if (!etfList.length) {
-        console.warn(`[StockBook] ETF p${page} 종목 없음`);
-        break;
-      }
-      for (const s of etfList) {
-        // marketSum 단위: 억 원 → 원으로 변환
-        const cap = (s.marketSum || 0) * 100_000_000;
-        results.push({
-          code:      s.itemcode || '',
-          name:      s.itemname || '',
-          industry:  '',
-          market,
-          price:     s.nowVal || 0,
-          change:    s.changeVal || 0,
-          changePct: s.changeRate || 0,
-          volume:    s.quant || 0,
-          marketCap: cap,
-          nav:       s.nav || 0,
-        });
-      }
-      if (etfList.length < PAGE_SZ) break;
-      continue; // ETF는 아래 KOSPI/KOSDAQ 로직 건너뜀
     }
 
     // KOSPI/KOSDAQ: 가능한 배열 키 모두 시도
@@ -715,6 +737,77 @@ async function startKisWebSocket(tickers) {
     }
   });
 }
+
+// ── KIS 잔고 조회 (보유 종목 + 예수금) ──────────────────────────────────────
+ipcMain.handle('fetch-kis-balance', async () => {
+  const auth = await getKisToken();
+  if (!auth) return { ok: false, error: 'KIS 토큰 없음. API 키를 확인해주세요.' };
+
+  // 저장된 계좌번호 로드 (10자리: 앞8자리=CANO, 뒤2자리=상품코드)
+  let account = '';
+  try {
+    const credFile = getCredFile('kis');
+    if (fs.existsSync(credFile)) {
+      const creds = JSON.parse(safeStorage.decryptString(fs.readFileSync(credFile)));
+      account = (creds?.account || '').replace(/[-\s]/g, '');
+    }
+  } catch (_) {}
+
+  if (!account || account.length < 8) {
+    return { ok: false, error: '계좌번호를 설정해주세요 (API 설정 > KIS 계좌번호 10자리).' };
+  }
+
+  const CANO          = account.slice(0, 8);
+  const ACNT_PRDT_CD  = account.length >= 10 ? account.slice(8, 10) : '01';
+
+  try {
+    const params = new URLSearchParams({
+      CANO, ACNT_PRDT_CD,
+      AFHR_FLPR_YN: 'N', OFL_YN: '', INQR_DVSN: '02',
+      UNPR_DVSN: '01', FUND_STTL_ICLD_YN: 'N',
+      FNCG_AMT_AUTO_RDPT_YN: 'N', PRCS_DVSN: '01',
+      CTX_AREA_FK100: '', CTX_AREA_NK100: '',
+    });
+    const body = await httpsGet(
+      `https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/trading/inquire-balance?${params}`,
+      15000,
+      {
+        authorization: `Bearer ${auth.token}`,
+        appkey:        auth.appKey,
+        appsecret:     auth.appSecret,
+        tr_id:         'TTTC8434R',  // 실계좌 (모의투자: VTTC8434R)
+      }
+    );
+    const d = JSON.parse(body);
+    if (d?.rt_cd !== '0') {
+      return { ok: false, error: d?.msg1 || `KIS API 오류 (rt_cd: ${d?.rt_cd})` };
+    }
+
+    const holdings = (d.output1 || [])
+      .filter(s => parseInt(s.hldg_qty || '0') > 0)
+      .map(s => ({
+        code:      s.pdno || '',
+        name:      s.prdt_name || '',
+        qty:       parseInt(s.hldg_qty || '0'),
+        avgPrice:  Math.round(parseFloat(s.pchs_avg_pric || '0')),
+        price:     parseFloat(s.prpr || '0'),
+        evalAmt:   parseFloat(s.evlu_amt || '0'),
+        profit:    parseFloat(s.evlu_pfls_amt || '0'),
+        profitPct: parseFloat(s.evlu_pfls_rt || '0'),
+        cost:      parseFloat(s.pchs_amt || '0'),
+      }));
+
+    const summary   = Array.isArray(d.output2) ? d.output2[0] : (d.output2 || {});
+    const cash      = parseFloat(summary.dnca_tot_amt || '0');
+    const totalEval = parseFloat(summary.tot_evlu_amt || '0');
+
+    console.log(`[StockBook] KIS 잔고: 예수금 ${cash.toLocaleString()}원, 보유 ${holdings.length}종목`);
+    return { ok: true, holdings, cash, totalEval };
+  } catch(e) {
+    console.error('[StockBook] KIS 잔고 조회 실패:', e.message);
+    return { ok: false, error: e.message };
+  }
+});
 
 ipcMain.handle('start-kis-realtime', async (_e, tickers) => {
   await startKisWebSocket(tickers);
