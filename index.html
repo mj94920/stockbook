@@ -2517,8 +2517,24 @@
   /* 패널 바디 */
   .mdi-body {
     flex: 1;
-    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     min-height: 0;
+  }
+  /* 탭 pane 없는 패널(뉴스·일지 등)은 바디 자체가 스크롤 */
+  .mdi-body:not(:has(.mdi-ptab-pane)) {
+    overflow: auto;
+  }
+  /* 탭 pane: 남은 공간 전부 + 자체 스크롤 */
+  .mdi-body > .mdi-ptab-pane {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+  }
+  .mdi-body > .mdi-ptab-pane[style*="display:none"],
+  .mdi-body > .mdi-ptab-pane[style*="display: none"] {
+    display: none !important;
   }
 
   /* ── MDI 리사이즈 핸들 ── */
@@ -2954,6 +2970,18 @@
   </button>
 
   <div class="mdi-sb-spacer"></div>
+
+  <!-- 레이아웃 초기화 -->
+  <button class="mdi-sb-btn" onclick="window._MDI && window._MDI.clearAndReset()" title="패널 레이아웃을 기본값으로 초기화"
+    style="margin-bottom:6px;">
+    <span class="mdi-sb-icon-wrap" style="background:rgba(100,116,139,0.18);">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+        <path d="M3 3v5h5"/>
+      </svg>
+    </span>
+    <span class="mdi-sb-label" style="font-size:10px;color:#94a3b8;">레이아웃초기화</span>
+  </button>
 
 </aside>
 
@@ -5946,7 +5974,12 @@ async function loadAllStocks(forceRefresh) {
 }
 
 function filterAndRenderAll() {
-  const q    = (document.getElementById('allStockSearch')?.value || '').toLowerCase();
+  const q = (document.getElementById('allStockSearch')?.value || '').toLowerCase();
+  // 섹터별 탭에서는 별도 렌더링
+  if (_allMkt === 'SECTOR') {
+    renderAllStockSectorView(q);
+    return;
+  }
   const data = _allStockRaw[_allMkt] || [];
   _allFiltered = data.filter(s =>
     !q ||
@@ -5961,13 +5994,14 @@ function filterAndRenderAll() {
 }
 
 // 전종목 섹터별 그룹 뷰
-function renderAllStockSectorView() {
+function renderAllStockSectorView(searchQ) {
   const bodyEl = document.getElementById('allStockBody');
   if (!bodyEl) return;
+  const q = (searchQ !== undefined ? searchQ : (document.getElementById('allStockSearch')?.value||'')).toLowerCase().trim();
 
   // KOSPI+KOSDAQ 합산 (없으면 로드)
-  const allData = [...(_allStockRaw['KOSPI']||[]), ...(_allStockRaw['KOSDAQ']||[])];
-  if (!allData.length) {
+  const rawData = [...(_allStockRaw['KOSPI']||[]), ...(_allStockRaw['KOSDAQ']||[])];
+  if (!rawData.length) {
     bodyEl.closest('table').parentElement.innerHTML =
       `<div style="text-align:center;padding:40px;color:var(--text3);">
         섹터별 분류를 위해 KOSPI/KOSDAQ 데이터를 먼저 불러옵니다...<br>
@@ -5975,6 +6009,13 @@ function renderAllStockSectorView() {
       </div>`;
     return;
   }
+
+  // 검색 필터 적용
+  const allData = q ? rawData.filter(s =>
+    (s.name||'').toLowerCase().includes(q) ||
+    (s.code||'').includes(q) ||
+    (s.industry||'').toLowerCase().includes(q)
+  ) : rawData;
 
   // 섹터 분류
   const sectors = {};
@@ -5988,7 +6029,8 @@ function renderAllStockSectorView() {
     return a.localeCompare(b,'ko');
   });
   const countEl = document.getElementById('allStockCount');
-  if (countEl) countEl.textContent = `(${allData.length.toLocaleString()}종목 / ${secNames.length}섹터)`;
+  const countSuffix = q ? ` · "${q}" 검색` : '';
+  if (countEl) countEl.textContent = `(${allData.length.toLocaleString()}종목 / ${secNames.length}섹터${countSuffix})`;
 
   const fmt = n => n > 0 ? n.toLocaleString('ko-KR') : '-';
   const capStr = mc => mc > 0 ? Math.round(mc/100000000).toLocaleString()+'억' : '-';
@@ -9368,7 +9410,7 @@ function renderAcctFilterBar() {
     </div>
     <button onclick="refreshPortfolioData(this)" title="잔고·시세 새로고침"
       style="flex-shrink:0;width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .15s;">↻</button>
-    <div id="acctDropList" style="display:none;position:absolute;left:8px;right:8px;top:calc(100% - 2px);z-index:9999;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.45);overflow:hidden;">
+    <div id="acctDropList" style="display:none;position:fixed;z-index:9999;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.45);overflow:hidden;min-width:160px;">
       ${items.map(item => {
         const ic = item.id ? ((BROKER_INFO[item.broker]||{}).color||'#888') : 'var(--accent)';
         const active = _acctFilter === item.id;
@@ -9387,14 +9429,27 @@ function renderAcctFilterBar() {
 
 function _toggleAcctDrop(e) {
   e.stopPropagation();
-  const dl = document.getElementById('acctDropList');
+  const dl  = document.getElementById('acctDropList');
+  const btn = document.getElementById('acctDropBtn');
   if (!dl) return;
   const isOpen = dl.style.display !== 'none';
-  dl.style.display = isOpen ? 'none' : 'block';
-  if (!isOpen) {
-    const close = () => { dl.style.display='none'; document.removeEventListener('click',close); };
-    setTimeout(() => document.addEventListener('click', close), 0);
+  if (isOpen) { dl.style.display = 'none'; return; }
+  // position:fixed — overflow:auto 부모에 의한 클리핑 방지
+  if (btn) {
+    const r = btn.getBoundingClientRect();
+    dl.style.left  = r.left + 'px';
+    dl.style.top   = (r.bottom + 3) + 'px';
+    dl.style.width = r.width + 'px';
+    dl.style.right = 'auto';
   }
+  dl.style.display = 'block';
+  // 다음 프레임에 pointerdown 캡처 리스너 등록 (현재 클릭 이벤트 완료 후)
+  const close = (ev) => {
+    if (dl.contains(ev.target) || (btn && btn.contains(ev.target))) return;
+    dl.style.display = 'none';
+    document.removeEventListener('pointerdown', close, true);
+  };
+  requestAnimationFrame(() => document.addEventListener('pointerdown', close, true));
 }
 
 function _selectAcct(id) {
@@ -11092,6 +11147,14 @@ function _toggleCheck(stockKey, checkKey, val) {
         if (!pid) return;
         const tb = panel.querySelector('.mdi-tb');
         if (tb) this._drag(panel, tb);
+        // .mdi-rz 핸들이 없는 패널에 동적으로 생성 (CSS 호버 화살표 표시용)
+        ['n','s','e','w','ne','nw','se','sw'].forEach(dir => {
+          if (!panel.querySelector('.mdi-rz-' + dir)) {
+            const rz = document.createElement('div');
+            rz.className = 'mdi-rz mdi-rz-' + dir;
+            panel.appendChild(rz);
+          }
+        });
         panel.querySelectorAll('.mdi-rz').forEach(rz => {
           const dir = Array.from(rz.classList).find(c => c.startsWith('mdi-rz-') && c !== 'mdi-rz');
           if (dir) this._resize(panel, rz, dir.replace('mdi-rz-', ''));
@@ -11296,6 +11359,13 @@ function _toggleCheck(stockKey, checkKey, val) {
     },
 
     // ── 기본배치 ────────────────────────────────────────────────────────
+    // ── localStorage 초기화 후 기본 배치 ────────────────────────────────
+    clearAndReset() {
+      try { localStorage.removeItem(this.MDI_KEY); } catch(e) {}
+      this.resetLayout();
+      if (typeof showToast === 'function') showToast('✅ 레이아웃이 기본값으로 초기화되었습니다');
+    },
+
     resetLayout() {
       const layout = this._layout();
       Object.entries(layout).forEach(([pid, l]) => {
@@ -11671,21 +11741,69 @@ function wlRenderGroupBar() {
 function wlSetGroup(g) { window._wlActiveGroup=g; renderWatchlist(); }
 
 function wlAddGroup() {
-  const name = prompt('새 그룹 이름을 입력하세요');
-  if (!name||!name.trim()) return;
-  const n = name.trim();
-  if (!state.watchlistGroups) state.watchlistGroups=[];
-  if (state.watchlistGroups.includes(n)) { showToast('이미 있는 그룹입니다.'); return; }
-  state.watchlistGroups.push(n); save();
-  window._wlActiveGroup=n; renderWatchlist();
+  // prompt() → Electron 차단됨: 커스텀 인라인 모달 사용
+  const existing = document.getElementById('_wlGroupModal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = '_wlGroupModal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);';
+  modal.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:22px 24px;min-width:280px;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.6);">
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;">새 그룹 이름</div>
+      <input id="_wlGroupInput" type="text" maxlength="20" placeholder="그룹명 입력 (최대 20자)"
+        style="width:100%;box-sizing:border-box;padding:8px 12px;border:1px solid var(--border);border-radius:7px;background:var(--bg3);color:var(--text);font-size:13px;outline:none;font-family:inherit;">
+      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
+        <button onclick="document.getElementById('_wlGroupModal').remove()"
+          style="padding:6px 16px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;">취소</button>
+        <button id="_wlGroupOk"
+          style="padding:6px 16px;border-radius:7px;border:none;background:var(--accent);color:#fff;font-size:12px;cursor:pointer;font-weight:600;">추가</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  const inp = document.getElementById('_wlGroupInput');
+  const ok = document.getElementById('_wlGroupOk');
+  const doAdd = () => {
+    const n = (inp.value||'').trim();
+    modal.remove();
+    if (!n) return;
+    if (!state.watchlistGroups) state.watchlistGroups=[];
+    if (state.watchlistGroups.includes(n)) { showToast('이미 있는 그룹입니다.'); return; }
+    state.watchlistGroups.push(n); save();
+    window._wlActiveGroup=n; renderWatchlist();
+  };
+  ok.addEventListener('click', doAdd);
+  inp.addEventListener('keydown', e => { if (e.key==='Enter') doAdd(); if (e.key==='Escape') modal.remove(); });
+  modal.addEventListener('click', e => { if (e.target===modal) modal.remove(); });
+  requestAnimationFrame(() => inp.focus());
 }
 
 function wlDeleteGroup(gName) {
-  if (!confirm(`'${gName}' 그룹을 삭제하시겠습니까?
-(종목은 삭제되지 않으며 미분류로 이동합니다.)`)) return;
-  state.watchlistGroups=(state.watchlistGroups||[]).filter(g=>g!==gName);
-  (state.watchlist||[]).forEach(w=>{ if(w.group===gName) w.group=''; });
-  save(); window._wlActiveGroup='전체'; renderWatchlist();
+  // confirm() → Electron 차단됨: 커스텀 인라인 모달 사용
+  const existing = document.getElementById('_wlDelModal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = '_wlDelModal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);';
+  const safe = gName.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  modal.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:22px 24px;min-width:280px;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.6);">
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px;">'${safe}' 그룹 삭제</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">종목은 삭제되지 않으며 미분류로 이동합니다.</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button onclick="document.getElementById('_wlDelModal').remove()"
+          style="padding:6px 16px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;">취소</button>
+        <button id="_wlDelOk"
+          style="padding:6px 16px;border-radius:7px;border:none;background:#9b1c1c;color:#fff;font-size:12px;cursor:pointer;font-weight:600;">삭제</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  document.getElementById('_wlDelOk').addEventListener('click', () => {
+    modal.remove();
+    state.watchlistGroups=(state.watchlistGroups||[]).filter(g=>g!==gName);
+    (state.watchlist||[]).forEach(w=>{ if(w.group===gName) w.group=''; });
+    save(); window._wlActiveGroup='전체'; renderWatchlist();
+  });
+  modal.addEventListener('click', e => { if (e.target===modal) modal.remove(); });
 }
 
 function wlAssignGroup(idx, gName) {
