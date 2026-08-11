@@ -632,6 +632,57 @@
     color: var(--hts-dn);
   }
 
+  /* ── 포트폴리오 요약 2행 그리드 (미래에셋 스타일) ── */
+  .hts-summary-2row {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+    box-shadow: var(--glass-shadow);
+  }
+  .hts-s2r-main {
+    display: flex;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .hts-s2r-cell {
+    flex: 1;
+    padding: 7px 14px;
+    border-right: 1px solid var(--border-light);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .hts-s2r-cell:last-child { border-right: none; }
+  .hts-s2r-cell.primary { flex: 1.4; }
+  .hts-s2r-cell .s2r-lbl { font-size: 10px; color: var(--text3); font-weight: 600; letter-spacing: 0.04em; }
+  .hts-s2r-cell .s2r-val { font-size: 15px; font-weight: 700; color: var(--text); }
+  .hts-s2r-cell .s2r-val.up { color: var(--hts-up); }
+  .hts-s2r-cell .s2r-val.dn { color: var(--hts-dn); }
+  .hts-s2r-sub {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 4px 12px;
+  }
+  .hts-s2r-sub-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 12px 3px 0;
+    margin-right: 12px;
+    border-right: 1px solid var(--border-light);
+  }
+  .hts-s2r-sub-item:last-child { border-right: none; margin-right: 0; padding-right: 0; }
+  .hts-s2r-sub-item.clickable { cursor: pointer; }
+  .hts-s2r-sub-item.clickable:hover .s2r-sv { opacity: 0.7; }
+  .hts-s2r-sub-item .s2r-sl { font-size: 10px; color: var(--text3); white-space: nowrap; }
+  .hts-s2r-sub-item .s2r-sv { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; }
+  .hts-s2r-sub-item .s2r-sv.up { color: var(--hts-up); }
+  .hts-s2r-sub-item .s2r-sv.dn { color: var(--hts-dn); }
+
   /* ── PORTFOLIO BAR (비중 표시 그라데이션) ── */
   .portfolio-bar-wrap {
     margin-bottom: 16px;
@@ -3308,20 +3359,8 @@
 
 
 
-  <!-- TOTAL ASSET SETTING -->
-  <div class="card total-asset-card" style="padding:12px 16px;margin-bottom:12px;">
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span style="font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> 총 자산</span>
-      <span id="totalAssetDisplay"
-        style="flex:1;min-width:180px;padding:7px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;user-select:none;">
-        -
-      </span>
-      <span id="assetRatioPreview" style="font-size:13px;color:var(--text3);"></span>
-    </div>
-  </div>
-
-  <!-- SUMMARY -->
-  <div id="htsSummary" class="hts-bar"></div>
+  <!-- SUMMARY (2행 컴팩트 그리드) -->
+  <div id="htsSummary" class="hts-summary-2row"></div>
 
 
   <!-- 잔고 테이블 -->
@@ -7508,35 +7547,58 @@ function renderSummary() {
   const pnlCls = pnl>=0?'up':'dn';
   const realCls = realized>=0?'up':'dn';
   const exCls = exAmt >= 0 ? '' : 'dn';
-  const cells = [
-    { label:'예수금', val: hasEx ? (exAmt<0?'-':'')+'₩'+fmt(Math.abs(exAmt)) : '-', cls:exCls,
-      // KIS API만 차단, 나머지 계좌는 모달로 직접 입력
-      // 모아보기: 계좌 있으면 계좌 선택 안내, 계좌 없으면 레거시 입력
-      click: filterAcct
-        ? ((filterAcct.broker === 'kis' && !filterAcct.isManual) ? null : `showCashEditForm('${filterAcct.id}')`)
-        : (accounts.length > 0 ? "showToast('💡 계좌를 선택하면 해당 계좌 예수금을 편집할 수 있습니다')" : 'openCashModal()') },
-    ...((filterAcct || state.totalAsset > 0 || state.cashManual != null || hasEx) ? [{
-      label:'순자산총액' + (filterAcct ? '<span style="font-size:9px;font-weight:400;color:var(--text3);margin-left:3px">계좌</span>'
-        : state.cashManual != null ? '<span style="font-size:9px;font-weight:400;color:var(--text3);margin-left:3px">↑역산</span>'
-        : hasEx ? '<span style="font-size:9px;font-weight:400;color:var(--text3);margin-left:3px">합산</span>' : ''),
-      val:'₩'+fmt(netAsset), cls:''
-    }] : []),
-    { label:'총평가금액', val:'₩'+fmt(totalVal), cls:'' },
-    { label:'총매입금액', val:'₩'+fmt(totalBuy), cls:'' },
-    { label:'총평가손익', val:(pnl>=0?'+':'')+fmt(pnl), cls:pnlCls },
-    { label:'총수익률', val:(pnlPct>=0?'+':'')+pnlPct.toFixed(2)+'%', cls:pnlCls },
-    { label:'실현손익', val:(realized>=0?'+':'')+fmt(realized), cls:realCls },
-    { label:'투자비중', val:investRatio.toFixed(1)+'%', cls: investRatio>90?'up':'' },
-    { label:'보유종목', val:p.length+'개' + (filterAcct ? '' : ' · 거래 '+state.trades.length+'건'), cls:'' },
-  ];
   const el = document.getElementById('htsSummary');
   if (!el) return;
-  el.innerHTML = cells.map(cell => `
-    <div class="hts-bar-cell${cell.click?' clickable':''}" ${cell.click?`onclick="${cell.click}"`:''}>
-      <div class="hts-bar-label">${cell.label}</div>
-      <div class="hts-bar-val ${cell.cls}">${cell.val}</div>
-    </div>`).join('');
-  // 잔고 탭 헤더도 동기화 (예수금/총잔고 수치)
+
+  // 예수금 클릭 속성
+  const exClick = filterAcct
+    ? ((filterAcct.broker === 'kis' && !filterAcct.isManual) ? '' : `onclick="showCashEditForm('${filterAcct.id}')"`)
+    : (accounts.length > 0 ? `onclick="showToast('💡 계좌를 선택하면 해당 계좌 예수금을 편집할 수 있습니다')"` : `onclick="openCashModal()"`);
+  const netLbl = filterAcct ? '계좌' : state.cashManual!=null ? '↑역산' : hasEx ? '합산' : '';
+
+  // Row1: 순자산총액 | 총평가금액 | 총평가손익
+  // Row2 (sub): 예수금 | 총매입금액 | 총수익률 | 실현손익 | 투자비중 | 보유
+  el.innerHTML = `
+    <div class="hts-s2r-main">
+      <div class="hts-s2r-cell primary">
+        <span class="s2r-lbl">순자산총액${netLbl?` <small style="font-size:9px;font-weight:400">${netLbl}</small>`:''}</span>
+        <span class="s2r-val">₩${fmt(netAsset)}</span>
+      </div>
+      <div class="hts-s2r-cell">
+        <span class="s2r-lbl">총평가금액</span>
+        <span class="s2r-val">₩${fmt(totalVal)}</span>
+      </div>
+      <div class="hts-s2r-cell">
+        <span class="s2r-lbl">총평가손익</span>
+        <span class="s2r-val ${pnlCls}">${pnl>=0?'+':''}${fmt(pnl)}</span>
+      </div>
+    </div>
+    <div class="hts-s2r-sub">
+      <div class="hts-s2r-sub-item${exClick?' clickable':''}" ${exClick}>
+        <span class="s2r-sl">예수금</span>
+        <span class="s2r-sv ${exCls}">${hasEx?(exAmt<0?'-':'')+'₩'+fmt(Math.abs(exAmt)):'-'}</span>
+      </div>
+      <div class="hts-s2r-sub-item">
+        <span class="s2r-sl">총매입금액</span>
+        <span class="s2r-sv">₩${fmt(totalBuy)}</span>
+      </div>
+      <div class="hts-s2r-sub-item">
+        <span class="s2r-sl">총수익률</span>
+        <span class="s2r-sv ${pnlCls}">${pnlPct>=0?'+':''}${pnlPct.toFixed(2)}%</span>
+      </div>
+      <div class="hts-s2r-sub-item">
+        <span class="s2r-sl">실현손익</span>
+        <span class="s2r-sv ${realCls}">${realized>=0?'+':''}${fmt(realized)}</span>
+      </div>
+      <div class="hts-s2r-sub-item">
+        <span class="s2r-sl">투자비중</span>
+        <span class="s2r-sv">${investRatio.toFixed(1)}%</span>
+      </div>
+      <div class="hts-s2r-sub-item">
+        <span class="s2r-sl">보유</span>
+        <span class="s2r-sv">${p.length}종목</span>
+      </div>
+    </div>`;
   try { renderBalanceSummary(); } catch(e) {}
 }
 
