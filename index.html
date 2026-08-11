@@ -6153,15 +6153,16 @@ function renderAllStockSectorView(searchQ) {
       sec = _getAutoETFTheme(s.name || '');
     } else {
       sec = _getAutoSector(s.name || s.ISU_ABBRV || '', s.industry || '');
-      // 섹터 모드에서 ETF/인덱스 그룹 제거 (ETF 탭으로 이동)
-      if (sec === 'ETF/인덱스') return;
+      // ETF/인덱스 섹터는 포함하되 목록 맨 뒤에 배치 (sort 로직에서 처리)
     }
     if (!sectors[sec]) sectors[sec] = [];
     sectors[sec].push(s);
   });
   const lastKey = isEtfMode ? '기타ETF' : '기타';
+  const etfKey = 'ETF/인덱스';
   const secNames = Object.keys(sectors).sort((a,b) => {
     if (a===lastKey) return 1; if (b===lastKey) return -1;
+    if (a===etfKey) return 1; if (b===etfKey) return -1;
     return a.localeCompare(b,'ko');
   });
   const countEl = document.getElementById('allStockCount');
@@ -7509,11 +7510,11 @@ function renderSummary() {
   const exCls = exAmt >= 0 ? '' : 'dn';
   const cells = [
     { label:'예수금', val: hasEx ? (exAmt<0?'-':'')+'₩'+fmt(Math.abs(exAmt)) : '-', cls:exCls,
-      // 수동 계좌 선택 시 → 해당 계좌 예수금 직접 편집 허용
-      // KIS·기타 API 계좌 선택 또는 모아보기(계좌 예수금 있음) → 편집 불가
-      // 모아보기이고 계좌 예수금이 전혀 없는 경우 → 레거시 cashManual 입력 허용
+      // KIS API 계좌만 차단 (자동 동기화됨) — 나머지(수동·토스·키움·LS 등)는 직접 입력 허용
+      // 모아보기 + 계좌 예수금 있음 → 편집 불가 (합산값)
+      // 모아보기 + 계좌 예수금 없음 → 레거시 cashManual 허용
       click: filterAcct
-        ? (filterAcct.isManual ? `showCashEditForm('${filterAcct.id}')` : null)
+        ? ((filterAcct.broker === 'kis' && !filterAcct.isManual) ? null : `showCashEditForm('${filterAcct.id}')`)
         : (allAcctsCash > 0 ? null : 'openCashModal()') },
     ...((filterAcct || state.totalAsset > 0 || state.cashManual != null || hasEx) ? [{
       label:'순자산총액' + (filterAcct ? '<span style="font-size:9px;font-weight:400;color:var(--text3);margin-left:3px">계좌</span>'
