@@ -3312,11 +3312,10 @@
   <div class="card total-asset-card" style="padding:12px 16px;margin-bottom:12px;">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
       <span style="font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> 총 자산</span>
-      <span id="totalAssetDisplay" onclick="openTotalAssetModal()" title="클릭하여 입력"
-        style="flex:1;min-width:180px;padding:7px 12px;background:var(--bg3);border:1px solid var(--accent);border-radius:6px;color:var(--text3);font-size:14px;cursor:pointer;user-select:none;">
-        클릭하여 입력
+      <span id="totalAssetDisplay"
+        style="flex:1;min-width:180px;padding:7px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;user-select:none;">
+        -
       </span>
-      <button class="btn btn-ghost btn-sm" onclick="clearTotalAsset()" style="white-space:nowrap;">초기화</button>
       <span id="assetRatioPreview" style="font-size:13px;color:var(--text3);"></span>
     </div>
   </div>
@@ -4727,13 +4726,15 @@ function clearTotalAsset() {
 function updateTotalAssetDisplay() {
   const el = document.getElementById('totalAssetDisplay');
   if (!el) return;
-  if (state.totalAsset > 0) {
-    el.textContent = '₩' + state.totalAsset.toLocaleString('ko-KR');
-    el.style.color = 'var(--text)';
-  } else {
-    el.textContent = '클릭하여 입력';
-    el.style.color = 'var(--text3)';
-  }
+  // 자동계산: 전계좌 예수금 + 포트폴리오 평가금액
+  const allAcctsCash = (state.accounts || [])
+    .filter(a => typeof a.cash === 'number' && a.cash > 0)
+    .reduce((s, a) => s + a.cash, 0);
+  const totalVal = (state.portfolio || [])
+    .reduce((s, p) => s + (p.currentPrice || p.avgPrice || 0) * (p.qty || 0), 0);
+  const total = allAcctsCash + totalVal;
+  el.textContent = total > 0 ? '₩' + total.toLocaleString('ko-KR') : '-';
+  el.style.color = total > 0 ? 'var(--text)' : 'var(--text3)';
 }
 function previewAssetRatio() {
   const inp = document.getElementById('totalAssetModalInput');
@@ -7466,6 +7467,11 @@ async function fetchMarketTicker() {
 // ============================================================
 function renderSummary() {
   const filterAcct = _acctFilter ? (state.accounts||[]).find(a => a.id === _acctFilter) : null;
+  const accounts = state.accounts || [];
+  // 전계좌 예수금 합산 (함수 상단에서 선언 — 스코프 안전)
+  const allAcctsCash = accounts
+    .filter(a => typeof a.cash === 'number' && a.cash > 0)
+    .reduce((s, a) => s + a.cash, 0);
   const p = filterAcct ? state.portfolio.filter(s => s.accountId === _acctFilter) : state.portfolio;
   const totalBuy = p.reduce((a,s) => a + s.avgPrice * s.qty, 0);
   const totalVal = p.reduce((a,s) => a + (s.currentPrice || s.avgPrice) * s.qty, 0);
@@ -7482,18 +7488,12 @@ function renderSummary() {
     hasEx = true;
     investRatio = netAsset > 0 ? (totalVal/netAsset*100) : 0;
   } else {
-    // 모든 계좌 예수금 합산 (API 계좌 + 수동 직접입력 계좌)
-    const allAcctsCash = (state.accounts || [])
-      .filter(a => typeof a.cash === 'number' && a.cash > 0)
-      .reduce((s, a) => s + a.cash, 0);
     if (allAcctsCash > 0) {
-      // 전계좌 예수금 + 주식 평가금액 = 순자산
       cash     = allAcctsCash;
       netAsset = allAcctsCash + totalVal;
       exAmt    = allAcctsCash;
       hasEx    = true;
     } else {
-      // 직접입력 예수금 / 총자산 설정 / 입출금 내역 기준 폴백
       netAsset = state.cashManual != null
         ? state.cashManual + totalVal
         : state.totalAsset > 0 ? state.totalAsset + cashflowAdj : totalVal;
@@ -7510,12 +7510,11 @@ function renderSummary() {
   const exCls = exAmt >= 0 ? '' : 'dn';
   const cells = [
     { label:'예수금', val: hasEx ? (exAmt<0?'-':'')+'₩'+fmt(Math.abs(exAmt)) : '-', cls:exCls,
-      // KIS API 계좌만 차단 (자동 동기화됨) — 나머지(수동·토스·키움·LS 등)는 직접 입력 허용
-      // 모아보기 + 계좌 예수금 있음 → 편집 불가 (합산값)
-      // 모아보기 + 계좌 예수금 없음 → 레거시 cashManual 허용
+      // KIS API만 차단, 나머지 계좌는 모달로 직접 입력
+      // 모아보기: 계좌 있으면 계좌 선택 안내, 계좌 없으면 레거시 입력
       click: filterAcct
         ? ((filterAcct.broker === 'kis' && !filterAcct.isManual) ? null : `showCashEditForm('${filterAcct.id}')`)
-        : (allAcctsCash > 0 ? null : 'openCashModal()') },
+        : (accounts.length > 0 ? "showToast('💡 계좌를 선택하면 해당 계좌 예수금을 편집할 수 있습니다')" : 'openCashModal()') },
     ...((filterAcct || state.totalAsset > 0 || state.cashManual != null || hasEx) ? [{
       label:'순자산총액' + (filterAcct ? '<span style="font-size:9px;font-weight:400;color:var(--text3);margin-left:3px">계좌</span>'
         : state.cashManual != null ? '<span style="font-size:9px;font-weight:400;color:var(--text3);margin-left:3px">↑역산</span>'
@@ -9625,21 +9624,43 @@ function saveAccount() {
   showToast('✅ 계좌 저장 완료');
 }
 
+let _acctCashEditId = null;
+
 function showCashEditForm(id) {
   const a = (state.accounts || []).find(x => x.id === id);
   if (!a) return;
-  // KIS 연동 계좌만 차단 (자동 동기화로 갱신) — 나머지는 직접 입력 허용
   if (a.broker === 'kis' && a.isManual === false) {
-    showToast('⚠️ KIS 연동 계좌 예수금은 실계좌 동기화로 자동 갱신됩니다');
+    showToast('⚠️ KIS 연동 계좌 예수금은 자동 동기화됩니다');
     return;
   }
-  const newCash = prompt(`[${a.nickname}] 예수금 입력 (현재: ${fmt(a.cash || 0)}원)`, a.cash || 0);
-  if (newCash === null) return;
-  const val = parseInt(String(newCash).replace(/,/g, ''), 10);
+  _acctCashEditId = id;
+  const modal = document.getElementById('acctCashEditModal');
+  document.getElementById('acctCashEditTitle').textContent = `예수금 — ${a.nickname || a.broker}`;
+  document.getElementById('acctCashEditCurrent').textContent = '₩' + fmt(a.cash || 0);
+  const inp = document.getElementById('acctCashEditInput');
+  inp.value = a.cash > 0 ? a.cash : '';
+  modal.style.display = 'flex';
+  setTimeout(() => inp.focus(), 60);
+}
+
+function closeAcctCashEditModal() {
+  document.getElementById('acctCashEditModal').style.display = 'none';
+  _acctCashEditId = null;
+}
+
+function saveAcctCashEdit() {
+  if (!_acctCashEditId) return;
+  const a = (state.accounts || []).find(x => x.id === _acctCashEditId);
+  if (!a) { closeAcctCashEditModal(); return; }
+  const raw = document.getElementById('acctCashEditInput').value;
+  const val = parseInt(String(raw).replace(/,/g, '').replace(/[^0-9]/g, ''), 10);
   if (isNaN(val) || val < 0) { showToast('⚠️ 올바른 금액을 입력해주세요'); return; }
   a.cash = val;
   save();
+  closeAcctCashEditModal();
   renderAccountPanel();
+  renderSummary();
+  updateTotalAssetDisplay();
   showToast('✅ 예수금 업데이트 완료');
 }
 
@@ -12828,6 +12849,30 @@ function wlAssignGroup(idx, gName) {
       <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
     <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.4.6</div>
+  </div>
+</div>
+
+<!-- 계좌 예수금 직접 입력 모달 -->
+<div id="acctCashEditModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3100;align-items:center;justify-content:center;">
+  <div style="width:340px;max-width:95vw;border-radius:12px;background:var(--bg2);border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.3);">
+    <div style="padding:16px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+      <div id="acctCashEditTitle" style="font-size:15px;font-weight:700;">예수금 입력</div>
+      <button onclick="closeAcctCashEditModal()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3);line-height:1;">✕</button>
+    </div>
+    <div style="padding:16px 18px;display:flex;flex-direction:column;gap:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;color:var(--text3);">현재 예수금</span>
+        <span id="acctCashEditCurrent" style="font-size:13px;font-weight:600;color:var(--text2);">₩0</span>
+      </div>
+      <input id="acctCashEditInput" type="text" inputmode="numeric"
+        placeholder="새 예수금 금액 입력"
+        onkeydown="if(event.key==='Enter') saveAcctCashEdit();"
+        style="width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--accent);border-radius:7px;color:var(--text);font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;">
+    </div>
+    <div style="padding:10px 18px 16px;display:flex;gap:8px;">
+      <button onclick="saveAcctCashEdit()" style="flex:1;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;">저장</button>
+      <button onclick="closeAcctCashEditModal()" style="padding:9px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;font-size:13px;cursor:pointer;color:var(--text2);">취소</button>
+    </div>
   </div>
 </div>
 
