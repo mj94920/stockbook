@@ -1509,6 +1509,18 @@
   }
   .api-bcard-del-btn:hover { background: var(--bg3); }
 
+  /* KIS 계좌번호 추가 버튼 */
+  .api-bcard-add-acct-btn {
+    display: block; width: 100%;
+    margin: 4px 0 8px;
+    padding: 5px 10px; font-size: 11px;
+    font-family: inherit; cursor: pointer; border-radius: 6px;
+    border: 1px dashed var(--border);
+    background: transparent; color: var(--text2);
+    text-align: left; transition: background 0.15s, color 0.15s;
+  }
+  .api-bcard-add-acct-btn:hover { background: var(--bg3); color: var(--text1); }
+
   .settings-close-row {
     display: flex;
     justify-content: flex-end;
@@ -8576,53 +8588,92 @@ function editJournal(idx) {
   document.getElementById('j_name').focus();
 }
 
+// ── KIS 계좌번호 행 추가/삭제 (API 설정 모달) ──────────────────────────────
+function addKisAccountRow(value, focus) {
+  if (value === undefined) value = '';
+  if (focus === undefined) focus = true;
+  const area = document.getElementById('kisAccountsArea');
+  if (!area) return;
+  const idx = area.querySelectorAll('.kis-acct-row').length;
+  const div = document.createElement('div');
+  div.className = 'api-bcard-input-row kis-acct-row';
+  const label = idx === 0 ? '계좌번호' : '계좌 ' + (idx + 1);
+  const delBtn = idx > 0
+    ? '<button type="button" onclick="removeKisAccountRow(this)" style="flex-shrink:0;margin-left:6px;background:none;border:none;color:#ef4444;cursor:pointer;font-size:16px;line-height:1;padding:0 4px;" title="삭제">✕</button>'
+    : '';
+  const safeVal = String(value).replace(/"/g, '&quot;');
+  div.innerHTML = `
+    <span class="api-bcard-label">${label}</span>
+    <input class="api-bcard-input kis-acct-input" type="text" placeholder="예: 50123456-01" value="${safeVal}" autocomplete="off" style="flex:1;min-width:0;">
+    ${delBtn}
+  `;
+  area.appendChild(div);
+  if (focus) { const inp = div.querySelector('input'); if (inp) inp.focus(); }
+}
+
+function removeKisAccountRow(btn) {
+  const row = btn.closest('.kis-acct-row');
+  if (row) row.remove();
+  // 레이블 재번호
+  const area = document.getElementById('kisAccountsArea');
+  if (!area) return;
+  area.querySelectorAll('.kis-acct-row').forEach(function(r, i) {
+    const lbl = r.querySelector('.api-bcard-label');
+    if (lbl) lbl.textContent = i === 0 ? '계좌번호' : '계좌 ' + (i + 1);
+  });
+}
+
 // ── KIS 실계좌 잔고 동기화 ──────────────────────────────────────────────────
 async function syncKisBalance() {
   if (!window.electronAPI?.fetchKisBalance) return;
-  const kisAcct = (state.accounts || []).find(a => a.broker === 'kis' && !a.isManual);
-  if (!kisAcct) return;
+  const kisAccts = (state.accounts || []).filter(function(a) { return a.broker === 'kis' && !a.isManual; });
+  if (!kisAccts.length) return;
 
-  const result = await window.electronAPI.fetchKisBalance();
-  if (!result?.ok) {
-    console.warn('[syncKisBalance] KIS 잔고 조회 실패:', result?.error);
-    showToast('⚠️ KIS 잔고 조회 실패: ' + (result?.error || ''));
-    return;
+  var anyFailed = false;
+  for (var _ki = 0; _ki < kisAccts.length; _ki++) {
+    var kisAcct = kisAccts[_ki];
+    var acctNum = kisAcct.number || undefined;
+
+    var result = await window.electronAPI.fetchKisBalance(acctNum);
+    if (!result?.ok) {
+      console.warn('[syncKisBalance] KIS 잔고 조회 실패 (' + (acctNum || '기본') + '):', result?.error);
+      anyFailed = true;
+      continue;
+    }
+
+    // 예수금 업데이트
+    kisAcct.cash = result.cash;
+
+    // 보유 종목 동기화
+    var holdings = result.holdings;
+    holdings.forEach(function(h) {
+      var existing = (state.portfolio || []).find(function(s) {
+        return s.ticker === h.code && s.accountId === kisAcct.id;
+      });
+      if (existing) {
+        existing.qty          = h.qty;
+        existing.avgPrice     = h.avgPrice;
+        existing.currentPrice = h.price;
+      } else {
+        state.portfolio.push({
+          name:         h.name,
+          ticker:       h.code,
+          avgPrice:     h.avgPrice,
+          qty:          h.qty,
+          currentPrice: h.price,
+          sector:       '',
+          position:     'mid',
+          tradeType:    'cash',
+          accountId:    kisAcct.id,
+        });
+      }
+    });
+    console.log('[syncKisBalance] ' + (acctNum || '기본') + ': 예수금 ' + result.cash.toLocaleString() + '원, 종목 ' + holdings.length + '개');
   }
 
-  // 예수금 업데이트 (isManual: false 계좌에만 반영)
-  kisAcct.cash = result.cash;
-
-  // 보유 종목 동기화: KIS 응답 기준으로 해당 계좌 종목 업데이트
-  const { holdings } = result;
-  holdings.forEach(h => {
-    const existing = (state.portfolio || []).find(
-      s => s.ticker === h.code && s.accountId === kisAcct.id
-    );
-    if (existing) {
-      // 기존 종목: 수량·평균단가·현재가 업데이트
-      existing.qty          = h.qty;
-      existing.avgPrice     = h.avgPrice;
-      existing.currentPrice = h.price;
-    } else {
-      // 신규 종목: 포트폴리오에 자동 추가
-      state.portfolio.push({
-        name:         h.name,
-        ticker:       h.code,
-        avgPrice:     h.avgPrice,
-        qty:          h.qty,
-        currentPrice: h.price,
-        sector:       '',
-        position:     'mid',
-        tradeType:    'cash',
-        accountId:    kisAcct.id,
-      });
-    }
-  });
-
-  // KIS 계좌 종목 중 API에서 사라진 것(전량 매도된 것)은 qty=0으로 표시하지 않고 그대로 유지
-  // (수동 삭제는 사용자가 직접 처리)
+  if (anyFailed) showToast('⚠️ 일부 KIS 계좌 잔고 조회 실패 — 계좌번호/토큰 확인');
+  // KIS 계좌 종목 중 API에서 사라진 것은 그대로 유지 (수동 삭제는 사용자가 직접)
   try { save(); } catch(_) {}
-  console.log(`[syncKisBalance] 완료: 예수금 ${result.cash.toLocaleString()}원, 종목 ${holdings.length}개`);
 }
 
 // ── 잔고·시세 수동 새로고침 버튼 ───────────────────────────────────────────────
@@ -9262,33 +9313,66 @@ async function syncApiAccounts(connected) {
   let needsSave = false;
   for (const [broker, ok] of Object.entries(connected)) {
     if (!ok) continue;
-    // 저장된 API 키에서 계좌번호 읽기 (1계좌 1API 원칙)
-    let storedNumber = '';
-    if (window.electronAPI?.loadApiKey) {
+
+    if (broker === 'kis' && window.electronAPI?.loadApiKey) {
+      // KIS: 복수 계좌번호 지원 — accounts 배열 기준으로 각각 등록
       try {
-        const data = await window.electronAPI.loadApiKey(broker);
-        storedNumber = data?.account || '';
+        const data = await window.electronAPI.loadApiKey('kis');
+        const acctList = (data?.accounts || []).filter(Boolean);
+        const list = acctList.length ? acctList : (data?.account ? [data.account] : []);
+        const bi = (typeof BROKER_INFO !== 'undefined' && BROKER_INFO.kis) || {};
+        list.forEach((acctNum, idx) => {
+          const existing = state.accounts.find(
+            a => a.broker === 'kis' && !a.isManual &&
+                 (a.number === acctNum || (a.number || '').replace(/[-\s]/g,'') === acctNum.replace(/[-\s]/g,''))
+          );
+          if (!existing) {
+            state.accounts.push({
+              id: (typeof _acctId === 'function') ? _acctId() : ('api_kis_' + Date.now() + idx),
+              broker: 'kis',
+              nickname: (bi.name || 'KIS') + (list.length > 1 ? ' (계좌 ' + (idx + 1) + ')' : ' (API)'),
+              number: acctNum,
+              type: '위탁',
+              isManual: false,
+              isActive: true,
+              cash: 0,
+              createdAt: new Date().toISOString().slice(0, 10),
+            });
+            needsSave = true;
+          } else if (acctNum && existing.number !== acctNum) {
+            existing.number = acctNum;
+            needsSave = true;
+          }
+        });
       } catch(e) {}
-    }
-    const existing = state.accounts.find(a => a.broker === broker && !a.isManual);
-    if (!existing) {
-      const bi = (typeof BROKER_INFO !== 'undefined' && BROKER_INFO[broker]) || {};
-      state.accounts.push({
-        id: (typeof _acctId === 'function') ? _acctId() : ('api_' + broker + '_' + Date.now()),
-        broker,
-        nickname: (bi.name || broker) + ' (API)',
-        number: storedNumber,
-        type: '위탁',
-        isManual: false,
-        isActive: true,
-        cash: 0,
-        createdAt: new Date().toISOString().slice(0, 10),
-      });
-      needsSave = true;
-    } else if (storedNumber && existing.number !== storedNumber) {
-      // 계좌번호가 바뀐 경우 업데이트
-      existing.number = storedNumber;
-      needsSave = true;
+    } else {
+      // 기타 증권사: 단일 계좌번호 원칙 유지
+      let storedNumber = '';
+      if (window.electronAPI?.loadApiKey) {
+        try {
+          const data = await window.electronAPI.loadApiKey(broker);
+          storedNumber = data?.account || '';
+        } catch(e) {}
+      }
+      const existing = state.accounts.find(a => a.broker === broker && !a.isManual);
+      if (!existing) {
+        const bi = (typeof BROKER_INFO !== 'undefined' && BROKER_INFO[broker]) || {};
+        state.accounts.push({
+          id: (typeof _acctId === 'function') ? _acctId() : ('api_' + broker + '_' + Date.now()),
+          broker,
+          nickname: (bi.name || broker) + ' (API)',
+          number: storedNumber,
+          type: '위탁',
+          isManual: false,
+          isActive: true,
+          cash: 0,
+          createdAt: new Date().toISOString().slice(0, 10),
+        });
+        needsSave = true;
+      } else if (storedNumber && existing.number !== storedNumber) {
+        existing.number = storedNumber;
+        needsSave = true;
+      }
     }
   }
   if (needsSave) {
@@ -9869,7 +9953,20 @@ async function renderApiPanel() {
   const brokerMap = {
     kis:    { badge:'apiBadge_kis',    check: d => d.appKey && d.appSecret,
               fields: [ ['apisKisAppKey','appKey','APP Key'], ['apisKisAppSecret','appSecret','APP Secret'] ],
-              extra: () => { const a = document.getElementById('apisKisAccount'); if (a) window.electronAPI.loadApiKey('kis').then(d => { if (d?.account) a.value = d.account; }); } },
+              extra: () => {
+                window.electronAPI.loadApiKey('kis').then(d => {
+                  const area = document.getElementById('kisAccountsArea');
+                  if (!area) return;
+                  area.innerHTML = '';
+                  const saved = (d?.accounts || []).filter(Boolean);
+                  const list  = saved.length ? saved : (d?.account ? [d.account] : []);
+                  if (list.length) {
+                    list.forEach(acct => addKisAccountRow(acct, false));
+                  } else {
+                    addKisAccountRow('', false); // 비어있는 첫 번째 row
+                  }
+                });
+              } },
     kiwoom: { badge:'apiBadge_kiwoom', check: d => d.appKey && d.appSecret,
               fields: [ ['apisKiwoomAppKey','appKey','App Key'], ['apisKiwoomAppSecret','appSecret','App Secret'] ] },
     ls:     { badge:'apiBadge_ls',     check: d => d.appKey && d.appSecret,
@@ -9898,8 +9995,16 @@ async function saveApiKeyPanel(broker) {
   if (broker === 'kis') {
     const nk = document.getElementById('apisKisAppKey')?.value.trim()    || '';
     const ns = document.getElementById('apisKisAppSecret')?.value.trim() || '';
-    const na = document.getElementById('apisKisAccount')?.value.trim()   || '';
-    fields = { appKey: nk || existing.appKey || '', appSecret: ns || existing.appSecret || '', account: na || existing.account || '' };
+    // 다중 계좌번호 수집 (kisAccountsArea의 모든 input)
+    const acctInputs = [...document.querySelectorAll('#kisAccountsArea .kis-acct-input')];
+    const accounts = acctInputs.map(el => el.value.trim()).filter(Boolean);
+    const primaryAcct = accounts[0] || existing.account || '';
+    fields = {
+      appKey:   nk || existing.appKey   || '',
+      appSecret: ns || existing.appSecret || '',
+      account:  primaryAcct,                          // 하위 호환 유지
+      accounts: accounts.length ? accounts : (existing.accounts || (primaryAcct ? [primaryAcct] : [])),
+    };
     if (!fields.appKey || !fields.appSecret) { alert('APP Key와 APP Secret을 입력해주세요.'); return; }
   } else if (broker === 'kiwoom') {
     const nk = document.getElementById('apisKiwoomAppKey')?.value.trim()    || '';
@@ -12609,10 +12714,10 @@ function wlAssignGroup(idx, gName) {
           <span class="api-bcard-label">APP Secret</span>
           <input class="api-bcard-input" id="apisKisAppSecret" type="password" placeholder="APP Secret" autocomplete="off">
         </div>
-        <div class="api-bcard-input-row">
-          <span class="api-bcard-label">계좌번호</span>
-          <input class="api-bcard-input" id="apisKisAccount" type="text" placeholder="예: 50123456-01" autocomplete="off">
+        <div id="kisAccountsArea">
+          <!-- 계좌번호 row들이 동적으로 추가됨 (addKisAccountRow 참고) -->
         </div>
+        <button class="api-bcard-add-acct-btn" onclick="addKisAccountRow()">+ 계좌번호 추가</button>
         <div class="api-bcard-actions">
           <button class="api-bcard-save-btn" onclick="saveApiKeyPanel('kis')">저장</button>
           <button class="api-bcard-del-btn" onclick="deleteApiKeyPanel('kis')">삭제</button>

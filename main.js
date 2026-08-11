@@ -759,19 +759,26 @@ async function startKisWebSocket(tickers) {
 }
 
 // ── KIS 잔고 조회 (보유 종목 + 예수금) ──────────────────────────────────────
-ipcMain.handle('fetch-kis-balance', async () => {
+// acctNum: 특정 계좌번호를 지정할 경우 전달 (생략 시 저장된 첫 번째 계좌 사용)
+ipcMain.handle('fetch-kis-balance', async (event, acctNum) => {
   const auth = await getKisToken();
   if (!auth) return { ok: false, error: 'KIS 토큰 없음. API 키를 확인해주세요.' };
 
-  // 저장된 계좌번호 로드 (10자리: 앞8자리=CANO, 뒤2자리=상품코드)
+  // 계좌번호 결정: 파라미터 우선, 없으면 저장된 accounts[0] 또는 account 사용
   let account = '';
-  try {
-    const credFile = getCredFile('kis');
-    if (fs.existsSync(credFile)) {
-      const creds = JSON.parse(safeStorage.decryptString(fs.readFileSync(credFile)));
-      account = (creds?.account || '').replace(/[-\s]/g, '');
-    }
-  } catch (_) {}
+  if (acctNum) {
+    account = String(acctNum).replace(/[-\s]/g, '');
+  } else {
+    try {
+      const credFile = getCredFile('kis');
+      if (fs.existsSync(credFile)) {
+        const creds = JSON.parse(safeStorage.decryptString(fs.readFileSync(credFile)));
+        const accounts = (creds?.accounts || []).filter(Boolean);
+        const first = accounts[0] || creds?.account || '';
+        account = first.replace(/[-\s]/g, '');
+      }
+    } catch (_) {}
+  }
 
   if (!account || account.length < 8) {
     return { ok: false, error: '계좌번호를 설정해주세요 (API 설정 > KIS 계좌번호 10자리).' };
