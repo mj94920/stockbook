@@ -338,52 +338,55 @@ async function fetchNaverStockList(market) {
   const isEtf   = market === 'ETF';
   const results = [];
 
-  // ── ETF: finance.naver.com API (page/pageSize 파라미터 무시 — 매번 전체 반환)
-  //         단일 호출 후 코드 기준 중복제거
+  // ── ETF: KRX API (Naver ETF API는 EUC-KR 인코딩 문제로 제거)
+  //         KRX MDCSTAT04301 — OTP → CSV 2단계, 동일 parseKrxCsv 활용
   if (isEtf) {
-    const ETF_HEADERS = {
-      'User-Agent':      NAVER_MOBILE_UA,
-      'Accept':          'application/json, */*',
-      'Referer':         'https://finance.naver.com/',
-      'Accept-Language': 'ko-KR,ko;q=0.9',
-    };
-    let body;
     try {
-      body = await httpsGet(
-        'https://finance.naver.com/api/sise/etfItemList.nhn',
-        25000, ETF_HEADERS
+      const KRX_ETF_OTP_QUERY = 'bld=dbms/MDC/STAT/standard/MDCSTAT04301&locale=ko_KR&share=1&money=1&csvxls_isNo=false';
+      const otp = (await httpsGet(
+        `https://data.krx.co.kr/comm/fileDn/GenerateOTP/generate.cmd?${KRX_ETF_OTP_QUERY}`,
+        15000,
+        { 'Referer': 'https://data.krx.co.kr/contents/MDC/MAIN/main/index.cmd',
+          'Accept': 'text/plain, */*; q=0.01', 'X-Requested-With': 'XMLHttpRequest' }
+      )).trim();
+      if (!otp || otp.length < 10) throw new Error(`KRX ETF OTP 실패: "${otp.slice(0,80)}"`);
+      console.log(`[StockBook] KRX ETF OTP: ${otp.slice(0,20)}...`);
+
+      const buf = await httpsFormPostBuf(
+        'https://data.krx.co.kr/comm/fileDn/download_csv.cmd',
+        `code=${otp}`,
+        { 'Accept': 'text/csv, application/octet-stream, */*' },
+        30000
       );
+
+      let csv;
+      if (buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF) {
+        csv = buf.toString('utf-8');
+      } else {
+        const { TextDecoder } = require('util');
+        csv = new TextDecoder('euc-kr').decode(buf);
+      }
+
+      const toNum = s => parseFloat((s || '0').replace(/,/g, '')) || 0;
+      const rows = parseKrxCsv(csv, 'ETF');
+      for (const r of rows) {
+        results.push({
+          code:      r.ISU_SRT_CD,
+          name:      r.ISU_ABBRV,
+          industry:  '',
+          market:    'ETF',
+          price:     toNum(r.TDD_CLSPRC),
+          change:    toNum(r.CMPPREVDD_PRC),
+          changePct: toNum(r.FLUC_RT),
+          volume:    toNum(r.ACC_TRDVOL),
+          marketCap: toNum(r.MKTCAP),
+          nav:       0,
+        });
+      }
+      console.log(`[StockBook] KRX ETF 로드 완료: ${results.length}종목`);
     } catch(e) {
-      console.error('[StockBook] ETF 목록 요청 실패:', e.message);
-      return [];
+      console.error('[StockBook] KRX ETF 실패:', e.message);
     }
-    let parsed;
-    try { parsed = JSON.parse(body); }
-    catch(pe) {
-      console.error('[StockBook] ETF JSON 파싱 실패, 첫200자:', body?.slice(0, 200));
-      return [];
-    }
-    const etfList = parsed?.result?.etfItemList || [];
-    const seen = new Set();
-    for (const s of etfList) {
-      const code = s.itemcode || '';
-      if (!code || seen.has(code)) continue;
-      seen.add(code);
-      const cap = (s.marketSum || 0) * 100_000_000;
-      results.push({
-        code,
-        name:      s.itemname || '',
-        industry:  '',
-        market,
-        price:     s.nowVal || 0,
-        change:    s.changeVal || 0,
-        changePct: s.changeRate || 0,
-        volume:    s.quant || 0,
-        marketCap: cap,
-        nav:       s.nav || 0,
-      });
-    }
-    console.log(`[StockBook] ETF 로드 완료: ${results.length}종목`);
     return results;
   }
 
@@ -444,7 +447,9 @@ async function fetchNaverStockList(market) {
 }
 
 ipcMain.handle('fetch-naver-stocks', async (event, market) => {
-  const cacheFile = path.join(app.getPath('userData'), `naver-stocks-${market}.json`);
+  // ETF는 KRX API 사용 → 별도 캐시 키 (naver-stocks-ETF.json 구 캐시 자동 무력화)
+  const cacheFile = path.join(app.getPath('userData'),
+    market === 'ETF' ? 'krx-etf.json' : `naver-stocks-${market}.json`);
   const now       = Date.now();
 
   // 메모리 캐시 유효 시 즉시 반환
