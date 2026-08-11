@@ -338,46 +338,64 @@ async function fetchNaverStockList(market) {
   const isEtf   = market === 'ETF';
   const results = [];
 
-  // ── ETF: Naver 모바일 marketValue/ETF (UTF-8 JSON, KOSPI/KOSDAQ와 동일 방식)
-  //         KRX MDCSTAT04301은 0건 반환 문제로 제거
+  // ── ETF: 방법1 Naver 모바일 marketValue/ETF → 방법2 etfItemList.nhn 폴백
   if (isEtf) {
-    for (let page = 1; page <= 30; page++) {
-      const url = `https://m.stock.naver.com/api/stocks/marketValue/ETF?page=${page}&pageSize=${PAGE_SZ}`;
-      let body;
-      try { body = await httpsGet(url, 20000, NAVER_HEADERS); }
-      catch(e) { console.error(`[StockBook] ETF p${page} 요청 실패:`, e.message); break; }
-      let parsed;
-      try { parsed = JSON.parse(body); }
-      catch(pe) { console.error(`[StockBook] ETF p${page} JSON 파싱 실패, 앞200자:`, body?.slice(0,200)); break; }
+    const toN = s => parseInt((s || '0').replace(/,/g,''), 10) || 0;
+    const pushItem = s => {
+      const cap = parseInt(s.marketValueRaw || '0', 10)
+        || (toN(s.marketValue || s.marketCap || s.quant || '0') * 100_000_000);
+      results.push({
+        code:      s.stockCode || s.itemCode || s.etfCode || s.cd  || s.code  || '',
+        name:      s.stockName || s.itemName || s.etfName || s.isuNm || s.nm || s.name || '',
+        industry:  '',
+        market:    'ETF',
+        price:     toN(s.closePriceRaw     || s.closePrice    || s.nxtRcpPrice || s.price  || '0'),
+        change:    toN(s.compareToPreviousClosePriceRaw || s.compareToPreviousClosePrice || s.priceChange || '0'),
+        changePct: parseFloat(s.fluctuationsRatio || s.changeRate || s.fluctuationRate || '0'),
+        volume:    toN(s.accumulatedTradingVolumeRaw || s.accumulatedTradingVolume || s.volume || '0'),
+        marketCap: cap,
+        nav:       0,
+      });
+    };
 
-      const items = parsed.stocks || parsed.etfs || parsed.etfItems || parsed.items
-                 || parsed.list   || parsed.data  || [];
-      if (!items.length) {
-        console.warn(`[StockBook] ETF p${page} 종목 없음, 응답 키:`, Object.keys(parsed));
-        break;
+    // 방법1: m.stock.naver.com/api/stocks/marketValue/ETF
+    try {
+      for (let page = 1; page <= 30; page++) {
+        const url = `https://m.stock.naver.com/api/stocks/marketValue/ETF?page=${page}&pageSize=${PAGE_SZ}`;
+        const body = await httpsGet(url, 20000, NAVER_HEADERS);
+        const parsed = JSON.parse(body);
+        const items = parsed.stocks || parsed.etfs || parsed.etfItems || parsed.etfItemList
+                   || parsed.items  || parsed.list  || parsed.data     || [];
+        if (!items.length) { console.warn('[StockBook] ETF marketValue 종목 없음, 키:', Object.keys(parsed)); break; }
+        for (const s of items) pushItem(s);
+        const total = parsed.totalCount || parsed.total || parsed.stockListSize || 0;
+        if (total > 0 && results.length >= total) break;
+        if (items.length < PAGE_SZ) break;
       }
-
-      for (const s of items) {
-        const cap = parseInt(s.marketValueRaw || '0', 10)
-          || (parseInt((s.marketValue || s.marketCap || '0').replace(/,/g,''), 10) * 100_000_000);
-        results.push({
-          code:      s.stockCode || s.itemCode || s.etfCode || s.code || '',
-          name:      s.stockName || s.itemName || s.etfName || s.name || '',
-          industry:  '',
-          market:    'ETF',
-          price:     parseInt(s.closePriceRaw || (s.closePrice || s.currentPrice || s.price || '0').replace(/,/g,''), 10),
-          change:    parseInt(s.compareToPreviousClosePriceRaw || (s.compareToPreviousClosePrice || s.priceChange || '0').replace(/,/g,''), 10),
-          changePct: parseFloat(s.fluctuationsRatio || s.changeRate || '0'),
-          volume:    parseInt(s.accumulatedTradingVolumeRaw || (s.accumulatedTradingVolume || s.volume || '0').replace(/,/g,''), 10),
-          marketCap: cap,
-          nav:       0,
-        });
-      }
-      const total = parsed.totalCount || parsed.total || parsed.stockListSize || 0;
-      if (total > 0 && results.length >= total) break;
-      if (items.length < PAGE_SZ) break; // 마지막 페이지
+      console.log(`[StockBook] ETF marketValue: ${results.length}종목`);
+    } catch(e) {
+      console.error('[StockBook] ETF marketValue 실패:', e.message);
     }
-    console.log(`[StockBook] ETF 로드 완료: ${results.length}종목`);
+
+    // 방법2 폴백: finance.naver.com/api/sise/etfItemList.nhn
+    //   (EUC-KR → httpsGet이 Content-Type charset 감지 후 자동 디코딩)
+    if (results.length === 0) {
+      console.log('[StockBook] ETF 폴백: etfItemList.nhn 시도');
+      try {
+        const body = await httpsGet(
+          'https://finance.naver.com/api/sise/etfItemList.nhn',
+          20000,
+          { 'Referer': 'https://finance.naver.com/etf/', 'Accept': '*/*' }
+        );
+        const parsed = JSON.parse(body);
+        const items = parsed.etfItemList || parsed.result?.etfItemList || parsed.list || parsed.data || [];
+        for (const s of items) pushItem(s);
+        console.log(`[StockBook] ETF etfItemList: ${results.length}종목`);
+      } catch(e) {
+        console.error('[StockBook] ETF etfItemList.nhn 실패:', e.message);
+      }
+    }
+
     return results;
   }
 
@@ -440,7 +458,7 @@ async function fetchNaverStockList(market) {
 ipcMain.handle('fetch-naver-stocks', async (event, market) => {
   // ETF는 KRX API 사용 → 별도 캐시 키 (naver-stocks-ETF.json 구 캐시 자동 무력화)
   const cacheFile = path.join(app.getPath('userData'),
-    market === 'ETF' ? 'krx-etf.json' : `naver-stocks-${market}.json`);
+    market === 'ETF' ? 'etf-naver-v3.json' : `naver-stocks-${market}.json`);
   const now       = Date.now();
 
   // 메모리 캐시 유효 시 즉시 반환

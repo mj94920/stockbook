@@ -9549,9 +9549,9 @@ function saveAccount() {
 function showCashEditForm(id) {
   const a = (state.accounts || []).find(x => x.id === id);
   if (!a) return;
-  // API 연동 계좌는 자동 동기화 전용 — 수동 입력 차단
-  if (a.isManual === false) {
-    showToast('⚠️ API 연동 계좌 예수금은 실계좌 동기화로 자동 갱신됩니다');
+  // KIS 연동 계좌만 차단 (자동 동기화로 갱신) — 나머지는 직접 입력 허용
+  if (a.broker === 'kis' && a.isManual === false) {
+    showToast('⚠️ KIS 연동 계좌 예수금은 실계좌 동기화로 자동 갱신됩니다');
     return;
   }
   const newCash = prompt(`[${a.nickname}] 예수금 입력 (현재: ${fmt(a.cash || 0)}원)`, a.cash || 0);
