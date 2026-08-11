@@ -32,7 +32,13 @@ function httpsGet(url, timeoutMs = 8000, extraHeaders = {}) {
           // Content-Type에 EUC-KR이 명시된 경우 TextDecoder로 올바르게 디코딩
           const ct = (res.headers['content-type'] || '').toLowerCase();
           if (/charset=(euc-kr|euc_kr|x-windows-949|cp949|ks_c_5601)/.test(ct)) {
-            try { resolve(new TextDecoder('EUC-KR').decode(buf)); return; } catch (_) {}
+            // Electron 소형-ICU 빌드는 글로벌 TextDecoder가 EUC-KR 미지원 →
+            // Node.js require('util').TextDecoder는 항상 EUC-KR 지원 (KRX 코드와 동일 패턴)
+            try {
+              const { TextDecoder: NodeTD } = require('util');
+              resolve(new NodeTD('euc-kr').decode(buf));
+              return;
+            } catch (_) {}
           }
           resolve(buf.toString('utf8'));
         } else {
@@ -328,7 +334,7 @@ const NAVER_HEADERS   = {
 
 async function fetchNaverStockList(market) {
   const MIN_CAP = 100_000_000_000; // 시총 1,000억 (원)
-  const PAGE_SZ = 120;             // 한 번에 더 많이 가져와 요청 횟수 절감
+  const PAGE_SZ = 60;              // Naver API 최대 반환 단위 (초과하면 첫 페이지만 로드됨)
   const isEtf   = market === 'ETF';
   const results = [];
 
