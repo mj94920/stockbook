@@ -338,55 +338,46 @@ async function fetchNaverStockList(market) {
   const isEtf   = market === 'ETF';
   const results = [];
 
-  // ── ETF: KRX API (Naver ETF API는 EUC-KR 인코딩 문제로 제거)
-  //         KRX MDCSTAT04301 — OTP → CSV 2단계, 동일 parseKrxCsv 활용
+  // ── ETF: Naver 모바일 marketValue/ETF (UTF-8 JSON, KOSPI/KOSDAQ와 동일 방식)
+  //         KRX MDCSTAT04301은 0건 반환 문제로 제거
   if (isEtf) {
-    try {
-      const KRX_ETF_OTP_QUERY = 'bld=dbms/MDC/STAT/standard/MDCSTAT04301&locale=ko_KR&share=1&money=1&csvxls_isNo=false';
-      const otp = (await httpsGet(
-        `https://data.krx.co.kr/comm/fileDn/GenerateOTP/generate.cmd?${KRX_ETF_OTP_QUERY}`,
-        15000,
-        { 'Referer': 'https://data.krx.co.kr/contents/MDC/MAIN/main/index.cmd',
-          'Accept': 'text/plain, */*; q=0.01', 'X-Requested-With': 'XMLHttpRequest' }
-      )).trim();
-      if (!otp || otp.length < 10) throw new Error(`KRX ETF OTP 실패: "${otp.slice(0,80)}"`);
-      console.log(`[StockBook] KRX ETF OTP: ${otp.slice(0,20)}...`);
+    for (let page = 1; page <= 30; page++) {
+      const url = `https://m.stock.naver.com/api/stocks/marketValue/ETF?page=${page}&pageSize=${PAGE_SZ}`;
+      let body;
+      try { body = await httpsGet(url, 20000, NAVER_HEADERS); }
+      catch(e) { console.error(`[StockBook] ETF p${page} 요청 실패:`, e.message); break; }
+      let parsed;
+      try { parsed = JSON.parse(body); }
+      catch(pe) { console.error(`[StockBook] ETF p${page} JSON 파싱 실패, 앞200자:`, body?.slice(0,200)); break; }
 
-      const buf = await httpsFormPostBuf(
-        'https://data.krx.co.kr/comm/fileDn/download_csv.cmd',
-        `code=${otp}`,
-        { 'Accept': 'text/csv, application/octet-stream, */*' },
-        30000
-      );
-
-      let csv;
-      if (buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF) {
-        csv = buf.toString('utf-8');
-      } else {
-        const { TextDecoder } = require('util');
-        csv = new TextDecoder('euc-kr').decode(buf);
+      const items = parsed.stocks || parsed.etfs || parsed.etfItems || parsed.items
+                 || parsed.list   || parsed.data  || [];
+      if (!items.length) {
+        console.warn(`[StockBook] ETF p${page} 종목 없음, 응답 키:`, Object.keys(parsed));
+        break;
       }
 
-      const toNum = s => parseFloat((s || '0').replace(/,/g, '')) || 0;
-      const rows = parseKrxCsv(csv, 'ETF');
-      for (const r of rows) {
+      for (const s of items) {
+        const cap = parseInt(s.marketValueRaw || '0', 10)
+          || (parseInt((s.marketValue || s.marketCap || '0').replace(/,/g,''), 10) * 100_000_000);
         results.push({
-          code:      r.ISU_SRT_CD,
-          name:      r.ISU_ABBRV,
+          code:      s.stockCode || s.itemCode || s.etfCode || s.code || '',
+          name:      s.stockName || s.itemName || s.etfName || s.name || '',
           industry:  '',
           market:    'ETF',
-          price:     toNum(r.TDD_CLSPRC),
-          change:    toNum(r.CMPPREVDD_PRC),
-          changePct: toNum(r.FLUC_RT),
-          volume:    toNum(r.ACC_TRDVOL),
-          marketCap: toNum(r.MKTCAP),
+          price:     parseInt(s.closePriceRaw || (s.closePrice || s.currentPrice || s.price || '0').replace(/,/g,''), 10),
+          change:    parseInt(s.compareToPreviousClosePriceRaw || (s.compareToPreviousClosePrice || s.priceChange || '0').replace(/,/g,''), 10),
+          changePct: parseFloat(s.fluctuationsRatio || s.changeRate || '0'),
+          volume:    parseInt(s.accumulatedTradingVolumeRaw || (s.accumulatedTradingVolume || s.volume || '0').replace(/,/g,''), 10),
+          marketCap: cap,
           nav:       0,
         });
       }
-      console.log(`[StockBook] KRX ETF 로드 완료: ${results.length}종목`);
-    } catch(e) {
-      console.error('[StockBook] KRX ETF 실패:', e.message);
+      const total = parsed.totalCount || parsed.total || parsed.stockListSize || 0;
+      if (total > 0 && results.length >= total) break;
+      if (items.length < PAGE_SZ) break; // 마지막 페이지
     }
+    console.log(`[StockBook] ETF 로드 완료: ${results.length}종목`);
     return results;
   }
 

@@ -7470,15 +7470,15 @@ function renderSummary() {
     hasEx = true;
     investRatio = netAsset > 0 ? (totalVal/netAsset*100) : 0;
   } else {
-    // API 계좌(한국투자증권 등) 예수금 합산 — 실계좌 동기화 시 자동 반영
-    const apiAcctsCash = (state.accounts || [])
-      .filter(a => !a.isManual && typeof a.cash === 'number' && a.cash > 0)
+    // 모든 계좌 예수금 합산 (API 계좌 + 수동 직접입력 계좌)
+    const allAcctsCash = (state.accounts || [])
+      .filter(a => typeof a.cash === 'number' && a.cash > 0)
       .reduce((s, a) => s + a.cash, 0);
-    if (apiAcctsCash > 0) {
-      // 실계좌 예수금 + 주식 평가금액 = 순자산 (가장 정확)
-      cash     = apiAcctsCash;
-      netAsset = apiAcctsCash + totalVal;
-      exAmt    = apiAcctsCash;
+    if (allAcctsCash > 0) {
+      // 전계좌 예수금 + 주식 평가금액 = 순자산
+      cash     = allAcctsCash;
+      netAsset = allAcctsCash + totalVal;
+      exAmt    = allAcctsCash;
       hasEx    = true;
     } else {
       // 직접입력 예수금 / 총자산 설정 / 입출금 내역 기준 폴백
@@ -7501,7 +7501,7 @@ function renderSummary() {
     ...((filterAcct || state.totalAsset > 0 || state.cashManual != null || hasEx) ? [{
       label:'순자산총액' + (filterAcct ? '<span style="font-size:9px;font-weight:400;color:var(--text3);margin-left:3px">계좌</span>'
         : state.cashManual != null ? '<span style="font-size:9px;font-weight:400;color:var(--text3);margin-left:3px">↑역산</span>'
-        : hasEx ? '<span style="font-size:9px;font-weight:400;color:var(--text3);margin-left:3px">API</span>' : ''),
+        : hasEx ? '<span style="font-size:9px;font-weight:400;color:var(--text3);margin-left:3px">합산</span>' : ''),
       val:'₩'+fmt(netAsset), cls:''
     }] : []),
     { label:'총평가금액', val:'₩'+fmt(totalVal), cls:'' },
@@ -7537,7 +7537,7 @@ function renderPortfolio() {
     (!_acctFilter || s.accountId === _acctFilter)
   );
   const totalVal = state.portfolio.reduce((a,s) => a + (s.currentPrice||s.avgPrice)*s.qty, 0);
-  const _apiCashWB = (state.accounts||[]).filter(a=>!a.isManual&&typeof a.cash==='number'&&a.cash>0).reduce((s,a)=>s+a.cash,0);
+  const _apiCashWB = (state.accounts||[]).filter(a=>typeof a.cash==='number'&&a.cash>0).reduce((s,a)=>s+a.cash,0);
   const weightBase = _apiCashWB > 0 ? _apiCashWB + totalVal
       : state.cashManual != null ? state.cashManual + totalVal
       : state.totalAsset > 0 ? state.totalAsset : totalVal;
@@ -9549,6 +9549,11 @@ function saveAccount() {
 function showCashEditForm(id) {
   const a = (state.accounts || []).find(x => x.id === id);
   if (!a) return;
+  // API 연동 계좌는 자동 동기화 전용 — 수동 입력 차단
+  if (a.isManual === false) {
+    showToast('⚠️ API 연동 계좌 예수금은 실계좌 동기화로 자동 갱신됩니다');
+    return;
+  }
   const newCash = prompt(`[${a.nickname}] 예수금 입력 (현재: ${fmt(a.cash || 0)}원)`, a.cash || 0);
   if (newCash === null) return;
   const val = parseInt(String(newCash).replace(/,/g, ''), 10);
@@ -10401,9 +10406,9 @@ function calcExsugeum() {
 // 예수금 최종값 — API 계좌(KIS 등) 예수금 합산이 최우선,
 // 없으면 직접 입력값(cashManual), 없으면 총자산 기준, 그것도 없으면 입출금 내역 기준으로 계산
 function getCashBalance() {
-  // API 연결 계좌 예수금 합산 (한국투자증권 등 실계좌 동기화값 우선)
+  // 모든 계좌 예수금 합산 (API 계좌 + 수동 직접입력 계좌)
   const apiCash = (state.accounts || [])
-    .filter(a => !a.isManual && typeof a.cash === 'number' && a.cash > 0)
+    .filter(a => typeof a.cash === 'number' && a.cash > 0)
     .reduce((s, a) => s + a.cash, 0);
   if (apiCash > 0) return apiCash;
   if (state.cashManual != null) return state.cashManual;
