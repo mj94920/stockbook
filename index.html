@@ -9285,32 +9285,21 @@ async function loadApiKeysUI() {
     updateApiStatusBar(false);
     return;
   }
-  const kisOk    = await window.electronAPI.checkApiKey('kis');
-  const kiwoomOk = await window.electronAPI.checkApiKey('kiwoom');
-  const lsOk     = await window.electronAPI.checkApiKey('ls');
-  const tossOk   = await window.electronAPI.checkApiKey('toss');
-  const dartOk   = await window.electronAPI.checkApiKey('dart').catch(() => false);
+  const kisOk  = await window.electronAPI.checkApiKey('kis');
+  const dartOk = await window.electronAPI.checkApiKey('dart').catch(() => false);
 
-  // 상단바 인디케이터 (연결된 첫 번째 증권사 표시)
-  const anyOk = kisOk || kiwoomOk || lsOk || tossOk;
+  // 상단바 인디케이터
   updateApiStatusBar(kisOk);
-  if (!kisOk && anyOk) {
-    const dot   = document.getElementById('apiStatusDot');
-    const label = document.getElementById('apiStatusLabel');
-    if (dot) dot.style.background = '#22c55e';
-    const connected = kiwoomOk ? '키움' : lsOk ? 'LS' : '토스';
-    if (label) label.textContent = `${connected} 연결됨`;
-  }
 
-  // 증권사/DART 카드 배지 (✓) 업데이트 — 설정 패널 + API 패널
-  const badges = { kis: kisOk, kiwoom: kiwoomOk, ls: lsOk, toss: tossOk, dart: dartOk };
+  // 증권사/DART 카드 배지 (✓) 업데이트
+  const badges = { kis: kisOk, dart: dartOk };
   Object.entries(badges).forEach(([b, ok]) => {
     const el1 = document.getElementById('brokerCheck_' + b);
     if (el1) el1.textContent = ok ? '✓' : '';
     const el2 = document.getElementById('apiBadge_' + b);
     if (el2) el2.textContent = ok ? '✓ 저장됨' : '';
   });
-  await syncApiAccounts({ kis: kisOk, kiwoom: kiwoomOk, ls: lsOk, toss: tossOk });
+  await syncApiAccounts({ kis: kisOk });
 }
 
 // ── API 연결 계좌 자동 등록 ───────────────────────────────────────────────
@@ -9973,12 +9962,7 @@ async function renderApiPanel() {
                   }
                 });
               } },
-    kiwoom: { badge:'apiBadge_kiwoom', check: d => d.appKey && d.appSecret,
-              fields: [ ['apisKiwoomAppKey','appKey','App Key'], ['apisKiwoomAppSecret','appSecret','App Secret'] ] },
-    ls:     { badge:'apiBadge_ls',     check: d => d.appKey && d.appSecret,
-              fields: [ ['apisLsAppKey','appKey','App Key'], ['apisLsAppSecret','appSecret','App Secret'] ] },
-    toss:   { badge:'apiBadge_toss',   check: d => d.clientId && d.clientSecret,
-              fields: [ ['apisTossClientId','clientId','Client ID'], ['apisTossClientSecret','clientSecret','Client Secret'] ] },
+    // kiwoom/ls/toss: API 미구현 — 수동 계좌로 대체
     dart:   { badge:'apiBadge_dart',   check: d => d.apiKey,
               fields: [ ['apisDartApiKey','apiKey','DART OpenAPI 인증키'] ] },
   };
@@ -10012,21 +9996,6 @@ async function saveApiKeyPanel(broker) {
       accounts: accounts.length ? accounts : (existing.accounts || (primaryAcct ? [primaryAcct] : [])),
     };
     if (!fields.appKey || !fields.appSecret) { alert('APP Key와 APP Secret을 입력해주세요.'); return; }
-  } else if (broker === 'kiwoom') {
-    const nk = document.getElementById('apisKiwoomAppKey')?.value.trim()    || '';
-    const ns = document.getElementById('apisKiwoomAppSecret')?.value.trim() || '';
-    fields = { appKey: nk || existing.appKey || '', appSecret: ns || existing.appSecret || '' };
-    if (!fields.appKey || !fields.appSecret) { alert('App Key와 App Secret을 입력해주세요.'); return; }
-  } else if (broker === 'ls') {
-    const nk = document.getElementById('apisLsAppKey')?.value.trim()    || '';
-    const ns = document.getElementById('apisLsAppSecret')?.value.trim() || '';
-    fields = { appKey: nk || existing.appKey || '', appSecret: ns || existing.appSecret || '' };
-    if (!fields.appKey || !fields.appSecret) { alert('App Key와 App Secret을 입력해주세요.'); return; }
-  } else if (broker === 'toss') {
-    const nk = document.getElementById('apisTossClientId')?.value.trim()     || '';
-    const ns = document.getElementById('apisTossClientSecret')?.value.trim() || '';
-    fields = { clientId: nk || existing.clientId || '', clientSecret: ns || existing.clientSecret || '' };
-    if (!fields.clientId || !fields.clientSecret) { alert('Client ID와 Client Secret을 입력해주세요.'); return; }
   } else if (broker === 'dart') {
     const nk = document.getElementById('apisDartApiKey')?.value.trim() || '';
     fields = { apiKey: nk || existing.apiKey || '' };
@@ -10037,7 +10006,7 @@ async function saveApiKeyPanel(broker) {
     loadApiKeysUI();
     renderApiPanel();
     if (broker === 'kis' && typeof startRealtimePrices === 'function') setTimeout(() => startRealtimePrices(), 1000);
-    const names = { kis:'한국투자증권', kiwoom:'키움증권', ls:'LS증권', toss:'토스증권', dart:'DART OpenAPI' };
+    const names = { kis:'한국투자증권', dart:'DART OpenAPI' };
     showToast('✅ ' + (names[broker] || broker) + ' API 키 저장 완료');
   } else {
     alert('저장 실패: ' + (result?.error || '알 수 없는 오류'));
@@ -10046,11 +10015,10 @@ async function saveApiKeyPanel(broker) {
 
 async function deleteApiKeyPanel(broker) {
   if (!window.electronAPI?.deleteApiKey) return;
-  const names = { kis:'한국투자증권', kiwoom:'키움증권', ls:'LS증권', toss:'토스증권', dart:'DART OpenAPI' };
+  const names = { kis:'한국투자증권', dart:'DART OpenAPI' };
   const confirmed = await window.electronAPI.showConfirm(`${names[broker] || broker} API 키를 삭제하시겠습니까?`);
   if (!confirmed) return;
   await window.electronAPI.deleteApiKey(broker);
-  if (broker === 'toss') { _tossToken = null; _tossTokenExpiry = 0; }
   loadApiKeysUI();
   renderApiPanel();
 }
@@ -12727,87 +12695,6 @@ function wlAssignGroup(idx, gName) {
         <div class="api-bcard-actions">
           <button class="api-bcard-save-btn" onclick="saveApiKeyPanel('kis')">저장</button>
           <button class="api-bcard-del-btn" onclick="deleteApiKeyPanel('kis')">삭제</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 키움증권 -->
-    <div class="api-bcard" style="--bcard-color:#C2407A;">
-      <div class="api-bcard-top">
-        <div class="api-bcard-logo" style="font-size:11px;">키움</div>
-        <div class="api-bcard-info">
-          <div class="api-bcard-name">키움증권</div>
-          <div class="api-bcard-desc">실시간 시세 · 잔고 · Open API+ REST 주문 <b style="color:var(--text2)">· IP 등록 필요</b></div>
-        </div>
-        <span class="api-bcard-status" id="apiBadge_kiwoom"></span>
-      </div>
-      <div class="api-bcard-body">
-        <button class="api-bcard-link-btn" onclick="openCalLink('https://www1.kiwoom.com/h/customer/apiManage/VOpApiKP1P')">🔗 키움 Open API 신청 ↗</button>
-        <div class="api-bcard-input-row">
-          <span class="api-bcard-label">App Key</span>
-          <input class="api-bcard-input" id="apisKiwoomAppKey" type="password" placeholder="App Key" autocomplete="off">
-        </div>
-        <div class="api-bcard-input-row">
-          <span class="api-bcard-label">App Secret</span>
-          <input class="api-bcard-input" id="apisKiwoomAppSecret" type="password" placeholder="App Secret" autocomplete="off">
-        </div>
-        <div class="api-bcard-actions">
-          <button class="api-bcard-save-btn" onclick="saveApiKeyPanel('kiwoom')">저장</button>
-          <button class="api-bcard-del-btn" onclick="deleteApiKeyPanel('kiwoom')">삭제</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- LS증권 -->
-    <div class="api-bcard" style="--bcard-color:#003087;">
-      <div class="api-bcard-top">
-        <div class="api-bcard-logo" style="font-size:13px;letter-spacing:0;">LS</div>
-        <div class="api-bcard-info">
-          <div class="api-bcard-name">LS증권 (EBest)</div>
-          <div class="api-bcard-desc">실시간 시세 · 잔고 · EBest Xing REST 주문</div>
-        </div>
-        <span class="api-bcard-status" id="apiBadge_ls"></span>
-      </div>
-      <div class="api-bcard-body">
-        <button class="api-bcard-link-btn" onclick="openCalLink('https://openapi.ls-sec.co.kr/')">🔗 LS증권 OpenAPI 포털 ↗</button>
-        <div class="api-bcard-input-row">
-          <span class="api-bcard-label">App Key</span>
-          <input class="api-bcard-input" id="apisLsAppKey" type="password" placeholder="App Key" autocomplete="off">
-        </div>
-        <div class="api-bcard-input-row">
-          <span class="api-bcard-label">App Secret</span>
-          <input class="api-bcard-input" id="apisLsAppSecret" type="password" placeholder="App Secret" autocomplete="off">
-        </div>
-        <div class="api-bcard-actions">
-          <button class="api-bcard-save-btn" onclick="saveApiKeyPanel('ls')">저장</button>
-          <button class="api-bcard-del-btn" onclick="deleteApiKeyPanel('ls')">삭제</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 토스증권 -->
-    <div class="api-bcard" style="--bcard-color:#2563EB;">
-      <div class="api-bcard-top">
-        <div class="api-bcard-logo" style="font-size:9px;background:linear-gradient(135deg,#2563EB,#4F46E5);">toss</div>
-        <div class="api-bcard-info">
-          <div class="api-bcard-name">토스증권</div>
-          <div class="api-bcard-desc">실시간 시세 · 잔고 · 주문 실행</div>
-        </div>
-        <span class="api-bcard-status" id="apiBadge_toss"></span>
-      </div>
-      <div class="api-bcard-body">
-        <button class="api-bcard-link-btn" onclick="openCalLink('https://securities.toss.im/trading-api/docs')">🔗 토스증권 개발자 센터 ↗</button>
-        <div class="api-bcard-input-row">
-          <span class="api-bcard-label">Client ID</span>
-          <input class="api-bcard-input" id="apisTossClientId" type="password" placeholder="Client ID" autocomplete="off">
-        </div>
-        <div class="api-bcard-input-row">
-          <span class="api-bcard-label">Client Secret</span>
-          <input class="api-bcard-input" id="apisTossClientSecret" type="password" placeholder="Client Secret" autocomplete="off">
-        </div>
-        <div class="api-bcard-actions">
-          <button class="api-bcard-save-btn" onclick="saveApiKeyPanel('toss')">저장</button>
-          <button class="api-bcard-del-btn" onclick="deleteApiKeyPanel('toss')">삭제</button>
         </div>
       </div>
     </div>
