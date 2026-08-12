@@ -10964,41 +10964,70 @@ async function refreshWatchlist() {
   if (!state.watchlist) state.watchlist = [];
   const list = state.watchlist;
   if (!list.length) return;
+  const api = window.electronAPI; // Electron IPC (CORS 없음)
   for (let i = 0; i < list.length; i++) {
     const w = list[i];
     if (!w.ticker && !w.name) continue;
+    const isKr = /^\d{6}$/.test(w.ticker);
     try {
-      // 국내 6자리 코드: 네이버 시세 API 활용
-      if (/^\d{6}$/.test(w.ticker)) {
-        const res = await fetch(`https://m.stock.naver.com/api/stock/${w.ticker}/basic`, { credentials: 'omit' });
-        if (res.ok) {
-          const d = await res.json();
-          w.price  = parseFloat((d.closePrice || '0').replace(/,/g,''));
-          w.change = parseFloat(d.fluctuationsRatio || 0);
-          if (!w.name && d.stockName) w.name = d.stockName;
-          w.per  = d.per  ?? null;
-          w.pbr  = d.pbr  ?? null;
-          w.roe  = d.roe  ?? null;
+      if (api) {
+        if (isKr) {
+          // 국내: fetch-stock-detail IPC → 가격 + PER/ROE 한번에
+          const r = await api.fetchStockDetail(w.ticker);
+          if (r?.ok && r?.data) {
+            const d = r.data;
+            const p = parseFloat((d.closePrice || '0').replace(/,/g,''));
+            if (p) {
+              w.price  = p;
+              w.change = parseFloat(d.fluctuationsRatio || 0);
+            }
+            if (!w.name && d.stockName) w.name = d.stockName;
+            w.per = d.per ? parseFloat(d.per) : null;
+            w.pbr = d.pbr ? parseFloat(d.pbr) : null;
+            w.roe = d.roe ? parseFloat(d.roe) : null;
+          }
+        } else {
+          // 해외: fetch-quote IPC (Yahoo Finance, CORS 없음)
+          const r = await api.fetchQuote(w.ticker);
+          if (r?.price) {
+            w.price = r.price;
+            const prev = r.prevClose;
+            w.change = prev && prev > 0 ? ((r.price - prev) / prev * 100) : null;
+            w.currency = r.currency || 'USD';
+          }
         }
       } else {
-        // 해외: Yahoo Finance 프록시 (CORS 허용 여부에 따라 생략)
-        const enc = encodeURIComponent(w.ticker || w.name);
-        const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${enc}?interval=1d&range=1d`, { credentials: 'omit' });
-        if (res.ok) {
-          const d = await res.json();
-          const meta = d?.chart?.result?.[0]?.meta;
-          if (meta) {
-            w.price  = meta.regularMarketPrice ?? null;
-            const prev = meta.previousClose ?? meta.chartPreviousClose ?? null;
-            w.change = prev && w.price ? ((w.price - prev) / prev * 100) : null;
-            if (!w.name && meta.symbol) w.name = meta.symbol;
+        // 비-Electron(웹 브라우저) 폴백: 직접 fetch
+        if (isKr) {
+          const res = await fetch(`https://m.stock.naver.com/api/stock/${w.ticker}/basic`, { credentials: 'omit' });
+          if (res.ok) {
+            const d = await res.json();
+            w.price  = parseFloat((d.closePrice || '0').replace(/,/g,''));
+            w.change = parseFloat(d.fluctuationsRatio || 0);
+            if (!w.name && d.stockName) w.name = d.stockName;
+            w.per  = d.per  ?? null;
+            w.pbr  = d.pbr  ?? null;
+            w.roe  = d.roe  ?? null;
+          }
+        } else {
+          const enc = encodeURIComponent(w.ticker || w.name);
+          const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${enc}?interval=1d&range=1d`, { credentials: 'omit' });
+          if (res.ok) {
+            const d = await res.json();
+            const meta = d?.chart?.result?.[0]?.meta;
+            if (meta) {
+              w.price  = meta.regularMarketPrice ?? null;
+              const prev = meta.previousClose ?? meta.chartPreviousClose ?? null;
+              w.change = prev && w.price ? ((w.price - prev) / prev * 100) : null;
+              if (!w.name && meta.symbol) w.name = meta.symbol;
+            }
           }
         }
       }
     } catch(e) {}
     list[i] = w;
   }
-  save(); // localStorage 아닌 state 저장
+  save();
   renderWatchlist();
 }
 
