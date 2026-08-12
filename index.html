@@ -4489,7 +4489,7 @@ function handleRealtimePrice({ ticker, price, change, changePct }) {
     const chgEl   = document.getElementById(`${rowId}-chg`);
     const pctEl   = document.getElementById(`${rowId}-pct`);
     const isUp    = (change ?? 0) >= 0;
-    const clsName = (change == null || change === 0) ? '' : (isUp ? 'pos' : 'neg');
+    const clsName = (change == null || change === 0) ? '' : (isUp ? 'up' : 'dn');
     if (priceEl) { priceEl.textContent = Math.round(price).toLocaleString(); priceEl.className = clsName; }
     if (chgEl && change != null) {
       chgEl.textContent = change === 0 ? '—' : `${isUp ? '▲' : '▼'} ${Math.abs(Math.round(change)).toLocaleString()}`;
@@ -6312,7 +6312,7 @@ async function fetchAllStockPagePrices() {
       const chg    = q.prevClose ? (q.price - q.prevClose) : 0;
       const chgPct = q.prevClose ? (chg / q.prevClose * 100) : 0;
       const isUp   = chg >= 0;
-      const clsUp  = isUp ? 'pos' : 'neg';
+      const clsUp  = isUp ? 'up' : 'dn';
       priceEl.textContent = Math.round(q.price).toLocaleString();
       priceEl.className   = clsUp;
       if (chgEl) {
