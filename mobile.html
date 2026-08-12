@@ -155,6 +155,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 /* CASH BADGE */
 .cash-badge{background:var(--bg3);border-radius:8px;padding:4px 10px;font-size:12px;color:var(--text2);cursor:pointer}
 .cash-badge:active{background:var(--bg4)}
+/* PORTFOLIO ITEM TAPPABLE */
+.portfolio-item{cursor:pointer}
+.portfolio-item:active{background:var(--bg3)}
+/* POS DETAIL GRID */
+.pos-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.pos-cell{background:var(--bg3);border-radius:10px;padding:12px}
+.pos-cell .lbl{font-size:11px;color:var(--text3);margin-bottom:4px}
+.pos-cell .val{font-size:16px;font-weight:600}
 </style>
 </head>
 <body>
@@ -348,6 +356,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
   <div class="sheet-body" id="sheet-stock-body"></div>
 </div>
 
+<!-- SHEET: 보유 종목 상세 -->
+<div class="sheet-backdrop" id="sheet-pos-backdrop"></div>
+<div class="sheet" id="sheet-pos">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="sheet-pos-title">종목 상세</div>
+  <div class="sheet-body" id="sheet-pos-body"></div>
+</div>
+
 <input type="file" id="import-file" accept=".json" style="display:none">
 
 <script>
@@ -443,18 +459,23 @@ async function fetchPrice(code, market) {
 }
 
 async function fetchNaver(code) {
-  try {
-    const url = `https://m.stock.naver.com/api/stock/${code}/basic`;
-    const r = await fetch(url, { signal: AbortSignal.timeout(5000) });
-    if (!r.ok) return null;
-    const j = await r.json();
-    return {
-      price: parseFloat(j.closePrice?.replace(/,/g,'') || j.stockItemTotalInfos?.find(x=>x.key==='closePriceStandard')?.value?.replace(/,/g,'')) || null,
-      chg: parseFloat(j.compareToPreviousClosePrice?.replace(/,/g,'')) || 0,
-      chgPct: parseFloat(j.fluctuationsRatio) || 0,
-      name: j.stockName || code
-    };
-  } catch(e) { return null; }
+  // m.stock.naver.com is CORS-blocked in browsers → use Yahoo Finance with .KS / .KQ suffix
+  for (const suffix of ['.KS', '.KQ']) {
+    try {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${code}${suffix}?interval=1d&range=1d`;
+      const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
+      if (!r.ok) continue;
+      const j = await r.json();
+      const meta = j.chart?.result?.[0]?.meta;
+      if (!meta?.regularMarketPrice) continue;
+      const price = meta.regularMarketPrice;
+      const prev = meta.previousClose || meta.chartPreviousClose;
+      const chg = price - (prev || price);
+      const chgPct = prev > 0 ? (chg / prev) * 100 : 0;
+      return { price, chg, chgPct, name: meta.longName || meta.shortName || code };
+    } catch(e) {}
+  }
+  return null;
 }
 
 async function fetchYahoo(ticker) {
@@ -566,7 +587,7 @@ function renderPortfolioList() {
     const cost = (p.avgPrice || 0) * p.qty;
     const pnl = eval_ != null ? eval_ - cost : null;
     const pnlPct_ = cost > 0 && pnl != null ? (pnl / cost * 100) : null;
-    return `<div class="portfolio-item">
+    return `<div class="portfolio-item" data-code="${p.code}" data-accid="${p.accountId||''}">
       <div class="pi-left">
         <div class="name">${p.name || p.code}</div>
         <div class="code">${p.code} · 평균 ${fmt(p.avgPrice)}원</div>
@@ -578,6 +599,67 @@ function renderPortfolioList() {
       </div>
     </div>`;
   }).join('');
+  // Tap → position detail
+  list.querySelectorAll('.portfolio-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const code = el.dataset.code;
+      const accId = el.dataset.accid;
+      const pos = state.portfolio.find(p => p.code === code && (p.accountId === accId || !accId));
+      if (pos) openPositionDetail(pos);
+    });
+  });
+}
+
+function openPositionDetail(pos) {
+  const key = pos.code + '_' + (pos.market || 'KR');
+  const cached = priceCache[key];
+  const price = cached?.data?.price;
+  const eval_ = price ? price * pos.qty : null;
+  const cost = (pos.avgPrice || 0) * pos.qty;
+  const pnl = eval_ != null ? eval_ - cost : null;
+  const pnlPct_ = cost > 0 && pnl != null ? (pnl / cost * 100) : null;
+  const chgCls = pnl != null ? pnlClass(pnl) : 'zero';
+
+  document.getElementById('sheet-pos-title').textContent = pos.name || pos.code;
+  document.getElementById('sheet-pos-body').innerHTML = `
+    <div style="background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${pos.code} · ${pos.market==='US'?'미국':'국내'}</div>
+      <div style="font-size:30px;font-weight:700">${price != null ? fmt(price)+'원' : '시세 없음'}</div>
+      <div style="font-size:13px;margin-top:4px" class="pnl ${chgCls}">${cached?.data ? fmtPct(cached.data.chgPct)+' ('+fmt(cached.data.chg)+'원)' : ''}</div>
+    </div>
+    <div class="pos-grid">
+      <div class="pos-cell"><div class="lbl">보유 수량</div><div class="val">${fmt(pos.qty, 0)}주</div></div>
+      <div class="pos-cell"><div class="lbl">평균 단가</div><div class="val">${fmt(pos.avgPrice)}원</div></div>
+      <div class="pos-cell"><div class="lbl">매입 금액</div><div class="val">${fmt(cost)}원</div></div>
+      <div class="pos-cell"><div class="lbl">평가 손익</div>
+        <div class="val ${chgCls}">${pnl != null ? fmt(pnl)+'원' : '-'}</div>
+        <div style="font-size:11px" class="${chgCls}">${pnlPct_ != null ? fmtPct(pnlPct_) : ''}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-primary" style="margin:0;flex:1;background:var(--red)" id="pos-buy-btn">추가 매수</button>
+      <button class="btn-primary" style="margin:0;flex:1" id="pos-sell-btn">매도</button>
+    </div>`;
+
+  document.getElementById('pos-buy-btn').addEventListener('click', () => {
+    closeSheet('pos');
+    tradeType = 'buy';
+    document.querySelectorAll('#trade-type-seg .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.type==='buy'));
+    document.getElementById('t-code').value = pos.code;
+    document.getElementById('t-name').value = pos.name || pos.code;
+    if (price) document.getElementById('t-price').value = price;
+    openTradeSheet();
+  });
+  document.getElementById('pos-sell-btn').addEventListener('click', () => {
+    closeSheet('pos');
+    tradeType = 'sell';
+    document.querySelectorAll('#trade-type-seg .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.type==='sell'));
+    document.getElementById('t-code').value = pos.code;
+    document.getElementById('t-name').value = pos.name || pos.code;
+    if (price) document.getElementById('t-price').value = price;
+    openTradeSheet();
+  });
+  openSheet('pos');
 }
 
 // ═══════════════════════════════════════════════
@@ -633,28 +715,62 @@ async function refreshWatchPrices(showSpinner=true) {
 // ═══════════════════════════════════════════════
 //  RENDER: SEARCH TAB
 // ═══════════════════════════════════════════════
+const POPULAR_STOCKS = [
+  { code: '005930', name: '삼성전자', market: 'KR' },
+  { code: '000660', name: 'SK하이닉스', market: 'KR' },
+  { code: '005380', name: '현대차', market: 'KR' },
+  { code: '035420', name: 'NAVER', market: 'KR' },
+  { code: '207940', name: '삼성바이오', market: 'KR' },
+  { code: '373220', name: 'LG에너솔', market: 'KR' },
+  { code: '006400', name: '삼성SDI', market: 'KR' },
+  { code: '051910', name: 'LG화학', market: 'KR' },
+  { code: 'AAPL', name: 'Apple', market: 'US' },
+  { code: 'NVDA', name: 'NVIDIA', market: 'US' },
+  { code: 'MSFT', name: 'Microsoft', market: 'US' },
+  { code: 'TSLA', name: 'Tesla', market: 'US' },
+  { code: 'AMZN', name: 'Amazon', market: 'US' },
+  { code: 'META', name: 'Meta', market: 'US' },
+];
+
+function renderPopularStocks() {
+  const area = document.getElementById('search-result');
+  area.innerHTML = `
+    <div class="section-title" style="padding:12px 16px 8px">인기 종목</div>
+    <div style="padding:0 16px;display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+      ${POPULAR_STOCKS.map(s => `<div class="chip" data-code="${s.code}" data-market="${s.market}" data-name="${s.name}">${s.name}<span style="font-size:10px;color:rgba(255,255,255,.6);margin-left:4px">${s.code}</span></div>`).join('')}
+    </div>`;
+  area.querySelectorAll('.chip[data-code]').forEach(chip => {
+    chip.addEventListener('click', async () => {
+      const code = chip.dataset.code;
+      const market = chip.dataset.market;
+      const name = chip.dataset.name;
+      area.innerHTML = `<div class="empty"><p>조회 중...</p></div>`;
+      const data = await fetchPrice(code, market);
+      if (data) {
+        showStockResult(code, market, { ...data, name: data.name || name });
+      } else {
+        area.innerHTML = `<div class="empty"><p>시세 조회 실패<br>잠시 후 다시 시도하세요</p></div>`;
+        setTimeout(() => renderPopularStocks(), 2000);
+      }
+    });
+  });
+}
+
 async function doSearch(q) {
   const area = document.getElementById('search-result');
-  if (!q.trim()) { area.innerHTML = ''; return; }
+  if (!q.trim()) { renderPopularStocks(); return; }
   area.innerHTML = `<div class="empty"><p>검색 중...</p></div>`;
-  // Try Naver search by code first
   const code = q.trim().toUpperCase();
   let data = null;
-  // KR code (6 digits)
+  // KR code (6 digits) → Yahoo Finance .KS / .KQ
   if (/^\d{6}$/.test(code)) {
-    data = await fetchNaver(code);
-    if (data) {
-      showStockResult(code, 'KR', data);
-      return;
-    }
+    data = await fetchPrice(code, 'KR');
+    if (data) { showStockResult(code, 'KR', data); return; }
   }
   // US ticker
-  if (/^[A-Z]{1,5}$/.test(code)) {
+  if (/^[A-Z]{1,6}$/.test(code)) {
     data = await fetchYahoo(code);
-    if (data) {
-      showStockResult(code, 'US', data);
-      return;
-    }
+    if (data) { showStockResult(code, 'US', data); return; }
   }
   area.innerHTML = `<div class="empty"><p>결과 없음<br>6자리 종목코드(국내) 또는<br>영문 티커(미국)를 입력하세요</p></div>`;
 }
@@ -1073,6 +1189,7 @@ function switchTab(tab) {
   fab.style.display = (tab === 'trade' || tab === 'portfolio' || tab === 'watch') ? 'flex' : 'none';
   if (tab === 'portfolio') renderPortfolio();
   else if (tab === 'watch') renderWatch();
+  else if (tab === 'search') { if (!document.getElementById('stock-search').value) renderPopularStocks(); }
   else if (tab === 'trade') renderTrade();
   else if (tab === 'more') renderMore();
 }
@@ -1165,6 +1282,9 @@ document.getElementById('watch-refresh-btn').addEventListener('click', () => ref
 // Stock sheet
 document.getElementById('sheet-stock-backdrop').addEventListener('click', () => closeSheet('stock'));
 
+// Position detail sheet
+document.getElementById('sheet-pos-backdrop').addEventListener('click', () => closeSheet('pos'));
+
 // Search
 document.getElementById('stock-search').addEventListener('input', e => {
   clearTimeout(searchTimeout);
@@ -1192,6 +1312,7 @@ if ('serviceWorker' in navigator) {
 // ═══════════════════════════════════════════════
 load();
 renderAll();
+renderPopularStocks();
 // Initial price refresh on load (background)
 setTimeout(() => refreshAllPrices(), 1000);
 </script>
