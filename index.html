@@ -7545,7 +7545,7 @@ function renderSummary() {
       exAmt = getCashBalance();
       hasEx = (state.cashflows||[]).length > 0 || state.totalAsset > 0 || state.cashManual != null;
     }
-    investRatio = netAsset > 0 ? (totalVal/netAsset*100) : 0;
+    investRatio = totalNetAsset > 0 ? (allPortfolioVal/totalNetAsset*100) : 0;
   }
   const pnlCls = pnl>=0?'up':'dn';
   const realCls = realized>=0?'up':'dn';
