@@ -7507,10 +7507,18 @@ async function fetchMarketTicker() {
 function renderSummary() {
   const filterAcct = _acctFilter ? (state.accounts||[]).find(a => a.id === _acctFilter) : null;
   const accounts = state.accounts || [];
-  // 전계좌 예수금 합산 (함수 상단에서 선언 — 스코프 안전)
+  // 전계좌 예수금 합산 (항상 전체 — 계좌 필터와 무관)
   const allAcctsCash = accounts
     .filter(a => typeof a.cash === 'number' && a.cash > 0)
     .reduce((s, a) => s + a.cash, 0);
+
+  // ── 순자산총액: 항상 전체 합산 (계좌1+2+3+…= 모아보기 = 총자산) ──
+  const allPortfolioVal = (state.portfolio||[]).reduce((a,s) => a + (s.currentPrice||s.avgPrice||0)*s.qty, 0);
+  const totalNetAsset = allAcctsCash > 0
+    ? allAcctsCash + allPortfolioVal
+    : (state.cashManual != null ? state.cashManual : state.totalAsset > 0 ? state.totalAsset : 0) + allPortfolioVal;
+
+  // ── 계좌 필터 기준 값 (총평가금액·손익·수익률·예수금) ──
   const p = filterAcct ? state.portfolio.filter(s => s.accountId === _acctFilter) : state.portfolio;
   const totalBuy = p.reduce((a,s) => a + s.avgPrice * s.qty, 0);
   const totalVal = p.reduce((a,s) => a + (s.currentPrice || s.avgPrice) * s.qty, 0);
@@ -7519,23 +7527,18 @@ function renderSummary() {
   const realized = state.trades.filter(t => t.type==='sell' && t.pnl!=null && (!filterAcct || t.accountId===_acctFilter)).reduce((a,t)=>a+t.pnl,0);
   const cashflowAdj = (state.cashflows||[]).reduce((s,c) =>
     c.type==='withdraw' ? s-c.amount : c.type==='deposit' ? s+c.amount : s, 0);
-  let netAsset, cash, exAmt, hasEx, investRatio;
+  let cash, exAmt, hasEx, investRatio;
   if (filterAcct) {
     cash = filterAcct.cash || 0;
-    netAsset = cash + totalVal;
     exAmt = cash;
     hasEx = true;
-    investRatio = netAsset > 0 ? (totalVal/netAsset*100) : 0;
+    investRatio = totalNetAsset > 0 ? (allPortfolioVal/totalNetAsset*100) : 0;
   } else {
     if (allAcctsCash > 0) {
       cash     = allAcctsCash;
-      netAsset = allAcctsCash + totalVal;
       exAmt    = allAcctsCash;
       hasEx    = true;
     } else {
-      netAsset = state.cashManual != null
-        ? state.cashManual + totalVal
-        : state.totalAsset > 0 ? state.totalAsset + cashflowAdj : totalVal;
       cash = state.cashManual != null
         ? state.cashManual
         : state.totalAsset > 0 ? Math.max(0, state.totalAsset + cashflowAdj - totalVal) : 0;
@@ -7554,15 +7557,16 @@ function renderSummary() {
   const exClick = filterAcct
     ? ((filterAcct.broker === 'kis' && !filterAcct.isManual) ? '' : `onclick="showCashEditForm('${filterAcct.id}')"`)
     : (accounts.length > 0 ? `onclick="showToast('💡 계좌를 선택하면 해당 계좌 예수금을 편집할 수 있습니다')"` : `onclick="openCashModal()"`);
-  const netLbl = filterAcct ? '계좌' : state.cashManual!=null ? '↑역산' : hasEx ? '합산' : '';
+  // 순자산총액 항상 전체 합산 — 계좌 필터 무관
+  const netLbl = hasEx ? '합산' : '';
 
-  // Row1: 순자산총액 | 총평가금액 | 총평가손익
-  // Row2 (sub): 예수금 | 총매입금액 | 총수익률 | 실현손익 | 투자비중 | 보유
+  // Row1: 순자산총액(전체고정) | 총평가금액(필터) | 총평가손익(필터)
+  // Row2 (sub): 예수금(필터) | 총매입금액 | 총수익률 | 실현손익 | 투자비중 | 보유
   el.innerHTML = `
     <div class="hts-s2r-main">
       <div class="hts-s2r-cell primary">
         <span class="s2r-lbl">순자산총액${netLbl?` <small style="font-size:9px;font-weight:400">${netLbl}</small>`:''}</span>
-        <span class="s2r-val">₩${fmt(netAsset)}</span>
+        <span class="s2r-val">₩${fmt(totalNetAsset)}</span>
       </div>
       <div class="hts-s2r-cell">
         <span class="s2r-lbl">총평가금액</span>
