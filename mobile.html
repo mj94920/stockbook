@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="StockBook">
+<link rel="manifest" href="manifest.json">
+<title>Stock Book</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#111827;--bg2:#1f2937;--bg3:#374151;--bg4:#4b5563;
+  --text:#f9fafb;--text2:#d1d5db;--text3:#9ca3af;
+  --accent:#3b82f6;--accent2:#2563eb;
+  --green:#10b981;--red:#ef4444;--yellow:#f59e0b;
+  --border:#374151;
+  --tab-h:56px;--safe-bottom:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100%}
+/* HEADER */
+#header{padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;min-height:56px}
+#header h1{font-size:18px;font-weight:700;letter-spacing:-.3px}
+.header-right{display:flex;gap:8px}
+.icon-btn{background:none;border:none;color:var(--text3);padding:6px;border-radius:8px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+.icon-btn:active{background:var(--bg3)}
+/* CONTENT */
+#content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.tab-panel{display:none;min-height:100%}
+.tab-panel.active{display:block}
+/* TAB BAR */
+#tabbar{display:flex;background:var(--bg2);border-top:1px solid var(--border);flex-shrink:0;padding-bottom:var(--safe-bottom)}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 0;cursor:pointer;background:none;border:none;color:var(--text3);font-size:10px;transition:color .15s}
+.tab-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab-btn.active{color:var(--accent)}
+/* SECTION */
+.section{padding:12px 16px}
+.section-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+/* CARD */
+.card{background:var(--bg2);border-radius:12px;overflow:hidden;margin-bottom:10px}
+.card-row{display:flex;align-items:center;padding:12px 14px;gap:10px;border-bottom:1px solid var(--border)}
+.card-row:last-child{border-bottom:none}
+.card-row:active{background:var(--bg3)}
+/* SUMMARY CARD */
+.summary-card{background:var(--bg2);border-radius:14px;padding:16px;margin:12px 16px}
+.summary-label{font-size:11px;color:var(--text3);margin-bottom:4px}
+.summary-value{font-size:24px;font-weight:700;letter-spacing:-.5px}
+.summary-row{display:flex;gap:16px;margin-top:12px}
+.summary-item{flex:1}
+.summary-item .label{font-size:11px;color:var(--text3);margin-bottom:2px}
+.summary-item .value{font-size:14px;font-weight:600}
+/* ACCOUNT CHIPS */
+.account-chips{display:flex;gap:8px;overflow-x:auto;padding:10px 16px;scrollbar-width:none}
+.account-chips::-webkit-scrollbar{display:none}
+.chip{background:var(--bg3);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;border:2px solid transparent;flex-shrink:0}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip-add{background:none;border:2px dashed var(--border);color:var(--text3)}
+.chip-add:active,.chip:active{opacity:.7}
+/* PORTFOLIO ITEM */
+.portfolio-item{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border)}
+.portfolio-item:last-child{border-bottom:none}
+.pi-left .name{font-size:14px;font-weight:600}
+.pi-left .code{font-size:11px;color:var(--text3);margin-top:2px}
+.pi-left .qty{font-size:11px;color:var(--text3)}
+.pi-right{text-align:right}
+.pi-right .price{font-size:14px;font-weight:600}
+.pi-right .pnl{font-size:12px;margin-top:2px}
+.pnl.pos{color:var(--red)}
+.pnl.neg{color:var(--accent)}
+.pnl.zero{color:var(--text3)}
+/* WATCHLIST ITEM */
+.watch-item{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border)}
+.watch-item:last-child{border-bottom:none}
+.wi-left .name{font-size:14px;font-weight:600}
+.wi-left .meta{font-size:11px;color:var(--text3);margin-top:2px}
+.wi-right{text-align:right}
+.wi-right .price{font-size:15px;font-weight:700}
+.wi-right .chg{font-size:11px;margin-top:2px}
+/* TRADE ITEM */
+.trade-item{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);gap:8px}
+.trade-item:last-child{border-bottom:none}
+.trade-item:active{background:var(--bg3)}
+.ti-badge{padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;flex-shrink:0}
+.ti-badge.buy{background:rgba(239,68,68,.15);color:var(--red)}
+.ti-badge.sell{background:rgba(59,130,246,.15);color:var(--accent)}
+.ti-mid{flex:1}
+.ti-mid .name{font-size:13px;font-weight:600}
+.ti-mid .date{font-size:11px;color:var(--text3);margin-top:1px}
+.ti-right{text-align:right}
+.ti-right .amount{font-size:13px;font-weight:600}
+.ti-right .detail{font-size:11px;color:var(--text3)}
+/* MORE SECTION */
+.more-item{display:flex;align-items:center;padding:14px;gap:12px;border-bottom:1px solid var(--border);cursor:pointer}
+.more-item:last-child{border-bottom:none}
+.more-item:active{background:var(--bg3)}
+.more-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
+.more-label{flex:1;font-size:14px;font-weight:500}
+.more-arrow{color:var(--text3);font-size:18px}
+/* INDEX CARD */
+.idx-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 12px}
+.idx-card{background:var(--bg2);border-radius:10px;padding:12px}
+.idx-name{font-size:11px;color:var(--text3);margin-bottom:4px}
+.idx-price{font-size:16px;font-weight:700}
+.idx-chg{font-size:12px;margin-top:2px}
+/* FAB */
+.fab{position:fixed;bottom:calc(var(--tab-h) + var(--safe-bottom) + 16px);right:20px;width:52px;height:52px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:24px;cursor:pointer;box-shadow:0 4px 16px rgba(59,130,246,.4);display:flex;align-items:center;justify-content:center;z-index:50}
+.fab:active{background:var(--accent2)}
+/* BOTTOM SHEET */
+.sheet-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;opacity:0;pointer-events:none;transition:opacity .25s}
+.sheet-backdrop.open{opacity:1;pointer-events:all}
+.sheet{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-radius:20px 20px 0 0;z-index:101;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);padding-bottom:var(--safe-bottom);max-height:90vh;overflow-y:auto}
+.sheet.open{transform:translateY(0)}
+.sheet-handle{width:36px;height:4px;background:var(--bg4);border-radius:2px;margin:12px auto 0}
+.sheet-title{font-size:16px;font-weight:700;padding:16px 20px 12px;border-bottom:1px solid var(--border)}
+.sheet-body{padding:16px 20px}
+/* FORM */
+.form-group{margin-bottom:14px}
+.form-group label{font-size:12px;color:var(--text3);margin-bottom:6px;display:block}
+.form-group input,.form-group select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:11px 13px;color:var(--text);font-size:15px;outline:none}
+.form-group input:focus,.form-group select:focus{border-color:var(--accent)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-primary{width:100%;background:var(--accent);border:none;color:#fff;padding:14px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px}
+.btn-primary:active{background:var(--accent2)}
+.btn-danger{background:var(--red)}
+.btn-danger:active{background:#dc2626}
+.btn-ghost{background:var(--bg3);color:var(--text2)}
+.btn-ghost:active{background:var(--bg4)}
+/* SEG CONTROL */
+.seg{display:flex;background:var(--bg3);border-radius:10px;padding:3px;margin-bottom:14px}
+.seg-btn{flex:1;padding:7px;text-align:center;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--text3)}
+.seg-btn.active{background:var(--bg2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+/* SEARCH */
+.search-bar{position:relative;padding:10px 16px}
+.search-bar input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 40px 10px 14px;color:var(--text);font-size:14px;outline:none}
+.search-bar input:focus{border-color:var(--accent)}
+.search-bar .search-icon{position:absolute;right:28px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:18px;pointer-events:none}
+/* EMPTY STATE */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:12px;color:var(--text3)}
+.empty svg{width:48px;height:48px;stroke:var(--text3);stroke-width:1;fill:none}
+.empty p{font-size:14px;text-align:center}
+/* TOAST */
+#toast{position:fixed;bottom:calc(var(--tab-h) + var(--safe-bottom) + 80px);left:50%;transform:translateX(-50%) translateY(20px);background:#1f2937;color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.4);z-index:200;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* REFRESH BTN */
+.refresh-btn{background:none;border:none;color:var(--text3);font-size:16px;padding:4px 8px;cursor:pointer;border-radius:8px}
+.refresh-btn:active{background:var(--bg3)}
+.spinning{animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* SWIPE DELETE */
+.swipeable{position:relative;overflow:hidden}
+.swipe-actions{position:absolute;right:0;top:0;bottom:0;display:flex;align-items:center;background:var(--red);padding:0 20px;cursor:pointer;color:#fff;font-size:13px;font-weight:600;gap:4px}
+/* CASH BADGE */
+.cash-badge{background:var(--bg3);border-radius:8px;padding:4px 10px;font-size:12px;color:var(--text2);cursor:pointer}
+.cash-badge:active{background:var(--bg4)}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- HEADER -->
+  <div id="header">
+    <h1 id="header-title">Stock Book</h1>
+    <div class="header-right">
+      <button class="icon-btn" id="btn-refresh" title="시세 새로고침">
+        <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+    <!-- TAB: 포트폴리오 -->
+    <div id="tab-portfolio" class="tab-panel active">
+      <div class="account-chips" id="account-chips"></div>
+      <div id="summary-area"></div>
+      <div class="section">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div class="section-title" style="margin-bottom:0">보유 종목</div>
+        </div>
+        <div class="card" id="portfolio-list"></div>
+      </div>
+    </div>
+
+    <!-- TAB: 관심종목 -->
+    <div id="tab-watch" class="tab-panel">
+      <div class="section" style="padding-bottom:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div class="section-title" style="margin-bottom:0">관심 종목</div>
+          <button class="refresh-btn" id="watch-refresh-btn">⟳</button>
+        </div>
+      </div>
+      <div class="card" style="margin:0 16px" id="watch-list"></div>
+    </div>
+
+    <!-- TAB: 전종목 -->
+    <div id="tab-search" class="tab-panel">
+      <div class="search-bar">
+        <input type="text" id="stock-search" placeholder="종목코드 또는 종목명 검색" autocomplete="off">
+        <span class="search-icon">🔍</span>
+      </div>
+      <div id="search-result"></div>
+    </div>
+
+    <!-- TAB: 매매 -->
+    <div id="tab-trade" class="tab-panel">
+      <div style="padding:10px 16px 0;display:flex;align-items:center;justify-content:space-between">
+        <div class="section-title" style="margin-bottom:0">거래 내역</div>
+        <div class="seg" style="margin:0;width:140px">
+          <button class="seg-btn active" data-filter="all">전체</button>
+          <button class="seg-btn" data-filter="buy">매수</button>
+          <button class="seg-btn" data-filter="sell">매도</button>
+        </div>
+      </div>
+      <div class="card" style="margin:10px 16px 0" id="trade-list"></div>
+    </div>
+
+    <!-- TAB: 더보기 -->
+    <div id="tab-more" class="tab-panel">
+      <div class="section-title" style="padding:12px 16px 4px">시장 지수</div>
+      <div class="idx-grid" id="idx-grid"></div>
+      <div class="section-title" style="padding:4px 16px 4px">계좌 관리</div>
+      <div class="card" id="more-accounts"></div>
+      <div class="section-title" style="padding:12px 16px 4px">데이터</div>
+      <div class="card">
+        <div class="more-item" id="btn-export"><div class="more-icon" style="background:rgba(59,130,246,.15)">📤</div><div class="more-label">데이터 내보내기</div><div class="more-arrow">›</div></div>
+        <div class="more-item" id="btn-import"><div class="more-icon" style="background:rgba(245,158,11,.15)">📥</div><div class="more-label">데이터 가져오기</div><div class="more-arrow">›</div></div>
+      </div>
+      <div class="section-title" style="padding:4px 16px 4px">앱 정보</div>
+      <div class="card" style="margin-bottom:80px">
+        <div class="card-row"><span style="color:var(--text3);font-size:13px">버전</span><span style="margin-left:auto;font-size:13px">Stock Book v1.0.0</span></div>
+        <div class="card-row"><span style="color:var(--text3);font-size:13px">스토리지</span><span style="margin-left:auto;font-size:13px" id="storage-info">-</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB BAR -->
+  <nav id="tabbar">
+    <button class="tab-btn active" data-tab="portfolio">
+      <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      포트폴리오
+    </button>
+    <button class="tab-btn" data-tab="watch">
+      <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      관심
+    </button>
+    <button class="tab-btn" data-tab="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      전종목
+    </button>
+    <button class="tab-btn" data-tab="trade">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      매매
+    </button>
+    <button class="tab-btn" data-tab="more">
+      <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      더보기
+    </button>
+  </nav>
+</div>
+
+<!-- FAB -->
+<button class="fab" id="fab" title="거래 추가">＋</button>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- SHEET: 계좌 추가/편집 -->
+<div class="sheet-backdrop" id="sheet-account-backdrop"></div>
+<div class="sheet" id="sheet-account">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="sheet-account-title">계좌 추가</div>
+  <div class="sheet-body">
+    <div class="form-group"><label>계좌명</label><input type="text" id="acc-name" placeholder="예: 주식 계좌"></div>
+    <div class="form-group"><label>증권사</label><input type="text" id="acc-broker" placeholder="예: 키움"></div>
+    <div class="form-row">
+      <div class="form-group"><label>유형</label>
+        <select id="acc-type"><option>위탁</option><option>ISA</option><option>연금저축</option><option>IRP</option></select>
+      </div>
+      <div class="form-group"><label>초기 예수금 (원)</label><input type="number" id="acc-cash" placeholder="0"></div>
+    </div>
+    <button class="btn-primary" id="btn-save-account">저장</button>
+    <button class="btn-primary btn-danger" id="btn-delete-account" style="display:none;margin-top:8px">계좌 삭제</button>
+  </div>
+</div>
+
+<!-- SHEET: 현금 수정 -->
+<div class="sheet-backdrop" id="sheet-cash-backdrop"></div>
+<div class="sheet" id="sheet-cash">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">예수금 수정</div>
+  <div class="sheet-body">
+    <div class="form-group"><label id="cash-acc-label">계좌</label><input type="number" id="cash-input" placeholder="0"></div>
+    <button class="btn-primary" id="btn-save-cash">저장</button>
+  </div>
+</div>
+
+<!-- SHEET: 거래 추가 -->
+<div class="sheet-backdrop" id="sheet-trade-backdrop"></div>
+<div class="sheet" id="sheet-trade">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">거래 기록</div>
+  <div class="sheet-body">
+    <div class="seg" id="trade-type-seg">
+      <button class="seg-btn active" data-type="buy">매수</button>
+      <button class="seg-btn" data-type="sell">매도</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>종목코드</label><input type="text" id="t-code" placeholder="005930"></div>
+      <div class="form-group"><label>종목명</label><input type="text" id="t-name" placeholder="삼성전자"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>수량</label><input type="number" id="t-qty" placeholder="0"></div>
+      <div class="form-group"><label>단가 (원/$)</label><input type="number" id="t-price" placeholder="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>날짜</label><input type="date" id="t-date"></div>
+      <div class="form-group"><label>계좌</label><select id="t-account"></select></div>
+    </div>
+    <div class="form-group"><label>메모 (선택)</label><input type="text" id="t-memo" placeholder=""></div>
+    <button class="btn-primary" id="btn-save-trade">저장</button>
+  </div>
+</div>
+
+<!-- SHEET: 관심종목 추가 -->
+<div class="sheet-backdrop" id="sheet-watch-backdrop"></div>
+<div class="sheet" id="sheet-watch">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">관심종목 추가</div>
+  <div class="sheet-body">
+    <div class="form-row">
+      <div class="form-group"><label>종목코드</label><input type="text" id="w-code" placeholder="005930 또는 AAPL"></div>
+      <div class="form-group"><label>종목명</label><input type="text" id="w-name" placeholder="삼성전자"></div>
+    </div>
+    <div class="form-group"><label>시장</label>
+      <select id="w-market"><option value="KR">국내 (KR)</option><option value="US">미국 (US)</option></select>
+    </div>
+    <button class="btn-primary" id="btn-save-watch">추가</button>
+  </div>
+</div>
+
+<!-- SHEET: 종목 상세 (검색) -->
+<div class="sheet-backdrop" id="sheet-stock-backdrop"></div>
+<div class="sheet" id="sheet-stock">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">종목 정보</div>
+  <div class="sheet-body" id="sheet-stock-body"></div>
+</div>
+
+<input type="file" id="import-file" accept=".json" style="display:none">
+
+<script>
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+const STORAGE_KEY = 'stockbook_v1';
+let state = {
+  portfolio: [], trades: [], journals: [], totalAsset: 0,
+  mcChecks: {}, cashflows: [], mcSettings: {}, monthlySnapshots: [],
+  cashManual: null, analysisChecks: {}, accounts: [],
+  watchlist: [] // mobile-only watchlist
+};
+let currentTab = 'portfolio';
+let selectedAccountId = 'all';
+let tradeFilter = 'all';
+let editingAccountId = null;
+let tradeType = 'buy';
+let searchTimeout = null;
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      Object.assign(state, parsed);
+    }
+  } catch(e) {}
+  if (!state.watchlist) state.watchlist = [];
+  if (!state.accounts || !state.accounts.length) {
+    state.accounts = [{
+      id: 'default_' + Date.now(),
+      name: '기본 계좌', broker: '', type: '위탁',
+      isManual: true, isActive: true, cash: 0
+    }];
+    save();
+  }
+}
+
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════
+function fmt(n, d=0) {
+  if (n == null || isNaN(n)) return '-';
+  return Math.round(n).toLocaleString('ko-KR');
+}
+function fmtPct(n) {
+  if (n == null || isNaN(n)) return '-';
+  const s = n >= 0 ? '+' : '';
+  return s + n.toFixed(2) + '%';
+}
+function pnlClass(n) { return n > 0 ? 'pos' : n < 0 ? 'neg' : 'zero'; }
+function today() { return new Date().toISOString().slice(0, 10); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function toast(msg, dur=2000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), dur);
+}
+function openSheet(id) {
+  document.getElementById('sheet-' + id + '-backdrop').classList.add('open');
+  document.getElementById('sheet-' + id).classList.add('open');
+}
+function closeSheet(id) {
+  document.getElementById('sheet-' + id + '-backdrop').classList.remove('open');
+  document.getElementById('sheet-' + id).classList.remove('open');
+}
+function activeAccounts() { return state.accounts.filter(a => a.isActive !== false); }
+
+// ═══════════════════════════════════════════════
+//  PRICE API
+// ═══════════════════════════════════════════════
+const priceCache = {};
+async function fetchPrice(code, market) {
+  const key = code + '_' + market;
+  if (priceCache[key] && Date.now() - priceCache[key].t < 60000) return priceCache[key].data;
+  try {
+    let data;
+    if (market === 'US') {
+      data = await fetchYahoo(code);
+    } else {
+      data = await fetchNaver(code);
+    }
+    if (data) { priceCache[key] = { t: Date.now(), data }; }
+    return data;
+  } catch(e) { return null; }
+}
+
+async function fetchNaver(code) {
+  try {
+    const url = `https://m.stock.naver.com/api/stock/${code}/basic`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return {
+      price: parseFloat(j.closePrice?.replace(/,/g,'') || j.stockItemTotalInfos?.find(x=>x.key==='closePriceStandard')?.value?.replace(/,/g,'')) || null,
+      chg: parseFloat(j.compareToPreviousClosePrice?.replace(/,/g,'')) || 0,
+      chgPct: parseFloat(j.fluctuationsRatio) || 0,
+      name: j.stockName || code
+    };
+  } catch(e) { return null; }
+}
+
+async function fetchYahoo(ticker) {
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    if (!r.ok) return null;
+    const j = await r.json();
+    const q = j.chart?.result?.[0];
+    if (!q) return null;
+    const meta = q.meta;
+    const price = meta.regularMarketPrice;
+    const prev = meta.previousClose || meta.chartPreviousClose;
+    const chg = price - prev;
+    const chgPct = (chg / prev) * 100;
+    return { price, chg, chgPct, name: meta.symbol };
+  } catch(e) { return null; }
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: PORTFOLIO TAB
+// ═══════════════════════════════════════════════
+function renderPortfolio() {
+  renderAccountChips();
+  renderSummary();
+  renderPortfolioList();
+}
+
+function renderAccountChips() {
+  const chips = document.getElementById('account-chips');
+  const accs = activeAccounts();
+  let html = `<div class="chip ${selectedAccountId==='all'?'active':''}" data-id="all">전체</div>`;
+  accs.forEach(a => {
+    html += `<div class="chip ${selectedAccountId===a.id?'active':''}" data-id="${a.id}">${a.name}</div>`;
+  });
+  html += `<div class="chip chip-add" id="chip-add-acc">+ 계좌</div>`;
+  chips.innerHTML = html;
+  chips.querySelectorAll('.chip[data-id]').forEach(c => {
+    c.addEventListener('click', () => { selectedAccountId = c.dataset.id; renderPortfolio(); });
+  });
+  document.getElementById('chip-add-acc').addEventListener('click', openAddAccount);
+}
+
+function getPortfolioForAccount() {
+  const items = state.portfolio || [];
+  if (selectedAccountId === 'all') return items;
+  return items.filter(p => p.accountId === selectedAccountId);
+}
+
+function renderSummary() {
+  const area = document.getElementById('summary-area');
+  const items = getPortfolioForAccount();
+  let totalEval = 0, totalCost = 0;
+  items.forEach(p => {
+    if (p.qty > 0) {
+      totalCost += (p.avgPrice || 0) * p.qty;
+      // price from cache if available
+      const key = p.code + '_' + (p.market || 'KR');
+      const cached = priceCache[key];
+      const price = cached ? cached.data?.price : null;
+      totalEval += (price || p.avgPrice || 0) * p.qty;
+    }
+  });
+  let cash = 0;
+  if (selectedAccountId === 'all') {
+    activeAccounts().forEach(a => { cash += a.cash || 0; });
+  } else {
+    const acc = state.accounts.find(a => a.id === selectedAccountId);
+    if (acc) cash = acc.cash || 0;
+  }
+  const totalAsset = totalEval + cash;
+  const pnl = totalEval - totalCost;
+  const pnlPct = totalCost > 0 ? (pnl / totalCost * 100) : 0;
+
+  area.innerHTML = `
+    <div class="summary-card">
+      <div class="summary-label">총 자산</div>
+      <div class="summary-value">${fmt(totalAsset)}<span style="font-size:14px;color:var(--text3);font-weight:400"> 원</span></div>
+      <div class="summary-row">
+        <div class="summary-item">
+          <div class="label">평가금액</div>
+          <div class="value">${fmt(totalEval)}원</div>
+        </div>
+        <div class="summary-item">
+          <div class="label">예수금 <span class="cash-badge" id="edit-cash-btn">수정</span></div>
+          <div class="value">${fmt(cash)}원</div>
+        </div>
+        <div class="summary-item">
+          <div class="label">손익</div>
+          <div class="value ${pnlClass(pnl)}">${fmt(pnl)}원 (${fmtPct(pnlPct)})</div>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('edit-cash-btn')?.addEventListener('click', openCashEdit);
+}
+
+function renderPortfolioList() {
+  const list = document.getElementById('portfolio-list');
+  const items = getPortfolioForAccount().filter(p => p.qty > 0);
+  if (!items.length) {
+    list.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><p>보유 종목이 없습니다<br>거래를 기록하면 자동으로 추가됩니다</p></div>`;
+    return;
+  }
+  list.innerHTML = items.map(p => {
+    const key = p.code + '_' + (p.market || 'KR');
+    const cached = priceCache[key];
+    const price = cached?.data?.price;
+    const eval_ = price ? price * p.qty : null;
+    const cost = (p.avgPrice || 0) * p.qty;
+    const pnl = eval_ != null ? eval_ - cost : null;
+    const pnlPct_ = cost > 0 && pnl != null ? (pnl / cost * 100) : null;
+    return `<div class="portfolio-item">
+      <div class="pi-left">
+        <div class="name">${p.name || p.code}</div>
+        <div class="code">${p.code} · 평균 ${fmt(p.avgPrice)}원</div>
+        <div class="qty">${fmt(p.qty, 0)}주</div>
+      </div>
+      <div class="pi-right">
+        <div class="price">${price != null ? fmt(price) : '-'}원</div>
+        <div class="pnl ${pnlClass(pnl)}">${pnl != null ? fmt(pnl) + '원 (' + fmtPct(pnlPct_) + ')' : '-'}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: WATCHLIST TAB
+// ═══════════════════════════════════════════════
+function renderWatch() {
+  const list = document.getElementById('watch-list');
+  const items = state.watchlist || [];
+  if (!items.length) {
+    list.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><p>관심종목이 없습니다<br>+ 버튼으로 추가하세요</p></div>`;
+    return;
+  }
+  list.innerHTML = items.map((w, i) => {
+    const key = w.code + '_' + (w.market || 'KR');
+    const cached = priceCache[key];
+    const d = cached?.data;
+    const chgCls = d ? (d.chgPct > 0 ? 'pos' : d.chgPct < 0 ? 'neg' : 'zero') : '';
+    return `<div class="watch-item" data-idx="${i}">
+      <div class="wi-left">
+        <div class="name">${w.name || w.code}</div>
+        <div class="meta">${w.code} · ${w.market==='US'?'미국':'국내'}</div>
+      </div>
+      <div class="wi-right">
+        <div class="price">${d?.price != null ? fmt(d.price) : '-'}</div>
+        <div class="chg ${chgCls}">${d ? fmtPct(d.chgPct) : '시세 미수신'}</div>
+      </div>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.watch-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const w = state.watchlist[parseInt(el.dataset.idx)];
+      if (!w) return;
+      // long-press or tap to delete option via confirm
+      // Simple: show confirm
+      if (confirm(`"${w.name||w.code}" 을 관심종목에서 삭제할까요?`)) {
+        state.watchlist.splice(parseInt(el.dataset.idx), 1);
+        save();
+        renderWatch();
+      }
+    });
+  });
+}
+
+async function refreshWatchPrices(showSpinner=true) {
+  const btn = document.getElementById('watch-refresh-btn');
+  if (showSpinner && btn) btn.classList.add('spinning');
+  const items = state.watchlist || [];
+  await Promise.all(items.map(w => fetchPrice(w.code, w.market || 'KR')));
+  if (btn) btn.classList.remove('spinning');
+  renderWatch();
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: SEARCH TAB
+// ═══════════════════════════════════════════════
+async function doSearch(q) {
+  const area = document.getElementById('search-result');
+  if (!q.trim()) { area.innerHTML = ''; return; }
+  area.innerHTML = `<div class="empty"><p>검색 중...</p></div>`;
+  // Try Naver search by code first
+  const code = q.trim().toUpperCase();
+  let data = null;
+  // KR code (6 digits)
+  if (/^\d{6}$/.test(code)) {
+    data = await fetchNaver(code);
+    if (data) {
+      showStockResult(code, 'KR', data);
+      return;
+    }
+  }
+  // US ticker
+  if (/^[A-Z]{1,5}$/.test(code)) {
+    data = await fetchYahoo(code);
+    if (data) {
+      showStockResult(code, 'US', data);
+      return;
+    }
+  }
+  area.innerHTML = `<div class="empty"><p>결과 없음<br>6자리 종목코드(국내) 또는<br>영문 티커(미국)를 입력하세요</p></div>`;
+}
+
+function showStockResult(code, market, data) {
+  const area = document.getElementById('search-result');
+  const chgCls = data.chgPct > 0 ? 'pos' : data.chgPct < 0 ? 'neg' : 'zero';
+  area.innerHTML = `
+    <div class="card" style="margin:0 16px">
+      <div style="padding:16px">
+        <div style="font-size:18px;font-weight:700">${data.name||code}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px">${code} · ${market==='US'?'미국':'국내'}</div>
+        <div style="font-size:28px;font-weight:700;margin-top:12px">${fmt(data.price)}</div>
+        <div class="pnl ${chgCls}" style="font-size:14px;margin-top:4px">${fmtPct(data.chgPct)} (${fmt(data.chg)})</div>
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <button class="btn-primary" style="margin:0" id="sr-buy">매수 기록</button>
+          <button class="btn-primary btn-ghost" style="margin:0" id="sr-watch">관심 추가</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('sr-buy').addEventListener('click', () => {
+    document.getElementById('t-code').value = code;
+    document.getElementById('t-name').value = data.name || code;
+    document.getElementById('t-price').value = data.price || '';
+    openSheet('trade');
+  });
+  document.getElementById('sr-watch').addEventListener('click', () => {
+    if (state.watchlist.find(w => w.code === code)) { toast('이미 관심종목에 있습니다'); return; }
+    state.watchlist.push({ code, name: data.name || code, market });
+    save();
+    toast('관심종목에 추가됐습니다');
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: TRADE TAB
+// ═══════════════════════════════════════════════
+function renderTrade() {
+  const list = document.getElementById('trade-list');
+  let items = [...(state.trades || [])];
+  if (tradeFilter !== 'all') items = items.filter(t => t.type === tradeFilter);
+  items.sort((a, b) => (b.date||'').localeCompare(a.date||''));
+  if (!items.length) {
+    list.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><p>거래 내역이 없습니다</p></div>`;
+    return;
+  }
+  list.innerHTML = items.map(t => {
+    const acc = state.accounts.find(a => a.id === t.accountId);
+    const amount = (t.price || 0) * (t.qty || 0);
+    return `<div class="trade-item" data-tid="${t.id}">
+      <div class="ti-badge ${t.type==='buy'?'buy':'sell'}">${t.type==='buy'?'매수':'매도'}</div>
+      <div class="ti-mid">
+        <div class="name">${t.name||t.code}</div>
+        <div class="date">${t.date||''} ${acc?'· '+acc.name:''}</div>
+      </div>
+      <div class="ti-right">
+        <div class="amount">${fmt(amount)}원</div>
+        <div class="detail">${fmt(t.price)}원 × ${fmt(t.qty, 0)}주</div>
+      </div>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.trade-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const tid = el.dataset.tid;
+      const t = state.trades.find(x => x.id === tid);
+      if (!t) return;
+      if (confirm(`"${t.name||t.code}" 거래 기록을 삭제할까요?\n(보유 종목 및 예수금이 자동으로 업데이트됩니다)`)) {
+        deleteTrade(tid);
+      }
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: MORE TAB
+// ═══════════════════════════════════════════════
+function renderMore() {
+  renderMoreAccounts();
+  renderIndices();
+  renderStorageInfo();
+}
+
+function renderMoreAccounts() {
+  const el = document.getElementById('more-accounts');
+  const accs = state.accounts || [];
+  if (!accs.length) { el.innerHTML = '<div class="card-row" style="color:var(--text3);font-size:13px">계좌 없음</div>'; return; }
+  el.innerHTML = accs.map(a => `
+    <div class="more-item" data-accid="${a.id}">
+      <div class="more-icon" style="background:rgba(59,130,246,.15)">🏦</div>
+      <div class="more-label">
+        <div>${a.name}</div>
+        <div style="font-size:11px;color:var(--text3)">${a.broker||''} ${a.type||''} · ${fmt(a.cash||0)}원</div>
+      </div>
+      <div class="more-arrow">›</div>
+    </div>`).join('') +
+    `<div class="more-item" id="btn-add-account-more">
+      <div class="more-icon" style="background:rgba(16,185,129,.15)">＋</div>
+      <div class="more-label">계좌 추가</div>
+    </div>`;
+  el.querySelectorAll('.more-item[data-accid]').forEach(el2 => {
+    el2.addEventListener('click', () => openEditAccount(el2.dataset.accid));
+  });
+  document.getElementById('btn-add-account-more')?.addEventListener('click', openAddAccount);
+}
+
+function renderStorageInfo() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY) || '';
+    const kb = (new Blob([raw]).size / 1024).toFixed(1);
+    document.getElementById('storage-info').textContent = `${kb} KB`;
+  } catch(e) {}
+}
+
+const INDEX_LIST = [
+  { symbol: '^KS11', name: 'KOSPI', market: 'US' },
+  { symbol: '^KQ11', name: 'KOSDAQ', market: 'US' },
+  { symbol: '^IXIC', name: 'NASDAQ', market: 'US' },
+  { symbol: '^DJI', name: 'DOW', market: 'US' },
+  { symbol: 'SOX', name: 'SOX(반도체)', market: 'US' },
+  { symbol: 'CL=F', name: 'WTI유가', market: 'US' },
+  { symbol: '^GSPC', name: 'S&P 500', market: 'US' },
+  { symbol: 'USDKRW=X', name: '원/달러', market: 'US' },
+];
+const idxCache = {};
+
+async function renderIndices() {
+  const grid = document.getElementById('idx-grid');
+  grid.innerHTML = INDEX_LIST.map(idx => `
+    <div class="idx-card" id="idx-${idx.symbol.replace(/[^a-zA-Z0-9]/g,'_')}">
+      <div class="idx-name">${idx.name}</div>
+      <div class="idx-price">-</div>
+      <div class="idx-chg" style="color:var(--text3)">-</div>
+    </div>`).join('');
+  // fetch in background
+  INDEX_LIST.forEach(async idx => {
+    const key = idx.symbol.replace(/[^a-zA-Z0-9]/g,'_');
+    try {
+      const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(idx.symbol)}?interval=1d&range=1d`, { signal: AbortSignal.timeout(7000) });
+      if (!r.ok) return;
+      const j = await r.json();
+      const meta = j.chart?.result?.[0]?.meta;
+      if (!meta) return;
+      const price = meta.regularMarketPrice;
+      const prev = meta.previousClose || meta.chartPreviousClose;
+      const chg = price - prev;
+      const chgPct = (chg / prev) * 100;
+      const el = document.getElementById('idx-' + key);
+      if (!el) return;
+      const isCurrency = idx.symbol === 'USDKRW=X';
+      el.querySelector('.idx-price').textContent = isCurrency ? price.toFixed(1) : price > 1000 ? fmt(price) : price.toFixed(2);
+      const chgEl = el.querySelector('.idx-chg');
+      chgEl.textContent = fmtPct(chgPct);
+      chgEl.style.color = chgPct > 0 ? 'var(--red)' : chgPct < 0 ? 'var(--accent)' : 'var(--text3)';
+    } catch(e) {}
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  TRADE LOGIC
+// ═══════════════════════════════════════════════
+function saveTrade(tradeData) {
+  const { type, code, name, qty, price, date, accountId, memo, market } = tradeData;
+  const amount = qty * price;
+  const id = uid();
+  const trade = { id, type, code, name, qty, price, date, accountId, memo: memo||'', market: market||'KR' };
+  state.trades = state.trades || [];
+  state.trades.unshift(trade);
+
+  // Update portfolio
+  state.portfolio = state.portfolio || [];
+  let pos = state.portfolio.find(p => p.code === code && p.accountId === accountId);
+  if (type === 'buy') {
+    if (pos) {
+      const totalCost = pos.avgPrice * pos.qty + price * qty;
+      pos.qty += qty;
+      pos.avgPrice = totalCost / pos.qty;
+    } else {
+      state.portfolio.push({ code, name, qty, avgPrice: price, accountId, market: market||'KR' });
+    }
+    // Deduct cash
+    const acc = state.accounts.find(a => a.id === accountId);
+    if (acc) acc.cash = (acc.cash || 0) - amount;
+  } else if (type === 'sell') {
+    if (pos) {
+      pos.qty -= qty;
+      if (pos.qty <= 0) state.portfolio = state.portfolio.filter(p => !(p.code === code && p.accountId === accountId));
+    }
+    // Add cash
+    const acc = state.accounts.find(a => a.id === accountId);
+    if (acc) acc.cash = (acc.cash || 0) + amount;
+  }
+
+  // Auto journal
+  state.journals = state.journals || [];
+  state.journals.unshift({
+    id: uid(), tradeId: id, date, type,
+    code, name, qty, price, amount,
+    accountId, memo: memo||''
+  });
+  save();
+}
+
+function deleteTrade(tid) {
+  const t = state.trades.find(x => x.id === tid);
+  if (!t) return;
+  const { type, code, qty, price, accountId } = t;
+  const amount = qty * price;
+
+  // Reverse portfolio
+  state.portfolio = state.portfolio || [];
+  let pos = state.portfolio.find(p => p.code === code && p.accountId === accountId);
+  if (type === 'buy') {
+    if (pos) {
+      if (pos.qty <= qty) {
+        state.portfolio = state.portfolio.filter(p => !(p.code === code && p.accountId === accountId));
+      } else {
+        const totalCost = pos.avgPrice * pos.qty - price * qty;
+        pos.qty -= qty;
+        pos.avgPrice = pos.qty > 0 ? totalCost / pos.qty : 0;
+      }
+    }
+    // Restore cash
+    const acc = state.accounts.find(a => a.id === accountId);
+    if (acc) acc.cash = (acc.cash || 0) + amount;
+  } else if (type === 'sell') {
+    // Restore portfolio approximate
+    if (pos) { pos.qty += qty; }
+    else {
+      state.portfolio.push({ code: t.code, name: t.name, qty, avgPrice: price, accountId, market: t.market||'KR' });
+    }
+    // Deduct cash
+    const acc = state.accounts.find(a => a.id === accountId);
+    if (acc) acc.cash = (acc.cash || 0) - amount;
+  }
+
+  // Remove trade
+  state.trades = state.trades.filter(x => x.id !== tid);
+  // Remove journal
+  state.journals = (state.journals || []).filter(j => j.tradeId !== tid);
+  save();
+  toast('거래가 삭제됐습니다');
+  renderTrade();
+  renderPortfolio();
+}
+
+// ═══════════════════════════════════════════════
+//  ACCOUNT SHEETS
+// ═══════════════════════════════════════════════
+function openAddAccount() {
+  editingAccountId = null;
+  document.getElementById('sheet-account-title').textContent = '계좌 추가';
+  document.getElementById('acc-name').value = '';
+  document.getElementById('acc-broker').value = '';
+  document.getElementById('acc-type').value = '위탁';
+  document.getElementById('acc-cash').value = '';
+  document.getElementById('btn-delete-account').style.display = 'none';
+  openSheet('account');
+}
+
+function openEditAccount(id) {
+  const acc = state.accounts.find(a => a.id === id);
+  if (!acc) return;
+  editingAccountId = id;
+  document.getElementById('sheet-account-title').textContent = '계좌 편집';
+  document.getElementById('acc-name').value = acc.name || '';
+  document.getElementById('acc-broker').value = acc.broker || '';
+  document.getElementById('acc-type').value = acc.type || '위탁';
+  document.getElementById('acc-cash').value = acc.cash || 0;
+  document.getElementById('btn-delete-account').style.display = 'block';
+  openSheet('account');
+}
+
+function saveAccount() {
+  const name = document.getElementById('acc-name').value.trim();
+  if (!name) { toast('계좌명을 입력하세요'); return; }
+  const broker = document.getElementById('acc-broker').value.trim();
+  const type = document.getElementById('acc-type').value;
+  const cash = parseFloat(document.getElementById('acc-cash').value) || 0;
+  if (editingAccountId) {
+    const acc = state.accounts.find(a => a.id === editingAccountId);
+    if (acc) { acc.name = name; acc.broker = broker; acc.type = type; acc.cash = cash; }
+  } else {
+    state.accounts.push({ id: uid(), name, broker, type, isManual: true, isActive: true, cash });
+  }
+  save();
+  closeSheet('account');
+  renderPortfolio();
+  renderMore();
+  toast(editingAccountId ? '계좌가 수정됐습니다' : '계좌가 추가됐습니다');
+}
+
+function deleteAccount() {
+  if (!editingAccountId) return;
+  const acc = state.accounts.find(a => a.id === editingAccountId);
+  if (!acc) return;
+  if (!confirm(`"${acc.name}" 계좌를 삭제할까요?\n연결된 보유 종목과 거래 내역은 남아있습니다`)) return;
+  state.accounts = state.accounts.filter(a => a.id !== editingAccountId);
+  save();
+  closeSheet('account');
+  if (selectedAccountId === editingAccountId) selectedAccountId = 'all';
+  renderPortfolio();
+  renderMore();
+  toast('계좌가 삭제됐습니다');
+}
+
+function openCashEdit() {
+  const accId = selectedAccountId === 'all' ? (activeAccounts()[0]?.id) : selectedAccountId;
+  if (!accId) { toast('계좌를 먼저 추가하세요'); return; }
+  const acc = state.accounts.find(a => a.id === accId);
+  if (!acc) return;
+  document.getElementById('cash-acc-label').textContent = acc.name + ' 예수금 (원)';
+  document.getElementById('cash-input').value = acc.cash || 0;
+  document.getElementById('btn-save-cash').dataset.accid = accId;
+  openSheet('cash');
+}
+
+// ═══════════════════════════════════════════════
+//  TRADE SHEET
+// ═══════════════════════════════════════════════
+function openTradeSheet() {
+  const today_ = today();
+  document.getElementById('t-date').value = today_;
+  // populate accounts
+  const sel = document.getElementById('t-account');
+  sel.innerHTML = activeAccounts().map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+  if (selectedAccountId !== 'all') sel.value = selectedAccountId;
+  openSheet('trade');
+}
+
+function saveTradeFromSheet() {
+  const code = document.getElementById('t-code').value.trim().toUpperCase();
+  const name = document.getElementById('t-name').value.trim();
+  const qty = parseFloat(document.getElementById('t-qty').value) || 0;
+  const price = parseFloat(document.getElementById('t-price').value) || 0;
+  const date = document.getElementById('t-date').value;
+  const accountId = document.getElementById('t-account').value;
+  const memo = document.getElementById('t-memo').value.trim();
+  if (!code) { toast('종목코드를 입력하세요'); return; }
+  if (qty <= 0) { toast('수량을 입력하세요'); return; }
+  if (price <= 0) { toast('단가를 입력하세요'); return; }
+  if (!accountId) { toast('계좌를 선택하세요'); return; }
+  // market detection
+  const market = /^[A-Z]{1,5}$/.test(code) ? 'US' : 'KR';
+  saveTrade({ type: tradeType, code, name: name||code, qty, price, date, accountId, memo, market });
+  closeSheet('trade');
+  toast(tradeType==='buy' ? '매수 기록됐습니다' : '매도 기록됐습니다');
+  renderPortfolio();
+  if (currentTab === 'trade') renderTrade();
+  // reset
+  document.getElementById('t-code').value = '';
+  document.getElementById('t-name').value = '';
+  document.getElementById('t-qty').value = '';
+  document.getElementById('t-price').value = '';
+  document.getElementById('t-memo').value = '';
+}
+
+// ═══════════════════════════════════════════════
+//  DATA EXPORT / IMPORT
+// ═══════════════════════════════════════════════
+function exportData() {
+  const raw = localStorage.getItem(STORAGE_KEY) || '{}';
+  const blob = new Blob([raw], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `stockbook_${today()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('데이터가 내보내기됐습니다');
+}
+
+function importData(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed || typeof parsed !== 'object') throw new Error('invalid');
+      Object.assign(state, parsed);
+      save();
+      toast('데이터를 가져왔습니다');
+      renderAll();
+    } catch(err) { toast('파일 형식이 올바르지 않습니다'); }
+  };
+  reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════
+//  REFRESH ALL PRICES
+// ═══════════════════════════════════════════════
+async function refreshAllPrices() {
+  const btn = document.getElementById('btn-refresh');
+  btn.querySelector('svg').classList.add('spinning');
+  const items = [...(state.portfolio||[]), ...(state.watchlist||[])];
+  const unique = {};
+  items.forEach(p => { if (p.code) unique[p.code + '_' + (p.market||'KR')] = { code: p.code, market: p.market||'KR' }; });
+  await Promise.all(Object.values(unique).map(u => fetchPrice(u.code, u.market)));
+  btn.querySelector('svg').classList.remove('spinning');
+  renderPortfolio();
+  if (currentTab === 'watch') renderWatch();
+  toast('시세가 업데이트됐습니다');
+}
+
+// ═══════════════════════════════════════════════
+//  TAB SWITCHING
+// ═══════════════════════════════════════════════
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
+  const titles = { portfolio: 'Stock Book', watch: '관심종목', search: '종목 검색', trade: '매매 기록', more: '더보기' };
+  document.getElementById('header-title').textContent = titles[tab] || 'Stock Book';
+  // Show/hide FAB
+  const fab = document.getElementById('fab');
+  fab.style.display = (tab === 'trade' || tab === 'portfolio' || tab === 'watch') ? 'flex' : 'none';
+  if (tab === 'portfolio') renderPortfolio();
+  else if (tab === 'watch') renderWatch();
+  else if (tab === 'trade') renderTrade();
+  else if (tab === 'more') renderMore();
+}
+
+function renderAll() {
+  renderPortfolio();
+  renderTrade();
+  renderMore();
+}
+
+// ═══════════════════════════════════════════════
+//  EVENT LISTENERS
+// ═══════════════════════════════════════════════
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+document.getElementById('btn-refresh').addEventListener('click', refreshAllPrices);
+
+// FAB
+document.getElementById('fab').addEventListener('click', () => {
+  if (currentTab === 'watch') {
+    openSheet('watch');
+  } else if (currentTab === 'portfolio' || currentTab === 'trade') {
+    openTradeSheet();
+  }
+});
+
+// Trade type seg
+document.getElementById('trade-type-seg').querySelectorAll('.seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    tradeType = btn.dataset.type;
+    document.querySelectorAll('#trade-type-seg .seg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// Trade filter seg
+document.querySelectorAll('#tab-trade .seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    tradeFilter = btn.dataset.filter;
+    document.querySelectorAll('#tab-trade .seg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTrade();
+  });
+});
+
+// Account sheet
+document.getElementById('btn-save-account').addEventListener('click', saveAccount);
+document.getElementById('btn-delete-account').addEventListener('click', deleteAccount);
+document.getElementById('sheet-account-backdrop').addEventListener('click', () => closeSheet('account'));
+
+// Cash sheet
+document.getElementById('btn-save-cash').addEventListener('click', () => {
+  const accId = document.getElementById('btn-save-cash').dataset.accid;
+  const acc = state.accounts.find(a => a.id === accId);
+  if (!acc) return;
+  acc.cash = parseFloat(document.getElementById('cash-input').value) || 0;
+  save();
+  closeSheet('cash');
+  renderPortfolio();
+  toast('예수금이 수정됐습니다');
+});
+document.getElementById('sheet-cash-backdrop').addEventListener('click', () => closeSheet('cash'));
+
+// Trade sheet
+document.getElementById('btn-save-trade').addEventListener('click', saveTradeFromSheet);
+document.getElementById('sheet-trade-backdrop').addEventListener('click', () => closeSheet('trade'));
+
+// Watch sheet
+document.getElementById('btn-save-watch').addEventListener('click', () => {
+  const code = document.getElementById('w-code').value.trim().toUpperCase();
+  const name = document.getElementById('w-name').value.trim();
+  const market = document.getElementById('w-market').value;
+  if (!code) { toast('종목코드를 입력하세요'); return; }
+  if (state.watchlist.find(w => w.code === code)) { toast('이미 추가된 종목입니다'); return; }
+  state.watchlist.push({ code, name: name||code, market });
+  save();
+  closeSheet('watch');
+  renderWatch();
+  toast('관심종목에 추가됐습니다');
+  document.getElementById('w-code').value = '';
+  document.getElementById('w-name').value = '';
+});
+document.getElementById('sheet-watch-backdrop').addEventListener('click', () => closeSheet('watch'));
+
+// Watch refresh
+document.getElementById('watch-refresh-btn').addEventListener('click', () => refreshWatchPrices(true));
+
+// Stock sheet
+document.getElementById('sheet-stock-backdrop').addEventListener('click', () => closeSheet('stock'));
+
+// Search
+document.getElementById('stock-search').addEventListener('input', e => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => doSearch(e.target.value), 500);
+});
+
+// Export/Import
+document.getElementById('btn-export').addEventListener('click', exportData);
+document.getElementById('btn-import').addEventListener('click', () => document.getElementById('import-file').click());
+document.getElementById('import-file').addEventListener('change', e => {
+  if (e.target.files[0]) importData(e.target.files[0]);
+  e.target.value = '';
+});
+
+// More indices refresh on tab activation is handled via renderMore
+// ═══════════════════════════════════════════════
+//  SERVICE WORKER
+// ═══════════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+load();
+renderAll();
+// Initial price refresh on load (background)
+setTimeout(() => refreshAllPrices(), 1000);
+</script>
+</body>
+</html>
