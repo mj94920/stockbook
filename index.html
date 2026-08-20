@@ -11045,15 +11045,29 @@ async function refreshWatchlist() {
           const r = await api.fetchStockDetail(w.ticker);
           if (r?.ok && r?.data) {
             const d = r.data;
-            const p = parseFloat((d.closePrice || '0').replace(/,/g,''));
+            const _spn = v => { const n = parseFloat(String(v||'').replace(/,/g,'')); return (!isNaN(n) && n !== 0) ? n : null; };
+            const p = _spn(d.closePrice);
             if (p) {
               w.price  = p;
-              w.change = parseFloat(d.fluctuationsRatio || 0);
+              w.change = _spn(d.fluctuationsRatio) ?? 0;
             }
             if (!w.name && d.stockName) w.name = d.stockName;
-            w.per = d.per ? parseFloat(d.per) : null;
-            w.pbr = d.pbr ? parseFloat(d.pbr) : null;
-            w.roe = d.roe ? parseFloat(d.roe) : null;
+            // 기본 재무
+            if (d.per)  w.per = _spn(d.per);
+            if (d.pbr)  w.pbr = _spn(d.pbr);
+            if (d.roe || d.roa) w.roe = _spn(d.roe || d.roa);
+            if (d.eps)  w.eps = _spn(d.eps);
+            // 배당
+            if (d.dividendYield) w.dividendYield = _spn(d.dividendYield);
+            // 업종
+            const ind = d.industryGroupName || d.industryName || d.industry || d.sectorName;
+            if (ind) w.industry = ind;
+            // 시총 (원 단위)
+            const cap = d.marketValue || d.marketCap || d.marketValueAmount;
+            if (cap) w.marketCap = _spn(cap);
+            // 거래량
+            const vol = d.accumulatedTradingVolume || d.totalTradingVolume || d.tradingVolume;
+            if (vol) w.volume = _spn(vol);
           }
         } else {
           // 해외: fetch-quote IPC (Yahoo Finance, CORS 없음)
@@ -11063,6 +11077,14 @@ async function refreshWatchlist() {
             const prev = r.prevClose;
             w.change = prev && prev > 0 ? ((r.price - prev) / prev * 100) : null;
             w.currency = r.currency || 'USD';
+            // 재무지표·업종 (parseYFv7 확장으로 추가됨)
+            if (r.volume    != null) w.volume   = r.volume;
+            if (r.marketCap != null) w.marketCap = r.marketCap;
+            if (r.industry)          w.industry  = r.industry;
+            if (r.per       != null) w.per       = r.per;
+            if (r.pbr       != null) w.pbr       = r.pbr;
+            if (r.eps       != null) w.eps       = r.eps;
+            if (r.dividendYield != null) w.dividendYield = r.dividendYield;
           }
         }
       } else {

@@ -945,14 +945,28 @@ ipcMain.handle('fetch-quote', async (_event, rawTicker) => {
   const parseYFv7 = (body, symbol) => {
     try {
       const d      = JSON.parse(body);
-      const result = d?.quoteResponse?.result?.[0];
-      if (!result?.regularMarketPrice) return null;
+      const r      = d?.quoteResponse?.result?.[0];
+      if (!r?.regularMarketPrice) return null;
+      const _n = v => (v != null && !isNaN(v) && v !== 0) ? v : null;
       return {
         symbol,
-        price:     result.regularMarketPrice,
-        prevClose: result.regularMarketPreviousClose ?? null,
-        openPrice: result.regularMarketOpen          ?? null,
-        currency:  result.currency                   ?? 'USD',
+        price:          r.regularMarketPrice,
+        prevClose:      r.regularMarketPreviousClose ?? null,
+        openPrice:      r.regularMarketOpen          ?? null,
+        currency:       r.currency                   ?? 'USD',
+        // 거래량·시총
+        volume:         _n(r.regularMarketVolume),
+        marketCap:      _n(r.marketCap),
+        // 업종
+        industry:       r.industryDisp || r.industry || r.sectorDisp || r.sector || null,
+        // 재무지표
+        per:            _n(r.trailingPE      ?? r.forwardPE),
+        pbr:            _n(r.priceToBook),
+        eps:            _n(r.epsTrailingTwelveMonths ?? r.trailingEps),
+        roe:            null,  // Yahoo quote에 ROE 없음
+        dividendYield:  _n(r.trailingAnnualDividendYield != null
+                            ? r.trailingAnnualDividendYield * 100
+                            : null),
       };
     } catch (_) { return null; }
   };
