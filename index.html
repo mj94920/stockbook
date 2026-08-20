@@ -10978,7 +10978,7 @@ function renderWatchlist() {
     const div    = w.dividendYield ? Number(w.dividendYield).toFixed(1)+'%' : (w.dividend ? w.dividend+'%' : '-');
     const vol    = w.volume ? Number(w.volume).toLocaleString() : '-';
     const cap    = w.marketCap ? Math.round(w.marketCap/100000000).toLocaleString() : '-';
-    const sector = w.industry || w.sector || (isKr ? (w.market||'KR') : 'US');
+    const sector = w.industry || w.sector || '-';
 
     return `<tr id="wl-row-${safeCode}" style="cursor:pointer;"
         onclick="allStockOpenChart('${safeCode}','${safeName}')">
