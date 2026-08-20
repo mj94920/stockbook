@@ -94,6 +94,12 @@ cd "C:\Users\mj949\OneDrive\오은미\주식\Project Stock Book" && bubblewrap b
 
 코드를 수정한 직후 **사용자에게 확인 없이** 즉시 배포를 실행한다.
 
+### ⚠️ 예외: mobile.html / PWA 전용 파일만 수정한 경우
+
+`mobile.html`, `manifest.json`, `sw.js` 만 변경된 경우 → **GitHub 푸시만** 실행. EXE 빌드는 하지 않는다.
+- 이유: EXE(Electron)의 메인 창은 `index.html`이며, mobile.html은 EXE에 포함되지만 Electron이 직접 로드하지 않음. 데스크탑 앱 동작에 영향 없음.
+- GitHub Pages에만 반영되면 충분 (proto-spinoff-2.6.6 → main 양쪽 push).
+
 ### Step 1 — GitHub 푸시 (cmd 셸)
 
 ```cmd

@@ -3091,7 +3091,7 @@
     <!-- ② 그룹 태그 필터 (C안 + A안) -->
     <div id="wlGroupBar" style="padding:4px 10px 2px;flex-shrink:0;display:flex;gap:5px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--border);min-height:30px;"></div>
     <!-- ③ 관심종목 리스트 -->
-    <div id="watchlistBody" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:5px;padding:6px 10px 8px;min-height:0;"></div>
+    <div id="watchlistBody" style="flex:1;overflow:auto;min-height:0;"></div>
   </div>
   <div class="mdi-ptab-pane" id="mdi-ptc-watchlist-as" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
   <!-- 고정 헤더 -->
@@ -10920,40 +10920,86 @@ function renderWatchlist() {
   if (filterKw) list = list.filter(w =>
     (w.name||'').toLowerCase().includes(filterKw) || (w.ticker||'').toLowerCase().includes(filterKw));
   if (!list.length) {
-    body.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0;">'+(filterKw||activeGrp!=='전체'?'검색 결과가 없습니다.':'관심종목을 추가해 보세요.')+'</div>';
+    body.innerHTML = `<div style="color:var(--text3);font-size:13px;text-align:center;padding:40px 0;">${filterKw||activeGrp!=='전체'?'검색 결과가 없습니다.':'관심종목을 추가해 보세요.'}</div>`;
     wlRenderGroupBar(); return;
   }
   const fullList = state.watchlist || [];
-  body.innerHTML = list.map(w => {
+  const rows = list.map(w => {
     const i = fullList.indexOf(w);
-    const priceStr = w.price != null ? w.price.toLocaleString('ko-KR')+'원' : '-';
-    const chg      = w.change;
-    const chgColor = chg == null ? 'var(--text3)' : chg > 0 ? 'var(--hts-up)' : chg < 0 ? 'var(--hts-dn)' : 'var(--text2)';
-    const chgStr   = chg == null ? '-' : (chg > 0 ? '+' : '') + chg.toFixed(2) + '%';
-    const label    = w.name || w.ticker;
-    const sub      = w.name && w.ticker ? `<span style="font-size:11px;color:var(--text3);margin-left:5px;">${w.ticker}</span>` : '';
-    const grps     = (state.watchlistGroups||[]);
-    const grpSel   = grps.length ? `<select onchange="wlAssignGroup(${i},this.value)" style="font-size:10px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text2);padding:1px 3px;cursor:pointer;" title="그룹 지정">
-      <option value="">미분류</option>
-      ${grps.map(g=>`<option value="${g}" ${(w.group===g)?'selected':''}>${g}</option>`).join('')}
-    </select>` : '';
-    return `<div data-name="${label}" style="display:flex;align-items:center;gap:7px;padding:7px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--border);">
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:600;color:var(--text);">${label}${sub}</div>
-        <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
-          ${w.per != null ? `<span style="font-size:10px;color:var(--text3);">PER ${w.per} · ROE ${w.roe??'-'}%</span>` : ''}
-          ${grpSel}
-        </div>
-      </div>
-      <div style="text-align:right;flex-shrink:0;">
-        <div style="font-size:13px;font-weight:700;color:var(--text);">${priceStr}</div>
-        <div style="font-size:11px;color:${chgColor};">${chgStr}</div>
-      </div>
-      <button onclick="removeWatchlistItem(${i})" title="삭제" style="background:none;border:none;cursor:pointer;color:var(--text3);padding:3px;border-radius:5px;flex-shrink:0;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>`;
+    const safeCode = (w.ticker||'').replace(/'/g,'');
+    const safeName = (w.name||w.ticker||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const isKr = /^\d{6}$/.test(w.ticker);
+    // 가격
+    const priceStr = w.price != null ? w.price.toLocaleString('ko-KR') : '-';
+    // 등락률
+    const chgPct = w.change;
+    const up = chgPct > 0, dn = chgPct < 0;
+    const cls = chgPct == null ? '' : up ? 'up' : dn ? 'dn' : '';
+    const pctStr = chgPct == null ? '-' : (up?'+':'') + chgPct.toFixed(2) + '%';
+    // 전일대비 (절대값 역산)
+    let diffStr = '-';
+    if (w.price != null && chgPct != null && chgPct !== 0) {
+      const prev = w.price / (1 + chgPct / 100);
+      const diff = Math.round(w.price - prev);
+      diffStr = (diff >= 0 ? '▲ ' : '▼ ') + Math.abs(diff).toLocaleString('ko-KR');
+    } else if (chgPct === 0) { diffStr = '— 0'; }
+    // 재무
+    const _fc = (window._stockFundamentalsCache||{})[safeCode] || {};
+    const epsRaw = _fc.eps || w.eps;
+    const roeRaw = _fc.roe || w.roe;
+    const epsStr = epsRaw ? Math.round(Number(epsRaw)).toLocaleString() : '-';
+    const roeStr = roeRaw ? Number(roeRaw).toFixed(1)+'%' : (w.roe != null ? Number(w.roe).toFixed(1)+'%' : '-');
+    const per    = w.per  != null ? Number(w.per).toFixed(1)+'배' : '-';
+    const pbr    = w.pbr  != null ? Number(w.pbr).toFixed(2)+'배' : '-';
+    const div    = w.dividendYield ? Number(w.dividendYield).toFixed(1)+'%' : (w.dividend ? w.dividend+'%' : '-');
+    const vol    = w.volume ? Number(w.volume).toLocaleString() : '-';
+    const cap    = w.marketCap ? Math.round(w.marketCap/100000000).toLocaleString() : '-';
+    const sector = w.industry || w.sector || (isKr ? (w.market||'KR') : 'US');
+
+    return `<tr id="wl-row-${safeCode}" style="cursor:pointer;"
+        onclick="allStockOpenChart('${safeCode}','${safeName}')">
+      <td style="text-align:center;width:26px;padding:2px 3px;"
+          onclick="event.stopPropagation();removeWatchlistItem(${i})" title="관심 해제">
+        <span style="font-size:13px;color:gold;cursor:pointer;">★</span>
+      </td>
+      <td style="font-weight:600;white-space:nowrap;">${w.name||w.ticker}</td>
+      <td style="font-family:monospace;font-size:11px;color:var(--text3);">${w.ticker||'-'}</td>
+      <td style="font-size:11px;color:var(--text3);white-space:nowrap;">${sector}</td>
+      <td id="wl-price-${safeCode}" style="text-align:right;font-weight:600;">${priceStr}</td>
+      <td id="wl-chg-${safeCode}"   style="text-align:right;" class="${cls}">${diffStr}</td>
+      <td id="wl-pct-${safeCode}"   style="text-align:right;font-weight:600;" class="${cls}">${pctStr}</td>
+      <td style="text-align:right;font-size:11px;color:var(--text2);">${vol}</td>
+      <td style="text-align:right;font-size:11px;">${cap}</td>
+      <td style="text-align:right;font-size:11px;color:var(--text3);">${epsStr}</td>
+      <td style="text-align:right;font-size:11px;color:var(--text3);">${roeStr}</td>
+      <td style="text-align:right;font-size:11px;color:var(--text3);">${per}</td>
+      <td style="text-align:right;font-size:11px;color:var(--text3);">${pbr}</td>
+      <td style="text-align:right;font-size:11px;color:var(--text3);">${div}</td>
+      <td style="text-align:center;padding:2px 3px;"
+          onclick="event.stopPropagation();allStockOpenChart('${safeCode}','${safeName}')" title="기업분석">
+        <button type="button" style="padding:1px 5px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-size:10px;cursor:pointer;line-height:1.5;">분석</button>
+      </td>
+    </tr>`;
   }).join('');
+
+  body.innerHTML = `<table class="hts-table" style="width:100%;min-width:820px;">
+    <thead><tr>
+      <th style="width:26px;text-align:center;padding:4px 2px;" title="관심 해제">★</th>
+      <th>종목명</th><th>코드</th><th>업종</th>
+      <th style="text-align:right;">현재가</th>
+      <th style="text-align:right;">전일대비</th>
+      <th style="text-align:right;">등락률</th>
+      <th style="text-align:right;">거래량</th>
+      <th style="text-align:right;">시총(억)</th>
+      <th style="text-align:right;" title="기업분석 조회 시 자동 기록">EPS</th>
+      <th style="text-align:right;" title="기업분석 조회 시 자동 기록">ROE</th>
+      <th style="text-align:right;">PER</th>
+      <th style="text-align:right;">PBR</th>
+      <th style="text-align:right;">배당률</th>
+      <th style="width:40px;"></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
   wlRenderGroupBar();
 }
 
