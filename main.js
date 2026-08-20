@@ -504,11 +504,15 @@ ipcMain.handle('fetch-stock-detail', async (event, code) => {
   try {
     const base = `https://m.stock.naver.com/api/stock/${code.trim()}`;
     const [basicRes, annualRes] = await Promise.allSettled([
-      httpsGet(`${base}/basic`,           10000, NAVER_HEADERS),
+      httpsGet(`${base}/basic`,           10000),           // NAVER_HEADERS 불필요 (fetchQuote와 동일 경로)
       httpsGet(`${base}/finance/annual`,  10000, NAVER_HEADERS),
     ]);
 
-    const data = basicRes.status === 'fulfilled' ? JSON.parse(basicRes.value) : {};
+    // basic API 실패 시 ok:false 반환 (빈 data로 ok:true 반환하던 버그 수정)
+    if (basicRes.status !== 'fulfilled') {
+      return { ok: false, error: 'basic API 실패: ' + (basicRes.reason?.message || '') };
+    }
+    const data = JSON.parse(basicRes.value);
 
     // annual 데이터에서 재무 지표 추출 (basic에 없는 경우 보완)
     if (annualRes.status === 'fulfilled') {
@@ -994,15 +998,25 @@ ipcMain.handle('fetch-quote', async (_event, rawTicker) => {
     try {
       const body = await httpsGet(`https://m.stock.naver.com/api/stock/${rawTicker}/basic`);
       const d    = JSON.parse(body);
+      const _nv  = v => { const n = parseFloat(String(v ?? '').replace(/,/g, '')); return (!isNaN(n) && n !== 0) ? n : null; };
       const price  = parseFloat((d.closePrice                 || '0').replace(/,/g, ''));
       const change = parseFloat((d.compareToPreviousClosePrice || '0').replace(/,/g, ''));
       const openP  = parseFloat((d.openPrice                  || '0').replace(/,/g, ''));
       if (price) return {
-        symbol:    rawTicker,
+        symbol:      rawTicker,
         price,
-        prevClose: Math.round((price - change) * 100) / 100,
-        openPrice: openP || null,
-        currency:  'KRW',
+        prevClose:   Math.round((price - change) * 100) / 100,
+        openPrice:   openP || null,
+        currency:    'KRW',
+        changeRatio: _nv(d.fluctuationsRatio),
+        volume:      _nv(d.accumulatedTradingVolume),
+        marketCap:   _nv(d.marketValue) ?? _nv(d.marketValueAmount),
+        per:         _nv(d.per),
+        pbr:         _nv(d.pbr),
+        eps:         _nv(d.eps),
+        dividendYield: _nv(d.dividendYield),
+        industry:    d.industryGroupName || d.industryName || d.industryCategoryName || null,
+        stockName:   d.stockName || null,
       };
     } catch (_) { /* 네이버 실패 시 야후 폴백 */ }
 
