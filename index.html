@@ -11044,6 +11044,7 @@ async function refreshWatchlist() {
           // 국내: fetchQuote IPC (확장된 Naver basic 데이터 — 가격+재무 한번에)
           // fetchStockDetail(ok:true + 빈data 버그) 대신 fetchQuote를 사용해 안정성 확보
           const r = await api.fetchQuote(w.ticker);
+          console.log('[WL-DEBUG]', w.ticker, JSON.stringify(r));
           if (r?.price) {
             w.price  = r.price;
             // 등락률: changeRatio(%) 우선, 없으면 prevClose로 계산
