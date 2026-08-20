@@ -990,37 +990,65 @@ ipcMain.handle('fetch-quote', async (_event, rawTicker) => {
   };
 
   if (isKrNum) {
-    // 1) KIS REST API (API 키 등록 시 — 실시간 공식 데이터)
-    const kisResult = await fetchKisPrice(rawTicker);
-    if (kisResult) return kisResult;
+    // KIS(가격) + Naver basic(재무) 병렬 조회 — KIS가 있어도 Naver 재무 데이터를 항상 수집
+    const _nv = v => { const n = parseFloat(String(v ?? '').replace(/,/g, '')); return (!isNaN(n) && n !== 0) ? n : null; };
 
-    // 2) 네이버 금융 (KIS 미등록 또는 실패 시 폴백)
-    try {
-      const body = await httpsGet(`https://m.stock.naver.com/api/stock/${rawTicker}/basic`);
-      const d    = JSON.parse(body);
-      const _nv  = v => { const n = parseFloat(String(v ?? '').replace(/,/g, '')); return (!isNaN(n) && n !== 0) ? n : null; };
-      const price  = parseFloat((d.closePrice                 || '0').replace(/,/g, ''));
-      const change = parseFloat((d.compareToPreviousClosePrice || '0').replace(/,/g, ''));
-      const openP  = parseFloat((d.openPrice                  || '0').replace(/,/g, ''));
-      if (price) return {
+    const [kisResult, naverRaw] = await Promise.allSettled([
+      fetchKisPrice(rawTicker),
+      httpsGet(`https://m.stock.naver.com/api/stock/${rawTicker}/basic`),
+    ]);
+
+    // Naver basic 파싱
+    let naverData = null;
+    if (naverRaw.status === 'fulfilled') {
+      try {
+        const d     = JSON.parse(naverRaw.value);
+        const price = parseFloat((d.closePrice || '0').replace(/,/g, ''));
+        const chg   = parseFloat((d.compareToPreviousClosePrice || '0').replace(/,/g, ''));
+        const openP = parseFloat((d.openPrice  || '0').replace(/,/g, ''));
+        if (price) naverData = {
+          price,
+          prevClose:   Math.round((price - chg) * 100) / 100,
+          openPrice:   openP || null,
+          changeRatio: _nv(d.fluctuationsRatio),
+          volume:      _nv(d.accumulatedTradingVolume),
+          marketCap:   _nv(d.marketValue) ?? _nv(d.marketValueAmount),
+          per:         _nv(d.per),
+          pbr:         _nv(d.pbr),
+          eps:         _nv(d.eps),
+          dividendYield: _nv(d.dividendYield),
+          industry:    d.industryGroupName || d.industryName || d.industryCategoryName || null,
+          stockName:   d.stockName || null,
+        };
+      } catch (_) {}
+    }
+
+    const kis = kisResult.status === 'fulfilled' ? kisResult.value : null;
+
+    // 결과 병합: 가격은 KIS 우선, 재무·업종·거래량은 Naver
+    if (kis && naverData) {
+      return {
         symbol:      rawTicker,
-        price,
-        prevClose:   Math.round((price - change) * 100) / 100,
-        openPrice:   openP || null,
+        price:       kis.price,
+        prevClose:   kis.prevClose ?? naverData.prevClose,
+        openPrice:   kis.openPrice ?? naverData.openPrice,
         currency:    'KRW',
-        changeRatio: _nv(d.fluctuationsRatio),
-        volume:      _nv(d.accumulatedTradingVolume),
-        marketCap:   _nv(d.marketValue) ?? _nv(d.marketValueAmount),
-        per:         _nv(d.per),
-        pbr:         _nv(d.pbr),
-        eps:         _nv(d.eps),
-        dividendYield: _nv(d.dividendYield),
-        industry:    d.industryGroupName || d.industryName || d.industryCategoryName || null,
-        stockName:   d.stockName || null,
+        source:      'KIS',
+        changeRatio: naverData.changeRatio,
+        volume:      naverData.volume,
+        marketCap:   naverData.marketCap,
+        per:         naverData.per,
+        pbr:         naverData.pbr,
+        eps:         naverData.eps,
+        dividendYield: naverData.dividendYield,
+        industry:    naverData.industry,
+        stockName:   naverData.stockName,
       };
-    } catch (_) { /* 네이버 실패 시 야후 폴백 */ }
+    }
+    if (kis)       return kis;           // KIS만 성공 (Naver 실패)
+    if (naverData) return { symbol: rawTicker, currency: 'KRW', ...naverData };
 
-    // 3) 야후 파이낸스 v7 quote .KS / .KQ
+    // 3) 야후 파이낸스 v7 quote .KS / .KQ (최후 폴백)
     for (const suffix of ['.KS', '.KQ']) {
       const result = await fetchYFv7(rawTicker + suffix);
       if (result) return { ...result, currency: result.currency || 'KRW' };
