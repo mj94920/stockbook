@@ -11119,35 +11119,8 @@ async function refreshWatchlist() {
     list[i] = w;
   }
   save();
-  // in-place 셀 업데이트 (전체 리렌더 없이 가격만 갱신 → 깜빡임 없음)
-  let _allInPlace = true;
-  list.forEach(w => {
-    const code = w.ticker || '';
-    const priceEl = document.getElementById('wl-price-' + code);
-    if (!priceEl) { _allInPlace = false; return; }
-    priceEl.textContent = w.price != null ? w.price.toLocaleString('ko-KR') : '-';
-    const chgEl = document.getElementById('wl-chg-' + code);
-    const pctEl = document.getElementById('wl-pct-' + code);
-    const chgPct = w.change;
-    const up = chgPct > 0, dn = chgPct < 0;
-    const cls = chgPct == null ? '' : up ? 'up' : dn ? 'dn' : '';
-    if (chgEl) {
-      let diffStr = '-';
-      if (w.price != null && chgPct != null && chgPct !== 0) {
-        const prev = w.price / (1 + chgPct / 100);
-        const diff = Math.round(w.price - prev);
-        diffStr = (diff >= 0 ? '▲ ' : '▼ ') + Math.abs(diff).toLocaleString('ko-KR');
-      } else if (chgPct === 0) { diffStr = '— 0'; }
-      chgEl.textContent = diffStr;
-      chgEl.className = cls;
-    }
-    if (pctEl) {
-      const pctStr = chgPct == null ? '-' : (up?'+':'') + chgPct.toFixed(2) + '%';
-      pctEl.textContent = pctStr;
-      pctEl.className = cls;
-    }
-  });
-  if (!_allInPlace) renderWatchlist();
+  // 펀더멘털 포함 전체 재렌더 (PER·EPS·업종 등도 반영)
+  renderWatchlist();
 }
 
 /* 관심종목 자동 갱신 타이머 (30초 주기, 탭 활성 중에만 동작) */
