@@ -10924,6 +10924,30 @@ function renderWatchlist() {
     wlRenderGroupBar(); return;
   }
   const fullList = state.watchlist || [];
+
+  // ── 정렬 ─────────────────────────────────────────────────────────────
+  window._wlSort = window._wlSort || { col: null, asc: true };
+  const _ws = window._wlSort;
+  const _wlSortFns = {
+    name:   (a,b) => (a.name||a.ticker||'').localeCompare(b.name||b.ticker||''),
+    price:  (a,b) => (a.price||0) - (b.price||0),
+    chg:    (a,b) => (a.change||0) - (b.change||0),
+    per:    (a,b) => (a.per||9999) - (b.per||9999),
+    pbr:    (a,b) => (a.pbr||9999) - (b.pbr||9999),
+    roe:    (a,b) => (a.roe||0) - (b.roe||0),
+  };
+  if (_ws.col && _wlSortFns[_ws.col]) {
+    const fn = _wlSortFns[_ws.col];
+    list = [...list].sort((a,b) => _ws.asc ? fn(a,b) : fn(b,a));
+  }
+  function _wlSortHead(col, label) {
+    const active = _ws.col === col;
+    const arrow = active ? (_ws.asc ? ' ▲' : ' ▼') : '';
+    return `<th style="text-align:right;cursor:pointer;user-select:none;${active?'color:var(--accent);':''}"
+      onclick="window._wlSort={col:'${col}',asc:${active?!_ws.asc:true}};renderWatchlist();"
+      title="${label} 정렬">${label}${arrow}</th>`;
+  }
+
   const rows = list.map(w => {
     const i = fullList.indexOf(w);
     const safeCode = (w.ticker||'').replace(/'/g,'');
@@ -10982,19 +11006,21 @@ function renderWatchlist() {
     </tr>`;
   }).join('');
 
+  const _sortName = _ws.col==='name' ? ` style="cursor:pointer;user-select:none;${_ws.col==='name'?'color:var(--accent);':''}" onclick="window._wlSort={col:'name',asc:${_ws.col==='name'?!_ws.asc:true}};renderWatchlist();" title="종목명 정렬"` : ` style="cursor:pointer;user-select:none;" onclick="window._wlSort={col:'name',asc:true};renderWatchlist();" title="종목명 정렬"`;
   body.innerHTML = `<table class="hts-table" style="width:100%;min-width:820px;">
     <thead><tr>
       <th style="width:26px;text-align:center;padding:4px 2px;" title="관심 해제">★</th>
-      <th>종목명</th><th>코드</th><th>업종</th>
-      <th style="text-align:right;">현재가</th>
-      <th style="text-align:right;">전일대비</th>
-      <th style="text-align:right;">등락률</th>
+      <th${_sortName}>종목명${_ws.col==='name'?(_ws.asc?' ▲':' ▼'):''}</th>
+      <th>코드</th><th>업종</th>
+      ${_wlSortHead('price','현재가')}
+      ${_wlSortHead('chg','전일대비')}
+      ${_wlSortHead('chg','등락률')}
       <th style="text-align:right;">거래량</th>
       <th style="text-align:right;">시총(억)</th>
       <th style="text-align:right;" title="기업분석 조회 시 자동 기록">EPS</th>
-      <th style="text-align:right;" title="기업분석 조회 시 자동 기록">ROE</th>
-      <th style="text-align:right;">PER</th>
-      <th style="text-align:right;">PBR</th>
+      ${_wlSortHead('roe','ROE')}
+      ${_wlSortHead('per','PER')}
+      ${_wlSortHead('pbr','PBR')}
       <th style="text-align:right;">배당률</th>
       <th style="width:40px;"></th>
     </tr></thead>
@@ -11071,7 +11097,51 @@ async function refreshWatchlist() {
     list[i] = w;
   }
   save();
-  renderWatchlist();
+  // in-place 셀 업데이트 (전체 리렌더 없이 가격만 갱신 → 깜빡임 없음)
+  let _allInPlace = true;
+  list.forEach(w => {
+    const code = w.ticker || '';
+    const priceEl = document.getElementById('wl-price-' + code);
+    if (!priceEl) { _allInPlace = false; return; }
+    priceEl.textContent = w.price != null ? w.price.toLocaleString('ko-KR') : '-';
+    const chgEl = document.getElementById('wl-chg-' + code);
+    const pctEl = document.getElementById('wl-pct-' + code);
+    const chgPct = w.change;
+    const up = chgPct > 0, dn = chgPct < 0;
+    const cls = chgPct == null ? '' : up ? 'up' : dn ? 'dn' : '';
+    if (chgEl) {
+      let diffStr = '-';
+      if (w.price != null && chgPct != null && chgPct !== 0) {
+        const prev = w.price / (1 + chgPct / 100);
+        const diff = Math.round(w.price - prev);
+        diffStr = (diff >= 0 ? '▲ ' : '▼ ') + Math.abs(diff).toLocaleString('ko-KR');
+      } else if (chgPct === 0) { diffStr = '— 0'; }
+      chgEl.textContent = diffStr;
+      chgEl.className = cls;
+    }
+    if (pctEl) {
+      const pctStr = chgPct == null ? '-' : (up?'+':'') + chgPct.toFixed(2) + '%';
+      pctEl.textContent = pctStr;
+      pctEl.className = cls;
+    }
+  });
+  if (!_allInPlace) renderWatchlist();
+}
+
+/* 관심종목 자동 갱신 타이머 (30초 주기, 탭 활성 중에만 동작) */
+let _wlAutoTimer = null;
+function _startWatchlistAutoRefresh() {
+  _stopWatchlistAutoRefresh();
+  _wlAutoTimer = setInterval(async () => {
+    const panel = document.getElementById('mdi-panel-watchlist');
+    if (!panel || panel.dataset.mdiState === 'closed' || panel.dataset.mdiState === 'minimized') {
+      _stopWatchlistAutoRefresh(); return;
+    }
+    try { await refreshWatchlist(); } catch(e) {}
+  }, 30000); // 30초 주기
+}
+function _stopWatchlistAutoRefresh() {
+  if (_wlAutoTimer) { clearInterval(_wlAutoTimer); _wlAutoTimer = null; }
 }
 
 // 관심종목 탭 진입 시 자동 렌더
@@ -11772,7 +11842,8 @@ function _toggleCheck(stockKey, checkKey, val) {
       if (!el) return;
       el.style.display = 'none';
       el.dataset.mdiState = 'closed';
-      if (pid === 'allstock') try { _stopAllStockAutoRefresh && _stopAllStockAutoRefresh(); } catch(e) {}
+      if (pid === 'allstock')  try { _stopAllStockAutoRefresh  && _stopAllStockAutoRefresh();  } catch(e) {}
+      if (pid === 'watchlist') try { _stopWatchlistAutoRefresh && _stopWatchlistAutoRefresh(); } catch(e) {}
       this._syncBtn(pid);
       try { this.saveMdiLayout(); } catch(e) {}
     },
@@ -12057,7 +12128,12 @@ function _toggleCheck(stockKey, checkKey, val) {
     // 렌더 트리거
     try {
       if (panelId === 'watchlist') {
-        if (tabKey === 'wl') renderWatchlist && renderWatchlist();
+        if (tabKey === 'wl') {
+          renderWatchlist && renderWatchlist();
+          _startWatchlistAutoRefresh && _startWatchlistAutoRefresh();
+        } else {
+          _stopWatchlistAutoRefresh && _stopWatchlistAutoRefresh();
+        }
         if (tabKey === 'as') { renderAllStockTab && renderAllStockTab(); _startAllStockAutoRefresh && _startAllStockAutoRefresh(); }
         if (tabKey === 'tm') renderThemeTab && renderThemeTab();
       }
