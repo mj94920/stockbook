@@ -35,8 +35,13 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
       "runAfterFinish": true,
-      "language": "1042"
+      "language": "1042",
+      "perMachine": false,
+      "shortcutName": "Stock Book",
+      "menuCategory": "Stock Book",
+      "include": "installer.nsh"
     }
   },
   "devDependencies": {
