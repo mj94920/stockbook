@@ -6616,15 +6616,20 @@ function connectToHoga(code, name) {
   const codeEl = document.getElementById('qo_stock_code');
   if (nameEl) nameEl.value = name;
   if (codeEl) codeEl.value = code;
+  // 기업분석 드로어 열려있으면 닫기
+  document.getElementById('analysisDrawer')?.classList.remove('open');
+  document.getElementById('analysisOverlay')?.classList.remove('open');
   // 호가 탭으로 전환
   if (typeof onQONameInput === 'function') onQONameInput();
   if (typeof updateHogaDisplay === 'function') updateHogaDisplay();
-  // trading 패널 열기
+  // trading 패널 열기 (display:none 또는 visibility:hidden 모두 처리)
   const panel = document.getElementById('mdi-panel-trading');
-  if (panel && panel.style.display === 'none') {
-    if (window._MDI?.open) window._MDI.open('trading');
+  if (panel) {
+    const hidden = panel.style.display === 'none' || panel.style.visibility === 'hidden'
+                   || getComputedStyle(panel).display === 'none';
+    if (hidden && window._MDI?.open) window._MDI.open('trading');
   }
-  // 호가 탭 활성화 (첫 번째 탭)
+  // 주문/호가 탭 활성화 (첫 번째 탭)
   const hogaTab = panel?.querySelector('.mdi-ptab');
   if (hogaTab) hogaTab.click();
   // 전종목 패널을 뒤로 보내기
