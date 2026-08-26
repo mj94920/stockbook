@@ -6992,15 +6992,16 @@ function updateHogaDisplay() {
   const code = codeEl?.value?.trim() || '';
 
   // 현재가 검색: 포트폴리오 → 전종목 캐시
-  let curPrice = null, prevClose = null;
+  let curPrice = null, prevClose = null, openPrice = null;
   const portS = (state.portfolio || []).find(s => s.name === name || s.ticker === code);
   if (portS) {
     curPrice  = portS.price ?? null;  // 실시간 현재가만 사용 (avgPrice 절대 폴백 금지)
     prevClose = portS.prevClose ?? null;
+    openPrice = portS.openPrice ?? null;
   }
   if (!curPrice) {
     const allS = (Object.values(_allStockRaw || {}).flat()).find(s => s.name === name || s.code === code);
-    if (allS) curPrice = allS.price ?? null;
+    if (allS) { curPrice = allS.price ?? null; if (!openPrice) openPrice = allS.openPrice ?? null; }
   }
 
   // 현재가 헤더 렌더링
@@ -7037,14 +7038,14 @@ function updateHogaDisplay() {
     if (code && /^\d{6}$/.test(code) && window.electronAPI?.fetchHoga) {
       window.electronAPI.fetchHoga(code).then(hoga => {
         if (hoga && hoga.asks?.length && hoga.bids?.length) {
-          _renderKisHoga(hoga, curPrice);
-          _startHogaAutoRefresh(curPrice, code);
+          _renderKisHoga(hoga, curPrice, openPrice);
+          _startHogaAutoRefresh(curPrice, code, openPrice);
         } else {
-          _renderSimulatedHoga(curPrice);
+          _renderSimulatedHoga(curPrice, false, openPrice);
         }
-      }).catch(() => _renderSimulatedHoga(curPrice));
+      }).catch(() => _renderSimulatedHoga(curPrice, false, openPrice));
     } else {
-      _renderSimulatedHoga(curPrice);
+      _renderSimulatedHoga(curPrice, false, openPrice);
     }
   } else if (wrap) {
     wrap.style.display = 'none';
@@ -7182,10 +7183,12 @@ function _getTickSize(price) {
 let _hogaRefreshTimer = null;
 let _hogaCurrentPrice = null;
 let _hogaCurrentCode  = null;
+let _hogaOpenPrice    = null;  // 시가 (현재가 색상 기준)
 
-function _startHogaAutoRefresh(price, code) {
+function _startHogaAutoRefresh(price, code, openPrice) {
   _hogaCurrentPrice = price;
   _hogaCurrentCode  = code || null;
+  if (openPrice != null) _hogaOpenPrice = openPrice;
   if (_hogaRefreshTimer) { clearInterval(_hogaRefreshTimer); _hogaRefreshTimer = null; }
   _hogaRefreshTimer = setInterval(async () => {
     const wrap = document.getElementById('qo_hoga_wrap');
@@ -7196,11 +7199,11 @@ function _startHogaAutoRefresh(price, code) {
       try {
         const hoga = await window.electronAPI.fetchHoga(_hogaCurrentCode);
         if (hoga && hoga.asks?.length && hoga.bids?.length) {
-          _renderKisHoga(hoga, _hogaCurrentPrice); return;
+          _renderKisHoga(hoga, _hogaCurrentPrice, _hogaOpenPrice); return;
         }
       } catch(e) { /* KIS 실패 → 가상 폴백 */ }
     }
-    _renderSimulatedHoga(_hogaCurrentPrice, true);
+    _renderSimulatedHoga(_hogaCurrentPrice, true, _hogaOpenPrice);
   }, 2000);
 }
 
@@ -7210,7 +7213,7 @@ function _stopHogaAutoRefresh() {
 
 
 /* KIS API 실시간 호가 렌더 */
-function _renderKisHoga(hoga, curPrice) {
+function _renderKisHoga(hoga, curPrice, openPrice) {
   // asks: 매도 (높은 가격 → 낮은 가격 순, length=5)
   // hoga.asks = [{price, qty}] — fetchKisHoga에서 i=5..1 순으로 push → 높은순
   const rows = [];
@@ -7221,11 +7224,11 @@ function _renderKisHoga(hoga, curPrice) {
   (hoga.bids || []).forEach(b => {
     rows.push({ price: b.price, askVol: 0, bidVol: b.qty, isCur: false });
   });
-  _renderHogaTable(rows);
+  _renderHogaTable(rows, openPrice);
 }
 
 /* 현재가 기반 가상 호가 5+5 레더 생성 */
-function _renderSimulatedHoga(price, isAutoRefresh = false) {
+function _renderSimulatedHoga(price, isAutoRefresh = false, openPrice = null) {
   const tick = _getTickSize(price);
   const base = Math.round(price / tick) * tick; // 현재가 기준 틱 정렬
   const rows = [];
@@ -7240,12 +7243,12 @@ function _renderSimulatedHoga(price, isAutoRefresh = false) {
     const p = base - tick * i;
     if (p > 0) rows.push({ price: p, askVol: 0, bidVol: Math.round(500 + Math.random() * 4000), isCur: false });
   }
-  _renderHogaTable(rows);
+  _renderHogaTable(rows, openPrice);
   // 최초 렌더 시에만 자동 갱신 타이머 시작
-  if (!isAutoRefresh) _startHogaAutoRefresh(price, _hogaCurrentCode);
+  if (!isAutoRefresh) _startHogaAutoRefresh(price, _hogaCurrentCode, openPrice);
 }
 
-function _renderHogaTable(rows) {
+function _renderHogaTable(rows, openPrice = null) {
   // rows: [{price, askVol, bidVol, isCur}] — 매도(ask) 위→아래, 현재가, 매수(bid) 위→아래
   const body = document.getElementById('qo_hoga_body');
   const wrap = document.getElementById('qo_hoga_wrap');
@@ -7262,9 +7265,15 @@ function _renderHogaTable(rows) {
 
     // ── 현재가 구분선 행 ──
     if (r.isCur) {
+      // 시가 대비 색상: 위 → 빨강, 아래 → 파랑, 동일/없음 → 무색
+      let curClr = 'var(--text)';
+      if (openPrice != null && r.price != null) {
+        if (r.price > openPrice) curClr = 'var(--hts-up)';
+        else if (r.price < openPrice) curClr = 'var(--hts-dn)';
+      }
       return `<tr onclick="${clickAct}" style="cursor:pointer;background:rgba(255,215,0,0.1);border-top:2px solid rgba(255,215,0,0.4);border-bottom:2px solid rgba(255,215,0,0.4);">
         <td style="text-align:right;padding:3px 6px;font-size:10px;color:var(--text3);width:35%;">현재가▶</td>
-        <td style="text-align:center;padding:3px 4px;font-weight:700;font-size:13px;color:var(--text);width:30%;">${priceStr}</td>
+        <td style="text-align:center;padding:3px 4px;font-weight:700;font-size:13px;color:${curClr};width:30%;">${priceStr}</td>
         <td style="padding:3px 6px;width:35%;"></td>
       </tr>`;
     }
