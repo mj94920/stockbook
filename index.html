@@ -2843,6 +2843,100 @@
   max-width: 200px; overflow: hidden; text-overflow: ellipsis;
 }
 #calDdayBadge:hover { border-color: #2563eb; color: #90bfff; background: #0d1a2e; }
+/* UI redesign step 2: shared primitives; inline for Electron's temporary HTML copy. */
+:root {
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px;
+  --control-height: 36px; --control-height-sm: 30px;
+  --radius: 8px; --radius-sm: 4px;
+  --modal-sm: 400px; --modal-md: 560px; --modal-lg: 800px;
+  --bg: #0d1421; --bg2: #131e2f; --bg3: #1b293d; --bg4: #30415b;
+  --border: #33445c; --border-light: #27374d;
+  --text: #edf2fa; --text2: #b7c4d8; --text3: #94a6bf;
+  --accent: #2563eb; --accent2: #1d4ed8;
+  --accent-glow: rgba(96,165,250,.25); --focus-ring: #93c5fd;
+  --bg-gradient: none; --card-bg: var(--bg2); --glass-bg: var(--bg2);
+  --glass-blur: none; --glass-border: var(--border);
+  --shadow-card: none; --shadow-btn: none; --glass-shadow: none;
+  --shadow: 0 12px 32px rgba(0,0,0,.28);
+  --danger-action: #be123c; --danger-action-hover: #9f1239;
+}
+body.light-mode {
+  --bg: #f0f4f8; --bg2: #fff; --bg3: #eaf0f7; --bg4: #d4deeb;
+  --border: #bac7d8; --border-light: #d7e0eb;
+  --text: #17243a; --text2: #40536e; --text3: #526681;
+  --accent: #2563eb; --accent2: #1d4ed8; --focus-ring: #1d4ed8;
+  --bg-gradient: none; --card-bg: var(--bg2); --glass-bg: var(--bg2);
+  --glass-blur: none; --glass-border: var(--border);
+  --shadow-card: none; --shadow-btn: none; --glass-shadow: none;
+  --shadow: 0 12px 32px rgba(15,23,42,.16);
+}
+body { font-family: 'Inter', 'Pretendard', -apple-system, sans-serif; }
+:is(body, body.light-mode) .btn {
+  min-height: var(--control-height); padding: var(--space-2) var(--space-4);
+  gap: var(--space-2); border-radius: var(--radius-sm); box-shadow: none;
+  transition: background-color .15s, border-color .15s, color .15s;
+}
+:is(body, body.light-mode) .btn-sm { min-height: var(--control-height-sm); padding: var(--space-1) var(--space-3); }
+:is(body, body.light-mode) .btn:hover, body .btn:active { transform: none; box-shadow: none; }
+:is(body, body.light-mode) .btn-ghost { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); backdrop-filter: none; }
+:is(body, body.light-mode) .btn-ghost:hover { background: var(--bg4); border-color: var(--border); color: var(--text); }
+:is(body, body.light-mode) .btn-danger { background: var(--danger-action); }
+:is(body, body.light-mode) .btn-danger:hover { background: var(--danger-action-hover); }
+:is(body, body.light-mode) .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+:is(body, body.light-mode) .btn:focus-visible, body input:focus-visible, body select:focus-visible, body textarea:focus-visible {
+  outline: 2px solid var(--focus-ring); outline-offset: 2px;
+}
+:is(body, body.light-mode) .form-grid { gap: var(--space-4); }
+:is(body, body.light-mode) .form-group { gap: var(--space-2); min-width: 0; }
+:is(body, body.light-mode) .form-group input:not([type=checkbox]):not([type=radio]):not([type=hidden]),
+:is(body, body.light-mode) .form-group select, body .form-group textarea {
+  background: var(--bg3); color: var(--text); border: 1px solid var(--border);
+  min-height: var(--control-height); padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm); box-shadow: none; backdrop-filter: none;
+}
+:is(body, body.light-mode) .form-group input::placeholder, body .form-group textarea::placeholder { color: var(--text3); opacity: 1; }
+:is(body, body.light-mode) .modal-overlay { padding: var(--space-4); backdrop-filter: none; }
+:is(body, body.light-mode) .modal {
+  width: 100%; max-width: var(--modal-md); max-height: calc(100dvh - 32px);
+  overflow-y: auto; padding: var(--space-6); border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--bg2); color: var(--text); box-shadow: var(--shadow);
+  backdrop-filter: none;
+}
+:is(body, body.light-mode) .modal.modal-sm { max-width: var(--modal-sm); }
+:is(body, body.light-mode) .modal.modal-md { max-width: var(--modal-md); }
+:is(body, body.light-mode) .modal.modal-lg { max-width: var(--modal-lg); }
+:is(body, body.light-mode) .modal-title { margin-bottom: var(--space-5); font-size: 18px; line-height: 1.4; }
+:is(body, body.light-mode) .modal-actions { gap: var(--space-2); margin-top: var(--space-6); flex-wrap: wrap; }
+@media (max-width: 600px) {
+  :is(body, body.light-mode) .modal { padding: var(--space-4); }
+  :is(body, body.light-mode) .modal .form-grid { grid-template-columns: minmax(0,1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(body, body.light-mode) .btn, body .modal, body .modal-overlay { transition: none; }
+}
+
+/* UI redesign step 3 */
+body .mdi-sidebar,body.light-mode .mdi-sidebar{width:192px;min-width:192px;background:var(--bg2);border-right:1px solid var(--border);padding:12px 8px;gap:12px;overflow-y:auto;z-index:150;}
+body .mdi-sidebar.sb-collapsed{width:56px;min-width:56px;padding:12px 4px;}
+body .mdi-sidebar .mdi-sb-toggle{display:flex;justify-content:space-between;align-items:center;min-height:30px;padding:0 10px;color:var(--text3);font-size:10px;letter-spacing:1px;}
+body .mdi-sidebar .mdi-sb-btn{width:100%;min-height:40px;padding:8px 10px;gap:10px;border:0;border-radius:4px;color:var(--text2)!important;background:transparent;text-align:left;}
+body .mdi-sidebar .mdi-sb-btn:hover{background:var(--bg3);color:var(--text)!important;}
+body .mdi-sidebar .mdi-sb-btn-active{background:var(--bg3);color:var(--text)!important;box-shadow:inset 2px 0 var(--accent);}
+body .mdi-sidebar .mdi-sb-icon-wrap{width:20px;height:20px;min-width:20px;background:transparent!important;transform:none;filter:none;}
+body .mdi-sidebar svg{stroke:currentColor;}
+body .mdi-sidebar .mdi-sb-label{font-size:12px;font-weight:500;white-space:nowrap;}
+body .mdi-sidebar .mdi-sb-section-label{display:block;padding:4px 10px 8px;font-size:10px;color:var(--text3);}
+body .mdi-sidebar.sb-collapsed .mdi-sb-label,body .mdi-sidebar.sb-collapsed .mdi-sb-section-label{display:none;}
+body .mdi-sidebar.sb-collapsed .mdi-sb-btn{justify-content:center;padding:8px;}
+.sb-system{margin-top:auto;padding-top:12px;border-top:1px solid var(--border);}
+#sbConnection{display:flex;align-items:center;gap:8px;padding:12px 10px;color:var(--text3);min-height:36px;}
+.sb-status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--text3);}
+.sb-collapsed #sbConnection{justify-content:center;}
+.sb-hub-actions{display:grid;gap:8px;}
+.header [hidden]{display:none!important;}
+.mdi-sidebar button:focus-visible{outline:2px solid var(--focus-ring);outline-offset:-2px;}
+
 </style>
 </head>
 <body>
@@ -3961,7 +4055,7 @@
 
 <!-- MC SNAPSHOT MODAL -->
 <div class="modal-overlay" id="mcSnapshotModal">
-  <div class="modal" style="max-width:360px">
+  <div class="modal modal-sm">
     <div class="modal-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg> 월별 실제 잔액 입력</div>
     <div id="mcSnapshotLabel" style="font-size:15px;font-weight:700;color:var(--accent);margin-bottom:14px;"></div>
     <div class="form-group">
@@ -3980,7 +4074,7 @@
 
 <!-- TOTAL ASSET MODAL -->
 <div class="modal-overlay" id="totalAssetModal">
-  <div class="modal" style="max-width:360px">
+  <div class="modal modal-sm">
     <div class="modal-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;flex-shrink:0"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> 총 자산 설정</div>
     <p style="font-size:12px;color:var(--text3);margin:-4px 0 12px;">전체 투자 가능 자산(예수금+주식평가액)을 입력하면 투자 비중 계산에 활용됩니다.</p>
     <div class="form-group">
@@ -4000,7 +4094,7 @@
 
 <!-- CASH MANUAL OVERRIDE MODAL -->
 <div class="modal-overlay" id="cashManualModal">
-  <div class="modal" style="max-width:360px">
+  <div class="modal modal-sm">
     <div class="modal-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;flex-shrink:0"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg> 예수금 직접 입력</div>
     <p style="font-size:12px;color:var(--text3);margin:-4px 0 12px;">총자산/입출금 내역으로 자동 계산된 값 대신 실제 예수금을 직접 입력합니다. 저장 후에는 이 값이 다른 계산보다 우선 적용됩니다.</p>
     <div class="form-group">
@@ -4041,7 +4135,7 @@
 
 <!-- EDIT STOCK MODAL -->
 <div class="modal-overlay" id="editStockModal">
-  <div class="modal" style="max-width:480px">
+  <div class="modal modal-md">
     <div class="modal-title" style="display:flex;align-items:center;gap:8px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> <span id="editModalStockName" style="color:var(--accent)">종목 메모</span></div>
     <input type="hidden" id="es_idx">
     <div class="form-grid" style="gap:10px;">
@@ -13020,5 +13114,55 @@ function wlAssignGroup(idx, gName) {
     </div>
   </div>
 </div>
+<script>
+// UI redesign step 3: navigation shell, preserving existing panel functions.
+(() => {
+ const sb=document.getElementById('mdiSidebar'); if(!sb)return;
+ const icons={};sb.querySelectorAll('[data-pid]').forEach(b=>icons[b.dataset.pid]=b.querySelector('svg').outerHTML);
+ const simple='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 15h8"/></svg>';
+ const calendarIcon='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>';
+ const accountIcon='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10h18M5 10v8M9 10v8M15 10v8M19 10v8M3 19h18M12 3l9 5H3l9-5Z"/></svg>';
+ const dataIcon='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v7c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12v7c0 1.7 3.6 3 8 3s8-1.3 8-3v-7"/></svg>';
+ const settingsIcon='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3V2.8h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>';
+ const button=(id,label,icon)=>`<button type="button" class="mdi-sb-btn" data-nav="${id}" title="${label}" aria-label="${label}"><span class="mdi-sb-icon-wrap">${icon||simple}</span><span class="mdi-sb-label">${label}</span></button>`;
+ sb.setAttribute('aria-label','주 메뉴');
+ sb.innerHTML=`<button type="button" class="mdi-sb-toggle" id="mdiSbToggle" title="사이드바 접기" aria-label="사이드바 접기" aria-expanded="true"><span class="mdi-sb-label">WORKSPACE</span><span class="mdi-sb-toggle-icon">«</span></button>
+ <nav aria-label="투자">${button('watchlist','종목 탐색',icons.watchlist)}${button('portfolio','포트폴리오',icons.portfolio)}${button('news','뉴스·시황',icons.news)}${button('records','매매기록',icons.trading)}${button('journal','투자일지',icons.journal)}</nav>
+ <div class="sb-tools"><span class="mdi-sb-section-label">보조 도구</span>${button('trading','호가·거래 입력',icons.trading)}${button('calendar','시장 일정',calendarIcon)}</div>
+ <div class="sb-system"><span class="mdi-sb-section-label">시스템</span>${button('accounts','계좌·API',accountIcon)}${button('data','데이터',dataIcon)}${button('settings','설정',settingsIcon)}<div id="sbConnection" role="status" title="실시간 OFF"><span class="sb-status-dot"></span><span class="mdi-sb-label">실시간 OFF</span></div></div>`;
+ const hub=document.createElement('div');hub.id='sidebarHub';hub.className='modal-overlay';
+ hub.innerHTML='<div class="modal modal-sm" role="dialog" aria-modal="true" aria-labelledby="sidebarHubTitle"><div class="modal-title" id="sidebarHubTitle"></div><div id="sidebarHubActions" class="sb-hub-actions"></div><div class="modal-actions"><button type="button" class="btn btn-ghost" id="sidebarHubClose">닫기</button></div></div>';
+ document.body.append(hub);let opener;
+ function closeHub(){hub.classList.remove('open');opener?.focus();}
+ hub.querySelector('#sidebarHubClose').onclick=closeHub;hub.onclick=e=>{if(e.target===hub)closeHub();};
+ hub.addEventListener('keydown',e=>{if(e.key==='Escape')closeHub();if(e.key==='Tab'){const a=[...hub.querySelectorAll('button')];if(e.shiftKey&&document.activeElement===a[0]){e.preventDefault();a.at(-1).focus();}else if(!e.shiftKey&&document.activeElement===a.at(-1)){e.preventDefault();a[0].focus();}}});
+ function openHub(title,actions){opener=document.activeElement;document.getElementById('sidebarHubTitle').textContent=title;const area=document.getElementById('sidebarHubActions');area.replaceChildren();for(const [label,fn]of actions){const b=document.createElement('button');b.type='button';b.className='btn btn-ghost';b.textContent=label;b.onclick=()=>{closeHub();fn();};area.append(b);}hub.classList.add('open');area.querySelector('button').focus();}
+ function active(id){sb.querySelectorAll('[data-nav]').forEach(b=>{const on=b.dataset.nav===id;b.classList.toggle('mdi-sb-btn-active',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});}
+ const mdi=window._MDI;
+ const selectedPortfolioMenu=()=>document.querySelector('#mdi-panel-portfolio .mdi-ptab.active')?.textContent.trim()==='거래내역'?'records':'portfolio';
+ const front=mdi._front.bind(mdi);mdi._front=function(pid){front(pid);active(pid==='portfolio'?selectedPortfolioMenu():pid);};
+ const panelTab=window._MDIPanelTab;window._MDIPanelTab=function(pid,tab){panelTab(pid,tab);if(pid==='portfolio')active(tab==='trd'?'records':'portfolio');};
+ mdi.toggleSidebar=function(){const collapsed=sb.classList.toggle('sb-collapsed');const b=document.getElementById('mdiSbToggle');b.setAttribute('aria-expanded',String(!collapsed));b.title=b.ariaLabel=collapsed?'사이드바 펼치기':'사이드바 접기';b.querySelector('.mdi-sb-toggle-icon').textContent=collapsed?'»':'«';try{saveUiState();}catch{}};
+ document.getElementById('mdiSbToggle').onclick=()=>mdi.toggleSidebar();
+ sb.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{const id=b.dataset.nav;
+  if(id==='accounts')return openHub('계좌·API',[['계좌 관리',()=>openAccountPanel()],['API 연결 관리',()=>openApiPanel()]]);
+  if(id==='data')return openHub('데이터',[['백업 내보내기',()=>exportBackup()],['백업 가져오기',()=>{const f=document.createElement('input');f.type='file';f.accept='.json';f.onchange=e=>importBackup(e);f.click();}]]);
+  if(id==='settings')return openHub('설정',[['일반 설정',()=>openSettings()],['테마 전환',()=>toggleTheme()],['작업 배치 초기화',()=>mdi.clearAndReset()]]);
+  if(id==='calendar'){toggleCalendarPanel();return;}
+  mdi.open(id==='records'?'portfolio':id);
+  if(id==='records'){window._MDIPanelTab('portfolio','trd');renderTrades();}else if(id==='portfolio'){window._MDIPanelTab('portfolio','pf');}
+  active(id);
+ });
+ const badge=document.getElementById('wsStatusText'),dot=document.getElementById('wsStatusDot');
+ function status(){const el=document.getElementById('sbConnection');el.title=badge?.textContent||'실시간 OFF';el.setAttribute('aria-label',el.title);el.querySelector('.mdi-sb-label').textContent=el.title;el.querySelector('.sb-status-dot').style.background=dot?.style.background||'var(--text3)';}
+ if(badge)new MutationObserver(status).observe(badge,{subtree:true,childList:true,characterData:true});status();
+ // Existing header actions are retained in DOM for their update handlers, but have one sidebar entry.
+ document.querySelectorAll('.header button[onclick="openAccountPanel()"],.header #apiStatusBtn,.header button[onclick="exportBackup()"],.header .theme-toggle-btn').forEach(e=>e.hidden=true);
+ document.querySelectorAll('.header input[type="file"]').forEach(e=>{if(e.parentElement.tagName==='LABEL')e.parentElement.hidden=true;});
+ active(document.querySelector('.mdi-focused')?.dataset.pid||'watchlist');
+ const collapsed=sb.classList.contains('sb-collapsed');document.getElementById('mdiSbToggle').setAttribute('aria-expanded',String(!collapsed));
+})();
+
+</script>
 </body>
 </html>
