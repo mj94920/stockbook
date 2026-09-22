@@ -2937,6 +2937,78 @@ body .mdi-sidebar.sb-collapsed .mdi-sb-btn{justify-content:center;padding:8px;}
 .header [hidden]{display:none!important;}
 .mdi-sidebar button:focus-visible{outline:2px solid var(--focus-ring);outline-offset:-2px;}
 
+/* UI redesign step 4: wide market board + compact asset summary */
+body .hdr-row1,body.light-mode .hdr-row1{height:48px;padding:0 18px;}
+body .hdr-row2,body.light-mode .hdr-row2{
+  height:82px;padding:8px 12px 8px 18px;gap:12px;align-items:stretch;background:color-mix(in srgb,var(--bg2) 82%,transparent);
+}
+.market-board{display:grid;grid-template-columns:repeat(6,minmax(116px,1fr));gap:6px;flex:1;min-width:0;overflow:hidden;}
+.market-tile{display:grid;grid-template-columns:1fr 54px;grid-template-rows:auto auto auto;align-items:center;column-gap:6px;padding:6px 9px;border:1px solid var(--border);background:var(--bg2);min-width:0;}
+.market-tile-name{grid-column:1;grid-row:1;font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.market-tile-value{grid-column:1;grid-row:2;font-size:14px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.market-tile-change{grid-column:1;grid-row:3;font-size:10px;font-weight:600;white-space:nowrap;}
+.market-tile-change.up{color:var(--hts-up,#e84c6e);}.market-tile-change.dn{color:var(--hts-dn,#4c8ff0);}
+.market-spark{grid-column:2;grid-row:1/4;width:54px;height:28px;align-self:center;}
+.market-spark .baseline{stroke:var(--border);stroke-width:1;stroke-dasharray:2 2;}
+.asset-board{display:grid;grid-template-columns:repeat(2,minmax(88px,1fr));width:258px;border:1px solid var(--border);background:var(--bg2);}
+.asset-metric{display:flex;flex-direction:column;justify-content:center;padding:6px 10px;min-width:0;}
+.asset-metric:nth-child(odd){border-right:1px solid var(--border)}.asset-metric:nth-child(-n+2){border-bottom:1px solid var(--border)}
+.asset-metric-label{font-size:9px;color:var(--text3);}.asset-metric-value{font-size:12px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.asset-metric-value.up{color:var(--hts-up,#e84c6e)}.asset-metric-value.dn{color:var(--hts-dn,#4c8ff0)}
+@media(max-width:1200px){.market-board{grid-template-columns:repeat(4,minmax(116px,1fr));}.market-tile:nth-child(n+5){display:none}.asset-board{width:220px}}
+@media(max-width:820px){body .hdr-row2,body.light-mode .hdr-row2{overflow-x:auto}.market-board{min-width:520px}.asset-board{min-width:210px}.header-date{display:none}}
+
+/* UI redesign step 6 foundation: in-workspace news center */
+.news-center{display:grid;grid-template-columns:168px minmax(320px,1fr) minmax(300px,38%);height:100%;min-height:0;background:var(--bg);}
+.news-rail,.news-stream,.news-preview{min-height:0;overflow:auto;}
+.news-rail{padding:14px 10px;border-right:1px solid var(--border);background:var(--bg2);}
+.news-rail-title{padding:4px 9px 10px;font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;}
+.news-filter{display:flex;width:100%;align-items:center;gap:8px;padding:9px;border:0;border-left:2px solid transparent;background:transparent;color:var(--text2);font:inherit;font-size:12px;text-align:left;cursor:pointer;}
+.news-filter:hover{background:var(--bg3);color:var(--text)}.news-filter.active{background:var(--bg3);border-left-color:var(--accent);color:var(--text);font-weight:700;}
+.news-stream{border-right:1px solid var(--border);}
+.news-searchbar{display:flex;gap:8px;padding:12px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:2;}
+.news-searchbar input{flex:1;min-width:0;background:var(--bg3);color:var(--text);border:1px solid var(--border);padding:9px 11px;outline:none;}
+.news-section-label{padding:14px 14px 7px;font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;}
+.news-source{display:grid;grid-template-columns:8px 1fr auto;gap:10px;align-items:start;width:100%;padding:13px 14px;border:0;border-top:1px solid var(--border);background:transparent;color:var(--text);text-align:left;cursor:pointer;}
+.news-source:hover,.news-source.active{background:var(--bg2)}.news-source.active{box-shadow:inset 2px 0 var(--accent)}
+.news-source-dot{width:7px;height:7px;border-radius:50%;margin-top:5px;background:var(--accent)}
+.news-source-name,.news-source-desc{display:block}.news-source-name{font-size:13px;font-weight:700}.news-source-desc{font-size:11px;color:var(--text3);margin-top:3px;line-height:1.45}.news-source-arrow{color:var(--text3)}
+.news-preview{padding:20px 22px;background:var(--bg2);}
+.news-preview-kicker{font-size:10px;color:var(--accent);letter-spacing:.08em;text-transform:uppercase}.news-preview h2{font-size:20px;line-height:1.35;margin:10px 0 8px}.news-preview p{font-size:12px;color:var(--text2);line-height:1.7;}
+.news-preview-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+.news-context{margin-top:22px;padding:14px;border:1px solid var(--border);background:var(--bg);}.news-context strong{display:block;font-size:11px;margin-bottom:6px}.news-context span{font-size:11px;color:var(--text3);line-height:1.5}
+@media(max-width:1050px){.news-center{grid-template-columns:140px 1fr}.news-preview{display:none}}
+@media(max-width:700px){.news-center{grid-template-columns:1fr}.news-rail{display:flex;overflow-x:auto;border-right:0;border-bottom:1px solid var(--border);padding:6px}.news-rail-title{display:none}.news-filter{width:auto;white-space:nowrap}.news-stream{border-right:0}}
+
+/* UI redesign step 3b: one docked workspace instead of overlapping windows */
+body .mdi-workspace,body.light-mode .mdi-workspace{
+  position:relative;background:var(--bg);overflow:hidden;min-width:0;
+}
+body .mdi-workspace .mdi-panel,body.light-mode .mdi-workspace .mdi-panel{
+  display:none!important;position:absolute!important;inset:0!important;
+  width:100%!important;height:100%!important;min-width:0;min-height:0;
+  border:0;border-radius:0;box-shadow:none;overflow:hidden;background:var(--bg);
+  z-index:1!important;
+}
+body .mdi-workspace .mdi-panel.workspace-active,
+body.light-mode .mdi-workspace .mdi-panel.workspace-active{display:flex!important;}
+body .mdi-workspace .mdi-panel.mdi-focused{border-color:transparent;box-shadow:none;}
+body .mdi-workspace .mdi-tb,body.light-mode .mdi-workspace .mdi-tb{
+  height:44px;min-height:44px;padding:0 18px;gap:8px;cursor:default;
+  background:var(--bg2);border-bottom:1px solid var(--border);
+}
+body .mdi-workspace .mdi-tb-title{font-size:14px;font-weight:700;color:var(--text);}
+body .mdi-workspace .mdi-tb-icon{color:var(--accent);}
+body .mdi-workspace .mdi-tb-btns,body .mdi-workspace .mdi-rz{display:none!important;}
+body .mdi-workspace .mdi-body{background:var(--bg);}
+body .mdi-workspace .mdi-ptab-bar{background:var(--bg2);border-color:var(--border);padding-left:12px;}
+body .mdi-workspace .mdi-ptab{color:var(--text3);padding:10px 14px;}
+body .mdi-workspace .mdi-ptab:hover{color:var(--text);}
+body .mdi-workspace .mdi-ptab.active{color:var(--accent);border-bottom-color:var(--accent);}
+@media (max-width:760px){
+  body .mdi-workspace .mdi-tb{height:40px;min-height:40px;padding:0 12px;}
+}
+
 </style>
 </head>
 <body>
@@ -3015,13 +3087,15 @@ body .mdi-sidebar.sb-collapsed .mdi-sb-btn{justify-content:center;padding:8px;}
     </div>
   </div>
 
-  <!-- ── 2행: 지수 로테이션 캐러셀 + 자산 요약 ── -->
+  <!-- ── 2행: 시장 지수 보드 + 자산 요약 ── -->
   <div class="hdr-row2">
-    <!-- 지수 캐러셀 (페이드 방식) -->
-    <div id="hdrCarousel" class="hdr-carousel"></div>
-    <!-- 페이지 도트 -->
-    <div class="hdr-car-dots" id="hdrCarDots"></div>
-
+    <div id="hdrCarousel" class="market-board" aria-label="주요 시장 지수"></div>
+    <div class="asset-board" aria-label="내 자산 요약">
+      <div class="asset-metric"><span class="asset-metric-label">총자산</span><span class="asset-metric-value" id="hdTotalAsset">0</span></div>
+      <div class="asset-metric"><span class="asset-metric-label">예수금</span><span class="asset-metric-value" id="hdCash">0</span></div>
+      <div class="asset-metric"><span class="asset-metric-label">평가손익</span><span class="asset-metric-value" id="hdEvalPnl">+0</span></div>
+      <div class="asset-metric"><span class="asset-metric-label">당일손익</span><span class="asset-metric-value" id="hdDayPnl">+0</span></div>
+    </div>
   </div>
 
   <!-- 숨겨진 지수 원본 (fetchMarketTicker가 여기에 값을 씀) -->
@@ -7561,6 +7635,10 @@ async function fetchMarketTicker() {
       chgEl.textContent = `${isUp ? '▲' : '▼'}${Math.abs(chgPct).toFixed(2)}%`;
       chgEl.className   = 'mt-chg ' + cls;
     }
+    const history=_tickerHistory[valId]||(_tickerHistory[valId]=[]);
+    if(!history.length&&Number.isFinite(prevClose))history.push(prevClose);
+    if(Number.isFinite(price)&&history.at(-1)!==price)history.push(price);
+    if(history.length>12)history.splice(0,history.length-12);
   };
 
   const fmtIndex = p => p >= 1000
@@ -9969,6 +10047,7 @@ const _CAR_GROUPS = [
 ];
 let _carIdx = 0;
 let _carTimer = null;
+const _tickerHistory = {};
 
 function _carGetClass(chgEl) {
   if (!chgEl) return '';
@@ -9979,30 +10058,29 @@ function _carGetClass(chgEl) {
 }
 
 function renderHeaderCarousel(idx) {
-  if (idx !== undefined) _carIdx = idx;
   const car = document.getElementById('hdrCarousel');
-  const dots = document.getElementById('hdrCarDots');
   if (!car) return;
-  const group = _CAR_GROUPS[_carIdx];
-  car.innerHTML = group.map(([name, valId, chgId], i) => {
+  const primary = [
+    ['KOSPI','tkKospi','tkKospiChg'],['KOSDAQ','tkKosdaq','tkKosdaqChg'],
+    ['NASDAQ','tkNasdaq','tkNasdaqChg'],['S&P500','tkSp500','tkSp500Chg'],
+    ['USD/KRW','tkUsdKrw','tkUsdKrwChg'],['WTI','tkWti','tkWtiChg']
+  ];
+  const sparkline = (values, cls) => {
+    const nums=(values||[]).filter(Number.isFinite);
+    if(nums.length<2)return '<svg class="market-spark" viewBox="0 0 54 28" aria-hidden="true"><path class="baseline" d="M2 14H52"/></svg>';
+    const min=Math.min(...nums),max=Math.max(...nums),range=max-min||1;
+    const pts=nums.map((v,i)=>`${(2+i*50/(nums.length-1)).toFixed(1)},${(25-(v-min)*22/range).toFixed(1)}`).join(' ');
+    const color=cls==='dn'?'var(--hts-dn,#4c8ff0)':'var(--hts-up,#e84c6e)';
+    return `<svg class="market-spark" viewBox="0 0 54 28" aria-hidden="true"><path class="baseline" d="M2 14H52"/><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  };
+  car.innerHTML = primary.map(([name, valId, chgId]) => {
     const valEl = document.getElementById(valId);
     const chgEl = document.getElementById(chgId);
     const val = valEl ? valEl.textContent : '--';
     const chg = chgEl ? chgEl.textContent : '';
     const cls = _carGetClass(chgEl);
-    return (i > 0 ? '<span class="hdr-car-sep">|</span>' : '') +
-      `<span class="hdr-car-item">` +
-        `<span class="hdr-car-name">${name}</span>` +
-        `<span class="hdr-car-val">${val}</span>` +
-        (chg ? `<span class="hdr-car-chg ${cls}">${chg}</span>` : '') +
-      `</span>`;
+    return `<div class="market-tile"><span class="market-tile-name">${name}</span><span class="market-tile-value">${val}</span><span class="market-tile-change ${cls}">${chg||'대기 중'}</span>${sparkline(_tickerHistory[valId],cls)}</div>`;
   }).join('');
-  // 도트 업데이트
-  if (dots) {
-    dots.innerHTML = _CAR_GROUPS.map((_, i) =>
-      `<span class="hdr-car-dot${i===_carIdx?' active':''}" onclick="renderHeaderCarousel(${i})"></span>`
-    ).join('');
-  }
 }
 
 function _carNext() {
@@ -10018,7 +10096,6 @@ function _carNext() {
 
 function startCarouselTimer() {
   if (_carTimer) clearInterval(_carTimer);
-  _carTimer = setInterval(_carNext, 6000);
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -13139,8 +13216,66 @@ function wlAssignGroup(idx, gName) {
  function openHub(title,actions){opener=document.activeElement;document.getElementById('sidebarHubTitle').textContent=title;const area=document.getElementById('sidebarHubActions');area.replaceChildren();for(const [label,fn]of actions){const b=document.createElement('button');b.type='button';b.className='btn btn-ghost';b.textContent=label;b.onclick=()=>{closeHub();fn();};area.append(b);}hub.classList.add('open');area.querySelector('button').focus();}
  function active(id){sb.querySelectorAll('[data-nav]').forEach(b=>{const on=b.dataset.nav===id;b.classList.toggle('mdi-sb-btn-active',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});}
  const mdi=window._MDI;
+ const workspace=document.getElementById('mdiWorkspace');
+ document.querySelectorAll('.mdi-panel').forEach(panel=>workspace.appendChild(panel));
+ const newsSources=[
+  {cat:'domestic',name:'네이버 증권 뉴스',desc:'국내 증시 속보와 종목별 주요 뉴스',url:'https://stock.naver.com/news',color:'#03c75a'},
+  {cat:'domestic',name:'한국경제 증권',desc:'시장·기업·채권 흐름',url:'https://www.hankyung.com/finance',color:'#e31937'},
+  {cat:'domestic',name:'매일경제 증권',desc:'국내외 시황과 기업 뉴스',url:'https://www.mk.co.kr/news/stock/',color:'#1683d8'},
+  {cat:'global',name:'네이버 글로벌·미국',desc:'미국 시장과 종목 정보',url:'https://stock.naver.com/market/stock/usa',color:'#03c75a'},
+  {cat:'global',name:'Yahoo Finance',desc:'미국 주식 뉴스·실적·재무 정보',url:'https://finance.yahoo.com',color:'#7c3aed'},
+  {cat:'disclosure',name:'오늘의 DART 공시',desc:'당일 제출된 기업 공시',url:'https://dart.fss.or.kr/dsac001/mainY.do',color:'#f59e0b'},
+  {cat:'disclosure',name:'DART 상세 검색',desc:'기업·보고서 종류·기간별 공시 검색',url:'https://dart.fss.or.kr/dsab007/main.do',color:'#f59e0b'}
+ ];
+ function buildNewsCenter(){
+  const body=document.getElementById('mdi-body-news');if(!body)return;
+  body.innerHTML=`<div class="news-center"><aside class="news-rail" aria-label="뉴스 분류"><div class="news-rail-title">정보 센터</div><button class="news-filter active" data-news-filter="all">전체 소스</button><button class="news-filter" data-news-filter="domestic">국내 증시</button><button class="news-filter" data-news-filter="global">해외 증시</button><button class="news-filter" data-news-filter="disclosure">기업 공시</button></aside><section class="news-stream"><div class="news-searchbar"><input type="text" id="sn_newsQuery" placeholder="종목명·코드로 뉴스 검색" autocomplete="off"><button class="btn btn-primary" id="newsSearchBtn">검색</button><div id="newsQueryDropdown" style="display:none;position:fixed;z-index:99999;background:var(--bg2);border:1px solid var(--border);max-height:220px;overflow-y:auto;"></div></div><div class="news-section-label" id="newsStreamLabel">주요 뉴스·공시 소스</div><div id="newsSourceList"></div><div id="sn_portfolioNewsCard" style="display:none;padding:14px;border-top:1px solid var(--border)"><div class="news-section-label" style="padding:0 0 8px">보유종목 바로가기</div><div id="sn_portfolioNewsLinks"></div></div></section><aside class="news-preview" id="newsPreview" aria-live="polite"></aside></div>`;
+  const input=document.getElementById('sn_newsQuery');input.oninput=_newsQueryOnInput;input.onkeydown=_newsQueryKeydown;document.getElementById('newsSearchBtn').onclick=searchNews;
+  const list=document.getElementById('newsSourceList'),preview=document.getElementById('newsPreview');
+  function selectSource(source,button){
+   list.querySelectorAll('.news-source').forEach(b=>b.classList.toggle('active',b===button));
+   preview.innerHTML=`<div class="news-preview-kicker">${source.cat==='disclosure'?'기업 공시':source.cat==='global'?'해외 시장':'국내 시장'}</div><h2>${source.name}</h2><p>${source.desc}</p><p>이 영역에서 출처와 내용을 확인한 뒤 원문으로 이동합니다. 종목을 검색하면 해당 종목의 뉴스 결과를 바로 열 수 있습니다.</p><div class="news-preview-actions"><button class="btn btn-primary" id="newsOpenSource">원문 보기 ↗</button><button class="btn btn-ghost" id="newsSearchThis">종목 검색</button></div><div class="news-context"><strong>한 화면 정보 흐름</strong><span>왼쪽에서 범위를 고르고, 가운데에서 출처를 선택하고, 오른쪽에서 설명과 이동 경로를 확인합니다.</span></div>`;
+   document.getElementById('newsOpenSource').onclick=()=>openUrl(source.url);document.getElementById('newsSearchThis').onclick=()=>input.focus();
+  }
+  function renderSources(filter='all'){
+   const items=filter==='all'?newsSources:newsSources.filter(s=>s.cat===filter);
+   list.replaceChildren();items.forEach((source,i)=>{const b=document.createElement('button');b.type='button';b.className='news-source';b.innerHTML=`<span class="news-source-dot" style="background:${source.color}"></span><span><span class="news-source-name">${source.name}</span><span class="news-source-desc">${source.desc}</span></span><span class="news-source-arrow">›</span>`;b.onclick=()=>selectSource(source,b);list.append(b);if(i===0)selectSource(source,b);});
+  }
+  document.querySelectorAll('[data-news-filter]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-news-filter]').forEach(x=>x.classList.toggle('active',x===b));renderSources(b.dataset.newsFilter);});
+  renderSources();
+ }
+ buildNewsCenter();
  const selectedPortfolioMenu=()=>document.querySelector('#mdi-panel-portfolio .mdi-ptab.active')?.textContent.trim()==='거래내역'?'records':'portfolio';
- const front=mdi._front.bind(mdi);mdi._front=function(pid){front(pid);active(pid==='portfolio'?selectedPortfolioMenu():pid);};
+ let currentWorkspace='watchlist';
+ function showWorkspace(pid){
+  const target=document.getElementById('mdi-panel-'+pid);if(!target)return;
+  currentWorkspace=pid;
+  document.querySelectorAll('.mdi-panel').forEach(panel=>{
+   const on=panel===target;
+   panel.classList.toggle('workspace-active',on);
+   panel.classList.toggle('mdi-focused',on);
+   panel.dataset.mdiState=on?'open':'closed';
+   panel.style.removeProperty('left');panel.style.removeProperty('top');panel.style.removeProperty('width');panel.style.removeProperty('height');panel.style.removeProperty('z-index');
+   const body=panel.querySelector('.mdi-body');if(body)body.style.display='';
+  });
+  try{mdi._render(pid);}catch(e){console.warn('workspace render',pid,e);}
+  active(pid==='portfolio'?selectedPortfolioMenu():pid);
+ }
+ mdi.init=function(){
+  try{localStorage.removeItem(this.MDI_KEY);}catch{}
+  requestAnimationFrame(()=>showWorkspace(currentWorkspace));
+ };
+ mdi.open=showWorkspace;
+ mdi.toggle=showWorkspace;
+ mdi.close=()=>{};
+ mdi.minimize=()=>{};
+ mdi.maximize=showWorkspace;
+ mdi.resetLayout=()=>showWorkspace(currentWorkspace);
+ mdi.clearAndReset=()=>{showWorkspace('watchlist');if(typeof showToast==='function')showToast('종목 탐색 화면으로 이동했습니다');};
+ mdi.saveMdiLayout=()=>{};
+ mdi._front=showWorkspace;
+ mdi._syncBtn=()=>{};
+ mdi._syncAllBtns=()=>{};
  const panelTab=window._MDIPanelTab;window._MDIPanelTab=function(pid,tab){panelTab(pid,tab);if(pid==='portfolio')active(tab==='trd'?'records':'portfolio');};
  mdi.toggleSidebar=function(){const collapsed=sb.classList.toggle('sb-collapsed');const b=document.getElementById('mdiSbToggle');b.setAttribute('aria-expanded',String(!collapsed));b.title=b.ariaLabel=collapsed?'사이드바 펼치기':'사이드바 접기';b.querySelector('.mdi-sb-toggle-icon').textContent=collapsed?'»':'«';try{saveUiState();}catch{}};
  document.getElementById('mdiSbToggle').onclick=()=>mdi.toggleSidebar();
@@ -13159,7 +13294,7 @@ function wlAssignGroup(idx, gName) {
  // Existing header actions are retained in DOM for their update handlers, but have one sidebar entry.
  document.querySelectorAll('.header button[onclick="openAccountPanel()"],.header #apiStatusBtn,.header button[onclick="exportBackup()"],.header .theme-toggle-btn').forEach(e=>e.hidden=true);
  document.querySelectorAll('.header input[type="file"]').forEach(e=>{if(e.parentElement.tagName==='LABEL')e.parentElement.hidden=true;});
- active(document.querySelector('.mdi-focused')?.dataset.pid||'watchlist');
+ showWorkspace('watchlist');
  const collapsed=sb.classList.contains('sb-collapsed');document.getElementById('mdiSbToggle').setAttribute('aria-expanded',String(!collapsed));
 })();
 
