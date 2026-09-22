@@ -26,3 +26,6 @@ manifest-checksum.txt
 app-release-unsigned-aligned.apk 
 sign_apk.bat 
 store_icon.png 
+
+# Local development build output
+/dist/
