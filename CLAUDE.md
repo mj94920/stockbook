@@ -1,7 +1,7 @@
 # StockBook — 개발 지침 (Claude · 사람 공통)
 
-> 저장소: `https://github.com/mj94920/stockbook--` (branch: `main`)
-> 웹/PWA: `https://mj94920.github.io/stockbook--/` · 릴리스: GitHub Releases
+> 저장소: `https://github.com/mj94920/stockbook` (branch: `main`)
+> 웹/PWA: `https://mj94920.github.io/stockbook/` · 릴리스: GitHub Releases
 > **현재 버전은 `package.json` 의 `version` 이 유일한 기준**이다. 문서에 버전 번호를 적지 않는다.
 
 ---

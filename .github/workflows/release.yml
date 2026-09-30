@@ -207,7 +207,7 @@ jobs:
             echo "---"
             echo "- 🖥️ Windows: \`Stock Book Setup *.exe\` 다운로드 후 설치"
             echo "- 📱 Android: \`.apk\` 설치 (Play 스토어 업로드는 \`.aab\`)"
-            echo "- 🌐 웹/PWA: https://mj94920.github.io/stockbook--/"
+            echo "- 🌐 웹/PWA: https://mj94920.github.io/stockbook/"
           } >> notes.md
           cat notes.md
 

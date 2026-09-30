@@ -2,7 +2,7 @@
 
 나만의 주식 포트폴리오 관리 앱 — Windows(Electron) · Android(TWA) · 웹(PWA)
 
-- 웹/PWA: https://mj94920.github.io/stockbook--/ (모바일: `mobile.html`)
+- 웹/PWA: https://mj94920.github.io/stockbook/ (모바일: `mobile.html`)
 - 설치 파일: [Releases](../../releases/latest) — `Stock Book Setup x.y.z.exe`, `Stock Book x.y.z.apk`
 
 ## 개발 방식 — 이슈만 쓰면 끝
