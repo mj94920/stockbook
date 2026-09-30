@@ -1,228 +1,147 @@
-# StockBook — 프로젝트 운영 지침서
+# StockBook — 개발 지침 (Claude · 사람 공통)
 
-> 현재 버전: **v2.4.0** | Git: `https://github.com/mj94920/stockbook.git` (branch: main)
-> GitHub Pages: `https://mj94920.github.io/stockbook/`
-
----
-
-## ⚠️ 절대 접근 금지 폴더
-
-아래 세 폴더는 어떤 상황에서도 읽거나 수정하지 않는다.
-
-- `독새`
-- `지소차트`
-- `키움증권REST API코드`
+> 저장소: `https://github.com/mj94920/stockbook--` (branch: `main`)
+> 웹/PWA: `https://mj94920.github.io/stockbook--/` · 릴리스: GitHub Releases
+> **현재 버전은 `package.json` 의 `version` 이 유일한 기준**이다. 문서에 버전 번호를 적지 않는다.
 
 ---
 
-## 1. 역할 정의
+## 0. 자동화 구조 한눈에 보기
 
-판토는 이 프로젝트에서 **전문 프로그래머 겸 빌드·배포 담당자** 역할을 맡는다. 코드 변경 → 빌드 → GitHub 푸시까지 자동으로 처리하며, 사용자에게 확인을 구하지 않는다.
+```
+이슈 작성 (템플릿 → 'claude' 라벨 자동)  또는  댓글에 @claude
+        │
+        ▼
+[claude.yml]  Claude 가 claude/* 브랜치에서 코드 수정 · npm test · 커밋
+        │
+        ▼
+[ci.yml]      정적 검사 + 스모크 테스트 (검사 스크립트는 main 기준 고정)
+        ├─ 통과 → PR 자동 생성 → main squash 머지
+        └─ 실패 → Claude 1회 자동 수정 → 재검증 → 실패 시 'needs-human' PR + 이슈 알림
+        │
+        ▼
+[release.yml] 커밋 메시지로 버전 자동 증가 → 태그 → Windows NSIS EXE · Android APK/AAB
+              → GitHub Release 게시 → Pages 갱신(PWA)
+```
+
+사람이 main 에 직접 푸시해도 `release.yml` 이 동일하게 검사 → 배포한다.
+사람이 연 PR 에 `automerge` 라벨을 붙이면 CI 통과 즉시 머지·배포된다.
 
 ---
 
-## 2. 앱 구조 & 기술 스택
+## 1. 절대 규칙
+
+1. **접근 금지 폴더**: `독새`, `지소차트`, `키움증권REST API코드` — 읽지도 수정하지도 않는다.
+2. **버전·CHANGELOG 를 직접 수정하지 않는다.** `scripts/bump-version.mjs` 가 릴리스 때 자동 처리한다
+   (package.json · package-lock.json · index/mobile.html 의 `Stock Book vX.Y.Z` · sw.js 캐시명 · android/twa-manifest.json · CHANGELOG.md).
+3. **커밋 메시지는 Conventional Commits + 한국어 요약.** 버전 수준이 여기서 결정된다.
+   - `feat: …` → minor · `fix:/refactor:/style:/perf:/chore: …` → patch · `feat!: …` 또는 본문 `BREAKING CHANGE` → major
+   - 예: `feat(watchlist): 52주 최고가 대비 하락률 열 추가`
+4. **커밋 전 `npm test` 통과 필수** (정적 검사 + 스모크 테스트). `scripts/` 의 검사를 느슨하게 고쳐 통과시키지 않는다.
+5. **Electron 보안 설정 변경 금지**: `contextIsolation: true`, `nodeIntegration: false`, IPC 는 `preload.js` 의 `contextBridge` 로만.
+6. **Windows 빌드는 NSIS 전용** (`build.win.target: "nsis"`, `asar: false`). zip/portable 금지.
+7. **비밀값 금지**: API 키·keystore·비밀번호를 코드/문서에 넣지 않는다 (GitHub Secrets 사용).
+8. `.github/workflows/` 는 Claude GitHub App 권한상 수정할 수 없다 — 워크플로 변경이 필요하면 이슈에 제안만 남긴다.
+
+---
+
+## 2. 앱 구조
 
 | 항목 | 내용 |
 |------|------|
-| 플랫폼 | Electron EXE (Windows 오프라인) + PWA/TWA (Android) |
-| 소스 구조 | 단일 파일 `index.html` (HTML + CSS + JS 전부 포함) |
-| 상태 저장 | `C:\Users\{user}\AppData\Roaming\StockBook\stockbook-data.json` |
-| 빌드 출력 | `C:\Temp\StockBookBuild\` |
+| 플랫폼 | Electron EXE (Windows) + PWA/TWA (Android, GitHub Pages) |
+| PC 앱 | `index.html` 단일 파일 (HTML+CSS+JS, ~13,000줄) — Electron 메인 창 |
+| 모바일 | `mobile.html` 단일 파일 — PWA `start_url`, TWA 가 이 페이지를 연다 |
+| Electron | `main.js`(메인 프로세스·IPC·CORS 우회 fetch) / `preload.js`(contextBridge) / `splash.html` |
+| PWA | `manifest.json`, `sw.js`(HTML network-first, 정적자원 cache-first) |
+| 데이터 | PC: `%APPDATA%\StockBook\stockbook-data.json` / 모바일: localStorage |
 | Electron 버전 | 31.7.7 |
-| asar | **false** (파일이 설치 폴더에 낱개로 풀림) |
 
-### Electron 보안 설정 (변경 금지)
-
-```javascript
-contextIsolation: true
-nodeIntegration: false
-preload: preload.js  // contextBridge로만 IPC 노출
-```
-
-### 핵심 파일 목록
+### 파일 맵
 
 ```
-index.html       ← 앱 본체 (단일 파일, ~7000줄)
-main.js          ← Electron 메인 프로세스 (IPC 핸들러, 보안)
-preload.js       ← contextBridge 정의 (렌더러 ↔ 메인 통신)
-splash.html      ← 스플래시 화면
-package.json     ← 빌드 설정 (target: nsis 고정)
-twa-manifest.json ← Android TWA 빌드 메타데이터
-manifest.json / sw.js / icon-*.png / icon.ico / logo.svg
+index.html  mobile.html  splash.html      ← 앱 본체 (Pages 로도 서빙됨)
+main.js  preload.js  installer.nsh         ← Electron / NSIS
+manifest.json  sw.js  icon-*.png  icon.ico  logo.svg
+android/twa-manifest.json                  ← TWA 설정 템플릿 (packageId·alias 는 CI 가 주입)
+scripts/check-syntax.mjs                   ← 정적 검사   (npm run check)
+scripts/smoke.mjs                          ← 스모크 테스트 (npm run smoke)
+scripts/bump-version.mjs                   ← 버전 일괄 갱신 (릴리스 전용)
+.github/workflows/{ci,claude,release,repo-setup}.yml
+docs/                                      ← PRD, 과거 개발 로그
+CHANGELOG.md                               ← 릴리스마다 자동 생성
 ```
+
+### 변경 범위 판단
+
+- `mobile.html` / `manifest.json` / `sw.js` 만 바꾼 경우에도 릴리스는 돌지만, 실사용 반영은 Pages 갱신이 핵심이다.
+- `index.html` 은 Electron 과 Pages 양쪽에서 쓰인다. `window.electronAPI` 가 없을 때(브라우저)도 초기화가 깨지지 않아야 한다 — 스모크 테스트가 이것을 검사한다.
 
 ---
 
-## 3. 빌드 원칙 ★★★
+## 3. 코딩 원칙 (과거 버그에서 얻은 교훈)
 
-### PC(Windows) 빌드 — 무조건 NSIS 인스톨러
-
-```
-✅ 올바른 명령: npx electron-builder --win nsis
-❌ 절대 사용 금지: npx electron-builder --win zip
-```
-
-**이유**: zip 빌드는 설치 마법사가 없어 일반 사용자가 설치할 수 없음. StockBook은 설치 프로그램(NSIS) 방식만 사용한다.
-
-- 출력 경로: `C:\Temp\StockBookBuild\Stock Book Setup {버전}.exe`
-- `oneClick: false` — 설치 경로 선택 가능
-- `allowToChangeInstallationDirectory: true`
-- `createDesktopShortcut: true`
-- `language: 1042` (한국어)
-
-### Android 빌드
-
-```
-cd "C:\Users\mj949\OneDrive\오은미\주식\Project Stock Book" && bubblewrap build
-```
-
-- 출력: `app\build\outputs\apk\release\app-release.apk`
-- GitHub Pages push만으로 PWA 반영 (APK 재빌드 불필요, 큰 변경사항만 재빌드)
-
-### 버전 관리 규칙
-
-`package.json`의 `version: "X.Y.Z"` 기준:
-
-- `twa-manifest.json.appVersionCode` = `X*100 + Y*10 + Z` (예: 2.1.0 → 210)
-- `twa-manifest.json.appVersionName` = 동일 숫자를 문자열로 (예: `"210"`)
-- `twa-manifest.json.appVersion` = 동일
+- **초기화 코드에서 DOM 요소는 null 체크**: `document.getElementById(x)?.addEventListener(...)`. 없는 요소 참조 한 줄이 스크립트 전체를 멈춰 버튼 먹통을 일으켰다(v2.2.3, v2.3.1).
+- **dangling `async` / TDZ 주의**: 선언 전 `let/const` 참조 금지. 스크립트 하나가 통째로 죽는다(v2.2.1).
+- **Electron GPU 합성 레이어 hit-test 버그**: 모달·오버레이에 `backdrop-filter` 금지, 필요한 경우 `transform: translateZ(0)` 로 독립 레이어 승격(v2.2.0, v2.3.2, v2.3.3).
+- 오버레이 페이드아웃 클래스에는 `pointer-events: none` 필수 (`#mobileIntro .fade-out`).
+- 모달 안 `<button>` 은 `type="button"` 명시.
+- **외부 API 는 main.js 에서 호출 → IPC → 렌더러** (CORS 회피). 렌더러 직접 fetch 는 모바일(PWA) 전용 코드에서만.
+- HTML=레이아웃, JS=상태·API·로직, main.js=네트워크 브리지.
 
 ---
 
-## 4. 자동 배포 원칙
+## 4. 핵심 로직 메모
 
-코드를 수정한 직후 **사용자에게 확인 없이** 즉시 배포를 실행한다.
+### 예수금 `getCashBalance()` — 우선순위
 
-### ⚠️ 예외: mobile.html / PWA 전용 파일만 수정한 경우
+1. `state.cashManual` (잔고탭 "예수금 직접 설정")
+2. `state.totalAsset − 총매입원가`
+3. `calcExsugeum()` (입출금 내역 폴백)
 
-`mobile.html`, `manifest.json`, `sw.js` 만 변경된 경우 → **GitHub 푸시만** 실행. EXE 빌드는 하지 않는다.
-- 이유: EXE(Electron)의 메인 창은 `index.html`이며, mobile.html은 EXE에 포함되지만 Electron이 직접 로드하지 않음. 데스크탑 앱 동작에 영향 없음.
-- GitHub Pages에만 반영되면 충분 (proto-spinoff-2.6.6 → main 양쪽 push).
+`renderBalanceSummary()` / `renderBalanceDonut()` / `renderPortfolioBar()` 가 공유 → 한 곳만 고친다.
 
-### Step 1 — GitHub 푸시 (cmd 셸)
+### API 키 저장 (Electron safeStorage)
 
-```cmd
-cd /d "C:\Users\mj949\OneDrive\오은미\주식\Project Stock Book"
-del /f .git\HEAD.lock 2>nul
-git add -A
-git commit -m "v{버전}: {변경 요약}"
-git push origin main
+- `main.js` 의 `getCredFile(broker)` → `userData/{broker}-cred.enc`, 로컬 암호화·외부 전송 없음
+- `preload.js`: `saveApiKey / loadApiKey / deleteApiKey / checkApiKey`
+- KIS 토큰 캐시: `kis-token-cache.json` (하루 1회 발급), 동시 발급 방지 pending-promise 락
+
+### 시세
+
+- KIS REST + WebSocket(H0STCNT0) 실시간, 100ms 디바운스 렌더
+- 네이버 모바일 증권 JSON (전종목·재무), Yahoo Finance (해외·지수)
+
+---
+
+## 5. 증권사 API 현황
+
+| 증권사 | 상태 |
+|--------|------|
+| 한국투자증권 (KIS) | ✅ 연동 (REST + WebSocket) |
+| 토스증권 | ⏳ 키 발급 대기 |
+| LS증권 | UI 만 존재 |
+| 키움 | ⏸ 보류 (COM 방식) |
+| 미래에셋 | ❌ 개인 API 불가 |
+
+---
+
+## 6. 로드맵
+
+- [ ] 토스 API 연동 → 전 증권사 합산 뷰
+- [ ] EXE 자동 업데이트 (electron-updater + GitHub Releases)
+- [ ] `index.html` 모듈 분리 검토 (파일이 13,000줄을 넘어 유지보수 부담)
+
+---
+
+## 7. 로컬 개발 (선택)
+
+```bash
+npm ci
+npm start          # Electron 실행
+npm run test:setup # 최초 1회: 스모크 테스트용 Playwright/Chromium 설치
+npm test           # 정적 검사 + 스모크 테스트
+npm run dist       # 로컬 NSIS 빌드 → dist/
 ```
 
-- `nothing to commit` 메시지가 나와도 오류 아님 → 그냥 push만 재시도
-- `HEAD.lock` 오류 시 `del /f .git\HEAD.lock` 선행 후 재시도
-
-### Step 2 — EXE 빌드 (cmd 셸)
-
-```cmd
-cd /d "C:\Users\mj949\OneDrive\오은미\주식\Project Stock Book"
-npx electron-builder --win nsis
-```
-
-- npx 실패 시: `node_modules\.bin\electron-builder --win nsis` 로 재시도
-- 빌드 완료 확인: `C:\Temp\StockBookBuild\` 안에 `Setup {버전}.exe` 존재 여부
-
----
-
-## 5. 핵심 로직 메모
-
-### 예수금 계산 (`getCashBalance()`) — 우선순위 3단계
-
-1. `state.cashManual` — 잔고탭 "예수금 직접 설정" (최우선)
-2. `state.totalAsset - 총매입원가` — 총자산 직접입력값 기반
-3. `calcExsugeum()` — 입출금 내역 기반 폴백
-
-**원칙**: 예수금 = 총자산 − 총매입원가 (주가 변동과 무관, 매도 시 실현손익 반영)
-
-`renderBalanceSummary()` / `renderBalanceDonut()` / `renderPortfolioBar()` 전부 이 함수를 공유 → 한 곳만 고치면 전체 반영.
-
-### 설정 모달 — 증권사 카드 (알려진 이슈 & 해결책)
-
-- `#mobileIntro`: `z-index: 9999; position: fixed; inset: 0` — 앱 시작 시 2초간 표시
-  - `.fade-out` 에 반드시 `pointer-events: none` 필요 (없으면 페이드아웃 중 클릭 차단)
-- `.settings-panel`: `max-height: 88vh; overflow-y: auto` 필수 (broker-fields-panel이 뷰포트 아래로 숨지 않도록)
-- 브로커 카드 `<button>` 에는 반드시 `type="button"` 명시 (폼 submit 방지)
-- `selectBroker(broker)` → `renderBrokerFields(broker)` 패턴으로 동적 필드 주입
-
-### API 키 저장 방식 (Electron safeStorage)
-
-```javascript
-// main.js IPC 핸들러 — broker 문자열을 파일명 키로 사용
-function getCredFile(broker) {
-  return path.join(app.getPath('userData'), `${broker}-cred.enc`)
-}
-// save / load / delete / check — 모두 broker-agnostic
-```
-
-- 외부 서버 전송 없음, 완전 오프라인 로컬 암호화
-- preload.js: `saveApiKey / loadApiKey / deleteApiKey / checkApiKey` 노출
-
----
-
-## 6. 증권사 API 현황
-
-| 증권사 | 상태 | 비고 |
-|--------|------|------|
-| 한국투자증권 (KIS) | ✅ 연동 완료 | REST, 국내+미국 분리, safeStorage 키 관리 |
-| 토스증권 | ⏳ 발급 대기 | REST+WebSocket, LLM 친화적, 국내+미국 통합 |
-| 미래에셋 | ❌ 개인 신청 불가 | 주력 계좌지만 API 연동 불가 |
-| 키움 | ⏸ 보류 | 가족 계좌, COM방식 Electron 연동 까다로움 |
-| LS증권 | 🆕 UI만 추가됨 | 실제 API 연동 미정 |
-
-- 미래에셋 계좌: 제룡전기·두산에너빌리티·포스코DX 손실 보유 → 회복 시 토스증권으로 대체출고 예정
-- 시세 조회: 네이버 금융 스크래핑 → KIS REST API 전환 예정
-
----
-
-## 7. 로드맵
-
-### 진행 중 / 단기
-
-- [x] NSIS 설치 마법사 전환 (v2.0 완료)
-- [x] KIS API 키 팝업 (safeStorage 암호화) (v2.0 완료)
-- [x] 증권사 카드 버튼 클릭 버그 수정 (v2.1.0 완료)
-- [ ] KIS REST API 시세 조회 연동 (네이버 스크래핑 대체)
-- [ ] 토스 API 키 발급 후 멀티 잔고 통합
-
-### 중기
-
-- [ ] 전 증권사 합산 뷰 (토스 API 발급 후)
-- [ ] Vue.js 도입 검토 (데이터 바인딩 복잡도 증가 시점)
-
-### 아키텍처 원칙
-
-- **HTML**: 디자인·레이아웃 전담
-- **JS**: API 연동·상태관리·비즈니스 로직
-- **main.js**: CORS 우회 API 호출 → IPC → 렌더러 전달
-
----
-
-## 8. 버전 히스토리
-
-| 버전 | 주요 내용 |
-|------|---------|
-| v1.2.x | Yahoo Finance/네이버 시세 조회, 월복리 시뮬레이터, 거래기록 자동화 |
-| v1.3.x | 다크/라이트 테마, 잔고탭 도넛차트, 예수금 계산식 수정, 티커 자동완성 |
-| v1.4.0 | Electron IPC 시세 조회, 기업 분석 드로어 |
-| v1.4.1 | 모바일 인트로, 뉴스탭 정리 |
-| v1.4.2 | 탭버그·주소창·버튼겹침 수정, 예수금 역산 |
-| v1.4.3 | 탭버그 완전 수정 (switchSubTab early return 제거) |
-| v1.4.4 | 기업 분석 드로어, 예수금↔총자산 연동 버그 수정, 저장소 이름 변경 |
-| v2.0 | NSIS 설치 마법사, KIS API 키 팝업 (safeStorage), KIS REST API 시세 조회 |
-| v2.1.0 | 증권사 카드 버튼 클릭 버그 수정 (mobileIntro pointer-events, settings scroll), twa-manifest 버전 210 |
-| v2.2.0 | 설정 모달 버튼 완전 먹통 근본 수정 (backdrop-filter 제거 — Electron GPU 합성 레이어 hit-test 버그), userData 경로 통일 (app.name='StockBook'), F12 DevTools 단축키 추가, twa-manifest 버전 220 |
-| v2.2.1 | 설정 버튼 먹통 근본 수정 (async 단독 키워드 dangling 제거 → 스크립트 TDZ 버그), 시장 지수 티커 확장 (S&P500·DOW·SOX·원/100엔·니케이·WTI), twa-manifest 221 |
-| v2.2.2 | 전종목 탭 KRX API 연동 (KOSPI+KOSDAQ ~2,500종목, 캐시 1시간), httpsFormPost 헬퍼 추가, IPC fetch-krx-stocks, 컴팩트 페이지네이션, 관심종목·기업분석 연동 버튼 |
-| v2.2.3 | 고아 요소 null 크래시 수정 (f_name·f_price·f_qty·es_name·es_ticker addEventListener null 체크 추가 → TDZ 패턴 제거 → 설정 버튼 먹통 근본 해결) |
-| v2.2.4 | 전종목 KRX API 수정 — getJsonData.cmd LOGOUT 에러 → OTP+CSV 2단계 다운로드 방식으로 교체 (세션 불필요, pykrx 방식) |
-| v2.2.5 | 시장 지수 티커 CORS 수정 — 렌더러 직접 fetch → IPC fetch-market-tickers (main.js httpsGet) 로 교체, preload.js fetchMarketTickers 추가 |
-| v2.2.6 | 전종목 KRX CSV 미표시 근본 수정 — OTP 발급 POST→GET 방식 변경(pykrx 동일), CSV 다운로드 Buffer 수신+인코딩 자동감지(UTF-8 BOM/EUC-KR), 0종목 시 에러 처리로 상태 표시 보장, httpsFormPostBuf 추가 |
-| v2.2.7 | 관심종목 이중저장소 버그 수정 (state.watchlist 단일화, localStorage 마이그레이션), 보유종목 버튼 겹침 수정 (col-action min-width:240px), 주문창 신규 종목 직접 입력 지원 (__new__ 센티넬, qo_new_name/qo_new_code) |
-| v2.2.8 | KIS 토큰 파일 캐싱 추가 (kis-token-cache.json) — 앱 재시작 후에도 유효한 토큰 재사용, 하루 1회 이상 재발급 방지 |
-| v2.2.9 | HTS 방식 주문 연동 — 액션버튼 아이콘 전용(텍스트 제거), 매수↑/매도↓ 버튼 추가(주문창 자동 세팅), 종목명 클릭→기업정보 탭 자동 연동, selectStockForQuickOrder/selectStockForCorpInfo 함수 추가 |
-| v2.3.0 | KIS WebSocket 실시간 시세 연동 — H0STCNT0 TR, approval_key 발급, PINGPONG 핸드셰이크, 100ms 디바운스 렌더, 상태 배지 UI (연결중/ON/OFF/오류/KIS키없음), 앱 시작 시 자동 구독, ws 패키지 의존성 추가 |
-| v2.3.1 | 크래시 수정 — f_date null 오류(→앱 초기화 중단·지수 미조회 연쇄 버그), mc_tbody null 오류(→복리계산기 월별테이블 HTML 복원), addStock f_date 옵셔널체이닝; 동시 토큰/approval_key 발급 방지 pending-promise 락(getKisToken·getKisApprovalKey); startRealtimePrices 중복실행 방지 _wsActive guard; 관리버튼 hover reveal (행 hover 시만 표시) + sticky 제거(데이터 열 가림 방지) |
-| v2.3.2 | 로그인 팝업 수정 — icon-192.png 깨짐 수정(main.js에서 temp 디렉터리에 복사, HTML의 img→inline SVG로 교체); 버튼 먹통 수정(inner div에 position:relative;z-index:1;transform:translateZ(0) 추가 → Electron GPU 합성 레이어 hit-test 버그 회피, settingsModal 동일 패턴); 외부 클릭 시 닫기(onclick 추가) |
-| v2.3.3 | 로그인 팝업 하단 버튼(건너뛰기·로그인) 먹통 수정 — body::after(배경 오브, filter:blur+animation)의 GPU 합성 레이어가 화면 하단 ~370px 영역에서 클릭을 가로채던 버그; 외부 loginModal div에 transform:translateZ(0) 추가로 전체 모달을 독립 합성 레이어로 승격하여 해결 |
-| v2.4.0 | loginModal 간소화 — "API 추가/저장" 성공 시 800ms 후 자동 닫기, 우상단 X버튼 추가(loginClose), 건너뛰기·로그인 버튼 제거; 전종목 탭 전면 재설계 — KRX OTP+CSV 탈피 → 네이버 모바일 증권 JSON API, KOSPI·KOSDAQ·ETF 3탭, 시총 1,000억 미만 제외, 8열(종목명·코드·업종·현재가·전일대비·등락률·거래량·시총), 종목명 클릭 → 기업정보 팝업(PER/PBR/EPS·시총·상장주식수·상장일·52주 최고·최저·배당) + 메모 칸, main.js fetchNaverStockList·fetch-naver-stocks·fetch-stock-detail 핸들러 추가, preload.js fetchNaverStocks·fetchStockDetail 노출 |
+로컬 빌드·배포는 더 이상 필요 없다. main 에 들어가면 CI 가 전부 처리한다.

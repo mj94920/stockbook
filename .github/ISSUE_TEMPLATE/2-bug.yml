@@ -1,0 +1,26 @@
+name: 🐛 버그 신고 (Claude 자동 수정)
+description: 버그를 적으면 Claude 가 원인을 찾아 수정 → 검증 → 배포까지 자동으로 진행합니다.
+title: "fix: "
+labels: [claude]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 어떤 문제가 있나요?
+      description: 무엇을 했을 때 → 무엇이 일어났고 → 원래 어떻게 되어야 하는지
+    validations:
+      required: true
+  - type: dropdown
+    id: target
+    attributes:
+      label: 발생 위치
+      multiple: true
+      options:
+        - PC 앱 (index.html / Electron)
+        - 모바일 (mobile.html / PWA)
+  - type: textarea
+    id: log
+    attributes:
+      label: 오류 메시지 / 콘솔 로그 (선택)
+      description: F12 개발자도구 콘솔 내용이 있으면 붙여 주세요.
+      render: text

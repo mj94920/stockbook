@@ -1,0 +1,81 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# CI — 모든 PR · 릴리스 · Claude 작업 결과가 반드시 통과해야 하는 관문
+#   1) 정적 검사 : JS/HTML 인라인 스크립트 문법, JSON, 프로젝트 규칙(nsis·보안설정)
+#   2) 스모크    : Chromium 으로 index.html / mobile.html 초기화 오류 검사
+#   3) 자동 머지 : 'automerge' 라벨이 붙은 PR 은 통과 즉시 main 에 squash 머지 → 릴리스
+# ─────────────────────────────────────────────────────────────────────────────
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, ready_for_review]
+  workflow_call:
+    inputs:
+      ref:
+        description: 검사할 git ref (브랜치/SHA)
+        type: string
+        default: ''
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: 정적 검사 + 스모크 테스트
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || '' }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # Claude 작업 브랜치는 검사 스크립트를 main 기준으로 고정 (검사를 느슨하게 고쳐 통과하는 것 방지)
+      - name: 검사 스크립트 고정 (claude/* 브랜치)
+        if: startsWith(inputs.ref, 'claude/') || startsWith(github.head_ref, 'claude/')
+        run: |
+          git fetch --depth 1 origin main
+          git checkout FETCH_HEAD -- scripts/
+
+      - run: npm ci --ignore-scripts
+
+      - name: 정적 검사
+        run: npm run check
+
+      - name: Playwright + Chromium 설치
+        run: npm run test:setup
+
+      - name: 스모크 테스트
+        run: npm run smoke
+
+  automerge:
+    name: 자동 머지
+    needs: test
+    if: >-
+      github.event_name == 'pull_request' &&
+      !github.event.pull_request.draft &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      contains(github.event.pull_request.labels.*.name, 'automerge')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PR: ${{ github.event.pull_request.number }}
+    steps:
+      - name: main 에 squash 머지
+        run: >-
+          gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --squash --delete-branch
+          --match-head-commit "${{ github.event.pull_request.head.sha }}"
+      # GITHUB_TOKEN 으로 만든 push 는 다른 워크플로를 깨우지 않으므로 릴리스를 직접 호출
+      - name: 릴리스 트리거
+        run: gh workflow run release.yml --repo "$GITHUB_REPOSITORY" --ref main

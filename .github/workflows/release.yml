@@ -1,0 +1,222 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Release — main 에 변경이 들어오면 사람 손 없이 끝까지 배포
+#   검사 → 버전 자동 증가(커밋 메시지 기반) → 태그
+#        → Windows NSIS 설치파일(EXE) 빌드  ┐
+#        → Android APK/AAB 빌드 (선택)      ├→ GitHub Release 게시 + Pages 갱신
+# 수동 실행: Actions 탭 → Release → Run workflow (bump 수준 선택 가능)
+# ─────────────────────────────────────────────────────────────────────────────
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.claude/**'
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 버전 증가 수준
+        type: choice
+        options: [auto, patch, minor, major, none]
+        default: auto
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pages: write
+  actions: read
+
+jobs:
+  checks:
+    if: ${{ !startsWith(github.event.head_commit.message, 'chore(release)') }}
+    uses: ./.github/workflows/ci.yml
+    # 재사용 워크플로 안의 automerge 잡이 요구하는 권한 (실행은 안 되지만 검증 단계에서 필요)
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    with:
+      ref: main
+
+  version:
+    name: 버전 증가 + 태그
+    needs: checks
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+      tag: v${{ steps.bump.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 버전 계산 및 파일 갱신
+        id: bump
+        run: node scripts/bump-version.mjs "${{ inputs.bump || 'auto' }}"
+
+      - name: 커밋 · 태그 · 푸시
+        env:
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- . ':!.release-notes.md'
+          git diff --cached --quiet || git commit -m "chore(release): v${VERSION}"
+          if git rev-parse "v${VERSION}" >/dev/null 2>&1; then
+            echo "::error::태그 v${VERSION} 가 이미 존재합니다"; exit 1
+          fi
+          git tag -a "v${VERSION}" -m "v${VERSION}"
+          git push origin HEAD:main --follow-tags
+
+  build-windows:
+    name: Windows EXE (NSIS)
+    needs: version
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.tag }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: electron-builder --win nsis
+        run: npm run dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/*.exe
+          if-no-files-found: error
+
+  build-android:
+    name: Android APK/AAB (TWA)
+    needs: version
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PACKAGE_ID: ${{ vars.ANDROID_PACKAGE_ID }}
+      KEY_ALIAS: ${{ vars.ANDROID_KEY_ALIAS || 'android' }}
+      KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD || secrets.ANDROID_KEYSTORE_PASSWORD }}
+      BUBBLEWRAP_VERSION: 1.25.0
+      BUILD_TOOLS: 36.1.0
+    steps:
+      - name: 설정 확인
+        id: cfg
+        run: |
+          if [ -z "$PACKAGE_ID" ] || [ -z "$KEYSTORE_B64" ] || [ -z "$BUBBLEWRAP_KEYSTORE_PASSWORD" ]; then
+            echo "::notice::Android 서명 설정(ANDROID_PACKAGE_ID 변수 / ANDROID_KEYSTORE_* 시크릿)이 없어 APK 빌드를 건너뜁니다."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.enabled == 'true'
+        with:
+          ref: ${{ needs.version.outputs.tag }}
+
+      - uses: actions/setup-java@v4
+        if: steps.cfg.outputs.enabled == 'true'
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: actions/setup-node@v4
+        if: steps.cfg.outputs.enabled == 'true'
+        with:
+          node-version: 22
+
+      - name: Android SDK build-tools · bubblewrap 준비
+        if: steps.cfg.outputs.enabled == 'true'
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "build-tools;${BUILD_TOOLS}" > /dev/null
+          npm install -g "@bubblewrap/cli@${BUBBLEWRAP_VERSION}"
+          mkdir -p ~/.bubblewrap
+          printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$ANDROID_HOME" > ~/.bubblewrap/config.json
+
+      - name: TWA 프로젝트 생성
+        if: steps.cfg.outputs.enabled == 'true'
+        run: |
+          mkdir -p twa && cd twa
+          sed -e "s/__ANDROID_PACKAGE_ID__/${PACKAGE_ID}/" -e "s/__ANDROID_KEY_ALIAS__/${KEY_ALIAS}/" \
+            ../android/twa-manifest.json > twa-manifest.json
+          echo "$KEYSTORE_B64" | base64 -d > android.keystore
+          bubblewrap update --skipVersionUpgrade < /dev/null
+
+      - name: bubblewrap build
+        if: steps.cfg.outputs.enabled == 'true'
+        working-directory: twa
+        run: |
+          bubblewrap build --skipPwaValidation < /dev/null
+          V="${{ needs.version.outputs.version }}"
+          mkdir -p ../out
+          cp app-release-signed.apk  "../out/Stock Book ${V}.apk"
+          cp app-release-bundle.aab  "../out/Stock Book ${V}.aab"
+
+      - uses: actions/upload-artifact@v4
+        if: steps.cfg.outputs.enabled == 'true'
+        with:
+          name: android
+          path: out/*
+          if-no-files-found: error
+
+  publish:
+    name: GitHub Release 게시
+    needs: [version, build-windows, build-android]
+    if: ${{ !cancelled() && needs.build-windows.result == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ needs.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.tag }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: 릴리스 노트 추출
+        run: |
+          awk -v t="## ${TAG} " 'index($0,t)==1{f=1;next} /^## v/{if(f)exit} f' CHANGELOG.md > notes.md
+          {
+            echo ""
+            echo "---"
+            echo "- 🖥️ Windows: \`Stock Book Setup *.exe\` 다운로드 후 설치"
+            echo "- 📱 Android: \`.apk\` 설치 (Play 스토어 업로드는 \`.aab\`)"
+            echo "- 🌐 웹/PWA: https://mj94920.github.io/stockbook--/"
+          } >> notes.md
+          cat notes.md
+
+      - name: 릴리스 생성
+        run: |
+          shopt -s nullglob
+          gh release create "$TAG" artifacts/* --title "Stock Book ${TAG}" --notes-file notes.md --latest
+
+      # Pages 가 '브랜치에서 배포' 모드일 때 GITHUB_TOKEN 커밋으로도 확실히 재빌드되도록 요청
+      - name: GitHub Pages 재빌드 요청
+        continue-on-error: true
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/pages/builds" --silent

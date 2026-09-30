@@ -1,3 +1,5 @@
+> ℹ️ 초기 제품 요구사항 문서(2026-07). 플랫폼·빌드 방식은 README.md / CLAUDE.md 가 최신 기준이다.
+
 # StockBook PWA — Product Requirements Document
 
 **작성일**: 2026-07-01  
