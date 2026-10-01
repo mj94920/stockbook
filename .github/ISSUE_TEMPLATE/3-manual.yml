@@ -1,0 +1,9 @@
+name: 📝 메모 (자동 개발 안 함)
+description: Claude 를 호출하지 않는 일반 이슈. 나중에 'claude' 라벨을 붙이면 그때 자동 개발이 시작됩니다.
+body:
+  - type: textarea
+    id: body
+    attributes:
+      label: 내용
+    validations:
+      required: true

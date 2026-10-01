@@ -1,0 +1,25 @@
+name: ✨ 기능 요청 (Claude 자동 개발)
+description: 원하는 기능을 적으면 Claude 가 구현 → 검증 → 배포까지 자동으로 진행합니다.
+title: "feat: "
+labels: [claude]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 무엇을 원하나요?
+      description: 화면·동작을 구체적으로. 예) "관심종목 탭에 52주 최고가 대비 하락률 열 추가"
+    validations:
+      required: true
+  - type: dropdown
+    id: target
+    attributes:
+      label: 적용 대상
+      multiple: true
+      options:
+        - PC 앱 (index.html / Electron)
+        - 모바일 (mobile.html / PWA)
+  - type: textarea
+    id: notes
+    attributes:
+      label: 참고 사항
+      description: 참고 화면, 데이터 출처, 하지 말아야 할 것 등 (선택)

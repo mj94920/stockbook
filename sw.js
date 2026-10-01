@@ -1,6 +1,7 @@
-const CACHE = 'stockbook-v5';
+const CACHE = 'stockbook-v1.0.0'; // 릴리스 시 scripts/bump-version.mjs 가 자동 갱신
 const ASSETS = [
-  './주식포트폴리오관리.html',
+  './index.html',
+  './mobile.html',
   './manifest.json',
   './logo.svg',
   './icon-192.png',

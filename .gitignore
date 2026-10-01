@@ -1,28 +1,40 @@
-# 서명 키 — 절대 공개 저장소에 올리지 말 것
-signing.keystore
+# 서명 키 — 절대 저장소에 올리지 말 것 (GitHub Secrets 로만 관리)
+*.keystore
+*.jks
 signing-key-info.txt
 
-# 빌드 산출물 / 의존성
+# 의존성 / 빌드 산출물
 node_modules/
+dist/
 *.exe
 *.zip
+*.apk
+*.aab
+.release-notes.md
+test.log
+test-tail.log
 
-# Windows 예약 장치명 / bash 오류로 생성된 더미 파일
+# Android TWA 로컬 빌드 산출물 (CI 는 android/twa-manifest.json 으로 매번 새로 생성)
+/twa/
+/app/
+.gradle/
+build/
+gradle/
+gradlew
+gradlew.bat
+build.gradle
+settings.gradle
+gradle.properties
+/twa-manifest.json
+manifest-checksum.txt
+app-release-*.apk
+sign_apk.bat
+store_icon.png
+
+# 로컬 전용
+.claude/settings.local.json
+*.bak*
 /nul
-/_ul
- 
-# Android TWA ���� ���� 
-.gradle/ 
-app/ 
-build/ 
-gradle/ 
-gradlew 
-gradlew.bat 
-build.gradle 
-settings.gradle 
-gradle.properties 
-twa-manifest.json 
-manifest-checksum.txt 
-app-release-unsigned-aligned.apk 
-sign_apk.bat 
-store_icon.png 
+/_ul*
+smoke-shots/
+.claude-task.md

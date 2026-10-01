@@ -5,7 +5,13 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win"
+    "check": "node scripts/check-syntax.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "test:setup": "npm i --no-save --ignore-scripts playwright@1.56.0 && npx playwright install --with-deps chromium",
+    "test": "npm run check && npm run smoke",
+    "build": "electron-builder --win nsis",
+    "dist": "electron-builder --win nsis --publish never -c.directories.output=dist",
+    "release:bump": "node scripts/bump-version.mjs"
   },
   "build": {
     "appId": "com.mj.stockbook",
