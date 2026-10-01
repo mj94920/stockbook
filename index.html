@@ -249,6 +249,57 @@
     padding: var(--sb-space-3) var(--sb-space-4); border-top: 1px solid var(--sb-border);
   }
   .sb-modal__foot .sb-btn:first-child:not(:only-child) { margin-right: auto; }
+  .sb-modal__info {
+    padding: var(--sb-space-2) var(--sb-space-3);
+    background: var(--sb-surface); border: 1px solid var(--sb-border); border-radius: var(--sb-radius-2);
+    font-size: 13px; color: var(--sb-text-2);
+  }
+  .sb-modal__info:empty { display: none; }
+  .sb-modal__section { font-size: 12px; font-weight: 700; margin-top: var(--sb-space-1); }
+  .sb-hint { font-size: 12px; color: var(--sb-text-3); line-height: 1.5; }
+  .sb-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sb-space-3); }
+  .sb-tm-row { display: grid; grid-template-columns: 1fr 110px 72px; gap: var(--sb-space-2); align-items: end; }
+  .sb-tm-rate { font-family: var(--sb-font-num); font-variant-numeric: tabular-nums; font-size: 13px; text-align: right; height: var(--sb-control-h); line-height: var(--sb-control-h); }
+  /* 숫자 입력: 오른쪽 정렬 + 단위 표기 */
+  .sb-input--num { text-align: right; font-family: var(--sb-font-num); font-variant-numeric: tabular-nums; }
+  .sb-input-unit { position: relative; display: flex; align-items: center; }
+  .sb-input-unit .sb-input { padding-right: calc(var(--sb-space-3) + 28px); }
+  .sb-unit { position: absolute; right: var(--sb-space-3); font-size: 12px; color: var(--sb-text-3); pointer-events: none; }
+  .sb-textarea { height: auto; padding: var(--sb-space-2) var(--sb-space-3); resize: vertical; line-height: 1.5; }
+  .sb-table-wrap { max-height: 50vh; overflow: auto; border: 1px solid var(--sb-border); border-radius: var(--sb-radius-2); }
+  .sb-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .sb-table th { padding: var(--sb-space-2); color: var(--sb-text-3); font-weight: 600; border-bottom: 1px solid var(--sb-border); position: sticky; top: 0; background: var(--sb-panel); }
+  .sb-table td { border-bottom: 1px solid var(--sb-border-weak); }
+  .sb-seg { display: flex; gap: var(--sb-space-2); }
+  .sb-seg__btn { flex: 1; }
+  .sb-seg__btn.active { background: var(--sb-accent); border-color: var(--sb-accent); color: var(--sb-on-accent); }
+
+  /* 설정 허브: 좌측 카테고리 + 우측 내용 */
+  .sb-hub { display: flex; min-height: 0; flex: 1; }
+  .sb-hub__nav { width: 168px; flex-shrink: 0; padding: var(--sb-space-2); border-right: 1px solid var(--sb-border); display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+  .sb-hub__nav-btn {
+    text-align: left; padding: var(--sb-space-2) var(--sb-space-3);
+    background: transparent; border: 0; border-radius: var(--sb-radius-2);
+    color: var(--sb-text-2); font-family: var(--sb-font-ko); font-size: 13px; cursor: pointer;
+  }
+  .sb-hub__nav-btn:hover { background: var(--sb-hover); color: var(--sb-text-1); }
+  .sb-hub__nav-btn.active { background: var(--sb-accent); color: var(--sb-on-accent); font-weight: 700; }
+  .sb-hub__content { flex: 1; min-width: 0; padding: var(--sb-space-4); overflow-y: auto; height: 520px; max-height: calc(100vh - 160px); }
+  .sb-hub__page { display: none; flex-direction: column; gap: var(--sb-space-4); }
+  .sb-hub__page.active { display: flex; }
+  .sb-hub__h { font-size: 12px; font-weight: 700; color: var(--sb-text-3); letter-spacing: 0.04em; }
+  .sb-hub__empty { padding: var(--sb-space-6); text-align: center; color: var(--sb-text-3); border: 1px dashed var(--sb-border); border-radius: var(--sb-radius-3); font-size: 13px; }
+  .sb-hub__row { display: flex; align-items: center; justify-content: space-between; gap: var(--sb-space-3); }
+  .sb-prio { display: flex; flex-direction: column; gap: var(--sb-space-1); }
+  .sb-prio__item { display: flex; align-items: center; gap: var(--sb-space-2); padding: var(--sb-space-1) var(--sb-space-3); background: var(--sb-surface); border: 1px solid var(--sb-border); border-radius: var(--sb-radius-2); font-size: 13px; }
+  .sb-prio__item span.sb-num { color: var(--sb-text-3); width: 16px; }
+  .sb-prio__item .sb-prio__name { flex: 1; }
+  @media (max-width: 640px) {
+    .sb-hub { flex-direction: column; }
+    .sb-hub__nav { width: auto; flex-direction: row; border-right: 0; border-bottom: 1px solid var(--sb-border); overflow-x: auto; }
+    .sb-hub__nav-btn { white-space: nowrap; }
+    .sb-tm-row { grid-template-columns: 1fr 1fr; }
+  }
 
   .sb-stat {
     display: flex; flex-direction: column; gap: var(--sb-space-1);
@@ -1352,14 +1403,21 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(11, 15, 25, 0.6);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: var(--sb-overlay);
+    /* backdrop-filter 금지 (GPU 합성 레이어 hit-test 버그) — 독립 레이어로 승격 */
+    transform: translateZ(0);
     z-index: 200;
     align-items: center;
     justify-content: center;
     opacity: 0;
     transition: opacity 0.2s ease;
+  }
+  /* 공통 모달 오버레이 (인라인 display 토글 방식 모달용) */
+  .sb-overlay {
+    position: fixed; inset: 0;
+    background: var(--sb-overlay);
+    align-items: center; justify-content: center;
+    transform: translateZ(0);
   }
   .modal-overlay.open {
     display: flex;
@@ -1404,7 +1462,7 @@
     inset: 0;
     /* backdrop-filter 제거 — Electron Chromium에서 GPU 합성 레이어 + overflow-y:auto
        조합 시 자식 요소 마우스 이벤트 hit-test 실패 버그 회피 */
-    background: rgba(0,0,0,0.72);
+    background: var(--sb-overlay);
     z-index: 4000;
     align-items: center;
     justify-content: center;
@@ -3175,7 +3233,7 @@
   <div class="mdi-sb-sep"></div>
   <div class="mdi-sb-section-label">시스템</div>
 
-  <button type="button" class="mdi-sb-btn" onclick="openAccountPanel()" title="계좌·API">
+  <button type="button" class="mdi-sb-btn" onclick="openSettings('account')" title="계좌·API">
     <span class="mdi-sb-icon-wrap">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
@@ -3184,7 +3242,7 @@
     <span class="mdi-sb-label">계좌·API (<span id="acctCount">0</span>)</span>
   </button>
 
-  <button type="button" class="mdi-sb-btn" id="sbDataBtn" onclick="sbToggleDataMenu(event)" title="데이터 (백업·복원·레이아웃 초기화)">
+  <button type="button" class="mdi-sb-btn" id="sbDataBtn" onclick="openSettings('data')" title="데이터 (백업·복원·레이아웃 초기화)">
     <span class="mdi-sb-icon-wrap">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <ellipse cx="12" cy="5" rx="9" ry="3"/>
@@ -3206,20 +3264,10 @@
   </button>
 
   <!-- API 연결 상태 (loadApiKeysUI 가 갱신) -->
-  <button type="button" class="mdi-sb-status" id="apiStatusBtn" onclick="openApiPanel()" title="KIS 미연결 — API 설정">
+  <button type="button" class="mdi-sb-status" id="apiStatusBtn" onclick="openSettings('account')" title="KIS 미연결 — API 설정">
     <span class="mdi-sb-dot" id="apiStatusDot"></span>
     <span class="mdi-sb-label" id="apiStatusLabel">KIS 미연결</span>
   </button>
-
-  <!-- 데이터 메뉴 팝오버 -->
-  <div class="mdi-sb-popover" id="sbDataMenu">
-    <button type="button" class="mdi-sb-pop-item" onclick="sbCloseDataMenu();exportBackup()">데이터 백업</button>
-    <label class="mdi-sb-pop-item" style="cursor:pointer;margin:0;">
-      백업 복원
-      <input type="file" accept=".json" onchange="sbCloseDataMenu();importBackup(event)" style="display:none;">
-    </label>
-    <button type="button" class="mdi-sb-pop-item" onclick="sbCloseDataMenu();window._MDI && window._MDI.clearAndReset()">레이아웃 초기화</button>
-  </div>
 
 </aside>
 
@@ -4084,175 +4132,174 @@
 
 <!-- SELL MODAL -->
 <div class="modal-overlay" id="sellModal">
-  <div class="modal">
-    <div class="modal-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;flex-shrink:0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> 매도 처리</div>
-    <div id="sellModalInfo" style="font-size:14px;color:var(--text2);margin-bottom:12px;"></div>
-    <div class="form-grid" style="grid-template-columns:1fr 1fr;">
-      <div class="form-group">
-        <label>매도 수량 *</label>
-        <input type="number" id="sell_qty" placeholder="10" min="1">
+  <div class="sb-modal sb-modal--m" role="dialog" aria-modal="true">
+    <div class="sb-modal__head">매도 처리<button type="button" class="sb-btn sb-btn--ghost sb-btn--sm sb-modal__close" onclick="closeSellModal()" aria-label="닫기">✕</button></div>
+    <div class="sb-modal__body">
+      <div class="sb-modal__info" id="sellModalInfo"></div>
+      <div class="sb-grid-2">
+        <label class="sb-field">매도 수량
+          <span class="sb-input-unit"><input class="sb-input sb-input--num" type="number" id="sell_qty" placeholder="10" min="1"><span class="sb-unit">주</span></span>
+        </label>
+        <label class="sb-field">매도 가격
+          <span class="sb-input-unit"><input class="sb-input sb-input--num" type="text" inputmode="decimal" id="sell_price" placeholder="80,000" oninput="formatWithComma(this);calcSellPnl()"><span class="sb-unit">원/$</span></span>
+        </label>
+        <label class="sb-field">날짜
+          <input class="sb-input" type="date" id="sell_date">
+        </label>
+        <label class="sb-field">멘털
+          <select class="sb-select" id="sell_mental">
+            <option value="">선택</option>
+            <option>원칙 지켰어</option>
+            <option>아이고 흔들렸네</option>
+            <option>고점에 팔았다 🎯</option>
+          </select>
+        </label>
       </div>
-      <div class="form-group">
-        <label>매도 가격 * (원/$)</label>
-        <input type="text" inputmode="decimal" id="sell_price" placeholder="80,000" oninput="formatWithComma(this);calcSellPnl()">
-      </div>
-      <div class="form-group">
-        <label>날짜</label>
-        <input type="date" id="sell_date">
-      </div>
-      <div class="form-group">
-        <label>멘털</label>
-        <select id="sell_mental">
-          <option value="">선택</option>
-          <option>원칙 지켰어</option>
-          <option>아이고 흔들렸네</option>
-          <option>고점에 팔았다 🎯</option>
-        </select>
-      </div>
+      <div class="calc-preview" id="sellCalcPreview"></div>
+      <label class="sb-field">메모
+        <input class="sb-input" type="text" id="sell_note" placeholder="매도 이유 간략 메모">
+      </label>
     </div>
-    <div class="calc-preview" id="sellCalcPreview" style="margin-top:8px;"></div>
-    <div class="form-group" style="margin-top:10px;">
-      <label>메모</label>
-      <input type="text" id="sell_note" placeholder="매도 이유 간략 메모">
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeSellModal()">취소</button>
-      <button class="btn btn-danger" onclick="confirmSell()">매도 확정</button>
+    <div class="sb-modal__foot">
+      <button type="button" class="sb-btn" onclick="closeSellModal()">취소</button>
+      <button type="button" class="sb-btn sb-btn--primary" onclick="confirmSell()">매도 확정</button>
     </div>
   </div>
 </div>
 
 <!-- TARGET MODAL -->
 <div class="modal-overlay" id="targetModal">
-  <div class="modal" style="max-width:420px">
-    <div class="modal-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> 목표가 · 손절가 수정</div>
-    <div id="targetModalInfo" style="font-size:14px;color:var(--text2);margin-bottom:14px;padding:8px 10px;background:var(--bg3);border-radius:6px;border:1px solid var(--border);">
-      <span id="targetModalName" style="font-weight:700;color:var(--text)"></span>
-      <span id="targetModalAvg" style="margin-left:8px;color:var(--text3)"></span>
-    </div>
-    <div style="display:grid;gap:8px;">
-      <div style="font-size:12px;font-weight:700;color:var(--green);margin-top:2px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> 수익 목표가</div>
+  <div class="sb-modal sb-modal--m" role="dialog" aria-modal="true">
+    <div class="sb-modal__head">목표가 · 손절가 수정<button type="button" class="sb-btn sb-btn--ghost sb-btn--sm sb-modal__close" onclick="closeTargetModal()" aria-label="닫기">✕</button></div>
+    <div class="sb-modal__body">
+      <div class="sb-modal__info" id="targetModalInfo">
+        <span id="targetModalName" style="font-weight:700;color:var(--sb-text-1)"></span>
+        <span id="targetModalAvg" style="margin-left:8px;color:var(--sb-text-3)"></span>
+      </div>
       <input type="hidden" id="tm_ref" value="0">
-      <div style="display:grid;grid-template-columns:1fr 80px 1fr;gap:6px;align-items:end;">
-        <div><label style="font-size:12px;color:var(--text3);">1단계 (가격)</label><input type="text" inputmode="decimal" id="tm_target1" placeholder="0" oninput="formatWithComma(this);calcTargetPreview();syncPP('tm_target1','tm_target1_p',getNum('tm_ref'))" style="width:100%"></div>
-        <div><label style="font-size:12px;color:var(--text3);">%</label><input type="number" id="tm_target1_p" placeholder="0" step="0.1" oninput="syncPC('tm_target1_p','tm_target1',getNum('tm_ref'));calcTargetPreview()" style="width:100%"></div>
-        <div id="tm_t1_rate" style="font-size:13px;color:var(--green);padding-bottom:6px;"></div>
+      <div class="sb-modal__section sb-up">수익 목표가</div>
+      <div class="sb-tm-row">
+        <label class="sb-field">1단계 (가격)<span class="sb-input-unit"><input class="sb-input sb-input--num" type="text" inputmode="decimal" id="tm_target1" placeholder="0" oninput="formatWithComma(this);calcTargetPreview();syncPP('tm_target1','tm_target1_p',getNum('tm_ref'))"><span class="sb-unit">원</span></span></label>
+        <label class="sb-field">수익률<span class="sb-input-unit"><input class="sb-input sb-input--num" type="number" id="tm_target1_p" placeholder="0" step="0.1" oninput="syncPC('tm_target1_p','tm_target1',getNum('tm_ref'));calcTargetPreview()"><span class="sb-unit">%</span></span></label>
+        <div id="tm_t1_rate" class="sb-tm-rate sb-up"></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 80px 1fr;gap:6px;align-items:end;">
-        <div><label style="font-size:12px;color:var(--text3);">2단계 (가격)</label><input type="text" inputmode="decimal" id="tm_target2" placeholder="0" oninput="formatWithComma(this);calcTargetPreview();syncPP('tm_target2','tm_target2_p',getNum('tm_ref'))" style="width:100%"></div>
-        <div><label style="font-size:12px;color:var(--text3);">%</label><input type="number" id="tm_target2_p" placeholder="0" step="0.1" oninput="syncPC('tm_target2_p','tm_target2',getNum('tm_ref'));calcTargetPreview()" style="width:100%"></div>
-        <div id="tm_t2_rate" style="font-size:13px;color:var(--green);padding-bottom:6px;"></div>
+      <div class="sb-tm-row">
+        <label class="sb-field">2단계 (가격)<span class="sb-input-unit"><input class="sb-input sb-input--num" type="text" inputmode="decimal" id="tm_target2" placeholder="0" oninput="formatWithComma(this);calcTargetPreview();syncPP('tm_target2','tm_target2_p',getNum('tm_ref'))"><span class="sb-unit">원</span></span></label>
+        <label class="sb-field">수익률<span class="sb-input-unit"><input class="sb-input sb-input--num" type="number" id="tm_target2_p" placeholder="0" step="0.1" oninput="syncPC('tm_target2_p','tm_target2',getNum('tm_ref'));calcTargetPreview()"><span class="sb-unit">%</span></span></label>
+        <div id="tm_t2_rate" class="sb-tm-rate sb-up"></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 80px 1fr;gap:6px;align-items:end;">
-        <div><label style="font-size:12px;color:var(--text3);">3단계 (가격)</label><input type="text" inputmode="decimal" id="tm_target3" placeholder="0" oninput="formatWithComma(this);calcTargetPreview();syncPP('tm_target3','tm_target3_p',getNum('tm_ref'))" style="width:100%"></div>
-        <div><label style="font-size:12px;color:var(--text3);">%</label><input type="number" id="tm_target3_p" placeholder="0" step="0.1" oninput="syncPC('tm_target3_p','tm_target3',getNum('tm_ref'));calcTargetPreview()" style="width:100%"></div>
-        <div id="tm_t3_rate" style="font-size:13px;color:var(--green);padding-bottom:6px;"></div>
+      <div class="sb-tm-row">
+        <label class="sb-field">3단계 (가격)<span class="sb-input-unit"><input class="sb-input sb-input--num" type="text" inputmode="decimal" id="tm_target3" placeholder="0" oninput="formatWithComma(this);calcTargetPreview();syncPP('tm_target3','tm_target3_p',getNum('tm_ref'))"><span class="sb-unit">원</span></span></label>
+        <label class="sb-field">수익률<span class="sb-input-unit"><input class="sb-input sb-input--num" type="number" id="tm_target3_p" placeholder="0" step="0.1" oninput="syncPC('tm_target3_p','tm_target3',getNum('tm_ref'));calcTargetPreview()"><span class="sb-unit">%</span></span></label>
+        <div id="tm_t3_rate" class="sb-tm-rate sb-up"></div>
       </div>
-      <div style="font-size:12px;font-weight:700;color:var(--red);margin-top:6px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> 손절가</div>
-      <div style="display:grid;grid-template-columns:1fr 80px 1fr;gap:6px;align-items:end;">
-        <div><label style="font-size:12px;color:var(--text3);">1단계 (가격)</label><input type="text" inputmode="decimal" id="tm_stop1" placeholder="0" oninput="formatWithComma(this);calcTargetPreview();syncPP('tm_stop1','tm_stop1_p',getNum('tm_ref'))" style="width:100%"></div>
-        <div><label style="font-size:12px;color:var(--text3);">%</label><input type="number" id="tm_stop1_p" placeholder="0" step="0.1" oninput="syncPC('tm_stop1_p','tm_stop1',getNum('tm_ref'));calcTargetPreview()" style="width:100%"></div>
-        <div id="tm_s1_rate" style="font-size:13px;color:var(--red);padding-bottom:6px;"></div>
+      <div class="sb-modal__section sb-down">손절가</div>
+      <div class="sb-tm-row">
+        <label class="sb-field">1단계 (가격)<span class="sb-input-unit"><input class="sb-input sb-input--num" type="text" inputmode="decimal" id="tm_stop1" placeholder="0" oninput="formatWithComma(this);calcTargetPreview();syncPP('tm_stop1','tm_stop1_p',getNum('tm_ref'))"><span class="sb-unit">원</span></span></label>
+        <label class="sb-field">손실률<span class="sb-input-unit"><input class="sb-input sb-input--num" type="number" id="tm_stop1_p" placeholder="0" step="0.1" oninput="syncPC('tm_stop1_p','tm_stop1',getNum('tm_ref'));calcTargetPreview()"><span class="sb-unit">%</span></span></label>
+        <div id="tm_s1_rate" class="sb-tm-rate sb-down"></div>
       </div>
     </div>
-    <div class="modal-actions" style="margin-top:16px;">
-      <button class="btn btn-ghost" onclick="closeTargetModal()">취소</button>
-      <button class="btn btn-primary" onclick="saveTargetModal()">저장</button>
+    <div class="sb-modal__foot">
+      <button type="button" class="sb-btn" onclick="closeTargetModal()">취소</button>
+      <button type="button" class="sb-btn sb-btn--primary" onclick="saveTargetModal()">저장</button>
     </div>
   </div>
 </div>
 
 <!-- MC SNAPSHOT MODAL -->
 <div class="modal-overlay" id="mcSnapshotModal">
-  <div class="modal" style="max-width:360px">
-    <div class="modal-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg> 월별 실제 잔액 입력</div>
-    <div id="mcSnapshotLabel" style="font-size:15px;font-weight:700;color:var(--accent);margin-bottom:14px;"></div>
-    <div class="form-group">
-      <label>실제 잔액 (원)</label>
-      <input type="text" inputmode="decimal" id="mcSnapshotInput" placeholder="예: 18,500,000"
-        oninput="formatWithComma(this)"
-        onkeydown="if(event.key==='Enter') confirmMcSnapshot()">
+  <div class="sb-modal sb-modal--s" role="dialog" aria-modal="true">
+    <div class="sb-modal__head">월별 실제 잔액 입력<button type="button" class="sb-btn sb-btn--ghost sb-btn--sm sb-modal__close" onclick="closeMcSnapshotModal()" aria-label="닫기">✕</button></div>
+    <div class="sb-modal__body">
+      <div id="mcSnapshotLabel" style="font-size:15px;font-weight:700;color:var(--sb-accent);"></div>
+      <label class="sb-field">실제 잔액
+        <span class="sb-input-unit"><input class="sb-input sb-input--num" type="text" inputmode="decimal" id="mcSnapshotInput" placeholder="예: 18,500,000"
+          oninput="formatWithComma(this)"
+          onkeydown="if(event.key==='Enter') confirmMcSnapshot()"><span class="sb-unit">원</span></span>
+      </label>
+      <p class="sb-hint">0 입력 시 해당 월 기록 삭제</p>
     </div>
-    <p style="font-size:12px;color:var(--text3);margin:-4px 0 12px;">0 입력 시 해당 월 기록 삭제</p>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeMcSnapshotModal()">취소</button>
-      <button class="btn btn-primary" onclick="confirmMcSnapshot()">저장</button>
+    <div class="sb-modal__foot">
+      <button type="button" class="sb-btn" onclick="closeMcSnapshotModal()">취소</button>
+      <button type="button" class="sb-btn sb-btn--primary" onclick="confirmMcSnapshot()">저장</button>
     </div>
   </div>
 </div>
 
 <!-- TOTAL ASSET MODAL -->
 <div class="modal-overlay" id="totalAssetModal">
-  <div class="modal" style="max-width:360px">
-    <div class="modal-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;flex-shrink:0"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> 총 자산 설정</div>
-    <p style="font-size:12px;color:var(--text3);margin:-4px 0 12px;">전체 투자 가능 자산(예수금+주식평가액)을 입력하면 투자 비중 계산에 활용됩니다.</p>
-    <div class="form-group">
-      <label class="form-label">총 자산 금액</label>
-      <input type="text" inputmode="decimal" id="totalAssetModalInput" placeholder="예: 100,000,000"
-        style="width:100%;padding:8px 12px;background:var(--bg3);border:1px solid var(--accent);border-radius:6px;color:var(--text);font-size:15px;outline:none;box-sizing:border-box;"
-        oninput="formatWithComma(this);previewAssetRatio()"
-        onkeydown="if(event.key==='Enter')saveTotalAsset()">
+  <div class="sb-modal sb-modal--s" role="dialog" aria-modal="true">
+    <div class="sb-modal__head">총 자산 설정<button type="button" class="sb-btn sb-btn--ghost sb-btn--sm sb-modal__close" onclick="closeTotalAssetModal()" aria-label="닫기">✕</button></div>
+    <div class="sb-modal__body">
+      <p class="sb-hint">전체 투자 가능 자산(예수금+주식평가액)을 입력하면 투자 비중 계산에 활용됩니다.</p>
+      <label class="sb-field">총 자산 금액
+        <span class="sb-input-unit"><input class="sb-input sb-input--num" type="text" inputmode="decimal" id="totalAssetModalInput" placeholder="예: 100,000,000"
+          oninput="formatWithComma(this);previewAssetRatio()"
+          onkeydown="if(event.key==='Enter')saveTotalAsset()"><span class="sb-unit">원</span></span>
+      </label>
+      <div id="assetRatioPreviewModal" class="sb-hint" style="min-height:18px;"></div>
     </div>
-    <div id="assetRatioPreviewModal" style="font-size:13px;color:var(--text3);min-height:18px;margin-bottom:10px;"></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;">
-      <button class="btn btn-ghost btn-sm" onclick="closeTotalAssetModal()">취소</button>
-      <button class="btn btn-primary btn-sm" onclick="saveTotalAsset()">저장</button>
+    <div class="sb-modal__foot">
+      <button type="button" class="sb-btn" onclick="closeTotalAssetModal()">취소</button>
+      <button type="button" class="sb-btn sb-btn--primary" onclick="saveTotalAsset()">저장</button>
     </div>
   </div>
 </div>
 
 <!-- CASH MANUAL OVERRIDE MODAL -->
-<div class="modal-overlay" id="cashManualModal">
-  <div class="modal" style="max-width:360px">
-    <div class="modal-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;flex-shrink:0"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg> 예수금 직접 입력</div>
-    <p style="font-size:12px;color:var(--text3);margin:-4px 0 12px;">총자산/입출금 내역으로 자동 계산된 값 대신 실제 예수금을 직접 입력합니다. 저장 후에는 이 값이 다른 계산보다 우선 적용됩니다.</p>
-    <div class="form-group">
-      <label>실제 예수금 (원)</label>
-      <input type="text" inputmode="decimal" id="cashManualInput" placeholder="예: 1,675,334"
-        oninput="formatWithComma(this); updateCashManualPreview();"
-        onkeydown="if(event.key==='Enter') confirmCashManual()">
-      <div id="cashManualCalcPreview" style="font-size:12px;color:var(--text3);margin-top:6px;min-height:18px;"></div>
+<div class="modal-overlay" id="cashManualModal" style="z-index:3200">
+  <div class="sb-modal sb-modal--s" role="dialog" aria-modal="true">
+    <div class="sb-modal__head">예수금 직접 입력<button type="button" class="sb-btn sb-btn--ghost sb-btn--sm sb-modal__close" onclick="closeCashManualModal()" aria-label="닫기">✕</button></div>
+    <div class="sb-modal__body">
+      <p class="sb-hint">총자산/입출금 내역으로 자동 계산된 값 대신 실제 예수금을 직접 입력합니다. 저장 후에는 이 값이 다른 계산보다 우선 적용됩니다.</p>
+      <label class="sb-field">실제 예수금
+        <span class="sb-input-unit"><input class="sb-input sb-input--num" type="text" inputmode="decimal" id="cashManualInput" placeholder="예: 1,675,334"
+          oninput="formatWithComma(this); updateCashManualPreview();"
+          onkeydown="if(event.key==='Enter') confirmCashManual()"><span class="sb-unit">원</span></span>
+      </label>
+      <div id="cashManualCalcPreview" class="sb-hint" style="min-height:18px;"></div>
     </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="clearCashManual()">자동 계산으로 전환</button>
-      <button class="btn btn-ghost" onclick="closeCashManualModal()">취소</button>
-      <button class="btn btn-primary" onclick="confirmCashManual()">저장</button>
+    <div class="sb-modal__foot">
+      <button type="button" class="sb-btn" onclick="closeCashManualModal()">취소</button>
+      <button type="button" class="sb-btn sb-btn--ghost" onclick="clearCashManual()">자동 계산으로 전환</button>
+      <button type="button" class="sb-btn sb-btn--primary" onclick="confirmCashManual()">저장</button>
     </div>
   </div>
 </div>
 
 <!-- UPDATE PRICE MODAL -->
 <div class="modal-overlay" id="priceModal">
-  <div class="modal">
-    <div class="modal-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg> 현재가 업데이트</div>
-    <div id="priceModalInfo" style="margin-bottom:14px;padding:10px 12px;background:var(--bg3);border-radius:6px;border:1px solid var(--border);">
-      <div style="font-size:16px;font-weight:700;color:var(--text)" id="priceModalName"></div>
-      <div style="font-size:13px;color:var(--text3);margin-top:3px" id="priceModalTicker"></div>
-      <div style="font-size:12px;color:var(--text3);margin-top:5px;display:none" id="priceModalExtra"></div>
+  <div class="sb-modal sb-modal--s" role="dialog" aria-modal="true">
+    <div class="sb-modal__head">현재가 업데이트<button type="button" class="sb-btn sb-btn--ghost sb-btn--sm sb-modal__close" onclick="closePriceModal()" aria-label="닫기">✕</button></div>
+    <div class="sb-modal__body">
+      <div class="sb-modal__info" id="priceModalInfo">
+        <div style="font-size:16px;font-weight:700;color:var(--sb-text-1)" id="priceModalName"></div>
+        <div style="font-size:13px;color:var(--sb-text-3);margin-top:3px" id="priceModalTicker"></div>
+        <div style="font-size:12px;color:var(--sb-text-3);margin-top:5px;display:none" id="priceModalExtra"></div>
+      </div>
+      <label class="sb-field">현재 주가
+        <span class="sb-input-unit"><input class="sb-input sb-input--num" type="text" inputmode="decimal" id="update_price" placeholder="0" oninput="formatWithComma(this)"><span class="sb-unit">원/$</span></span>
+      </label>
     </div>
-    <div class="form-group">
-      <label>현재 주가</label>
-      <input type="text" inputmode="decimal" id="update_price" placeholder="0" oninput="formatWithComma(this)">
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closePriceModal()">취소</button>
-      <button class="btn btn-ghost" id="priceModalAutoBtn" onclick="fetchSinglePrice()" style="display:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> 자동 조회</button>
-      <button class="btn btn-blue" onclick="confirmPriceUpdate()">업데이트</button>
+    <div class="sb-modal__foot">
+      <button type="button" class="sb-btn" onclick="closePriceModal()">취소</button>
+      <button type="button" class="sb-btn sb-btn--ghost" id="priceModalAutoBtn" onclick="fetchSinglePrice()" style="display:none">자동 조회</button>
+      <button type="button" class="sb-btn sb-btn--primary" onclick="confirmPriceUpdate()">업데이트</button>
     </div>
   </div>
 </div>
 
 <!-- EDIT STOCK MODAL -->
 <div class="modal-overlay" id="editStockModal">
-  <div class="modal" style="max-width:480px">
-    <div class="modal-title" style="display:flex;align-items:center;gap:8px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> <span id="editModalStockName" style="color:var(--accent)">종목 메모</span></div>
+  <div class="sb-modal sb-modal--m" role="dialog" aria-modal="true">
+    <div class="sb-modal__head"><span id="editModalStockName" style="color:var(--sb-accent)">종목 메모</span><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm sb-modal__close" onclick="closeEditStockModal()" aria-label="닫기">✕</button></div>
+    <div class="sb-modal__body">
     <input type="hidden" id="es_idx">
-    <div class="form-grid" style="gap:10px;">
-      
-      
-      <div class="form-group">
-        <label>섹터</label>
-        <select id="es_sector">
+    <div class="sb-grid-2">
+      <div class="sb-field">
+        <label for="es_sector">섹터</label>
+        <select class="sb-select" id="es_sector">
           <option value="">선택</option>
           <option>전기전자/반도체</option>
           <option>반도체</option>
@@ -4287,85 +4334,90 @@
           <option>기타</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>포트폴리오 위치</label>
-        <select id="es_pos">
+      <div class="sb-field">
+        <label for="es_pos">포트폴리오 위치</label>
+        <select class="sb-select" id="es_pos">
           <option value="">선택</option>
-          <option value="top"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;margin-right:4px;"></span>제일 위 (고위험·고수익)</option>
-          <option value="mid"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#3b82f6;margin-right:4px;"></span>중간 (성장주)</option>
-          <option value="bot"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;margin-right:4px;"></span>제일 아래 (배당·안정)</option>
+          <option value="top">제일 위 (고위험·고수익)</option>
+          <option value="mid">중간 (성장주)</option>
+          <option value="bot">제일 아래 (배당·안정)</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>평균단가 수정</label>
-        <input type="text" inputmode="decimal" id="es_avgPrice" placeholder="0" oninput="formatWithComma(this);syncPP('es_avgPrice','es_avgPrice_dummy',0)">
+      <div class="sb-field">
+        <label for="es_avgPrice">평균단가 수정</label>
+        <span class="sb-input-unit"><input class="sb-input sb-input--num" type="text" inputmode="decimal" id="es_avgPrice" placeholder="0" oninput="formatWithComma(this);syncPP('es_avgPrice','es_avgPrice_dummy',0)"><span class="sb-unit">원</span></span>
       </div>
-      <div class="form-group">
-        <label>보유 수량 수정</label>
-        <input type="number" id="es_qty" placeholder="0" min="1" step="1">
+      <div class="sb-field">
+        <label for="es_qty">보유 수량 수정</label>
+        <span class="sb-input-unit"><input class="sb-input sb-input--num" type="number" id="es_qty" placeholder="0" min="1" step="1"><span class="sb-unit">주</span></span>
       </div>
     </div>
-    <div class="form-group" style="margin-top:10px;">
-      <label>메모 (투자 근거 · 비고)</label>
-      <textarea id="es_memo" rows="3" placeholder="투자 이유, 관찰 포인트 등 자유 메모..." style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+    <div class="sb-field">
+      <label for="es_memo">메모 (투자 근거 · 비고)</label>
+      <textarea class="sb-input sb-textarea" id="es_memo" rows="3" placeholder="투자 이유, 관찰 포인트 등 자유 메모..."></textarea>
     </div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;">※ 평균단가·수량 수정은 데이터 보정 용도입니다. 거래기록은 자동 추가되지 않습니다.</div>
-    <div class="modal-actions" style="margin-top:14px;">
-      <button class="btn btn-ghost" onclick="closeEditStockModal()">취소</button>
-      <button class="btn btn-primary" onclick="saveEditStock()">저장</button>
+    <p class="sb-hint">※ 평균단가·수량 수정은 데이터 보정 용도입니다. 거래기록은 자동 추가되지 않습니다.</p>
+    </div>
+    <div class="sb-modal__foot">
+      <button type="button" class="sb-btn" onclick="closeEditStockModal()">취소</button>
+      <button type="button" class="sb-btn sb-btn--primary" onclick="saveEditStock()">저장</button>
     </div>
   </div>
 </div>
 
 <!-- BULK PRICE UPDATE MODAL -->
 <div class="modal-overlay" id="bulkPriceModal">
-  <div class="modal" style="max-width:520px">
-    <div class="modal-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg> 현재가 일괄 업데이트</div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 12px;gap:8px;">
-      <p style="font-size:12px;color:var(--text3);margin:0;">모든 보유 종목의 현재가를 한 번에 입력합니다.</p>
-      <button class="btn btn-ghost btn-sm" onclick="fetchAllPrices()" style="flex-shrink:0;" title="티커가 있는 종목을 야후 파이낸스에서 자동 조회"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> 자동 조회</button>
+  <div class="sb-modal sb-modal--m" role="dialog" aria-modal="true">
+    <div class="sb-modal__head">현재가 일괄 업데이트<button type="button" class="sb-btn sb-btn--ghost sb-btn--sm sb-modal__close" onclick="closeBulkPriceModal()" aria-label="닫기">✕</button></div>
+    <div class="sb-modal__body">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <p class="sb-hint">모든 보유 종목의 현재가를 한 번에 입력합니다. (단위: 원/$)</p>
+        <button type="button" class="sb-btn sb-btn--sm" onclick="fetchAllPrices()" style="flex-shrink:0;" title="티커가 있는 종목을 야후 파이낸스에서 자동 조회">자동 조회</button>
+      </div>
+      <div class="sb-table-wrap">
+        <table class="sb-table" id="bulkPriceTable">
+          <thead>
+            <tr>
+              <th style="text-align:left;">종목명</th>
+              <th style="text-align:right;">평균단가</th>
+              <th style="text-align:right;">현재가 입력</th>
+            </tr>
+          </thead>
+          <tbody id="bulkPriceTbody"></tbody>
+        </table>
+      </div>
     </div>
-    <div style="max-height:400px;overflow-y:auto;">
-      <table style="width:100%;border-collapse:collapse;font-size:13px;" id="bulkPriceTable">
-        <thead>
-          <tr style="border-bottom:1px solid var(--border);">
-            <th style="text-align:left;padding:6px 8px;color:var(--text3);font-weight:600;">종목명</th>
-            <th style="text-align:right;padding:6px 8px;color:var(--text3);font-weight:600;">평균단가</th>
-            <th style="text-align:right;padding:6px 8px;color:var(--text3);font-weight:600;">현재가 입력</th>
-          </tr>
-        </thead>
-        <tbody id="bulkPriceTbody"></tbody>
-      </table>
-    </div>
-    <div class="modal-actions" style="margin-top:14px;">
-      <button class="btn btn-ghost" onclick="closeBulkPriceModal()">취소</button>
-      <button class="btn btn-primary" onclick="saveBulkPrices()" style="display:inline-flex;align-items:center;gap:5px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> 전체 저장</button>
+    <div class="sb-modal__foot">
+      <button type="button" class="sb-btn" onclick="closeBulkPriceModal()">취소</button>
+      <button type="button" class="sb-btn sb-btn--primary" onclick="saveBulkPrices()">전체 저장</button>
     </div>
   </div>
 </div>
 
 <!-- BULK EDIT MODAL -->
 <div class="modal-overlay" id="bulkEditModal">
-  <div class="modal" style="max-width:700px">
-    <div class="modal-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> 종목 전체 편집</div>
-    <p style="font-size:12px;color:var(--text3);margin:0 0 12px;">종목명·평균단가·수량·목표가·손절가를 일괄 수정합니다.</p>
-    <div style="max-height:420px;overflow-y:auto;overflow-x:auto;">
-      <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:580px;" id="bulkEditTable">
-        <thead>
-          <tr style="border-bottom:1px solid var(--border);">
-            <th style="text-align:left;padding:6px 8px;color:var(--text3);font-weight:600;">종목명</th>
-            <th style="text-align:right;padding:6px 8px;color:var(--text3);font-weight:600;">평균단가</th>
-            <th style="text-align:right;padding:6px 8px;color:var(--text3);font-weight:600;">수량</th>
-            <th style="text-align:right;padding:6px 8px;color:var(--text3);font-weight:600;">목표가</th>
-            <th style="text-align:right;padding:6px 8px;color:var(--text3);font-weight:600;">손절가</th>
-          </tr>
-        </thead>
-        <tbody id="bulkEditTbody"></tbody>
-      </table>
+  <div class="sb-modal sb-modal--l" role="dialog" aria-modal="true">
+    <div class="sb-modal__head">종목 전체 편집<button type="button" class="sb-btn sb-btn--ghost sb-btn--sm sb-modal__close" onclick="closeBulkEditModal()" aria-label="닫기">✕</button></div>
+    <div class="sb-modal__body">
+      <p class="sb-hint">종목명·평균단가·수량·목표가·손절가를 일괄 수정합니다. (단위: 원/$, 수량은 주)</p>
+      <div class="sb-table-wrap">
+        <table class="sb-table" id="bulkEditTable" style="min-width:580px;">
+          <thead>
+            <tr>
+              <th style="text-align:left;">종목명</th>
+              <th style="text-align:right;">평균단가</th>
+              <th style="text-align:right;">수량</th>
+              <th style="text-align:right;">목표가</th>
+              <th style="text-align:right;">손절가</th>
+            </tr>
+          </thead>
+          <tbody id="bulkEditTbody"></tbody>
+        </table>
+      </div>
     </div>
-    <div class="modal-actions" style="margin-top:14px;">
-      <button class="btn btn-ghost" onclick="closeBulkEditModal()">취소</button>
-      <button class="btn btn-primary" onclick="saveBulkEdit()" style="display:inline-flex;align-items:center;gap:5px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> 전체 저장</button>
+    <div class="sb-modal__foot">
+      <button type="button" class="sb-btn" onclick="closeBulkEditModal()">취소</button>
+      <button type="button" class="sb-btn sb-btn--primary" onclick="saveBulkEdit()">전체 저장</button>
     </div>
   </div>
 </div>
@@ -4733,7 +4785,10 @@ async function startRealtimePrices() {
   if (!window.electronAPI?.startRealtimePrice) return;
   if (_wsActive) return; // 이미 연결 중이거나 연결됨 → 중복 실행 방지
   // 6자리 숫자 티커를 가진 종목만 구독 (국내주식)
-  const tickers = state.portfolio.map(s => s.ticker).filter(t => t && /^\d{6}$/.test(t));
+  // 구독 우선순위(설정 › 시세·실시간): 보유종목 > 선택 종목 > 관심종목 > 기타, 한도까지
+  let tickers;
+  try { tickers = buildRtTickers(); }
+  catch (_) { tickers = state.portfolio.map(s => s.ticker).filter(t => t && /^\d{6}$/.test(t)); }
   if (!tickers.length) { setWsStatusUI('disconnected'); return; }
   setWsStatusUI('connecting');
   await window.electronAPI.startRealtimePrice(tickers);
@@ -9735,9 +9790,15 @@ function initTheme() {
 }
 
 // 설정 팝업
-function openSettings() {
+function openSettings(cat) {
   const modal = document.getElementById('settingsModal');
   if (modal) modal.classList.add('open');
+  settingsGo(typeof cat === 'string' ? cat : (_settingsCat || 'general'));
+  const auto = document.getElementById('settingsAutoLogin');
+  if (auto) auto.checked = !!state.autoLogin;
+  updateAcctCountLabel();
+  renderDensityButtons();
+  renderRtPriority();
   // 현재 활성 버튼 표시
   const saved = localStorage.getItem('theme') || 'system';
   ['system','light','dark'].forEach(m => {
@@ -9771,6 +9832,144 @@ function closeSettings() {
   const modal = document.getElementById('settingsModal');
   if (modal) modal.classList.remove('open');
 }
+
+// ── 설정 허브: 카테고리 전환 ──
+let _settingsCat = 'general';
+function settingsGo(cat) {
+  _settingsCat = cat;
+  document.querySelectorAll('#settingsNav .sb-hub__nav-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+  document.querySelectorAll('#settingsModal .sb-hub__page').forEach(p => p.classList.toggle('active', p.dataset.page === cat));
+}
+
+function setAutoLogin(on) {
+  state.autoLogin = !!on;
+  save();
+}
+
+// ── UI 밀도 (body[data-density] → --sb-density) ──
+const DENSITY_KEY = 'sb_density';
+function setDensity(mode) {
+  if (!['compact', 'normal', 'comfortable'].includes(mode)) mode = 'normal';
+  localStorage.setItem(DENSITY_KEY, mode);
+  document.body.setAttribute('data-density', mode);
+  renderDensityButtons();
+}
+function renderDensityButtons() {
+  const cur = document.body.getAttribute('data-density') || 'normal';
+  ['comfortable', 'normal', 'compact'].forEach(m => {
+    document.getElementById('densityOpt_' + m)?.classList.toggle('active', m === cur);
+  });
+}
+function initDensity() {
+  document.body.setAttribute('data-density', localStorage.getItem(DENSITY_KEY) || 'normal');
+}
+initDensity();
+
+// ── KIS 실시간 구독 우선순위 ──
+const RT_PRIO_KEY = 'sb_rt_priority';
+const RT_PRIO_DEFAULT = ['holding', 'selected', 'watch', 'other'];
+const RT_PRIO_LABEL = { holding: '보유종목', selected: '현재 선택 종목', watch: '관심종목', other: '기타' };
+const RT_MAX_SUBS = 40; // KIS WebSocket 등록 한도(41) 안쪽
+function getRtPriority() {
+  try {
+    const v = JSON.parse(localStorage.getItem(RT_PRIO_KEY) || 'null');
+    if (Array.isArray(v) && v.length === RT_PRIO_DEFAULT.length && RT_PRIO_DEFAULT.every(k => v.includes(k))) return v;
+  } catch (_) {}
+  return RT_PRIO_DEFAULT.slice();
+}
+// 우선순위 순서대로 구독 대상 티커(국내 6자리)를 모아 한도까지 자른다
+function buildRtTickers() {
+  const ok = t => t && /^\d{6}$/.test(t);
+  const groups = {
+    holding:  (state.portfolio || []).map(s => s.ticker),
+    selected: [typeof _hogaCurrentCode !== 'undefined' ? _hogaCurrentCode : null],
+    watch:    (state.watchlist || []).map(w => w.ticker),
+    other:    [],
+  };
+  const seen = new Set();
+  const out = [];
+  for (const key of getRtPriority()) {
+    for (const t of groups[key] || []) {
+      if (ok(t) && !seen.has(t)) { seen.add(t); out.push(t); }
+    }
+  }
+  return out.slice(0, RT_MAX_SUBS);
+}
+function renderRtPriority() {
+  const list = document.getElementById('rtPrioList');
+  if (!list) return;
+  const order = getRtPriority();
+  list.innerHTML = order.map((k, i) => `
+    <div class="sb-prio__item">
+      <span class="sb-num">${i + 1}</span>
+      <span class="sb-prio__name">${RT_PRIO_LABEL[k]}</span>
+      <button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" ${i === 0 ? 'disabled' : ''} onclick="moveRtPriority(${i},-1)" aria-label="위로">▲</button>
+      <button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" ${i === order.length - 1 ? 'disabled' : ''} onclick="moveRtPriority(${i},1)" aria-label="아래로">▼</button>
+    </div>`).join('');
+  const info = document.getElementById('rtPrioInfo');
+  if (info) info.textContent = `최대 구독 ${RT_MAX_SUBS}종목 · 현재 대상 ${buildRtTickers().length}종목`;
+}
+async function resubscribeRealtime() {
+  // 이미 연결된 경우 main 이 기존 WebSocket 을 닫고 새 목록으로 다시 연결한다
+  if (!_wsActive || !window.electronAPI?.startRealtimePrice) return;
+  const tickers = buildRtTickers();
+  if (!tickers.length) return;
+  await window.electronAPI.startRealtimePrice(tickers);
+}
+function moveRtPriority(i, d) {
+  const order = getRtPriority();
+  const j = i + d;
+  if (j < 0 || j >= order.length) return;
+  [order[i], order[j]] = [order[j], order[i]];
+  localStorage.setItem(RT_PRIO_KEY, JSON.stringify(order));
+  renderRtPriority();
+  resubscribeRealtime();
+}
+function resetRtPriority() {
+  localStorage.removeItem(RT_PRIO_KEY);
+  renderRtPriority();
+  resubscribeRealtime();
+}
+
+// ── 모달 공통: ESC / 바깥 클릭 닫기 ──
+// 위쪽(z-index 높은) 모달부터 검사한다. 오버레이 id → 닫기 함수.
+const SB_MODAL_CLOSERS = [
+  ['apiKeyPopup',        () => closeApiKeyPopup()],
+  ['loginModal',         () => loginClose()],
+  ['cashManualModal',    () => closeCashManualModal()],
+  ['acctCashEditModal',  () => closeAcctCashEditModal()],
+  ['settingsModal',      () => closeSettings()],
+  ['cashModal',          () => closeCashModal()],
+  ['sellModal',          () => closeSellModal()],
+  ['targetModal',        () => closeTargetModal()],
+  ['mcSnapshotModal',    () => closeMcSnapshotModal()],
+  ['totalAssetModal',    () => closeTotalAssetModal()],
+  ['priceModal',         () => closePriceModal()],
+  ['editStockModal',     () => closeEditStockModal()],
+  ['bulkPriceModal',     () => closeBulkPriceModal()],
+  ['bulkEditModal',      () => closeBulkEditModal()],
+];
+function sbModalOpen(el) {
+  return !!el && (el.classList.contains('open') || el.style.display === 'flex');
+}
+function sbCloseTopModal() {
+  for (const [id, close] of SB_MODAL_CLOSERS) {
+    if (sbModalOpen(document.getElementById(id))) { close(); return true; }
+  }
+  return false;
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && sbCloseTopModal()) e.stopImmediatePropagation();
+}, true);
+// 바깥(오버레이) 클릭: 눌렀을 때와 뗐을 때 모두 오버레이일 때만 (텍스트 드래그 오작동 방지)
+let _sbMouseDownTarget = null;
+document.addEventListener('mousedown', e => { _sbMouseDownTarget = e.target; }, true);
+document.addEventListener('click', e => {
+  const t = e.target;
+  if (!t || t !== _sbMouseDownTarget) return;
+  const hit = SB_MODAL_CLOSERS.find(([id]) => id === t.id);
+  if (hit && sbModalOpen(t)) hit[1]();
+});
 
 // ── API 키 설정 ────────────────────────────────────────────────────────────
 async function loadApiKeysUI() {
@@ -9979,6 +10178,8 @@ function migrateAccountsDefault() {
 function updateAcctCountLabel() {
   const el = document.getElementById('acctCount');
   if (el) el.textContent = (state.accounts || []).length;
+  const elHub = document.getElementById('acctCountHub');
+  if (elHub) elHub.textContent = (state.accounts || []).length;
 }
 
 function openAccountPanel() {
@@ -10143,7 +10344,7 @@ function showCashEditForm(id) {
   document.getElementById('acctCashEditTitle').textContent = `예수금 — ${a.nickname || a.broker}`;
   document.getElementById('acctCashEditCurrent').textContent = '₩' + fmt(a.cash || 0);
   const inp = document.getElementById('acctCashEditInput');
-  inp.value = a.cash > 0 ? a.cash : '';
+  inp.value = a.cash > 0 ? Number(a.cash).toLocaleString('ko-KR') : '';
   modal.style.display = 'flex';
   setTimeout(() => inp.focus(), 60);
 }
@@ -10624,11 +10825,9 @@ function renderLoginFields() {
   };
   const fields = fieldMap[broker] || [];
   area.innerHTML = fields.map(f =>
-    `<div style="margin-bottom:8px;">
-      <label style="font-size:11px;color:var(--text3);margin-bottom:3px;display:block;">${f.label}</label>
-      <input id="${f.id}" type="${f.type}" placeholder="${f.placeholder}"
-        style="width:100%;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-size:12px;box-sizing:border-box;font-family:monospace;">
-    </div>`
+    `<label class="sb-field">${f.label}
+      <input class="sb-input" id="${f.id}" type="${f.type}" placeholder="${f.placeholder}" autocomplete="off">
+    </label>`
   ).join('');
   // 기존 저장 여부 확인
   if (window.electronAPI?.checkApiKey) {
@@ -13313,38 +13512,31 @@ function wlAssignGroup(idx, gName) {
 
 <!-- ─── 시작 로그인 팝업 ─── -->
 <!-- transform:translateZ(0) → 전체 모달을 독립 GPU 합성 레이어로 승격. body::after(filter:blur+animation)의 합성 레이어가 화면 하단을 커버하며 클릭을 가로채는 버그 회피 -->
-<div id="loginModal" onclick="if(event.target===this)loginClose()" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.88);align-items:center;justify-content:center;transform:translateZ(0);">
-  <!-- position:relative + z-index:1 + transform:translateZ(0) → Electron GPU 합성 레이어 hit-test 버그 회피 (settingsModal과 동일한 패턴) -->
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px 26px 22px;width:420px;max-width:92vw;box-shadow:0 8px 40px rgba(0,0,0,.6);position:relative;z-index:1;transform:translateZ(0);">
-    <button onclick="loginClose()" style="position:absolute;top:10px;right:12px;background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:4px 6px;line-height:1;" title="닫기">✕</button>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
-      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" style="border-radius:8px;flex-shrink:0;" xmlns="http://www.w3.org/2000/svg"><rect width="36" height="36" rx="8" fill="#1e1b4b"/><rect x="7" y="10" width="22" height="3" rx="1.5" fill="#818cf8"/><rect x="7" y="16" width="14" height="2.5" rx="1.25" fill="#4f46e5"/><rect x="7" y="21" width="17" height="2.5" rx="1.25" fill="#4f46e5"/><rect x="7" y="26" width="10" height="2" rx="1" fill="#312e81"/><circle cx="27" cy="26" r="5" fill="#22c55e"/><path d="M24.5 26l1.5 1.5 3-3" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <div>
-        <div style="font-size:16px;font-weight:700;color:var(--text1);">Stock Book</div>
-        <div style="font-size:11px;color:var(--text3);">증권사 API 연결</div>
-      </div>
-    </div>
-
-    <div style="margin-bottom:12px;">
-      <label style="font-size:11px;color:var(--text3);margin-bottom:4px;display:block;">증권사 선택</label>
-      <select id="loginBrokerSel" onchange="renderLoginFields()" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-size:13px;cursor:pointer;">
-        <option value="kis">한국투자증권 (KIS)</option>
-        <option value="toss">토스증권</option>
-        <option value="kiwoom">키움증권</option>
-        <option value="ls">LS증권</option>
-      </select>
-    </div>
-
-    <div id="loginFieldsArea" style="margin-bottom:10px;"></div>
-
-    <button onclick="loginSaveKey()" style="width:100%;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px;">✅ API 추가 / 저장</button>
-
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;">
-        <input type="checkbox" id="loginAutoCheck" style="accent-color:var(--accent);width:14px;height:14px;">
-        다음 시작 시 자동 로그인
+<div id="loginModal" class="sb-overlay" style="display:none;z-index:10001;">
+  <div class="sb-modal sb-modal--m" role="dialog" aria-modal="true">
+    <div class="sb-modal__head">증권사 API 연결<button type="button" class="sb-btn sb-btn--ghost sb-btn--sm sb-modal__close" onclick="loginClose()" aria-label="닫기">✕</button></div>
+    <div class="sb-modal__body">
+      <label class="sb-field">증권사 선택
+        <select class="sb-select" id="loginBrokerSel" onchange="renderLoginFields()">
+          <option value="kis">한국투자증권 (KIS)</option>
+          <option value="toss">토스증권</option>
+          <option value="kiwoom">키움증권</option>
+          <option value="ls">LS증권</option>
+        </select>
       </label>
-      <span id="loginKeyStatus" style="font-size:11px;color:#4caf81;"></span>
+      <div id="loginFieldsArea" style="display:flex;flex-direction:column;gap:var(--sb-space-3);"></div>
+      <div class="sb-hub__row">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--sb-text-2);cursor:pointer;">
+          <input type="checkbox" id="loginAutoCheck" style="accent-color:var(--sb-accent);width:14px;height:14px;">
+          다음 시작 시 자동 로그인
+        </label>
+        <span id="loginKeyStatus" style="font-size:12px;color:var(--sb-success);"></span>
+      </div>
+      <p class="sb-hint">API 키는 이 PC 에서 암호화되어 저장되며 외부로 전송되지 않습니다. 이후 변경은 설정 › 계좌·API 에서 할 수 있습니다.</p>
+    </div>
+    <div class="sb-modal__foot">
+      <button type="button" class="sb-btn" onclick="loginClose()">취소</button>
+      <button type="button" class="sb-btn sb-btn--primary" onclick="loginSaveKey()">API 추가 / 저장</button>
     </div>
   </div>
 </div>
@@ -13437,42 +13629,92 @@ function wlAssignGroup(idx, gName) {
 </div>
 
 <!-- ─── 설정 모달에서 API 키 입력 팝업 ─── -->
-<div id="apiKeyPopup" onclick="if(event.target===this)closeApiKeyPopup()" style="display:none;position:fixed;inset:0;z-index:10002;background:rgba(0,0,0,.75);align-items:center;justify-content:center;">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px 22px 18px;width:380px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.5);">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-      <div style="font-size:14px;font-weight:700;color:var(--text1);" id="apiKeyPopupTitle">API 키 설정</div>
-      <button onclick="closeApiKeyPopup()" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;line-height:1;">✕</button>
+<div id="apiKeyPopup" class="sb-overlay" style="display:none;z-index:10002;">
+  <div class="sb-modal sb-modal--m" role="dialog" aria-modal="true">
+    <div class="sb-modal__head"><span id="apiKeyPopupTitle">API 키 설정</span><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm sb-modal__close" onclick="closeApiKeyPopup()" aria-label="닫기">✕</button></div>
+    <!-- renderBrokerFields가 이 panel에 렌더링 (저장/삭제 버튼 포함) -->
+    <div class="sb-modal__body">
+      <div class="broker-fields-panel" id="brokerFieldsPanel"></div>
     </div>
-    <!-- renderBrokerFields가 이 panel에 렌더링 -->
-    <div class="broker-fields-panel" id="brokerFieldsPanel"></div>
   </div>
 </div>
 
 <!-- 설정 모달 -->
-<div id="settingsModal" onclick="if(event.target===this)closeSettings()">
-  <div class="settings-panel">
-    <div class="settings-title">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      설정
+<div id="settingsModal" class="sb-overlay">
+  <div class="sb-modal sb-modal--l" role="dialog" aria-modal="true" style="width:860px;">
+    <div class="sb-modal__head">설정<button type="button" class="sb-btn sb-btn--ghost sb-btn--sm sb-modal__close" onclick="closeSettings()" aria-label="닫기">✕</button></div>
+    <div class="sb-hub">
+      <nav class="sb-hub__nav" id="settingsNav">
+        <button type="button" class="sb-hub__nav-btn active" data-cat="general" onclick="settingsGo('general')">일반</button>
+        <button type="button" class="sb-hub__nav-btn" data-cat="display" onclick="settingsGo('display')">화면·테마</button>
+        <button type="button" class="sb-hub__nav-btn" data-cat="realtime" onclick="settingsGo('realtime')">시세·실시간</button>
+        <button type="button" class="sb-hub__nav-btn" data-cat="account" onclick="settingsGo('account')">계좌·API</button>
+        <button type="button" class="sb-hub__nav-btn" data-cat="portfolio" onclick="settingsGo('portfolio')">포트폴리오</button>
+        <button type="button" class="sb-hub__nav-btn" data-cat="classify" onclick="settingsGo('classify')">종목 분류</button>
+        <button type="button" class="sb-hub__nav-btn" data-cat="news" onclick="settingsGo('news')">뉴스·시황</button>
+        <button type="button" class="sb-hub__nav-btn" data-cat="data" onclick="settingsGo('data')">데이터 관리</button>
+        <button type="button" class="sb-hub__nav-btn" data-cat="notify" onclick="settingsGo('notify')">알림</button>
+        <button type="button" class="sb-hub__nav-btn" data-cat="advanced" onclick="settingsGo('advanced')">고급</button>
+      </nav>
+      <div class="sb-hub__content">
+
+    <!-- 일반 -->
+    <div class="sb-hub__page active" data-page="general">
+      <div class="sb-hub__h">일반</div>
+      <label class="sb-hub__row" style="cursor:pointer;">
+        <span>시작 시 자동 로그인<br><span class="sb-hint">API 키가 저장돼 있으면 시작 시 로그인 창을 건너뜁니다.</span></span>
+        <input type="checkbox" id="settingsAutoLogin" onchange="setAutoLogin(this.checked)" style="accent-color:var(--sb-accent);width:16px;height:16px;">
+      </label>
+      <div class="sb-hint">Stock Book v1.4.0</div>
     </div>
 
-    <div class="settings-section">
+    <!-- 화면·테마 -->
+    <div class="sb-hub__page" data-page="display">
+      <div class="settings-section">
       <div class="settings-section-label">테마</div>
       <div class="theme-option-group">
-        <button class="theme-option-btn" id="themeOptSystem" onclick="setTheme('system')" title="시스템 설정에 따름">
+        <button type="button" class="theme-option-btn" id="themeOptSystem" onclick="setTheme('system')" title="시스템 설정에 따름">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
           시스템 자동
         </button>
-        <button class="theme-option-btn" id="themeOptLight" onclick="setTheme('light')" title="항상 라이트 모드">
+        <button type="button" class="theme-option-btn" id="themeOptLight" onclick="setTheme('light')" title="항상 라이트 모드">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
           라이트
         </button>
-        <button class="theme-option-btn" id="themeOptDark" onclick="setTheme('dark')" title="항상 다크 모드">
+        <button type="button" class="theme-option-btn" id="themeOptDark" onclick="setTheme('dark')" title="항상 다크 모드">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
           다크
         </button>
       </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-label">UI 밀도</div>
+        <div class="sb-seg">
+          <button type="button" class="sb-btn sb-seg__btn" id="densityOpt_comfortable" onclick="setDensity('comfortable')">넓게</button>
+          <button type="button" class="sb-btn sb-seg__btn" id="densityOpt_normal" onclick="setDensity('normal')">기본</button>
+          <button type="button" class="sb-btn sb-seg__btn" id="densityOpt_compact" onclick="setDensity('compact')">조밀하게</button>
+        </div>
+        <p class="sb-hint" style="margin-top:var(--sb-space-2);">간격과 컨트롤 높이에 적용되며 다시 시작해도 유지됩니다.</p>
+      </div>
     </div>
+
+    <!-- 시세·실시간 -->
+    <div class="sb-hub__page" data-page="realtime">
+      <div class="sb-hub__h">KIS 실시간 구독 우선순위</div>
+      <p class="sb-hint">KIS WebSocket 은 등록 가능한 종목 수가 제한되어 있어, 한도를 넘으면 위쪽 항목부터 우선 구독합니다. (기본: 보유종목 &gt; 선택 종목 &gt; 관심종목 &gt; 기타)</p>
+      <div class="sb-prio" id="rtPrioList"></div>
+      <div class="sb-hub__row">
+        <span id="rtPrioInfo" class="sb-hint"></span>
+        <button type="button" class="sb-btn sb-btn--sm" onclick="resetRtPriority()">기본값으로</button>
+      </div>
+    </div>
+
+    <!-- 계좌·API -->
+    <div class="sb-hub__page" data-page="account">
+      <div class="sb-hub__row">
+        <div class="sb-hub__h">증권사 계좌</div>
+        <button type="button" class="sb-btn sb-btn--sm" onclick="closeSettings();openAccountPanel()">계좌 관리 (<span id="acctCountHub">0</span>)</button>
+      </div>
 
     <!-- 증권사 API 키 -->
     <div class="settings-section">
@@ -13530,69 +13772,117 @@ function wlAssignGroup(idx, gName) {
       </div>
     </div>
 
-    <div class="settings-close-row">
-      <button class="btn btn-ghost" onclick="closeSettings()">닫기</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);padding:8px 0 2px;opacity:0.6;">Stock Book v1.4.0</div>
+
+    <!-- 포트폴리오 -->
+    <div class="sb-hub__page" data-page="portfolio">
+      <div class="sb-hub__h">자산 · 예수금</div>
+      <div class="sb-hub__row"><span>총 자산 설정</span><button type="button" class="sb-btn sb-btn--sm" onclick="closeSettings();openTotalAssetModal()">열기</button></div>
+      <div class="sb-hub__row"><span>예수금 직접 입력</span><button type="button" class="sb-btn sb-btn--sm" onclick="closeSettings();openCashManualModal()">열기</button></div>
+      <div class="sb-hub__row"><span>입출금 내역 관리</span><button type="button" class="sb-btn sb-btn--sm" onclick="closeSettings();openCashModal()">열기</button></div>
+      <div class="sb-hub__h">종목</div>
+      <div class="sb-hub__row"><span>현재가 일괄 업데이트</span><button type="button" class="sb-btn sb-btn--sm" onclick="closeSettings();openBulkPriceModal()">열기</button></div>
+      <div class="sb-hub__row"><span>종목 전체 편집</span><button type="button" class="sb-btn sb-btn--sm" onclick="closeSettings();openBulkEditModal()">열기</button></div>
+    </div>
+
+    <!-- 종목 분류 -->
+    <div class="sb-hub__page" data-page="classify">
+      <div class="sb-hub__h">종목 분류</div>
+      <div class="sb-hub__empty">준비 중입니다. 업종 / 세부산업 / 사용자 태그 다중 분류가 2차에 추가됩니다.</div>
+    </div>
+
+    <!-- 뉴스·시황 -->
+    <div class="sb-hub__page" data-page="news">
+      <div class="sb-hub__h">뉴스·시황</div>
+      <div class="sb-hub__empty">준비 중입니다. 뉴스·공시 소스 설정이 추가될 예정입니다.</div>
+    </div>
+
+    <!-- 데이터 관리 -->
+    <div class="sb-hub__page" data-page="data">
+      <div class="sb-hub__h">백업 · 복원</div>
+      <div class="sb-hub__row"><span>데이터 백업 (JSON 다운로드)</span><button type="button" class="sb-btn sb-btn--sm" onclick="exportBackup()">백업</button></div>
+      <div class="sb-hub__row"><span>백업 복원 (JSON 선택)</span>
+        <label class="sb-btn sb-btn--sm" style="cursor:pointer;">복원<input type="file" accept=".json" onchange="importBackup(event)" style="display:none;"></label>
+      </div>
+      <div class="sb-hub__h">레이아웃</div>
+      <div class="sb-hub__row"><span>패널 레이아웃 초기화</span><button type="button" class="sb-btn sb-btn--sm sb-btn--danger" onclick="closeSettings();window._MDI && window._MDI.clearAndReset()">초기화</button></div>
+    </div>
+
+    <!-- 알림 -->
+    <div class="sb-hub__page" data-page="notify">
+      <div class="sb-hub__h">알림</div>
+      <div class="sb-hub__empty">준비 중입니다.</div>
+    </div>
+
+    <!-- 고급 -->
+    <div class="sb-hub__page" data-page="advanced">
+      <div class="sb-hub__h">고급</div>
+      <div class="sb-hub__empty">준비 중입니다.</div>
+    </div>
+
+      </div>
+    </div>
+    <div class="sb-modal__foot">
+      <button type="button" class="sb-btn" onclick="closeSettings()">닫기</button>
+    </div>
   </div>
 </div>
 
 <!-- 계좌 예수금 직접 입력 모달 -->
-<div id="acctCashEditModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3100;align-items:center;justify-content:center;">
-  <div style="width:340px;max-width:95vw;border-radius:12px;background:var(--bg2);border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.3);">
-    <div style="padding:16px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-      <div id="acctCashEditTitle" style="font-size:15px;font-weight:700;">예수금 입력</div>
-      <button onclick="closeAcctCashEditModal()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3);line-height:1;">✕</button>
-    </div>
-    <div style="padding:16px 18px;display:flex;flex-direction:column;gap:10px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:12px;color:var(--text3);">현재 예수금</span>
-        <span id="acctCashEditCurrent" style="font-size:13px;font-weight:600;color:var(--text2);">₩0</span>
+<div id="acctCashEditModal" class="sb-overlay" style="display:none;z-index:3100;">
+  <div class="sb-modal sb-modal--s" role="dialog" aria-modal="true">
+    <div class="sb-modal__head"><span id="acctCashEditTitle">예수금 입력</span><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm sb-modal__close" onclick="closeAcctCashEditModal()" aria-label="닫기">✕</button></div>
+    <div class="sb-modal__body">
+      <div class="sb-hub__row">
+        <span class="sb-hint">현재 예수금</span>
+        <span id="acctCashEditCurrent" class="sb-num" style="font-size:13px;font-weight:600;color:var(--sb-text-2);">₩0</span>
       </div>
-      <input id="acctCashEditInput" type="text" inputmode="numeric"
-        placeholder="새 예수금 금액 입력"
-        onkeydown="if(event.key==='Enter') saveAcctCashEdit();"
-        style="width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--accent);border-radius:7px;color:var(--text);font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;">
+      <label class="sb-field">새 예수금
+        <span class="sb-input-unit"><input class="sb-input sb-input--num" id="acctCashEditInput" type="text" inputmode="numeric"
+          placeholder="금액 입력" oninput="formatWithComma(this)"
+          onkeydown="if(event.key==='Enter') saveAcctCashEdit();"><span class="sb-unit">원</span></span>
+      </label>
     </div>
-    <div style="padding:10px 18px 16px;display:flex;gap:8px;">
-      <button onclick="saveAcctCashEdit()" style="flex:1;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;">저장</button>
-      <button onclick="closeAcctCashEditModal()" style="padding:9px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;font-size:13px;cursor:pointer;color:var(--text2);">취소</button>
+    <div class="sb-modal__foot">
+      <button type="button" class="sb-btn" onclick="closeAcctCashEditModal()">취소</button>
+      <button type="button" class="sb-btn sb-btn--primary" onclick="saveAcctCashEdit()">저장</button>
     </div>
   </div>
 </div>
 
 <!-- 입금/출금 모달 -->
-<div id="cashModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:3000;align-items:center;justify-content:center;">
-  <div style="width:480px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column;border-radius:12px;background:var(--bg2);border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.2);">
-    <div style="padding:18px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-      <div style="font-size:17px;font-weight:700;">💰 예수금 관리</div>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div style="font-size:13px;color:var(--text3);">현재 예수금 <span id="cashModalBalance" style="font-weight:700;"></span></div>
-        <button onclick="openCashManualModal()" style="padding:4px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text2);font-size:12px;" title="입출금 내역 대신 실제 예수금을 직접 입력">✏️ 직접 입력</button>
-        <button onclick="closeCashModal()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3);">✕</button>
+<div id="cashModal" class="sb-overlay" style="display:none;z-index:3000;">
+  <div class="sb-modal sb-modal--l" role="dialog" aria-modal="true">
+    <div class="sb-modal__head">예수금 관리<button type="button" class="sb-btn sb-btn--ghost sb-btn--sm sb-modal__close" onclick="closeCashModal()" aria-label="닫기">✕</button></div>
+    <div class="sb-modal__body">
+      <div class="sb-hub__row">
+        <div style="font-size:13px;color:var(--sb-text-2);">현재 예수금 <span id="cashModalBalance" class="sb-num" style="font-weight:700;"></span></div>
+        <button type="button" class="sb-btn sb-btn--sm" onclick="openCashManualModal()" title="입출금 내역 대신 실제 예수금을 직접 입력">직접 입력</button>
+      </div>
+      <div style="display:flex;gap:var(--sb-space-2);align-items:center;flex-wrap:wrap;">
+        <select class="sb-select" id="cf_type" style="width:96px;">
+          <option value="deposit">입금</option>
+          <option value="withdraw">출금</option>
+        </select>
+        <input class="sb-input" id="cf_date" type="date" style="width:140px;">
+        <span class="sb-input-unit" style="flex:1;min-width:130px;"><input class="sb-input sb-input--num" id="cf_amount" type="text" inputmode="decimal" placeholder="금액" oninput="formatWithComma(this)"><span class="sb-unit">원</span></span>
+        <input class="sb-input" id="cf_memo" type="text" placeholder="메모" style="flex:1;min-width:90px;">
+        <button type="button" class="sb-btn sb-btn--primary" onclick="saveCash()">추가</button>
+      </div>
+      <div class="sb-table-wrap">
+        <table class="sb-table">
+          <thead><tr>
+            <th style="text-align:left;">날짜</th>
+            <th style="text-align:left;">구분</th>
+            <th style="text-align:right;">금액 (원)</th>
+            <th>메모</th>
+          </tr></thead>
+          <tbody id="cashListBody"></tbody>
+        </table>
       </div>
     </div>
-    <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-      <select id="cf_type" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--bg);color:var(--text);">
-        <option value="deposit">📥 입금</option>
-        <option value="withdraw">📤 출금</option>
-      </select>
-      <input id="cf_date" type="date" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--bg);color:var(--text);">
-      <input id="cf_amount" type="number" placeholder="금액 (원)" style="flex:1;min-width:110px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--bg);color:var(--text);">
-      <input id="cf_memo" type="text" placeholder="메모" style="flex:1;min-width:90px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--bg);color:var(--text);">
-      <button onclick="saveCash()" style="padding:7px 16px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">추가</button>
-    </div>
-    <div style="overflow-y:auto;flex:1;padding:4px 0;">
-      <table style="width:100%;border-collapse:collapse;">
-        <thead><tr style="background:var(--bg3);">
-          <th style="padding:8px;font-size:12px;text-align:left;color:var(--text3);font-weight:600;">날짜</th>
-          <th style="padding:8px;f
-          <th style="padding:8px;font-size:12px;text-align:left;color:var(--text3);font-weight:600;">구분</th>
-          <th style="padding:8px;font-size:12px;text-align:right;color:var(--text3);font-weight:600;">금액</th>
-          <th style="padding:8px;font-size:12px;color:var(--text3);font-weight:600;">메모</th>
-        </tr></thead>
-        <tbody id="cashListBody"></tbody>
-      </table>
+    <div class="sb-modal__foot">
+      <button type="button" class="sb-btn" onclick="closeCashModal()">닫기</button>
     </div>
   </div>
 </div>
