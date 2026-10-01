@@ -311,14 +311,6 @@
     background: #ffffff;
     color: #1a2840;
   }
-  body.light-mode .mdi-sidebar {
-    background: #dce6f0;
-    border-right-color: #c0ccd8;
-  }
-  body.light-mode .mdi-sb-btn { color: #0d1a2e !important; }
-  body.light-mode .mdi-sb-btn:hover { background: #c8d4e0; }
-  body.light-mode .mdi-sb-btn-active { color: #1a4fd6 !important; border-left-color: #2563eb; background: rgba(37,99,235,0.08); }
-  body.light-mode .mdi-sb-btn-active:hover { background: rgba(37,99,235,0.14); }
   body.light-mode .mdi-taskbar {
     background: #dce6f0;
     border-top-color: #c0ccd8;
@@ -2547,12 +2539,12 @@
     height: calc(100vh - 106px) !important;
   }
 
-  /* ── 좌측 사이드바 ──────────────────────────────────── */
+  /* ── 좌측 사이드바 (--sb-* 토큰) ─────────────────────── */
   .mdi-sidebar {
     width: 160px;
     min-width: 160px;
-    background: #080d18;
-    border-right: 1px solid #1a2840;
+    background: var(--sb-panel);
+    border-right: 1px solid var(--sb-border-weak);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
@@ -2560,79 +2552,90 @@
     overflow: hidden;
     transition: width 0.2s ease, min-width 0.2s ease;
     user-select: none;
+    font-family: var(--sb-font-ko);
   }
-  .mdi-sidebar.sb-collapsed { width: 44px; min-width: 44px; }
+  .mdi-sidebar.sb-collapsed { width: 48px; min-width: 48px; }
   .mdi-sidebar.sb-collapsed .mdi-sb-label,
-  .mdi-sidebar.sb-collapsed .mdi-sb-brand,
   .mdi-sidebar.sb-collapsed .mdi-sb-section-label { display: none; }
-  .mdi-sidebar.sb-collapsed .mdi-sb-toggle-icon { content: '▶'; }
-
-  /* 헤더 */
-  .mdi-sb-header {
-    display: flex; align-items: center; gap: 8px;
-    padding: 12px 10px 10px;
-    border-bottom: 1px solid #1a2840;
-    color: #e0eaf5; font-weight: 700; font-size: 13px;
-    min-height: 42px; flex-shrink: 0;
-  }
-  .mdi-sb-logo {
-    width: 24px; height: 24px; min-width: 24px;
-    background: #2563eb; border-radius: 4px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 900; color: #fff;
-    letter-spacing: -0.5px;
-  }
-  .mdi-sb-brand { font-size: 13px; white-space: nowrap; display: none; }
+  .mdi-sidebar.sb-collapsed .mdi-sb-btn { justify-content: center; padding: 0; gap: 0; }
+  .mdi-sidebar.sb-collapsed .mdi-sb-status { justify-content: center; padding: 0; }
 
   /* 섹션 레이블 */
   .mdi-sb-section-label {
     font-size: 10px; font-weight: 600; letter-spacing: .08em;
-    color: #3a5070; padding: 10px 12px 3px;
+    color: var(--sb-text-3); padding: 12px 14px 4px;
     white-space: nowrap; text-transform: uppercase;
   }
 
-  /* 패널 버튼 */
+  /* 메뉴 버튼 */
   .mdi-sb-btn {
     display: flex; align-items: center; gap: 10px;
-    padding: 0 10px 0 10px;
-    height: 50px; min-height: 50px;
-    background: none; border: none; border-left: 2px solid transparent;
-    color: #9bb8d4; font-size: 12px; font-family: inherit;
+    padding: 0 12px 0 10px;
+    height: 40px; min-height: 40px;
+    background: none; border: none; border-left: 3px solid transparent;
+    color: var(--sb-text-2); font-size: 12px; font-family: inherit;
     cursor: pointer; text-align: left; white-space: nowrap;
-    transition: all 0.15s; width: 100%;
+    transition: background 0.15s, color 0.15s; width: 100%;
   }
-  .mdi-sb-btn:hover { background: rgba(255,255,255,0.04); color: #c8e0f4; }
-  .mdi-sb-btn:hover .mdi-sb-icon-wrap { filter: brightness(1.15); }
-  .mdi-sb-btn-active { color: #e0eef8; border-left-color: #3b82f6; background: rgba(59,130,246,0.08); }
-  .mdi-sb-btn-active .mdi-sb-icon-wrap { filter: brightness(1.2); }
-  .mdi-sb-util { color: #c0d4e8; font-size: 12px; }
-  .mdi-sb-util:hover { color: #dce8f5; }
+  .mdi-sb-btn:hover { background: var(--sb-surface); color: var(--sb-text-1); }
+  .mdi-sb-btn-active { color: var(--sb-text-1); border-left-color: var(--sb-accent); background: var(--sb-surface); }
+  .mdi-sb-btn-active:hover { background: var(--sb-hover); }
+  .mdi-sb-btn-active .mdi-sb-icon-wrap { color: var(--sb-accent); }
 
-  /* 아이콘 뱃지 */
+  /* 아이콘 */
   .mdi-sb-icon-wrap {
-    width: 32px; height: 32px; min-width: 32px;
-    border-radius: 8px;
+    width: 24px; height: 24px; min-width: 24px;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
-    transition: filter 0.15s, transform 0.15s;
   }
-  .mdi-sb-btn:hover .mdi-sb-icon-wrap { transform: scale(1.05); }
-  .mdi-sb-icon { font-size: 14px; min-width: 20px; text-align: center; } /* 레거시 호환 */
   .mdi-sb-label { font-size: 12px; font-weight: 500; }
 
   /* 구분선 + 여백 */
-  .mdi-sb-sep { height: 1px; background: #1a2840; margin: 6px 10px; flex-shrink: 0; }
+  .mdi-sb-sep { height: 1px; background: var(--sb-border-weak); margin: 6px 10px; flex-shrink: 0; }
   .mdi-sb-spacer { flex: 1; }
+
+  /* 연결 상태 */
+  .mdi-sb-status {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 14px; height: 32px; flex-shrink: 0;
+    background: none; border: none; width: 100%;
+    color: var(--sb-text-2); font-size: 11px; font-family: inherit;
+    cursor: pointer; white-space: nowrap; text-align: left;
+  }
+  .mdi-sb-status:hover { color: var(--sb-text-1); }
+  .mdi-sb-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    background: var(--sb-up);
+  }
+  .mdi-sb-dot.on { background: var(--sb-success); }
+
+  /* 데이터 메뉴 팝오버 (backdrop-filter 금지) */
+  .mdi-sb-popover {
+    position: fixed; z-index: 100000; display: none;
+    min-width: 150px; padding: 4px;
+    background: var(--sb-panel); border: 1px solid var(--sb-border);
+    border-radius: var(--sb-radius-2); box-shadow: var(--sb-shadow-2);
+    transform: translateZ(0);
+  }
+  .mdi-sb-popover.open { display: block; }
+  .mdi-sb-popover .mdi-sb-pop-item {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    height: 32px; padding: 0 10px; box-sizing: border-box;
+    background: none; border: none; border-radius: var(--sb-radius-1);
+    color: var(--sb-text-1); font-size: 12px; font-family: inherit;
+    cursor: pointer; text-align: left; white-space: nowrap;
+  }
+  .mdi-sb-popover .mdi-sb-pop-item:hover { background: var(--sb-surface); }
 
   /* 토글 버튼 */
   .mdi-sb-toggle {
     display: flex; align-items: center; justify-content: center;
     height: 36px; width: 100%;
-    background: none; border: none; border-top: 1px solid #1a2840;
-    color: #3a5070; cursor: pointer; font-size: 13px;
+    background: none; border: none; border-bottom: 1px solid var(--sb-border-weak);
+    color: var(--sb-text-3); cursor: pointer; font-size: 13px;
     transition: all 0.12s; flex-shrink: 0;
   }
-  .mdi-sb-toggle:hover { background: #0d1a2e; color: #7090b0; }
+  .mdi-sb-toggle:hover { background: var(--sb-surface); color: var(--sb-text-1); }
 
   /* ── 패널 내부 탭바 ──────────────────────────────────── */
   .mdi-ptab-bar {
@@ -3036,33 +3039,10 @@
     </div>
 
     <div style="margin-left:auto;display:flex;align-items:center;gap:12px;flex-wrap:nowrap;">
-      <!-- 계좌 관리 -->
-      <button onclick="openAccountPanel()" title="계좌 관리"
-        style="display:flex;align-items:center;gap:5px;padding:8px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);cursor:pointer;font-size:12px;font-family:inherit;color:var(--text2);white-space:nowrap;transition:all .2s;">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-        <span id="acctCountLabel">계좌 <span id="acctCount">0</span></span>
-      </button>
-      <!-- API 연결 상태 -->
-      <button id="apiStatusBtn" onclick="openApiPanel()" title="API 설정"
-        style="display:flex;align-items:center;gap:5px;padding:8px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);cursor:pointer;font-size:12px;font-family:inherit;color:var(--text2);white-space:nowrap;transition:all .2s;">
-        <span id="apiStatusDot" style="width:7px;height:7px;border-radius:50%;background:#ef4444;display:inline-block;flex-shrink:0;"></span>
-        <span id="apiStatusLabel">KIS 미연결</span>
-      </button>
       <!-- 테마 -->
       <button onclick="toggleTheme()" title="라이트/다크 테마 전환" class="theme-toggle-btn" id="settingsBtn">
         <svg id="themeToggleIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       </button>
-      <!-- 백업 -->
-      <button onclick="exportBackup()" title="데이터 백업" class="header-action-btn">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        <span class="header-btn-text">백업</span>
-      </button>
-      <!-- 복원 -->
-      <label title="JSON 파일로 복원" class="header-action-btn" style="cursor:pointer;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <span class="header-btn-text">복원</span>
-        <input type="file" accept=".json" onchange="importBackup(event)" style="display:none;">
-      </label>
       <!-- 날짜 -->
       <div style="font-size:12px;color:var(--text3);white-space:nowrap;padding:0 4px;" id="headerDate" class="header-date"></div>
       <!-- 캘린더 -->
@@ -3107,48 +3087,33 @@
     <span class="mdi-sb-toggle-icon">◀</span>
   </button>
 
-  <!-- 종목탐색: 파랑 -->
-  <button class="mdi-sb-btn mdi-sb-btn-active" data-pid="watchlist"
-          onclick="window._MDI.toggle('watchlist')" title="종목탐색">
-    <span class="mdi-sb-icon-wrap" style="background:rgba(59,130,246,0.18);">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+  <div class="mdi-sb-section-label">투자</div>
+
+  <button type="button" class="mdi-sb-btn mdi-sb-btn-active" data-pid="watchlist"
+          onclick="window._MDI.toggle('watchlist')" title="종목 탐색">
+    <span class="mdi-sb-icon-wrap">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>
     </span>
-    <span class="mdi-sb-label">종목탐색</span>
+    <span class="mdi-sb-label">종목 탐색</span>
   </button>
 
-  <!-- 매매관리: 초록 -->
-  <button class="mdi-sb-btn mdi-sb-btn-active" data-pid="trading"
-          onclick="window._MDI.toggle('trading')" title="매매관리">
-    <span class="mdi-sb-icon-wrap" style="background:rgba(16,185,129,0.18);">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
-        <polyline points="16 7 22 7 22 13"/>
-      </svg>
-    </span>
-    <span class="mdi-sb-label">매매관리</span>
-  </button>
-
-  <!-- 포트폴리오: 보라 -->
-  <button class="mdi-sb-btn mdi-sb-btn-active" data-pid="portfolio"
+  <button type="button" class="mdi-sb-btn mdi-sb-btn-active" data-pid="portfolio"
           onclick="window._MDI.toggle('portfolio')" title="포트폴리오">
-    <span class="mdi-sb-icon-wrap" style="background:rgba(139,92,246,0.18);">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <span class="mdi-sb-icon-wrap">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <rect x="2" y="7" width="20" height="14" rx="2"/>
         <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
-        <line x1="12" y1="12" x2="12" y2="16"/>
-        <line x1="10" y1="14" x2="14" y2="14"/>
       </svg>
     </span>
     <span class="mdi-sb-label">포트폴리오</span>
   </button>
 
-  <!-- 뉴스·시황: 주황 -->
-  <button class="mdi-sb-btn" data-pid="news"
+  <button type="button" class="mdi-sb-btn" data-pid="news"
           onclick="window._MDI.toggle('news')" title="뉴스·시황">
-    <span class="mdi-sb-icon-wrap" style="background:rgba(245,158,11,0.18);">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <span class="mdi-sb-icon-wrap">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
         <path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/>
       </svg>
@@ -3156,46 +3121,79 @@
     <span class="mdi-sb-label">뉴스·시황</span>
   </button>
 
-  <!-- 투자일지: 분홍 -->
-  <button class="mdi-sb-btn" data-pid="journal"
+  <button type="button" class="mdi-sb-btn mdi-sb-btn-active" data-pid="trading"
+          onclick="window._MDI.toggle('trading')" title="매매기록">
+    <span class="mdi-sb-icon-wrap">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+        <polyline points="16 7 22 7 22 13"/>
+      </svg>
+    </span>
+    <span class="mdi-sb-label">매매기록</span>
+  </button>
+
+  <button type="button" class="mdi-sb-btn" data-pid="journal"
           onclick="window._MDI.toggle('journal')" title="투자일지">
-    <span class="mdi-sb-icon-wrap" style="background:rgba(236,72,153,0.18);">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <span class="mdi-sb-icon-wrap">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
         <polyline points="14 2 14 8 20 8"/>
         <line x1="16" y1="13" x2="8" y2="13"/>
         <line x1="16" y1="17" x2="8" y2="17"/>
-        <polyline points="10 9 9 9 8 9"/>
       </svg>
     </span>
     <span class="mdi-sb-label">투자일지</span>
   </button>
 
-  <!-- 캘린더: 인디고 -->
-  <button class="mdi-sb-btn" id="sbCalBtn"
-          onclick="toggleCalendarPanel()" title="경제·주식 캘린더">
-    <span class="mdi-sb-icon-wrap" style="background:rgba(99,102,241,0.18);">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
-        <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-      </svg>
-    </span>
-    <span class="mdi-sb-label">캘린더</span>
-  </button>
-
   <div class="mdi-sb-spacer"></div>
+  <div class="mdi-sb-sep"></div>
+  <div class="mdi-sb-section-label">시스템</div>
 
-  <!-- 레이아웃 초기화 -->
-  <button class="mdi-sb-btn" onclick="window._MDI && window._MDI.clearAndReset()" title="패널 레이아웃을 기본값으로 초기화"
-    style="margin-bottom:6px;">
-    <span class="mdi-sb-icon-wrap" style="background:rgba(100,116,139,0.18);">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-        <path d="M3 3v5h5"/>
+  <button type="button" class="mdi-sb-btn" onclick="openAccountPanel()" title="계좌·API">
+    <span class="mdi-sb-icon-wrap">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
       </svg>
     </span>
-    <span class="mdi-sb-label" style="font-size:10px;color:#94a3b8;">레이아웃초기화</span>
+    <span class="mdi-sb-label">계좌·API (<span id="acctCount">0</span>)</span>
   </button>
+
+  <button type="button" class="mdi-sb-btn" id="sbDataBtn" onclick="sbToggleDataMenu(event)" title="데이터 (백업·복원·레이아웃 초기화)">
+    <span class="mdi-sb-icon-wrap">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <ellipse cx="12" cy="5" rx="9" ry="3"/>
+        <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+      </svg>
+    </span>
+    <span class="mdi-sb-label">데이터</span>
+  </button>
+
+  <button type="button" class="mdi-sb-btn" onclick="openSettings()" title="설정">
+    <span class="mdi-sb-icon-wrap">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </span>
+    <span class="mdi-sb-label">설정</span>
+  </button>
+
+  <!-- API 연결 상태 (loadApiKeysUI 가 갱신) -->
+  <button type="button" class="mdi-sb-status" id="apiStatusBtn" onclick="openApiPanel()" title="KIS 미연결 — API 설정">
+    <span class="mdi-sb-dot" id="apiStatusDot"></span>
+    <span class="mdi-sb-label" id="apiStatusLabel">KIS 미연결</span>
+  </button>
+
+  <!-- 데이터 메뉴 팝오버 -->
+  <div class="mdi-sb-popover" id="sbDataMenu">
+    <button type="button" class="mdi-sb-pop-item" onclick="sbCloseDataMenu();exportBackup()">데이터 백업</button>
+    <label class="mdi-sb-pop-item" style="cursor:pointer;margin:0;">
+      백업 복원
+      <input type="file" accept=".json" onchange="sbCloseDataMenu();importBackup(event)" style="display:none;">
+    </label>
+    <button type="button" class="mdi-sb-pop-item" onclick="sbCloseDataMenu();window._MDI && window._MDI.clearAndReset()">레이아웃 초기화</button>
+  </div>
 
 </aside>
 
@@ -9492,6 +9490,25 @@ function openSettings() {
   loadApiKeysUI();
 }
 
+// 사이드바 '데이터' 메뉴 (백업·복원·레이아웃 초기화)
+function sbCloseDataMenu() {
+  document.getElementById('sbDataMenu')?.classList.remove('open');
+}
+function sbToggleDataMenu(ev) {
+  const menu = document.getElementById('sbDataMenu');
+  const btn  = document.getElementById('sbDataBtn');
+  if (!menu || !btn) return;
+  if (menu.classList.contains('open')) { sbCloseDataMenu(); return; }
+  const r = btn.getBoundingClientRect();
+  menu.style.left = (r.right + 4) + 'px';
+  menu.style.bottom = Math.max(4, window.innerHeight - r.bottom) + 'px';
+  menu.classList.add('open');
+  ev?.stopPropagation();
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest?.('#sbDataMenu')) sbCloseDataMenu();
+});
+
 function closeSettings() {
   const modal = document.getElementById('settingsModal');
   if (modal) modal.classList.remove('open');
@@ -9504,8 +9521,10 @@ async function loadApiKeysUI() {
     const dot   = document.getElementById('apiStatusDot');
     const label = document.getElementById('apiStatusLabel');
     if (!dot || !label) return;
-    dot.style.background  = connected ? '#22c55e' : '#ef4444';
+    dot.classList.toggle('on', !!connected);
     label.textContent     = connected ? 'KIS 연결됨' : 'KIS 미연결';
+    const sbBtn = document.getElementById('apiStatusBtn');
+    if (sbBtn) sbBtn.title = (connected ? 'KIS 연결됨' : 'KIS 미연결') + ' — API 설정';
   }
 
   if (!window.electronAPI?.checkApiKey) {
