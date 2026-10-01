@@ -1,4 +1,4 @@
-const CACHE = 'stockbook-v1.0.1'; // 릴리스 시 scripts/bump-version.mjs 가 자동 갱신
+const CACHE = 'stockbook-v1.0.2'; // 릴리스 시 scripts/bump-version.mjs 가 자동 갱신
 const ASSETS = [
   './index.html',
   './mobile.html',
