@@ -582,7 +582,7 @@
   body.light-mode .theme-toggle-btn {
     background: rgba(0,0,0,0.04);
     border-color: rgba(0,0,0,0.10);
-    color: #4f46e5;
+    color: var(--sb-accent);
   }
 
   /* ── 계좌 관리 패널 ── */
@@ -605,7 +605,7 @@
   .acct-card-sub  { font-size:11px; color:var(--text3); margin-top:2px; }
   .acct-card-badges { display:flex; gap:5px; align-items:center; flex-shrink:0; }
   .acct-badge { font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px; }
-  .acct-badge-manual { background:color-mix(in srgb, #94a3b8 15%, transparent); color:#94a3b8; }
+  .acct-badge-manual { background:color-mix(in srgb, var(--sb-text-3) 15%, transparent); color:var(--sb-text-3); }
   .acct-badge-api    { background:color-mix(in srgb, var(--accent) 15%, transparent); color:var(--accent); }
   .acct-badge-type   { background:var(--bg3); color:var(--text3); }
   .acct-card-cash { display:flex; align-items:center; justify-content:space-between; padding:6px 12px 10px; }
@@ -614,8 +614,8 @@
   .acct-card-actions { display:flex; gap:6px; padding:0 12px 10px; }
   .acct-action-btn { flex:1; font-size:11px; font-weight:600; padding:5px 0; border-radius:6px; border:1px solid var(--border); background:var(--bg3); color:var(--text2); cursor:pointer; font-family:inherit; }
   .acct-action-btn:hover { background:var(--bg2); }
-  .acct-action-btn.del { color:#ef4444; border-color:color-mix(in srgb, #ef4444 30%, transparent); }
-  .acct-action-btn.del:hover { background:color-mix(in srgb, #ef4444 10%, transparent); }
+  .acct-action-btn.del { color:var(--sb-up); border-color:color-mix(in srgb, var(--sb-up) 30%, transparent); }
+  .acct-action-btn.del:hover { background:color-mix(in srgb, var(--sb-up) 10%, transparent); }
   /* 계좌 추가/편집 폼 */
   .acct-form { background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:14px; }
   .acct-form-title { font-size:13px; font-weight:700; color:var(--text); margin-bottom:12px; }
@@ -1034,7 +1034,7 @@
   }
   .btn-primary {
     background: var(--accent);
-    color: #ffffff;
+    color: var(--sb-on-accent);
     box-shadow: var(--shadow-btn);
   }
   .btn-primary:hover {
@@ -1043,7 +1043,7 @@
   }
   .btn-danger {
     background: var(--red);
-    color: #ffffff;
+    color: var(--sb-on-accent);
   }
   .btn-danger:hover {
     background: var(--red2);
@@ -1736,7 +1736,7 @@
   .api-bcard-info { flex: 1; min-width: 0; }
   .api-bcard-name { font-size: 12px; font-weight: 700; color: var(--text1); }
   .api-bcard-desc { font-size: 10px; color: var(--text3); margin-top: 2px; line-height: 1.4; }
-  .api-bcard-status { font-size: 11px; color: #22c55e; font-weight: 600; flex-shrink: 0; }
+  .api-bcard-status { font-size: 11px; color: var(--sb-success); font-weight: 600; flex-shrink: 0; }
   .api-bcard-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
   .api-bcard-link-btn {
     display: inline-flex; align-items: center; gap: 4px;
