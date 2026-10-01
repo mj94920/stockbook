@@ -21,9 +21,9 @@
     "path": "./android.keystore",
     "alias": "__ANDROID_KEY_ALIAS__"
   },
-  "appVersionName": "1.2.0",
-  "appVersionCode": 10200,
-  "appVersion": "1.2.0",
+  "appVersionName": "1.3.0",
+  "appVersionCode": 10300,
+  "appVersion": "1.3.0",
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://mj94920.github.io/stockbook/manifest.json",
