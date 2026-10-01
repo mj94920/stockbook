@@ -21,7 +21,7 @@
 
 | # | 할 일 | 위치 |
 |---|------|------|
-| 1 | Claude GitHub App 설치 (이 저장소 선택) | https://github.com/apps/claude |
+| 1 | (선택) Claude GitHub App 설치 — 없어도 동작, 설치 시 댓글이 claude[bot] 이름으로 표시 | https://github.com/apps/claude |
 | 2 | 시크릿 `CLAUDE_CODE_OAUTH_TOKEN` 추가 — 터미널에서 `claude setup-token` 실행 후 출력값 (Pro/Max 구독). API 과금을 쓰려면 대신 `ANTHROPIC_API_KEY` | Settings → Secrets and variables → Actions → Secrets |
 | 3 | Workflow 권한: **Read and write** + **Allow GitHub Actions to create and approve pull requests** 체크 | Settings → Actions → General → Workflow permissions |
 | 4 | (Android 빌드를 원하면) 아래 Android 항목 설정 | 같은 Secrets/Variables 화면 |

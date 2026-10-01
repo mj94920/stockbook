@@ -12,7 +12,7 @@ on:
     branches: [main]
     paths-ignore:
       - '**.md'
-      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/**'   # 워크플로·템플릿 변경은 앱 릴리스 불필요
       - '.claude/**'
   workflow_dispatch:
     inputs:

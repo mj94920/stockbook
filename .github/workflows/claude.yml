@@ -11,7 +11,7 @@
 #
 # 필요 시크릿: CLAUDE_CODE_OAUTH_TOKEN (Pro/Max 구독, `claude setup-token`)
 #              또는 ANTHROPIC_API_KEY  — 둘 중 하나
-# 필요 앱   : Claude GitHub App (https://github.com/apps/claude) 저장소에 설치
+# 선택 앱   : Claude GitHub App — 없어도 동작(GITHUB_TOKEN 사용). 설치하면 댓글 작성자가 claude[bot] 으로 표시됨
 # ─────────────────────────────────────────────────────────────────────────────
 name: Claude
 
@@ -95,6 +95,7 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}   # Claude GitHub App 없이도 동작 (PR 생성·머지는 워크플로가 직접 처리)
           prompt: |
             저장소 루트의 `.claude-task.md` 에 이번에 처리할 GitHub 이슈 내용이 있다. 그 작업을 끝까지 수행하라.
 
@@ -133,6 +134,7 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}   # Claude GitHub App 없이도 동작 (PR 생성·머지는 워크플로가 직접 처리)
           label_trigger: claude
           track_progress: true
           additional_permissions: |
@@ -217,6 +219,7 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}   # Claude GitHub App 없이도 동작 (PR 생성·머지는 워크플로가 직접 처리)
           prompt: |
             브랜치 `${{ needs.claude.outputs.branch }}` 의 변경이 CI 검사(`npm test` = 정적 검사 + 스모크 테스트)를 통과하지 못했다.
             아래 로그(test-tail.log)를 분석해 원인을 고치고, `npm test` 가 통과하는 것을 확인한 뒤
