@@ -35,9 +35,14 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       R: ${{ github.repository }}
+      HAS_CLAUDE_AUTH: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' || secrets.ANTHROPIC_API_KEY != '' }}
     steps:
       - name: 다음 작업 시작
         run: |
+          if [ "$HAS_CLAUDE_AUTH" != "true" ]; then
+            echo "::warning::CLAUDE_CODE_OAUTH_TOKEN / ANTHROPIC_API_KEY 시크릿이 없어 큐를 시작하지 않습니다 (README 최초 설정 참고). 시크릿 등록 후 매시간 자동 재시도됩니다."
+            exit 0
+          fi
           busy=$(gh issue list --repo "$R" --label in-progress --state open --json number --jq 'map(.number) | join(",")')
           if [ -n "$busy" ]; then echo "진행 중인 작업 있음: #$busy → 대기"; exit 0; fi
 
