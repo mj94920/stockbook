@@ -16,7 +16,8 @@
         │
         ▼
 [ci.yml]      정적 검사 + 스모크 테스트 (검사 스크립트는 main 기준 고정)
-        ├─ 통과 → PR 자동 생성 → main squash 머지
+        ├─ 통과 → PR 자동 생성 → main 동기화(sync-main.sh) → main squash 머지
+        │         (릴리스 버전 문자열 충돌은 자동 해결, 그 외 충돌·머지 실패는 'needs-human' + 알림)
         └─ 실패 → Claude 1회 자동 수정 → 재검증 → 실패 시 'needs-human' PR + 이슈 알림
         │
         ▼
@@ -72,6 +73,7 @@ android/twa-manifest.json                  ← TWA 설정 템플릿 (packageId·
 scripts/check-syntax.mjs                   ← 정적 검사   (npm run check)
 scripts/smoke.mjs                          ← 스모크 테스트 (npm run smoke)
 scripts/bump-version.mjs                   ← 버전 일괄 갱신 (릴리스 전용)
+.github/scripts/{ship-branch,sync-main}.sh ← Claude 브랜치 PR·main 동기화·머지 (워크플로가 호출)
 .github/workflows/{ci,claude,queue,release,repo-setup}.yml
 docs/UI-REVAMP-PLAN.md                     ← UI/UX 1차 개편 기준 문서 (진행 중)
 docs/                                      ← PRD, 과거 개발 로그

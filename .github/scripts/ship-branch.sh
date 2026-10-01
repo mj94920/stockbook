@@ -34,8 +34,26 @@ if [ "$MERGE" != "true" ]; then
   exit 0
 fi
 
+# 머지 실패는 조용히 끝나면 큐가 in-progress 로 영영 멈춘다 → 반드시 needs-human 으로 알린다
+hold() {
+  gh pr edit "$pr" --repo "$REPO" --add-label needs-human || true
+  msg="⚠️ $1 PR #$pr 을 확인해 주세요. 해결 후 PR 을 머지하거나, PR 에 \`@claude\` 로 지시하면 됩니다."
+  gh pr comment "$pr" --repo "$REPO" --body "$msg" || true
+  [ -n "$ISSUE" ] && [ "$ISSUE" != "$pr" ] && gh issue comment "$ISSUE" --repo "$REPO" --body "$msg" || true
+  exit 1
+}
+
+# 큐 작업 중 릴리스가 main 에 버전 커밋을 올려 생기는 충돌을 머지 전에 해소
+bash "$(dirname "$0")/sync-main.sh" "$BRANCH" \
+  || hold "main 과 충돌이 있어 자동 머지를 보류했습니다 (버전 문자열 외의 충돌)."
+
 gh pr edit "$pr" --repo "$REPO" --add-label automerge
-gh pr merge "$pr" --repo "$REPO" --squash --delete-branch
+merged=false
+for i in 1 2 3 4 5 6; do   # 방금 푸시한 머지 커밋의 mergeable 계산을 잠시 기다린다
+  if gh pr merge "$pr" --repo "$REPO" --squash --delete-branch; then merged=true; break; fi
+  sleep 10
+done
+[ "$merged" = true ] || hold "자동 머지에 실패했습니다."
 echo "PR #$pr 머지 완료"
 
 # 이슈 정리 — GITHUB_TOKEN 머지는 'Closes #N' 자동 종료가 보장되지 않으므로 직접 닫는다 (큐가 다음 항목으로 넘어가는 조건)
