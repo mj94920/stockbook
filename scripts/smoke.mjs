@@ -4,7 +4,7 @@
 // 외부 네트워크는 전부 차단 → 시세 API 장애와 무관하게 결정적으로 동작.
 // 실행: npm run smoke
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { readFile, mkdir } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { chromium } from 'playwright';
 
@@ -13,6 +13,7 @@ const PAGES = [
   { path: '/mobile.html', viewport: { width: 390,  height: 844 } },
 ];
 const SETTLE_MS = Number(process.env.SMOKE_SETTLE_MS ?? 4000);
+const SHOT_DIR  = process.env.SMOKE_SHOT_DIR ?? 'smoke-shots';   // UI 확인용 스크린샷 (CI 아티팩트로 업로드)
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json',
                '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
 
@@ -50,6 +51,17 @@ for (const pg of PAGES) {
   // 기본 렌더링 확인: body 에 실제 내용이 그려졌는지
   const textLen = await page.evaluate(() => document.body?.innerText.trim().length ?? 0);
   if (textLen < 20) errors.push(`body 텍스트가 비어 있음 (${textLen}자) — 렌더링 실패 의심`);
+
+  // 다크/라이트 스크린샷 (실패해도 테스트 결과에는 영향 없음)
+  try {
+    await mkdir(SHOT_DIR, { recursive: true });
+    const name = pg.path.replace(/^\//, '').replace(/\.html$/, '');
+    await page.evaluate(() => document.body.classList.remove('light-mode'));
+    await page.screenshot({ path: `${SHOT_DIR}/${name}-dark.png` });
+    await page.evaluate(() => document.body.classList.add('light-mode'));
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: `${SHOT_DIR}/${name}-light.png` });
+  } catch (e) { console.warn(`  (스크린샷 생략: ${e.message})`); }
 
   if (errors.length) {
     failed++;

@@ -196,6 +196,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
+          pattern: '{windows,android}'
           path: artifacts
           merge-multiple: true
 

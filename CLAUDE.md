@@ -24,6 +24,10 @@
               → GitHub Release 게시 → Pages 갱신(PWA)
 ```
 
+**작업 큐** (`queue.yml`): `queue` 라벨 이슈를 번호 순서대로 **하나씩** Claude 에게 맡긴다.
+진행 중 이슈는 `in-progress`, 머지되면 다음 이슈 자동 시작, 실패하면 큐 정지(`needs-human`).
+여러 단계로 나뉜 큰 작업(예: UI 개편)은 이 큐로 돌린다 — 동시에 여러 Claude 가 같은 파일을 고쳐 충돌하는 것을 막는다.
+
 사람이 main 에 직접 푸시해도 `release.yml` 이 동일하게 검사 → 배포한다.
 사람이 연 PR 에 `automerge` 라벨을 붙이면 CI 통과 즉시 머지·배포된다.
 
@@ -67,7 +71,8 @@ android/twa-manifest.json                  ← TWA 설정 템플릿 (packageId·
 scripts/check-syntax.mjs                   ← 정적 검사   (npm run check)
 scripts/smoke.mjs                          ← 스모크 테스트 (npm run smoke)
 scripts/bump-version.mjs                   ← 버전 일괄 갱신 (릴리스 전용)
-.github/workflows/{ci,claude,release,repo-setup}.yml
+.github/workflows/{ci,claude,queue,release,repo-setup}.yml
+docs/UI-REVAMP-PLAN.md                     ← UI/UX 1차 개편 기준 문서 (진행 중)
 docs/                                      ← PRD, 과거 개발 로그
 CHANGELOG.md                               ← 릴리스마다 자동 생성
 ```
@@ -128,6 +133,7 @@ CHANGELOG.md                               ← 릴리스마다 자동 생성
 
 ## 6. 로드맵
 
+- [ ] **UI/UX 1차 개편** — `docs/UI-REVAMP-PLAN.md`, 작업 큐로 진행 중
 - [ ] 토스 API 연동 → 전 증권사 합산 뷰
 - [ ] EXE 자동 업데이트 (electron-updater + GitHub Releases)
 - [ ] `index.html` 모듈 분리 검토 (파일이 13,000줄을 넘어 유지보수 부담)

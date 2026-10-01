@@ -1,0 +1,53 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# 작업 큐 — 'queue' 라벨 이슈를 번호 순서대로 하나씩 Claude 에게 맡긴다
+#   · 한 번에 하나만 진행 ('in-progress' 라벨 이슈가 열려 있으면 대기)
+#   · 이전 작업이 머지되면 ship-branch.sh 가 이 워크플로를 다시 호출 → 다음 이슈 시작
+#   · 실패(needs-human)하면 그 이슈가 in-progress 로 남아 큐가 자동 정지
+#     → 해결 후 이슈를 닫거나 in-progress 라벨을 지우면 재개
+# 시작/재개: 이슈에 'queue' 라벨을 붙이거나 Actions → Queue → Run workflow
+# ─────────────────────────────────────────────────────────────────────────────
+name: Queue
+
+on:
+  workflow_dispatch:
+  issues:
+    types: [labeled, unlabeled, closed]
+  schedule:
+    - cron: '17 * * * *'   # 안전장치: 매시간 큐 상태 점검
+
+concurrency:
+  group: queue
+  cancel-in-progress: false
+
+permissions:
+  issues: write
+  actions: write
+  contents: read
+
+jobs:
+  next:
+    if: >-
+      github.event_name != 'issues' ||
+      github.event.label.name == 'queue' ||
+      github.event.label.name == 'in-progress' ||
+      github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      R: ${{ github.repository }}
+    steps:
+      - name: 다음 작업 시작
+        run: |
+          busy=$(gh issue list --repo "$R" --label in-progress --state open --json number --jq 'map(.number) | join(",")')
+          if [ -n "$busy" ]; then echo "진행 중인 작업 있음: #$busy → 대기"; exit 0; fi
+
+          running=$(gh run list --repo "$R" --workflow claude.yml --event workflow_dispatch --status in_progress --json databaseId --jq 'length')
+          queued=$(gh run list --repo "$R" --workflow claude.yml --event workflow_dispatch --status queued --json databaseId --jq 'length')
+          if [ "$running" != "0" ] || [ "$queued" != "0" ]; then echo "Claude 큐 작업 실행 중 → 대기"; exit 0; fi
+
+          next=$(gh issue list --repo "$R" --label queue --state open --limit 200 --json number --jq 'map(.number) | min // empty')
+          if [ -z "$next" ]; then echo "큐가 비어 있음"; exit 0; fi
+
+          gh issue edit "$next" --repo "$R" --remove-label queue --add-label in-progress
+          gh workflow run claude.yml --repo "$R" --ref main -f issue="$next"
+          echo "이슈 #$next 작업 시작"

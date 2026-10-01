@@ -55,6 +55,16 @@ jobs:
       - name: 스모크 테스트
         run: npm run smoke
 
+      # 다크/라이트 화면 스크린샷 — Actions 실행 페이지 하단 Artifacts 에서 확인
+      - name: 스크린샷 업로드
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-shots-${{ github.run_attempt }}
+          path: smoke-shots/
+          if-no-files-found: ignore
+          retention-days: 14
+
   automerge:
     name: 자동 머지
     needs: test

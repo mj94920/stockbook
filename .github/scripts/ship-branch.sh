@@ -41,3 +41,6 @@ echo "PR #$pr 머지 완료"
 # GITHUB_TOKEN 머지는 push 이벤트를 발생시키지 않으므로 릴리스를 직접 호출
 gh workflow run release.yml --repo "$REPO" --ref main
 echo "릴리스 워크플로 트리거 완료"
+
+# 작업 큐: 다음 'queue' 이슈 시작 (queue.yml 이 없거나 큐가 비었으면 아무 일도 없음)
+gh workflow run queue.yml --repo "$REPO" --ref main 2>/dev/null && echo "작업 큐 다음 항목 요청" || true

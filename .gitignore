@@ -36,3 +36,5 @@ store_icon.png
 *.bak*
 /nul
 /_ul*
+smoke-shots/
+.claude-task.md
