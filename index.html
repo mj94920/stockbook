@@ -2843,167 +2843,131 @@
 #qoDropdown::-webkit-scrollbar { width: 5px; }
 #qoDropdown::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-/* ── 경제·주식 캘린더 슬라이드 패널 ─────────────────── */
+/* ── 시장 일정 센터 (우측 슬라이드 패널) ─────────────────── */
 .cal-panel {
   position: fixed; top: 106px; right: 0;
-  width: 420px; height: calc(100vh - 106px);
-  background: #070c16; border-left: 1px solid #1a2840;
+  width: min(960px, 92vw); height: calc(100vh - 106px);
+  background: var(--sb-panel); border-left: 1px solid var(--sb-border);
+  color: var(--sb-text-1); font-family: var(--sb-font-ko);
   z-index: 99990; display: flex; flex-direction: column;
-  transform: translateX(100%);
+  transform: translateX(100%) translateZ(0);
   transition: transform 0.24s cubic-bezier(0.4,0,0.2,1);
-  box-shadow: -8px 0 32px rgba(0,0,0,0.6);
+  box-shadow: var(--sb-shadow-2);
 }
-.cal-panel.open { transform: translateX(0); }
-.cal-overlay { position: fixed; inset: 0; z-index: 99989; display: none; }
+.cal-panel.open { transform: translateX(0) translateZ(0); }
+.cal-overlay { position: fixed; inset: 0; z-index: 99989; display: none; background: var(--sb-overlay); }
 .cal-overlay.open { display: block; }
 .cal-hdr {
-  display: flex; align-items: center; padding: 10px 12px 9px;
-  border-bottom: 1px solid #1a2840; flex-shrink: 0; gap: 8px;
+  display: flex; align-items: center; padding: var(--sb-space-3) var(--sb-space-4);
+  border-bottom: 1px solid var(--sb-border); flex-shrink: 0; gap: var(--sb-space-2);
 }
-.cal-hdr-title { font-size: 13px; font-weight: 600; color: #dce8f5; flex: 1; }
-.cal-hdr-close {
-  background: none; border: none; color: #4a6080; cursor: pointer;
-  font-size: 18px; line-height: 1; padding: 0 4px; border-radius: 3px;
-  transition: color 0.12s;
-}
-.cal-hdr-close:hover { color: #dce8f5; }
-.cal-tabbar { display: flex; border-bottom: 1px solid #1a2840; flex-shrink: 0; }
+.cal-hdr-title { font-size: 15px; font-weight: 700; color: var(--sb-text-1); flex: 1; }
+.cal-tabbar { display: flex; border-bottom: 1px solid var(--sb-border); flex-shrink: 0; padding: 0 var(--sb-space-3); }
 .cal-tb {
-  flex: 1; padding: 8px 0; font-size: 12px; font-family: inherit;
+  padding: var(--sb-space-2) var(--sb-space-4); font-size: 13px; font-family: inherit;
   background: none; border: none; border-bottom: 2px solid transparent;
-  color: #4a6080; cursor: pointer; transition: all 0.12s;
+  color: var(--sb-text-3); cursor: pointer; transition: color 0.12s;
 }
-.cal-tb.active { color: #90bfff; border-bottom-color: #2563eb; font-weight: 600; }
-.cal-tb:hover { color: #b0c8e0; }
-/* 기업이벤트 탭 */
-.cal-corp { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.cal-eco  { flex: 1; display: none; flex-direction: column; overflow: hidden; }
-/* 캘린더 상단 네비 */
+.cal-tb.active { color: var(--sb-accent); border-bottom-color: var(--sb-accent); font-weight: 600; }
+.cal-tb:hover { color: var(--sb-text-1); }
+/* 탭 본문: 좌 달력 / 우 목록 2열 */
+.cal-corp, .cal-eco {
+  flex: 1; min-height: 0; display: none;
+  grid-template-columns: minmax(340px, 1.15fr) minmax(300px, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+.cal-col-cal { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--sb-border); overflow-y: auto; }
+.cal-col-list { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+@media (max-width: 1100px) {
+  .cal-corp, .cal-eco { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); overflow-y: auto; }
+  .cal-col-cal { border-right: none; border-bottom: 1px solid var(--sb-border); overflow: visible; }
+}
 .cal-cnav {
-  display: flex; align-items: center; padding: 8px 12px 6px;
-  border-bottom: 1px solid #1a2840; flex-shrink: 0; gap: 8px;
+  display: flex; align-items: center; padding: var(--sb-space-2) var(--sb-space-3);
+  flex-shrink: 0; gap: var(--sb-space-2);
 }
-.cal-cnav-month { font-size: 13px; font-weight: 600; color: #dce8f5; flex: 1; text-align: center; }
-.cal-cnav-btn {
-  background: none; border: 1px solid #1a2840; border-radius: 4px;
-  color: #5a7a9a; cursor: pointer; width: 24px; height: 24px;
-  font-size: 13px; display: flex; align-items: center; justify-content: center;
-  transition: all 0.1s;
-}
-.cal-cnav-btn:hover { background: #0d1a2e; color: #dce8f5; }
-/* 달력 그리드 */
-.cal-grid-wrap { padding: 6px 10px 4px; flex-shrink: 0; }
-.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 1px; }
-.cal-dow { text-align: center; font-size: 10px; color: #3a5070; padding: 2px 0 4px; }
+.cal-cnav-month { font-size: 14px; font-weight: 700; color: var(--sb-text-1); flex: 1; text-align: center; }
+.cal-grid-wrap { padding: 0 var(--sb-space-3) var(--sb-space-3); flex-shrink: 0; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; }
+.cal-dow { text-align: center; font-size: 11px; color: var(--sb-text-3); padding: 2px 0 var(--sb-space-1); }
+.cal-dow.sun { color: var(--sb-up); }
+.cal-dow.sat { color: var(--sb-down); }
 .cal-day {
-  min-height: 34px; border-radius: 4px; font-size: 11px;
-  text-align: center; color: #4a6080; cursor: pointer;
-  position: relative; display: flex; flex-direction: column;
-  align-items: center; padding: 3px 1px; gap: 2px; transition: background 0.1s;
+  min-height: 62px; min-width: 0; border-radius: var(--sb-radius-1); font-size: 11px;
+  color: var(--sb-text-2); cursor: pointer; overflow: hidden;
+  display: flex; flex-direction: column; align-items: stretch;
+  padding: 3px 4px; gap: 2px; border: 1px solid var(--sb-border-weak);
+  transition: background 0.1s;
 }
-.cal-day:hover { background: #0d1a2e; }
-.cal-day.today { background: #0c2040; color: #90bfff; font-weight: 700; }
-.cal-day.sel   { background: #1a3562; color: #d0e4f5; }
-.cal-day.has-ev { color: #b0c8e0; }
-.cal-day.empty { color: #1a2840; cursor: default; pointer-events: none; }
-.cal-ev-dots { display: flex; gap: 2px; justify-content: center; }
-.cal-ev-dot { width: 4px; height: 4px; border-radius: 50%; }
-.cal-ev-dot.earn  { background: #2563eb; }
-.cal-ev-dot.div   { background: #10b981; }
-.cal-ev-dot.split { background: #f59e0b; }
-.cal-ev-dot.iss   { background: #ef4444; }
-.cal-ev-dot.misc  { background: #8b5cf6; }
-.cal-ev-dot.econ  { background: #e0a020; }
-.cal-ev-dot.econ-mid { background: #f59e0b; }
-/* 이벤트 리스트 */
-.cal-evlist { flex: 1; overflow-y: auto; padding: 8px 12px; }
-.cal-evlist::-webkit-scrollbar { width: 4px; }
-.cal-evlist::-webkit-scrollbar-thumb { background: #1a2840; border-radius: 2px; }
+.cal-day:hover { background: var(--sb-hover); }
+.cal-day.sun .cal-day-num { color: var(--sb-up); }
+.cal-day.sat .cal-day-num { color: var(--sb-down); }
+.cal-day.today { border-color: var(--sb-accent); }
+.cal-day.today .cal-day-num { color: var(--sb-accent); font-weight: 700; }
+.cal-day.sel { background: var(--sb-accent-soft); border-color: var(--sb-accent); }
+.cal-day.empty { visibility: hidden; cursor: default; pointer-events: none; }
+.cal-day-num { font-family: var(--sb-font-num); font-variant-numeric: tabular-nums; font-size: 11px; }
+.cal-day-ev {
+  display: block; font-size: 10px; line-height: 1.3; color: var(--sb-text-1);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  border-left: 2px solid var(--sb-accent); padding-left: 3px;
+}
+.cal-day-ev.earn  { border-left-color: var(--sb-accent); }
+.cal-day-ev.div   { border-left-color: var(--sb-success); }
+.cal-day-ev.split, .cal-day-ev.econ-mid { border-left-color: var(--sb-warn); }
+.cal-day-ev.iss, .cal-day-ev.econ { border-left-color: var(--sb-up); }
+.cal-day-ev.misc  { border-left-color: var(--sb-flat); }
+.cal-day-more { font-size: 10px; color: var(--sb-text-3); }
+/* 일정 목록 */
+.cal-evlist { flex: 1; min-height: 0; overflow-y: auto; padding: var(--sb-space-3) var(--sb-space-4); }
 .cal-evlist-hdr {
-  font-size: 11px; font-weight: 600; color: #4a6080;
-  padding-bottom: 7px; border-bottom: 1px solid #1a2840; margin-bottom: 7px;
+  font-size: 13px; font-weight: 700; color: var(--sb-text-1);
+  padding-bottom: var(--sb-space-2); border-bottom: 1px solid var(--sb-border); margin-bottom: var(--sb-space-2);
 }
 .cal-ev-item {
-  padding: 7px 10px; border-radius: 5px; margin-bottom: 5px;
-  border: 1px solid #1a2840; background: #09111e;
+  padding: var(--sb-space-2) var(--sb-space-3); border-radius: var(--sb-radius-2); margin-bottom: var(--sb-space-1);
+  border: 1px solid var(--sb-border); background: var(--sb-bg);
   display: flex; flex-direction: column; gap: 3px;
 }
-.cal-ev-row { display: flex; align-items: center; gap: 6px; }
-.cal-ev-name { font-size: 12px; color: #dce8f5; flex: 1; }
+.cal-ev-row { display: flex; align-items: center; gap: var(--sb-space-2); }
+.cal-ev-time { font-family: var(--sb-font-num); font-variant-numeric: tabular-nums; font-size: 11px; color: var(--sb-text-3); min-width: 38px; }
+.cal-ev-name { font-size: 12px; color: var(--sb-text-1); flex: 1; min-width: 0; }
+.cal-ev-tick { color: var(--sb-text-3); font-size: 10px; margin-left: 4px; }
 .cal-ev-badge {
-  font-size: 9px; padding: 2px 5px; border-radius: 3px;
+  font-size: 10px; padding: 1px 6px; border-radius: var(--sb-radius-1);
   font-weight: 600; white-space: nowrap;
+  background: var(--sb-surface); color: var(--sb-text-2); border: 1px solid var(--sb-border);
 }
-.cal-ev-badge.earn  { background: rgba(37,99,235,0.25);  color: #90bfff; }
-.cal-ev-badge.div   { background: rgba(16,185,129,0.25); color: #6ee7b7; }
-.cal-ev-badge.split { background: rgba(245,158,11,0.25); color: #fcd34d; }
-.cal-ev-badge.iss   { background: rgba(239,68,68,0.25);  color: #fca5a5; }
-.cal-ev-badge.misc  { background: rgba(139,92,246,0.25); color: #c4b5fd; }
-.cal-ev-badge.econ  { background: rgba(224,160,32,0.25); color: #fcd34d; }
-.cal-ev-sub { font-size: 10px; color: #4a6080; }
-.cal-ev-del {
-  background: none; border: none; color: #2a3a4a; cursor: pointer;
-  font-size: 13px; padding: 0 3px; transition: color 0.1s; flex-shrink: 0;
+.cal-ev-badge.kind-corp { color: var(--sb-accent); border-color: var(--sb-accent); }
+.cal-ev-badge.kind-econ { color: var(--sb-warn); border-color: var(--sb-warn); }
+.cal-ev-badge.kind-user { color: var(--sb-success); border-color: var(--sb-success); }
+.cal-ev-dday { font-family: var(--sb-font-num); font-size: 10px; color: var(--sb-text-3); white-space: nowrap; }
+.cal-ev-dday.soon { color: var(--sb-up); font-weight: 700; }
+.cal-ev-sub { font-size: 10px; color: var(--sb-text-3); }
+.cal-ev-empty { color: var(--sb-text-3); font-size: 12px; text-align: center; padding: var(--sb-space-5) 0; }
+/* 경제지표 표 */
+.cal-eco-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.cal-eco-table th {
+  text-align: left; font-weight: 600; font-size: 11px; color: var(--sb-text-3);
+  padding: var(--sb-space-1) var(--sb-space-2); border-bottom: 1px solid var(--sb-border); white-space: nowrap;
 }
-.cal-ev-del:hover { color: #ef4444; }
-/* 추가 버튼 */
-.cal-add-wrap {
-  padding: 6px 12px 8px; flex-shrink: 0; border-top: 1px solid #1a2840;
-}
-.cal-add-btn {
-  width: 100%; padding: 7px; border-radius: 5px;
-  background: #09111e; border: 1px dashed #1a2840; color: #3a5070;
-  font-size: 12px; cursor: pointer; transition: all 0.15s; font-family: inherit;
-}
-.cal-add-btn:hover { background: #0d1a2e; color: #7aa0be; border-color: #2a4060; }
+.cal-eco-table td { padding: var(--sb-space-2); border-bottom: 1px solid var(--sb-border-weak); color: var(--sb-text-1); }
+.cal-eco-table .num { text-align: right; font-family: var(--sb-font-num); font-variant-numeric: tabular-nums; }
+.cal-imp { letter-spacing: 1px; white-space: nowrap; color: var(--sb-up); }
+.cal-imp .off { color: var(--sb-text-3); }
 /* 추가 폼 */
+.cal-add-wrap { padding: var(--sb-space-2) var(--sb-space-4); flex-shrink: 0; border-top: 1px solid var(--sb-border); }
 .cal-add-form {
-  display: none; padding: 10px 12px; border-top: 1px solid #1a2840;
-  flex-shrink: 0; flex-direction: column; gap: 7px;
-  background: #070c16;
+  display: none; padding: var(--sb-space-3) var(--sb-space-4); border-top: 1px solid var(--sb-border);
+  flex-shrink: 0; flex-direction: column; gap: var(--sb-space-2);
 }
 .cal-add-form.show { display: flex; }
-.cal-finput {
-  background: #0a1525; border: 1px solid #1a2840; border-radius: 4px;
-  color: #dce8f5; font-size: 12px; padding: 5px 8px;
-  font-family: inherit; outline: none; width: 100%;
-}
-.cal-finput:focus { border-color: #2563eb; }
-.cal-fselect {
-  background: #0a1525; border: 1px solid #1a2840; border-radius: 4px;
-  color: #dce8f5; font-size: 12px; padding: 5px 8px;
-  font-family: inherit; outline: none; width: 100%;
-}
-.cal-form-row { display: flex; gap: 6px; }
-.cal-fsave {
-  background: #1a3562; border: 1px solid #2563eb; border-radius: 4px;
-  color: #90bfff; font-size: 12px; padding: 5px 14px;
-  cursor: pointer; font-family: inherit; transition: all 0.12s;
-}
-.cal-fsave:hover { background: #234080; }
-.cal-fcancel {
-  background: none; border: 1px solid #1a2840; border-radius: 4px;
-  color: #5a7a9a; font-size: 12px; padding: 5px 14px;
-  cursor: pointer; font-family: inherit; transition: all 0.12s;
-}
-.cal-fcancel:hover { background: #0d1a2e; color: #dce8f5; }
-/* 경제지표 탭 */
+.cal-form-row { display: flex; gap: var(--sb-space-2); }
+/* 경제지표 바로가기 */
 .cal-eco-nav {
-  display: flex; gap: 6px; padding: 8px 12px;
-  border-bottom: 1px solid #1a2840; flex-shrink: 0; flex-wrap: wrap;
-  align-items: center;
+  display: flex; gap: var(--sb-space-2); padding: var(--sb-space-2) var(--sb-space-4);
+  border-top: 1px solid var(--sb-border); flex-shrink: 0; flex-wrap: wrap; align-items: center;
 }
-.cal-eco-link {
-  padding: 4px 10px; border-radius: 12px;
-  border: 1px solid #1a2840; background: #09111e;
-  color: #7aa0be; font-size: 11px; text-decoration: none;
-  transition: all 0.12s; cursor: pointer; font-family: inherit;
-  background-color: #09111e;
-}
-.cal-eco-link:hover { border-color: #2563eb; color: #90bfff; background: #0d1a2e; }
-/* 경제지표 탭 — iframe 제거 후 달력 그리드 레이아웃 */
-.cal-eco .cal-evlist { border-top: 1px solid #1a2840; }
-.cal-eco .cal-eco-nav { margin-top: auto; }
 /* 헤더 D-day 뱃지 */
 #calDdayBadge {
   display: flex; align-items: center; gap: 5px;
@@ -3983,72 +3947,80 @@
 <!-- ── 캘린더 오버레이 ── -->
 <div class="cal-overlay" id="calOverlay" onclick="closeCalendarPanel()"></div>
 
-<!-- ── 경제·주식 캘린더 슬라이드 패널 ── -->
+<!-- ── 시장 일정 센터 (우측 슬라이드 패널) ── -->
 <div class="cal-panel" id="calPanel">
   <div class="cal-hdr">
     <span style="font-size:16px;line-height:1">📅</span>
-    <span class="cal-hdr-title">경제·주식 캘린더</span>
-    <button class="cal-hdr-close" onclick="closeCalendarPanel()" title="닫기">✕</button>
+    <span class="cal-hdr-title">시장 일정 센터</span>
+    <button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="closeCalendarPanel()" title="닫기 (ESC)">✕</button>
   </div>
   <div class="cal-tabbar">
-    <button class="cal-tb active" id="calTbCorp" onclick="switchCalTab('corp')">기업 이벤트</button>
-    <button class="cal-tb" id="calTbEco"  onclick="switchCalTab('eco')">경제지표</button>
+    <button type="button" class="cal-tb active" id="calTbCorp" onclick="switchCalTab('corp')">기업 이벤트</button>
+    <button type="button" class="cal-tb" id="calTbEco"  onclick="switchCalTab('eco')">경제지표</button>
   </div>
 
   <!-- ── 기업 이벤트 탭 ── -->
   <div class="cal-corp" id="calTabCorp">
-    <div class="cal-cnav">
-      <button class="cal-cnav-btn" onclick="calCorpPrevMonth()">‹</button>
-      <span class="cal-cnav-month" id="calCorpMonthLabel">2026년 8월</span>
-      <button class="cal-cnav-btn" onclick="calCorpNextMonth()">›</button>
-    </div>
-    <div class="cal-grid-wrap">
-      <div class="cal-grid" id="calCorpGrid"></div>
-    </div>
-    <div class="cal-evlist" id="calEvList">
-      <div class="cal-evlist-hdr" id="calEvListHdr">날짜를 선택하세요</div>
-      <div id="calEvListBody"></div>
-    </div>
-    <div class="cal-add-wrap">
-      <button class="cal-add-btn" onclick="toggleCalAddForm()">＋ 이벤트 추가</button>
-    </div>
-    <div class="cal-add-form" id="calAddForm">
-      <div class="cal-form-row">
-        <input class="cal-finput" type="date" id="calNewDate" style="flex:1">
-        <select class="cal-fselect" id="calNewCat" style="width:110px">
-          <option value="earn">실적발표</option>
-          <option value="div">배당기준일</option>
-          <option value="split">액면분할</option>
-          <option value="iss">증자·소각</option>
-          <option value="misc">기타</option>
-        </select>
+    <div class="cal-col-cal">
+      <div class="cal-cnav">
+        <button type="button" class="sb-btn sb-btn--sm" onclick="calCorpPrevMonth()">‹</button>
+        <span class="cal-cnav-month" id="calCorpMonthLabel">2026년 8월</span>
+        <button type="button" class="sb-btn sb-btn--sm" onclick="calCorpNextMonth()">›</button>
       </div>
-      <input class="cal-finput" type="text" id="calNewName" placeholder="이벤트명 (예: 삼성전자 2Q 실적)">
-      <input class="cal-finput" type="text" id="calNewTicker" placeholder="종목코드 (선택, 예: 005930)">
-      <div class="cal-form-row" style="justify-content:flex-end">
-        <button class="cal-fcancel" onclick="toggleCalAddForm()">취소</button>
-        <button class="cal-fsave"   onclick="saveCalEvent()">저장</button>
+      <div class="cal-grid-wrap">
+        <div class="cal-grid" id="calCorpGrid"></div>
+      </div>
+    </div>
+    <div class="cal-col-list">
+      <div class="cal-evlist" id="calEvList">
+        <div class="cal-evlist-hdr" id="calEvListHdr">날짜를 선택하세요</div>
+        <div id="calEvListBody"></div>
+      </div>
+      <div class="cal-add-wrap">
+        <button type="button" class="sb-btn sb-btn--sm" style="width:100%" onclick="toggleCalAddForm()">＋ 이벤트 추가</button>
+      </div>
+      <div class="cal-add-form" id="calAddForm">
+        <div class="cal-form-row">
+          <input class="sb-input" type="date" id="calNewDate" style="flex:1">
+          <select class="sb-select" id="calNewCat" style="width:120px">
+            <option value="earn">실적발표</option>
+            <option value="div">배당기준일</option>
+            <option value="split">액면분할</option>
+            <option value="iss">증자·소각</option>
+            <option value="misc">기타</option>
+          </select>
+        </div>
+        <input class="sb-input" type="text" id="calNewName" placeholder="이벤트명 (예: 삼성전자 2Q 실적)">
+        <input class="sb-input" type="text" id="calNewTicker" placeholder="종목코드 (선택, 예: 005930)">
+        <div class="cal-form-row" style="justify-content:flex-end">
+          <button type="button" class="sb-btn sb-btn--sm" onclick="toggleCalAddForm()">취소</button>
+          <button type="button" class="sb-btn sb-btn--sm sb-btn--primary" onclick="saveCalEvent()">저장</button>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- ── 경제지표 탭 ── -->
   <div class="cal-eco" id="calTabEco">
-    <div class="cal-cnav">
-      <button class="cal-cnav-btn" onclick="calEcoPrevMonth()">‹</button>
-      <span class="cal-cnav-month" id="calEcoMonthLabel">2026년 8월</span>
-      <button class="cal-cnav-btn" onclick="calEcoNextMonth()">›</button>
+    <div class="cal-col-cal">
+      <div class="cal-cnav">
+        <button type="button" class="sb-btn sb-btn--sm" onclick="calEcoPrevMonth()">‹</button>
+        <span class="cal-cnav-month" id="calEcoMonthLabel">2026년 8월</span>
+        <button type="button" class="sb-btn sb-btn--sm" onclick="calEcoNextMonth()">›</button>
+      </div>
+      <div class="cal-grid-wrap"><div class="cal-grid" id="calEcoGrid"></div></div>
     </div>
-    <div class="cal-grid-wrap"><div class="cal-grid" id="calEcoGrid"></div></div>
-    <div class="cal-evlist" id="calEcoEvList">
-      <div class="cal-evlist-hdr" id="calEcoEvListHdr">날짜를 선택하세요</div>
-      <div id="calEcoEvListBody"></div>
-    </div>
-    <div class="cal-eco-nav">
-      <span style="font-size:11px;color:#3a5070;align-self:center">바로가기:</span>
-      <button class="cal-eco-link" onclick="openCalLink('https://www.investing.com/economic-calendar/')">Investing.com ↗</button>
-      <button class="cal-eco-link" onclick="openCalLink('https://www.bok.or.kr/portal/main/main.do')">한국은행 ↗</button>
-      <button class="cal-eco-link" onclick="openCalLink('https://www.bok.or.kr/portal/main/contents.do?menuNo=200656')">금통위 일정 ↗</button>
+    <div class="cal-col-list">
+      <div class="cal-evlist" id="calEcoEvList">
+        <div class="cal-evlist-hdr" id="calEcoEvListHdr">날짜를 선택하세요</div>
+        <div id="calEcoEvListBody"></div>
+      </div>
+      <div class="cal-eco-nav">
+        <span style="font-size:11px;color:var(--sb-text-3)">바로가기:</span>
+        <button type="button" class="sb-btn sb-btn--sm" onclick="openCalLink('https://www.investing.com/economic-calendar/')">Investing.com ↗</button>
+        <button type="button" class="sb-btn sb-btn--sm" onclick="openCalLink('https://www.bok.or.kr/portal/main/main.do')">한국은행 ↗</button>
+        <button type="button" class="sb-btn sb-btn--sm" onclick="openCalLink('https://www.bok.or.kr/portal/main/contents.do?menuNo=200656')">금통위 일정 ↗</button>
+      </div>
     </div>
   </div>
 </div>
@@ -12722,9 +12694,65 @@ function wlAssignGroup(idx, gName) {
   let _ecoMonth = new Date().getMonth();
   let _ecoSelDate = null;
 
+  const DAY_NAMES = ['일','월','화','수','목','금','토'];
+  const CAT_MAP   = { earn:'실적발표', div:'배당기준일', split:'액면분할', iss:'증자·소각', misc:'기타' };
+  const KIND_LABEL = { corp:'기업 이벤트', econ:'경제지표', user:'사용자 일정' };
+
+  function _pad(n) { return String(n).padStart(2, '0'); }
+  function _todayStr() { const t = new Date(); return `${t.getFullYear()}-${_pad(t.getMonth() + 1)}-${_pad(t.getDate())}`; }
+  function _dowOf(dateStr) { const [y, m, d] = dateStr.split('-').map(Number); return new Date(y, m - 1, d).getDay(); }
+  function _esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
+  function _cleanName(n) { return n.replace(' *예상', '').replace(' *예정', ''); }
+
   /* ── state.calEvents 초기화 보장 ──────────────────────── */
   function ensureCalEvents() {
     if (!state.calEvents) state.calEvents = [];
+  }
+
+  /* ── 통합 일정 조회 + 중요도 판정 (패널·달력 셀·헤더 배지 공유) ──
+     kind: corp | econ | user. score 가 클수록 중요. */
+  function _score(e) {
+    if (e.kind === 'econ') return e.impact === 'high' ? 3 : 2;
+    if (e.kind === 'user') return 2.5;
+    return e.cat === 'earn' ? 2 : 1.5;
+  }
+  function _eventsOn(dateStr, kinds) {
+    ensureCalEvents();
+    const out = [];
+    if (kinds.includes('econ')) {
+      ECON.filter(e => e.date === dateStr).forEach(e => out.push({
+        kind:'econ', date:e.date, name:e.name, country:e.country, impact:e.impact,
+        time:e.time, actual:e.actual, forecast:e.forecast, prev:e.prev, cat: e.impact === 'high' ? 'econ' : 'econ-mid',
+      }));
+    }
+    if (kinds.includes('corp')) {
+      CORP_EVENTS.filter(e => e.date === dateStr).forEach(e => out.push({
+        kind:'corp', date:e.date, name:_cleanName(e.name), cat:e.cat || 'earn', ticker:e.ticker,
+        est: /\*예상|\*예정/.test(e.name), time:e.time,
+      }));
+    }
+    if (kinds.includes('user')) {
+      state.calEvents.forEach((e, i) => { if (e.date === dateStr) out.push({
+        kind:'user', date:e.date, name:e.name, cat:e.cat || 'misc', ticker:e.ticker, userIdx:i, time:e.time,
+      }); });
+    }
+    out.forEach(e => { e.score = _score(e); });
+    return out;
+  }
+  /* 중요도 내림차순 → 시간순 */
+  function _byImportance(a, b) { return b.score - a.score || (a.time || '99:99').localeCompare(b.time || '99:99') || a.name.localeCompare(b.name); }
+  /* 시간순(시간 없는 항목은 뒤) → 중요도 */
+  function _byTime(a, b) { return (a.time || '99:99').localeCompare(b.time || '99:99') || b.score - a.score || a.name.localeCompare(b.name); }
+  window.calImportantEvents = function (dateStr, kinds) {
+    return _eventsOn(dateStr, kinds || ['corp', 'econ', 'user']).sort(_byImportance);
+  };
+
+  function _ddayHtml(dateStr) {
+    const t = new Date(); t.setHours(0, 0, 0, 0);
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const diff = Math.round((new Date(y, m - 1, d) - t) / 86400000);
+    if (diff < 0) return '';
+    return `<span class="cal-ev-dday${diff <= 3 ? ' soon' : ''}">${diff === 0 ? 'D-DAY' : 'D-' + diff}</span>`;
   }
 
   /* ── 패널 열기/닫기 ─────────────────────────────────── */
@@ -12738,12 +12766,15 @@ function wlAssignGroup(idx, gName) {
     const sbBtn = document.getElementById('sbCalBtn');
     if (sbBtn) sbBtn.classList.add('mdi-sb-btn-active');
     // 오늘 날짜 초기 선택
-    if (!_selDate) _selDate = new Date().toISOString().slice(0, 10);
+    if (!_selDate) _selDate = _todayStr();
     const [y, m] = _selDate.split('-');
     _year = parseInt(y); _month = parseInt(m) - 1;
     renderCalCorpGrid();
     renderCalEvList();
-    if (_tab === 'eco') { renderCalEcoGrid(); renderCalEcoEvList(); }
+    if (_tab === 'eco') {
+      if (!_ecoSelDate) _ecoSelDate = _selDate;
+      renderCalEcoGrid(); renderCalEcoEvList();
+    }
   };
 
   window.closeCalendarPanel = function () {
@@ -12754,14 +12785,22 @@ function wlAssignGroup(idx, gName) {
     if (sbBtn) sbBtn.classList.remove('mdi-sb-btn-active');
   };
 
+  // ESC 로 닫기 (입력 중이어도 패널이 열려 있으면 닫는다)
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && _open) closeCalendarPanel();
+  });
+
   /* ── 탭 전환 ─────────────────────────────────────────── */
   window.switchCalTab = function (tab) {
     _tab = tab;
-    document.getElementById('calTabCorp').style.display = tab === 'corp' ? 'flex' : 'none';
-    document.getElementById('calTabEco').style.display  = tab === 'eco'  ? 'flex' : 'none';
+    document.getElementById('calTabCorp').style.display = tab === 'corp' ? 'grid' : 'none';
+    document.getElementById('calTabEco').style.display  = tab === 'eco'  ? 'grid' : 'none';
     document.getElementById('calTbCorp').classList.toggle('active', tab === 'corp');
     document.getElementById('calTbEco').classList.toggle('active',  tab === 'eco');
-    if (tab === 'eco') { renderCalEcoGrid(); renderCalEcoEvList(); }
+    if (tab === 'eco') {
+      if (!_ecoSelDate) _ecoSelDate = _selDate || _todayStr();
+      renderCalEcoGrid(); renderCalEcoEvList();
+    }
   };
 
   /* ── 외부 링크 열기 ─────────────────────────────────── */
@@ -12773,45 +12812,35 @@ function wlAssignGroup(idx, gName) {
   };
 
   /* ── 달력 그리드 렌더링 ─────────────────────────────── */
+  function _gridHtml(year, month, selDate, kinds, selFn) {
+    let html = DAY_NAMES.map((d, i) => `<div class="cal-dow${i === 0 ? ' sun' : i === 6 ? ' sat' : ''}">${d}</div>`).join('');
+    const firstDay    = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const today       = _todayStr();
+    for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${year}-${_pad(month + 1)}-${_pad(d)}`;
+      const dow = (firstDay + d - 1) % 7;
+      const evs = window.calImportantEvents(dateStr, kinds);
+      let cls = 'cal-day' + (dow === 0 ? ' sun' : dow === 6 ? ' sat' : '');
+      if (dateStr === today) cls += ' today';
+      if (dateStr === selDate) cls += ' sel';
+      let inner = `<span class="cal-day-num">${d}</span>`;
+      if (evs.length) {
+        inner += `<span class="cal-day-ev ${_esc(evs[0].cat)}" title="${_esc(evs[0].name)}">${_esc(evs[0].name)}</span>`;
+        if (evs.length > 1) inner += `<span class="cal-day-more">+${evs.length - 1}</span>`;
+      }
+      html += `<div class="${cls}" onclick="${selFn}('${dateStr}')">${inner}</div>`;
+    }
+    return html;
+  }
+
   window.renderCalCorpGrid = function () {
     const grid  = document.getElementById('calCorpGrid');
     const label = document.getElementById('calCorpMonthLabel');
     if (!grid) return;
-    ensureCalEvents();
     label.textContent = `${_year}년 ${_month + 1}월`;
-
-    const dows = ['일','월','화','수','목','금','토'];
-    let html = dows.map(d =>
-      `<div class="cal-dow${d === '일' ? '" style="color:#6a3040' : d === '토' ? '" style="color:#2a4070' : ''}">${d}</div>`
-    ).join('');
-
-    const firstDay    = new Date(_year, _month, 1).getDay();
-    const daysInMonth = new Date(_year, _month + 1, 0).getDate();
-    const today       = new Date().toISOString().slice(0, 10);
-
-    // 빈 칸
-    for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
-
-    for (let d = 1; d <= daysInMonth; d++) {
-      const mm      = String(_month + 1).padStart(2, '0');
-      const dd      = String(d).padStart(2, '0');
-      const dateStr = `${_year}-${mm}-${dd}`;
-      const dow     = new Date(dateStr).getDay();
-      const userEv  = state.calEvents.filter(e => e.date === dateStr);
-      const corpEv  = CORP_EVENTS.filter(e => e.date === dateStr);
-      const hasEv   = userEv.length > 0 || corpEv.length > 0;
-      const isTod   = dateStr === today;
-      const isSel   = dateStr === _selDate;
-      let cls = 'cal-day' + (isTod ? ' today' : '') + (isSel ? ' sel' : '') + (hasEv ? ' has-ev' : '');
-      // 일/토 색상
-      let style = dow === 0 ? ' style="color:#8a4050"' : dow === 6 ? ' style="color:#3a5080"' : '';
-      if (isTod || isSel || hasEv) style = '';  // 클래스 색상 우선
-      let dots = '';
-      corpEv.forEach(e => { dots += `<div class="cal-ev-dot ${e.cat || 'earn'}"></div>`; });
-      userEv.forEach(e => { dots += `<div class="cal-ev-dot ${e.cat || 'misc'}"></div>`; });
-      html += `<div class="${cls}"${style} onclick="calSelectDay('${dateStr}')">${d}${dots ? `<div class="cal-ev-dots">${dots}</div>` : ''}</div>`;
-    }
-    grid.innerHTML = html;
+    grid.innerHTML = _gridHtml(_year, _month, _selDate, ['corp', 'user'], 'calSelectDay');
   };
 
   /* ── 날짜 선택 ───────────────────────────────────────── */
@@ -12821,7 +12850,12 @@ function wlAssignGroup(idx, gName) {
     renderCalEvList();
   };
 
-  /* ── 이벤트 리스트 렌더링 ────────────────────────────── */
+  function _dateHdr(dateStr) {
+    const [y, m, d] = dateStr.split('-');
+    return `${parseInt(y)}년 ${parseInt(m)}월 ${parseInt(d)}일 (${DAY_NAMES[_dowOf(dateStr)]})`;
+  }
+
+  /* ── 이벤트 리스트 렌더링 (시간순 · 종류 배지 · D-day) ───── */
   window.renderCalEvList = function () {
     const hdr  = document.getElementById('calEvListHdr');
     const body = document.getElementById('calEvListBody');
@@ -12830,42 +12864,27 @@ function wlAssignGroup(idx, gName) {
 
     if (!_selDate) { hdr.textContent = '날짜를 선택하세요'; body.innerHTML = ''; return; }
 
-    const [y, m, d] = _selDate.split('-');
-    const dayNames  = ['일','월','화','수','목','금','토'];
-    const dow       = dayNames[new Date(_selDate).getDay()];
-    hdr.textContent = `${parseInt(y)}년 ${parseInt(m)}월 ${parseInt(d)}일 (${dow})`;
+    hdr.textContent = _dateHdr(_selDate);
 
-    const catMap = { earn:'실적발표', div:'배당기준일', split:'액면분할', iss:'증자·소각', misc:'기타' };
+    const dday = _ddayHtml(_selDate);
+    const evs = _eventsOn(_selDate, ['corp', 'user']).sort(_byTime);
     let html = '';
-
-    // 하드코딩 기업 이벤트 (KOSPI200/KOSDAQ150)
-    CORP_EVENTS.filter(e => e.date === _selDate).forEach(function (e) {
-      const catLabel = catMap[e.cat] || '실적발표';
-      const isEst    = e.name.includes('*예상') || e.name.includes('*예정');
-      const dispName = e.name.replace(' *예상', '').replace(' *예정', '');
+    evs.forEach(function (e) {
+      const catLabel = CAT_MAP[e.cat] || (e.kind === 'user' ? '기타' : '실적발표');
       html += `<div class="cal-ev-item">
         <div class="cal-ev-row">
-          <span class="cal-ev-name">${dispName}${e.ticker ? `<span style="color:#3a5070;font-size:10px;margin-left:4px">(${e.ticker})</span>` : ''}</span>
-          <span class="cal-ev-badge ${e.cat || 'earn'}">${catLabel}</span>
+          <span class="cal-ev-time sb-num">${_esc(e.time || '-')}</span>
+          <span class="cal-ev-name">${_esc(e.name)}${e.ticker ? `<span class="cal-ev-tick">(${_esc(e.ticker)})</span>` : ''}</span>
+          <span class="cal-ev-badge kind-${e.kind}">${KIND_LABEL[e.kind]}</span>
+          <span class="cal-ev-badge">${catLabel}</span>
+          ${dday}
+          ${e.kind === 'user' ? `<button type="button" class="sb-btn sb-btn--danger sb-btn--sm" onclick="deleteCalEvent(${e.userIdx})" title="삭제">삭제</button>` : ''}
         </div>
-        ${isEst ? `<div class="cal-ev-sub">예상 일정 · 변동 가능</div>` : ''}
+        ${e.est ? `<div class="cal-ev-sub">예상 일정 · 변동 가능</div>` : ''}
       </div>`;
     });
 
-    // 사용자 추가 이벤트
-    state.calEvents.forEach(function (e, i) {
-      if (e.date !== _selDate) return;
-      const catLabel = catMap[e.cat] || '기타';
-      html += `<div class="cal-ev-item">
-        <div class="cal-ev-row">
-          <span class="cal-ev-name">${e.name}${e.ticker ? `<span style="color:#3a5070;font-size:10px;margin-left:4px">(${e.ticker})</span>` : ''}</span>
-          <span class="cal-ev-badge ${e.cat || 'misc'}">${catLabel}</span>
-          <button class="cal-ev-del" onclick="deleteCalEvent(${i})" title="삭제">✕</button>
-        </div>
-      </div>`;
-    });
-
-    if (!html) html = `<div style="color:#2a3a4a;font-size:12px;text-align:center;padding:22px 0">이 날의 일정이 없습니다</div>`;
+    if (!html) html = `<div class="cal-ev-empty">이 날의 일정이 없습니다</div>`;
     body.innerHTML = html;
   };
 
@@ -12889,37 +12908,7 @@ function wlAssignGroup(idx, gName) {
     const label = document.getElementById('calEcoMonthLabel');
     if (!grid) return;
     label.textContent = `${_ecoYear}년 ${_ecoMonth + 1}월`;
-
-    const dows = ['일','월','화','수','목','금','토'];
-    let html = dows.map(d =>
-      `<div class="cal-dow${d === '일' ? '" style="color:#6a3040' : d === '토' ? '" style="color:#2a4070' : ''}">${d}</div>`
-    ).join('');
-
-    const firstDay    = new Date(_ecoYear, _ecoMonth, 1).getDay();
-    const daysInMonth = new Date(_ecoYear, _ecoMonth + 1, 0).getDate();
-    const today       = new Date().toISOString().slice(0, 10);
-
-    for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
-
-    for (let d = 1; d <= daysInMonth; d++) {
-      const mm      = String(_ecoMonth + 1).padStart(2, '0');
-      const dd      = String(d).padStart(2, '0');
-      const dateStr = `${_ecoYear}-${mm}-${dd}`;
-      const dow     = new Date(dateStr).getDay();
-      const evs     = ECON.filter(e => e.date === dateStr);
-      const hasEv   = evs.length > 0;
-      const isTod   = dateStr === today;
-      const isSel   = dateStr === _ecoSelDate;
-      let cls = 'cal-day' + (isTod ? ' today' : '') + (isSel ? ' sel' : '') + (hasEv ? ' has-ev' : '');
-      let style = dow === 0 ? ' style="color:#8a4050"' : dow === 6 ? ' style="color:#3a5080"' : '';
-      if (isTod || isSel || hasEv) style = '';
-      let dots = '';
-      evs.forEach(e => {
-        dots += `<div class="cal-ev-dot ${e.impact === 'high' ? 'econ' : 'econ-mid'}"></div>`;
-      });
-      html += `<div class="${cls}"${style} onclick="calEcoSelectDay('${dateStr}')">${d}${dots ? `<div class="cal-ev-dots">${dots}</div>` : ''}</div>`;
-    }
-    grid.innerHTML = html;
+    grid.innerHTML = _gridHtml(_ecoYear, _ecoMonth, _ecoSelDate, ['econ'], 'calEcoSelectDay');
   };
 
   /* ── 경제지표 탭: 날짜 선택 ─────────────────────────── */
@@ -12937,28 +12926,30 @@ function wlAssignGroup(idx, gName) {
 
     if (!_ecoSelDate) { hdr.textContent = '날짜를 선택하세요'; body.innerHTML = ''; return; }
 
-    const [y, m, d] = _ecoSelDate.split('-');
-    const dayNames  = ['일','월','화','수','목','금','토'];
-    const dow       = dayNames[new Date(_ecoSelDate).getDay()];
-    hdr.textContent = `${parseInt(y)}년 ${parseInt(m)}월 ${parseInt(d)}일 (${dow})`;
+    hdr.textContent = _dateHdr(_ecoSelDate);
 
-    const evs = ECON.filter(e => e.date === _ecoSelDate);
-    let html = '';
-    evs.forEach(function (e) {
-      const flag     = e.country === 'US' ? '🇺🇸' : '🇰🇷';
-      const impColor = e.impact === 'high' ? '#ef4444' : '#f59e0b';
-      const impLabel = e.impact === 'high' ? '고영향' : '중영향';
-      html += `<div class="cal-ev-item">
-        <div class="cal-ev-row">
-          <span style="font-size:14px;flex-shrink:0">${flag}</span>
-          <span class="cal-ev-name">${e.name}</span>
-          <span style="width:7px;height:7px;border-radius:50%;background:${impColor};flex-shrink:0;display:inline-block"></span>
-        </div>
-        <div class="cal-ev-sub">경제지표 · ${impLabel} · ${e.country === 'US' ? '미국' : '한국'}</div>
-      </div>`;
-    });
-    if (!html) html = `<div style="color:#2a3a4a;font-size:12px;text-align:center;padding:22px 0">이 날의 경제지표 일정이 없습니다</div>`;
-    body.innerHTML = html;
+    const evs = _eventsOn(_ecoSelDate, ['econ']).sort(_byTime);
+    if (!evs.length) { body.innerHTML = `<div class="cal-ev-empty">이 날의 경제지표 일정이 없습니다</div>`; return; }
+    const v = x => (x == null || x === '') ? '-' : _esc(x);
+    const dday = _ddayHtml(_ecoSelDate);
+    const rows = evs.map(function (e) {
+      const lvl = e.impact === 'high' ? 3 : 2;
+      const imp = '●'.repeat(lvl) + `<span class="off">${'○'.repeat(3 - lvl)}</span>`;
+      return `<tr>
+        <td class="sb-num">${v(e.time)}</td>
+        <td>${e.country === 'US' ? '🇺🇸 미국' : '🇰🇷 한국'}</td>
+        <td>${_esc(e.name)}</td>
+        <td class="num">${v(e.actual)}</td>
+        <td class="num">${v(e.forecast)}</td>
+        <td class="num">${v(e.prev)}</td>
+        <td><span class="cal-imp" title="${e.impact === 'high' ? '고영향' : '중영향'}">${imp}</span></td>
+      </tr>`;
+    }).join('');
+    body.innerHTML = `${dday ? `<div style="margin-bottom:var(--sb-space-2)"><span class="cal-ev-badge kind-econ">경제지표</span> ${dday}</div>` : ''}
+      <table class="cal-eco-table">
+        <thead><tr><th>시간</th><th>국가</th><th>지표명</th><th class="num">실제</th><th class="num">예상</th><th class="num">이전</th><th>중요도</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
   };
 
   /* ── 경제지표 탭: 월 이동 ───────────────────────────── */
@@ -13031,15 +13022,16 @@ function wlAssignGroup(idx, gName) {
     const today = new Date(); today.setHours(0, 0, 0, 0);
 
     const all = [
-      ...ECON.map(e => ({ date: e.date, name: e.name })),
-      ...CORP_EVENTS.map(e => ({ date: e.date, name: e.name.replace(' *예상','').replace(' *예정','') })),
-      ...state.calEvents.map(e => ({ date: e.date, name: e.name })),
+      ...ECON.map(e => ({ date: e.date, name: e.name, kind: 'econ', impact: e.impact })),
+      ...CORP_EVENTS.map(e => ({ date: e.date, name: _cleanName(e.name), kind: 'corp', cat: e.cat })),
+      ...state.calEvents.map(e => ({ date: e.date, name: e.name, kind: 'user', cat: e.cat })),
     ];
+    all.forEach(e => { e.score = _score(e); });
 
     const upcoming = all
-      .map(e => ({ ...e, diff: Math.ceil((new Date(e.date) - today) / 86400000) }))
+      .map(e => { const [y, m, d] = e.date.split('-').map(Number); return { ...e, diff: Math.round((new Date(y, m - 1, d) - today) / 86400000) }; })
       .filter(e => e.diff >= 0)
-      .sort((a, b) => a.diff - b.diff || a.name.localeCompare(b.name));
+      .sort((a, b) => a.diff - b.diff || b.score - a.score || a.name.localeCompare(b.name));
 
     if (!upcoming.length) { el.textContent = '캘린더'; return; }
     const next = upcoming[0];
@@ -13055,7 +13047,7 @@ function wlAssignGroup(idx, gName) {
     ensureCalEvents();
     updateCalDdayBadge();
     // 탭 초기 상태 적용
-    document.getElementById('calTabCorp').style.display = 'flex';
+    document.getElementById('calTabCorp').style.display = 'grid';
     document.getElementById('calTabEco').style.display  = 'none';
     // 경제지표 그리드 사전 렌더 (탭 전환 시 즉시 표시용)
     renderCalEcoGrid();
