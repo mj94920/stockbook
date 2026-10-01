@@ -3069,6 +3069,125 @@
   max-width: 240px; overflow: hidden; text-overflow: ellipsis;
 }
 #calDdayBadge:hover { border-color: var(--sb-accent); color: var(--sb-text-1); background: var(--sb-hover); }
+
+  /* ── 8단계: 포트폴리오 · 호가/거래기록 · 투자일지 · 종목탐색 시각 통일 (--sb-* 토큰만 사용) ── */
+  #mdi-panel-portfolio .mdi-body, #mdi-panel-trading .mdi-body,
+  #mdi-panel-journal .mdi-body, #mdi-panel-watchlist .mdi-body { background: var(--sb-bg); }
+
+  /* 패널 탭 바 */
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-watchlist) .mdi-ptab-bar {
+    background: var(--sb-panel); border-bottom: 1px solid var(--sb-border); padding: 0 var(--sb-space-2);
+  }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-watchlist) .mdi-ptab {
+    padding: var(--sb-space-2) var(--sb-space-3); color: var(--sb-text-3);
+    font-family: var(--sb-font-ko); font-size: 13px; border-bottom: 2px solid transparent;
+  }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-watchlist) .mdi-ptab:hover { color: var(--sb-text-1); }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-watchlist) .mdi-ptab.active {
+    color: var(--sb-accent); border-bottom: 2px solid var(--sb-accent); font-weight: 700;
+  }
+
+  /* 카드: 얇은 경계, 그림자·blur·호버 부상 제거 */
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-journal) .card,
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-journal) .journal-card {
+    background: var(--sb-panel); border: 1px solid var(--sb-border); border-radius: var(--sb-radius-3);
+    box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+    padding: var(--sb-space-4); margin-bottom: var(--sb-space-3);
+  }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-journal) .card:hover { border-color: var(--sb-border); box-shadow: none; }
+  #mdi-panel-journal .journal-card:hover { border-color: var(--sb-accent); box-shadow: none; transform: none; }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-journal) .section-row { margin-bottom: var(--sb-space-3); }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-journal) .section-title,
+  #mdi-panel-journal .card-title { font-size: 14px; font-weight: 700; color: var(--sb-text-1); }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-journal) .empty-state {
+    padding: var(--sb-space-6); font-size: 13px; color: var(--sb-text-3);
+    border: 1px dashed var(--sb-border); border-radius: var(--sb-radius-3);
+  }
+
+  /* 툴바 입력·버튼·필터 */
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-journal) input[type="text"],
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-journal) input[type="number"],
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-journal) input[type="date"],
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-journal) select,
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-journal) textarea {
+    background: var(--sb-surface); border: 1px solid var(--sb-border); border-radius: var(--sb-radius-2);
+    color: var(--sb-text-1); font-family: var(--sb-font-ko);
+  }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-journal) .btn {
+    border-radius: var(--sb-radius-2); box-shadow: none; min-height: var(--sb-control-h); font-size: 13px; padding: 0 var(--sb-space-4);
+  }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-journal) .btn:hover { transform: none; box-shadow: none; }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-journal) .btn-sm { min-height: var(--sb-control-h-sm); padding: 0 var(--sb-space-3); font-size: 12px; }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-journal) .btn-primary { background: var(--sb-accent); color: var(--sb-on-accent); }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-journal) .btn-primary:hover { background: var(--sb-accent-hover); }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-journal) .btn-ghost {
+    background: var(--sb-surface); border: 1px solid var(--sb-border); color: var(--sb-text-2);
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-journal) .btn-ghost:hover { background: var(--sb-hover); color: var(--sb-text-1); border-color: var(--sb-border); }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading) .filter-btn {
+    border-radius: var(--sb-radius-2); border-color: var(--sb-border); color: var(--sb-text-2); font-family: var(--sb-font-ko); font-size: 12px;
+  }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading) .filter-btn.active { background: var(--sb-accent); border-color: var(--sb-accent); color: var(--sb-on-accent); }
+
+  /* 표: 헤더·행 높이·숫자 정렬 통일, 회색 박스 배경 제거 */
+  :is(#mdi-panel-portfolio, #mdi-panel-trading) .table-wrap { border: 1px solid var(--sb-border); border-radius: var(--sb-radius-2); background: transparent; }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading) table { font-family: var(--sb-font-num); font-variant-numeric: tabular-nums; }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading) thead th {
+    background: var(--sb-surface); backdrop-filter: none; -webkit-backdrop-filter: none;
+    padding: 0 var(--sb-space-3); height: calc(30px * var(--sb-density)); text-align: right;
+    font-family: var(--sb-font-ko); font-size: 11px; font-weight: 700; text-transform: none; letter-spacing: 0;
+    color: var(--sb-text-2); border-bottom: 1px solid var(--sb-border);
+  }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading) thead th:first-child { text-align: left; }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading) tbody td {
+    padding: 0 var(--sb-space-3); height: calc(36px * var(--sb-density)); text-align: right; white-space: nowrap;
+    background: transparent; border-bottom: 1px solid var(--sb-border-weak); color: var(--sb-text-1);
+  }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading) tbody td:first-child,
+  :is(#mdi-panel-portfolio, #mdi-panel-trading) tbody td.name-cell { text-align: left; }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading) tbody tr:hover td { background: var(--sb-hover); }
+  :is(#mdi-panel-portfolio, #mdi-panel-trading) tfoot tr, :is(#mdi-panel-portfolio, #mdi-panel-trading) tfoot td { background: var(--sb-surface); }
+  /* 실시간 가격 변화 강조는 보유종목 표에만 */
+  #mdi-panel-portfolio .portfolio-table .highlight-up { animation: flash-up 0.8s ease-out; }
+  #mdi-panel-portfolio .portfolio-table .highlight-down { animation: flash-down 0.8s ease-out; }
+
+  /* 포트폴리오 요약 카드 */
+  .pf-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sb-space-2); margin-bottom: var(--sb-space-2); }
+  .pf-stats .sb-stat__label { display: flex; align-items: center; justify-content: space-between; gap: var(--sb-space-1); }
+  .pf-stats .sb-stat__value { font-size: 18px; white-space: nowrap; }
+  .pf-stats .sb-stat__value.sb-up, .pf-stats .sb-stat__sub.sb-up { color: var(--sb-up); }
+  .pf-stats .sb-stat__value.sb-down, .pf-stats .sb-stat__sub.sb-down { color: var(--sb-down); }
+  .pf-stat-edit { height: 20px; padding: 0 var(--sb-space-2); font-size: 11px; }
+  #mdi-panel-portfolio .hts-summary-2row {
+    background: transparent; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+    border-radius: 0; overflow: visible; margin-bottom: var(--sb-space-3);
+  }
+  #mdi-panel-portfolio .hts-s2r-sub {
+    padding: var(--sb-space-1) var(--sb-space-3); background: var(--sb-panel);
+    border: 1px solid var(--sb-border); border-radius: var(--sb-radius-2);
+  }
+  #mdi-panel-portfolio .hts-s2r-sub-item { border-right-color: var(--sb-border); }
+  #mdi-panel-portfolio .hts-s2r-sub-item .s2r-sl { color: var(--sb-text-3); }
+  #mdi-panel-portfolio .hts-s2r-sub-item .s2r-sv { font-family: var(--sb-font-num); font-variant-numeric: tabular-nums; color: var(--sb-text-1); }
+  #mdi-panel-portfolio .hts-s2r-sub-item .s2r-sv.up { color: var(--sb-up); }
+  #mdi-panel-portfolio .hts-s2r-sub-item .s2r-sv.dn { color: var(--sb-down); }
+  @media (max-width: 720px) { .pf-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+  /* 호가 확인 + 거래 기록 */
+  .tr-rec-title { font-size: 12px; font-weight: 700; color: var(--sb-text-1); display: flex; align-items: baseline; justify-content: space-between; gap: var(--sb-space-2); }
+  .tr-rec-title span { font-size: 10px; font-weight: 400; color: var(--sb-text-3); }
+  #mdi-panel-trading #qo_hoga_wrap { border-color: var(--sb-border) !important; border-radius: var(--sb-radius-2) !important; }
+  #mdi-panel-trading #qo_target_panel { background: var(--sb-surface) !important; border-color: var(--sb-border) !important; border-radius: var(--sb-radius-2) !important; }
+  #mdi-panel-trading .calc-toggle-btn { font-family: var(--sb-font-ko); }
+
+  /* 투자일지 */
+  .j-hint { font-size: 11px; font-weight: 400; color: var(--sb-text-3); margin-left: var(--sb-space-1); }
+  #mdi-panel-journal .journal-section { margin-bottom: var(--sb-space-4); }
+  #mdi-panel-journal .journal-section h3 { font-size: 13px; color: var(--sb-text-1); border-bottom: 1px solid var(--sb-border); }
+  #mdi-panel-journal .checkbox-item { border-radius: var(--sb-radius-2); border-color: var(--sb-border); background: var(--sb-surface); color: var(--sb-text-2); }
+  #mdi-panel-journal .jc-tag { background: var(--sb-surface); border-radius: var(--sb-radius-1); color: var(--sb-text-2); }
+  #mdi-panel-journal .card { position: static; }
 </style>
 </head>
 <body>
@@ -3374,7 +3493,7 @@
          style="left:0;top:0;width:400px;height:300px;z-index:102;visibility:hidden">
       <div class="mdi-tb">
         <span class="mdi-tb-icon">📊</span>
-        <span class="mdi-tb-title">매매관리</span>
+        <span class="mdi-tb-title">호가 확인 · 거래 기록</span>
         <div class="mdi-tb-btns">
           <button class="mdi-tb-btn mdi-btn-min"  onclick="window._MDI.minimize('trading')" title="최소화">─</button>
           <button class="mdi-tb-btn mdi-btn-max"  onclick="window._MDI.maximize('trading')" title="최대화/복구">□</button>
@@ -3383,10 +3502,10 @@
       </div>
       <div class="mdi-body" id="mdi-body-trading">
   <div class="mdi-ptab-bar">
-    <button class="mdi-ptab active" onclick="window._MDIPanelTab('trading','ord')">주문/호가</button>
-    <button class="mdi-ptab" onclick="window._MDIPanelTab('trading','calc')">계산기</button>
+    <button class="mdi-ptab active" onclick="window._MDIPanelTab('trading','ord')">호가 · 기록</button>
+    <button class="mdi-ptab" onclick="window._MDIPanelTab('trading','calc')">계산기 (보조)</button>
   </div>
-  <!-- ── 주문/호가 탭 ── -->
+  <!-- ── 호가 확인 + 거래 기록 탭 (실주문 아님) ── -->
     <div class="mdi-ptab-pane" id="mdi-ptc-trading-ord" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto">
 <!-- ========== 종합탭 우측 미니탭 래퍼 ========== -->
     <div id="ord-hoga-direct" style="padding:0 10px 8px;display:flex;flex-direction:column;height:100%;box-sizing:border-box;overflow:hidden;">
@@ -3432,6 +3551,7 @@
           </div>
           <!-- 우: 주문폼 + 목표/손절 -->
           <div style="flex:0 0 47%;display:flex;flex-direction:column;gap:5px;overflow-y:auto;max-height:100%;">
+            <div class="tr-rec-title">거래 기록 <span>실제 주문이 아닌 기록용</span></div>
             <!-- 계좌 선택 -->
             <div>
               <label style="font-size:10px;color:var(--text3);margin-bottom:2px;display:block;">계좌</label>
@@ -3890,7 +4010,7 @@
           <div id="j_period_display" style="font-size:14px;font-weight:700;color:var(--accent);padding:6px 0;"></div>
         </div>
         <div class="form-group">
-          <label>종목명 *</label>
+          <label>종목명 * <span class="j-hint">종목 연결 · 보유종목 목표가/손절가 동기화</span></label>
           <input type="text" id="j_name" placeholder="삼성전자" list="jStockList">
           <datalist id="jStockList"></datalist>
         </div>
@@ -3918,7 +4038,7 @@
           <input type="number" id="j_qty" placeholder="10" min="1" oninput="calcJTotal()">
         </div>
         <div class="form-group">
-          <label>총 금액</label>
+          <label>총 금액 <span class="j-hint">가격 × 수량 자동 계산</span></label>
           <input type="text" id="j_total" readonly placeholder="자동 계산" style="color:var(--text2)">
         </div>
         <div class="form-group">
@@ -3940,6 +4060,7 @@
 
     <!-- 왜 샀어? -->
     <div class="journal-section" id="j_buySection">
+      <div class="j-hint" style="margin-bottom:6px;">매수 사유 태그 · 매수/매도일은 거래 기록과 연결되어 날짜 수정 시 함께 반영됩니다</div>
       <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 왜 샀어?</h3>
       <div class="checkbox-group">
         <label class="checkbox-item"><input type="checkbox" name="buyReason" value="톱다운"> 톱다운</label>
@@ -7846,25 +7967,42 @@ function renderSummary() {
 
   // Row1: 순자산총액(전체고정) | 총평가금액(필터) | 총평가손익(필터)
   // Row2 (sub): 예수금(필터) | 총매입금액 | 총수익률 | 실현손익 | 투자비중 | 보유
+  // 헤더(4단계)와 동일한 계산 함수·컴포넌트(.sb-stat) 사용
+  const _as = window.calcAssetSummary();
+  const _tone = v => v > 0 ? 'sb-up' : v < 0 ? 'sb-down' : 'sb-flat';
+  const _sg = v => v >= 0 ? '+' : '-';
+  const _edit = (fn, t) => `<button type="button" class="sb-btn sb-btn--ghost sb-btn--sm pf-stat-edit" onclick="${fn}" title="${t}">수정</button>`;
   el.innerHTML = `
-    <div class="hts-s2r-main">
-      <div class="hts-s2r-cell primary">
-        <span class="s2r-lbl">순자산총액${netLbl?` <small style="font-size:9px;font-weight:400">${netLbl}</small>`:''}</span>
-        <span class="s2r-val">₩${fmt(totalNetAsset)}</span>
+    <div class="pf-stats">
+      <div class="sb-stat">
+        <span class="sb-stat__label">총자산 ${_edit('openTotalAssetModal()', '총 자산 설정')}</span>
+        <span class="sb-stat__value">₩${fmt(Math.round(_as.total))}</span>
+        <span class="sb-stat__sub">${netLbl ? '계좌 합산' : '&nbsp;'}</span>
       </div>
-      <div class="hts-s2r-cell">
-        <span class="s2r-lbl">총평가금액</span>
-        <span class="s2r-val">₩${fmt(totalVal)}</span>
+      <div class="sb-stat">
+        <span class="sb-stat__label">예수금 ${_edit('openCashModal()', '예수금 직접 설정')}</span>
+        <span class="sb-stat__value">₩${fmt(Math.round(_as.cash))}</span>
+        <span class="sb-stat__sub">&nbsp;</span>
       </div>
-      <div class="hts-s2r-cell">
-        <span class="s2r-lbl">총평가손익</span>
-        <span class="s2r-val ${pnlCls}">${pnl>=0?'+':''}${fmt(pnl)}</span>
+      <div class="sb-stat">
+        <span class="sb-stat__label">평가손익</span>
+        <span class="sb-stat__value ${_tone(_as.pnl)}">${_sg(_as.pnl)}${fmt(Math.round(Math.abs(_as.pnl)))}</span>
+        <span class="sb-stat__sub ${_tone(_as.pnl)}">${_sg(_as.rate)}${Math.abs(_as.rate).toFixed(2)}%</span>
+      </div>
+      <div class="sb-stat">
+        <span class="sb-stat__label">당일손익</span>
+        <span class="sb-stat__value ${_tone(_as.dayPnl)}">${_sg(_as.dayPnl)}${fmt(Math.round(Math.abs(_as.dayPnl)))}</span>
+        <span class="sb-stat__sub ${_tone(_as.dayPnl)}">${_sg(_as.dayRate)}${Math.abs(_as.dayRate).toFixed(2)}%</span>
       </div>
     </div>
     <div class="hts-s2r-sub">
       <div class="hts-s2r-sub-item${exClick?' clickable':''}" ${exClick}>
         <span class="s2r-sl">예수금</span>
         <span class="s2r-sv ${exCls}">${hasEx?(exAmt<0?'-':'')+'₩'+fmt(Math.abs(exAmt)):'-'}</span>
+      </div>
+      <div class="hts-s2r-sub-item">
+        <span class="s2r-sl">총평가금액</span>
+        <span class="s2r-sv">₩${fmt(totalVal)}</span>
       </div>
       <div class="hts-s2r-sub-item">
         <span class="s2r-sl">총매입금액</span>
@@ -12818,23 +12956,31 @@ function _toggleCheck(stockKey, checkKey, val) {
   function toggleSidebar()    { window._MDI && _MDI.toggleSidebar(); }
 
   // ── 헤더 자산 요약 업데이트 ─────────────────────────────────────────
+  // 헤더·포트폴리오 요약 카드 공용 계산 (총자산/예수금/평가손익/당일손익)
+  function calcAssetSummary() {
+    let evalTotal = 0, costTotal = 0, dayPnl = 0, prevTotal = 0;
+    (state.portfolio || []).forEach(st => {
+      const qty = st.qty || 0;
+      const cur = parseFloat(st.currentPrice) || parseFloat(st.avgPrice) || 0;
+      const prev = parseFloat(st.prevClose) || cur;
+      evalTotal += cur * qty;
+      costTotal += (parseFloat(st.avgPrice) || 0) * qty;
+      prevTotal += prev * qty;
+      dayPnl    += (cur - prev) * qty;
+    });
+    const cash = getCashBalance();
+    const pnl  = evalTotal - costTotal;
+    return {
+      cash, evalTotal, costTotal, dayPnl, pnl,
+      total: cash + evalTotal,
+      rate: costTotal > 0 ? (pnl / costTotal * 100) : 0,
+      dayRate: prevTotal > 0 ? (dayPnl / prevTotal * 100) : 0
+    };
+  }
+  window.calcAssetSummary = calcAssetSummary;
   function updateHeaderAsset() {
     try {
-      let evalTotal = 0, costTotal = 0, dayPnl = 0, prevTotal = 0;
-      (state.portfolio || []).forEach(st => {
-        const qty = st.qty || 0;
-        const cur = parseFloat(st.currentPrice) || parseFloat(st.avgPrice) || 0;
-        const prev = parseFloat(st.prevClose) || cur;
-        evalTotal += cur * qty;
-        costTotal += (parseFloat(st.avgPrice) || 0) * qty;
-        prevTotal += prev * qty;
-        dayPnl    += (cur - prev) * qty;
-      });
-      const cash = getCashBalance();
-      const total = cash + evalTotal;
-      const pnl  = evalTotal - costTotal;
-      const rate = costTotal > 0 ? (pnl / costTotal * 100) : 0;
-      const dayRate = prevTotal > 0 ? (dayPnl / prevTotal * 100) : 0;
+      const { cash, total, pnl, rate, dayPnl, dayRate } = calcAssetSummary();
       const fmtW = v => Math.abs(v) >= 1e8 ? (v/1e8).toFixed(2)+'억'
                      : Math.abs(v) >= 1e4 ? Math.round(v/1e4).toLocaleString()+'만'
                      : Math.round(v).toLocaleString();
