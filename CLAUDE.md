@@ -96,6 +96,9 @@ CHANGELOG.md                               ← 릴리스마다 자동 생성
 - 모달 안 `<button>` 은 `type="button"` 명시.
 - **외부 API 는 main.js 에서 호출 → IPC → 렌더러** (CORS 회피). 렌더러 직접 fetch 는 모바일(PWA) 전용 코드에서만.
 - HTML=레이아웃, JS=상태·API·로직, main.js=네트워크 브리지.
+- **UI 는 디자인 토큰(`--sb-*`)과 공통 컴포넌트(`.sb-btn/.sb-input/.sb-modal/.sb-stat`)만 사용**한다. 새 하드코딩 색상 금지 (`docs/UI-REVAMP-PLAN.md` §8).
+- 새 팝업은 `.sb-modal--s/m/l` 규격(head/body/foot, 닫기 버튼)으로 만든다. 설정 항목은 설정 허브(`#settingsModal`, `settingsGo(cat)`) 카테고리에 추가한다.
+- 사이드바 메뉴는 `.mdi-sb-btn[data-pid]` ↔ `#mdi-panel-{pid}[data-mdi-state]`, 시장 일정은 `#calPanel` — 스모크 테스트가 이 id 들에 의존하므로 바꾸면 `scripts/smoke.mjs` 도 함께 고친다.
 
 ---
 
@@ -136,7 +139,7 @@ CHANGELOG.md                               ← 릴리스마다 자동 생성
 
 ## 6. 로드맵
 
-- [ ] **UI/UX 1차 개편** — `docs/UI-REVAMP-PLAN.md`, 작업 큐로 진행 중
+- [x] **UI/UX 1차 개편** — 완료 (결과: `docs/UI-REVAMP-PLAN.md` §9)
 - [ ] 토스 API 연동 → 전 증권사 합산 뷰
 - [ ] EXE 자동 업데이트 (electron-updater + GitHub Releases)
 - [ ] `index.html` 모듈 분리 검토 (파일이 13,000줄을 넘어 유지보수 부담)
