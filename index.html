@@ -17,41 +17,88 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* ── 다크 테마 (기본) ── */
-    --bg: #0b0f19;
+    /* ══ 디자인 토큰 (--sb-*) — 다크 (기본) ══ */
+    --sb-bg: #0b0f19;
+    --sb-panel: #111827;
+    --sb-surface: #1f2937;
+    --sb-hover: #374151;
+    --sb-border: #1f2937;
+    --sb-border-weak: rgba(255, 255, 255, 0.08);
+    --sb-text-1: #f3f4f6;
+    --sb-text-2: #9ca3af;
+    --sb-text-3: #6b7280;
+    --sb-accent: #4f46e5;
+    --sb-accent-hover: #4338ca;
+    --sb-accent-soft: rgba(79, 70, 229, 0.4);
+    --sb-on-accent: #ffffff;
+    /* 등락 (한국식: 상승 빨강 / 하락 파랑) */
+    --sb-up: #f43f5e;
+    --sb-up-strong: #be123c;
+    --sb-up-bg: rgba(244, 63, 94, 0.08);
+    --sb-up-border: rgba(244, 63, 94, 0.2);
+    --sb-down: #3b82f6;
+    --sb-down-strong: #1d4ed8;
+    --sb-down-bg: rgba(59, 130, 246, 0.08);
+    --sb-down-border: rgba(59, 130, 246, 0.2);
+    --sb-flat: #9ca3af;
+    --sb-warn: #f59e0b;
+    --sb-success: #10b981;
+    --sb-overlay: rgba(0, 0, 0, 0.6);
+    /* 간격 (밀도 훅: body[data-density] 가 --sb-density 를 바꾼다) */
+    --sb-density: 1;
+    --sb-space-1: calc(4px * var(--sb-density));
+    --sb-space-2: calc(8px * var(--sb-density));
+    --sb-space-3: calc(12px * var(--sb-density));
+    --sb-space-4: calc(16px * var(--sb-density));
+    --sb-space-5: calc(24px * var(--sb-density));
+    --sb-space-6: calc(32px * var(--sb-density));
+    --sb-control-h: calc(34px * var(--sb-density));
+    --sb-control-h-sm: calc(28px * var(--sb-density));
+    --sb-radius-1: 4px;
+    --sb-radius-2: 6px;
+    --sb-radius-3: 8px;
+    /* 타이포 (외부 CDN 글꼴 추가 금지 — 설치돼 있으면 쓰고 없으면 폴백) */
+    --sb-font-ko: Pretendard, 'NanumSquare', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    --sb-font-num: Inter, Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    /* 그림자 (경계선 위주, 1~2단계) */
+    --sb-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --sb-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.45);
+
+    /* ── 기존 변수: 새 토큰의 별칭 (삭제 금지) ── */
+    --bg: var(--sb-bg);
     --bg-gradient:
       radial-gradient(ellipse 75% 55% at 12% 18%, rgba(79, 70, 229, 0.25) 0%, transparent 68%),
       radial-gradient(ellipse 60% 50% at 88% 82%, rgba(59, 130, 246, 0.20) 0%, transparent 65%),
       radial-gradient(ellipse 45% 40% at 58% 52%, rgba(16, 185, 129, 0.09) 0%, transparent 58%),
       radial-gradient(circle at top right, #111a2e, #0b0f19);
-    --bg2: #111827;
-    --bg3: #1f2937;
-    --bg4: #374151;
-    --border: #1f2937;
-    --border-light: rgba(255, 255, 255, 0.08);
-    --text: #f3f4f6;
-    --text2: #9ca3af;
-    --text3: #6b7280;
-    --accent: #4f46e5;
-    --accent-glow: rgba(79, 70, 229, 0.4);
-    --accent2: #4338ca;
-    
-    /* HTS 주식 컬러 (다크 모드 기준) */
-    --red: #f43f5e;
-    --red2: #be123c;
-    --red-bg: rgba(244, 63, 94, 0.08);
-    --red-border: rgba(244, 63, 94, 0.2);
-    
-    --blue: #3b82f6;
-    --blue2: #1d4ed8;
-    --blue-bg: rgba(59, 130, 246, 0.08);
-    --blue-border: rgba(59, 130, 246, 0.2);
-    
-    --yellow: #f59e0b;
-    --green: #10b981;
-    --hts-up: #f43f5e;
-    --hts-dn: #3b82f6;
-    
+    --bg2: var(--sb-panel);
+    --bg3: var(--sb-surface);
+    --bg4: var(--sb-hover);
+    --border: var(--sb-border);
+    --border-light: var(--sb-border-weak);
+    --text: var(--sb-text-1);
+    --text2: var(--sb-text-2);
+    --text3: var(--sb-text-3);
+    --accent: var(--sb-accent);
+    --accent-glow: var(--sb-accent-soft);
+    --accent2: var(--sb-accent-hover);
+
+    /* HTS 주식 컬러 */
+    --red: var(--sb-up);
+    --red2: var(--sb-up-strong);
+    --red-bg: var(--sb-up-bg);
+    --red-border: var(--sb-up-border);
+
+    --blue: var(--sb-down);
+    --blue2: var(--sb-down-strong);
+    --blue-bg: var(--sb-down-bg);
+    --blue-border: var(--sb-down-border);
+
+    --yellow: var(--sb-warn);
+    --green: var(--sb-success);
+    --hts-up: var(--sb-up);
+    --hts-dn: var(--sb-down);
+
     --radius: 16px;
     --radius-sm: 10px;
     --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
@@ -66,37 +113,64 @@
   }
 
   body.light-mode {
-    /* ── 라이트 테마 ── */
-    --bg: #f8fafc;
+    /* ══ 디자인 토큰 — 라이트 ══ */
+    --sb-bg: #f8fafc;
+    --sb-panel: #ffffff;
+    --sb-surface: #f1f5f9;
+    --sb-hover: #e2e8f0;
+    --sb-border: #e2e8f0;
+    --sb-border-weak: rgba(0, 0, 0, 0.05);
+    --sb-text-1: #0f172a;
+    --sb-text-2: #475569;
+    --sb-text-3: #94a3b8;
+    --sb-accent: #2563eb;
+    --sb-accent-hover: #1d4ed8;
+    --sb-accent-soft: rgba(37, 99, 235, 0.2);
+    --sb-up: #dc2626;
+    --sb-up-strong: #991b1b;
+    --sb-up-bg: rgba(220, 38, 38, 0.06);
+    --sb-up-border: rgba(220, 38, 38, 0.15);
+    --sb-down: #2563eb;
+    --sb-down-strong: #1d4ed8;
+    --sb-down-bg: rgba(37, 99, 235, 0.06);
+    --sb-down-border: rgba(37, 99, 235, 0.15);
+    --sb-flat: #64748b;
+    --sb-warn: #d97706;
+    --sb-success: #16a34a;
+    --sb-overlay: rgba(15, 23, 42, 0.4);
+    --sb-shadow-1: 0 1px 2px rgba(15, 23, 42, 0.06);
+    --sb-shadow-2: 0 8px 24px rgba(15, 23, 42, 0.12);
+
+    /* ── 기존 변수 별칭 (:root 의 var() 는 :root 에서 계산되므로 다시 선언) ── */
+    --bg: var(--sb-bg);
     --bg-gradient: radial-gradient(circle at top right, #f1f5f9, #f8fafc);
-    --bg2: #ffffff;
-    --bg3: #f1f5f9;
-    --bg4: #e2e8f0;
-    --border: #e2e8f0;
-    --border-light: rgba(0, 0, 0, 0.05);
-    --text: #0f172a;
-    --text2: #475569;
-    --text3: #94a3b8;
-    --accent: #2563eb;
-    --accent-glow: rgba(37, 99, 235, 0.2);
-    --accent2: #1d4ed8;
-    
-    /* HTS 주식 컬러 (라이트 모드 기준) */
-    --red: #dc2626;
-    --red2: #991b1b;
-    --red-bg: rgba(220, 38, 38, 0.06);
-    --red-border: rgba(220, 38, 38, 0.15);
-    
-    --blue: #2563eb;
-    --blue2: #1d4ed8;
-    --blue-bg: rgba(37, 99, 235, 0.06);
-    --blue-border: rgba(37, 99, 235, 0.15);
-    
-    --yellow: #d97706;
-    --green: #16a34a;
-    --hts-up: #dc2626;
-    --hts-dn: #2563eb;
-    
+    --bg2: var(--sb-panel);
+    --bg3: var(--sb-surface);
+    --bg4: var(--sb-hover);
+    --border: var(--sb-border);
+    --border-light: var(--sb-border-weak);
+    --text: var(--sb-text-1);
+    --text2: var(--sb-text-2);
+    --text3: var(--sb-text-3);
+    --accent: var(--sb-accent);
+    --accent-glow: var(--sb-accent-soft);
+    --accent2: var(--sb-accent-hover);
+
+    --red: var(--sb-up);
+    --red2: var(--sb-up-strong);
+    --red-bg: var(--sb-up-bg);
+    --red-border: var(--sb-up-border);
+
+    --blue: var(--sb-down);
+    --blue2: var(--sb-down-strong);
+    --blue-bg: var(--sb-down-bg);
+    --blue-border: var(--sb-down-border);
+
+    --yellow: var(--sb-warn);
+    --green: var(--sb-success);
+    --hts-up: var(--sb-up);
+    --hts-dn: var(--sb-down);
+
     --shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.08);
     --shadow-card: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
     --shadow-btn: 0 4px 14px rgba(37, 99, 235, 0.18);
@@ -107,6 +181,83 @@
     --glass-border: rgba(0, 0, 0, 0.07);
     --glass-shadow: 0 8px 32px rgba(15, 23, 42, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.90);
   }
+
+  /* 밀도 훅 — UI 토글은 7단계 */
+  body[data-density="compact"] { --sb-density: 0.8; }
+  body[data-density="normal"] { --sb-density: 1; }
+  body[data-density="comfortable"] { --sb-density: 1.2; }
+
+  /* ══ 공통 컴포넌트 (--sb-* 토큰만 사용) ══ */
+  .sb-num { font-family: var(--sb-font-num); font-variant-numeric: tabular-nums; }
+  .sb-up { color: var(--sb-up); }
+  .sb-down { color: var(--sb-down); }
+  .sb-flat { color: var(--sb-flat); }
+
+  .sb-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: var(--sb-space-1);
+    height: var(--sb-control-h); padding: 0 var(--sb-space-4);
+    background: var(--sb-surface); color: var(--sb-text-1);
+    border: 1px solid var(--sb-border); border-radius: var(--sb-radius-2);
+    font-family: var(--sb-font-ko); font-size: 13px; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .sb-btn:hover { background: var(--sb-hover); }
+  .sb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .sb-btn--primary { background: var(--sb-accent); border-color: var(--sb-accent); color: var(--sb-on-accent); }
+  .sb-btn--primary:hover { background: var(--sb-accent-hover); border-color: var(--sb-accent-hover); }
+  .sb-btn--ghost { background: transparent; border-color: transparent; color: var(--sb-text-2); }
+  .sb-btn--ghost:hover { background: var(--sb-hover); color: var(--sb-text-1); }
+  .sb-btn--danger { background: var(--sb-up-bg); border-color: var(--sb-up-border); color: var(--sb-up); }
+  .sb-btn--danger:hover { background: var(--sb-up-border); }
+  .sb-btn--sm { height: var(--sb-control-h-sm); padding: 0 var(--sb-space-3); font-size: 12px; }
+
+  .sb-field { display: flex; flex-direction: column; gap: var(--sb-space-1); font-size: 12px; color: var(--sb-text-2); }
+  .sb-input, .sb-select {
+    width: 100%; height: var(--sb-control-h); padding: 0 var(--sb-space-3);
+    background: var(--sb-bg); color: var(--sb-text-1);
+    border: 1px solid var(--sb-border); border-radius: var(--sb-radius-2);
+    font-family: var(--sb-font-ko); font-size: 13px; outline: none;
+    transition: border-color 0.15s ease;
+  }
+  .sb-input:focus, .sb-select:focus { border-color: var(--sb-accent); }
+  .sb-input::placeholder { color: var(--sb-text-3); }
+
+  .sb-modal {
+    display: flex; flex-direction: column;
+    width: 480px; max-width: calc(100vw - var(--sb-space-5)); max-height: calc(100vh - var(--sb-space-5));
+    background: var(--sb-panel); color: var(--sb-text-1);
+    border: 1px solid var(--sb-border); border-radius: var(--sb-radius-3);
+    box-shadow: var(--sb-shadow-2);
+    font-family: var(--sb-font-ko);
+  }
+  .sb-modal--s { width: 360px; }
+  .sb-modal--m { width: 480px; }
+  .sb-modal--l { width: 720px; }
+  .sb-modal__head {
+    position: relative; display: flex; align-items: center;
+    padding: var(--sb-space-3) var(--sb-space-6) var(--sb-space-3) var(--sb-space-4);
+    border-bottom: 1px solid var(--sb-border); font-size: 15px; font-weight: 700;
+  }
+  /* 닫기 버튼: 우상단 */
+  .sb-modal__head .sb-modal__close { position: absolute; top: var(--sb-space-2); right: var(--sb-space-2); }
+  .sb-modal__body { padding: var(--sb-space-4); overflow-y: auto; display: flex; flex-direction: column; gap: var(--sb-space-3); }
+  /* 푸터: 취소 좌측, 확인 우측 (버튼이 둘 이상이면 첫 버튼을 좌측으로) */
+  .sb-modal__foot {
+    display: flex; align-items: center; justify-content: flex-end; gap: var(--sb-space-2);
+    padding: var(--sb-space-3) var(--sb-space-4); border-top: 1px solid var(--sb-border);
+  }
+  .sb-modal__foot .sb-btn:first-child:not(:only-child) { margin-right: auto; }
+
+  .sb-stat {
+    display: flex; flex-direction: column; gap: var(--sb-space-1);
+    padding: var(--sb-space-3) var(--sb-space-4);
+    background: var(--sb-panel); border: 1px solid var(--sb-border); border-radius: var(--sb-radius-3);
+  }
+  .sb-stat__label { font-size: 12px; color: var(--sb-text-2); }
+  .sb-stat__value { font-family: var(--sb-font-num); font-variant-numeric: tabular-nums; font-size: 20px; font-weight: 700; color: var(--sb-text-1); }
+  .sb-stat__sub { font-family: var(--sb-font-num); font-variant-numeric: tabular-nums; font-size: 12px; color: var(--sb-text-3); }
 
   * {
     box-sizing: border-box;
