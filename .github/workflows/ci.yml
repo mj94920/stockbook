@@ -38,8 +38,10 @@ jobs:
           cache: npm
 
       # Claude 작업 브랜치는 검사 스크립트를 main 기준으로 고정 (검사를 느슨하게 고쳐 통과하는 것 방지)
-      - name: 검사 스크립트 고정 (claude/* 브랜치)
-        if: startsWith(inputs.ref, 'claude/') || startsWith(github.head_ref, 'claude/')
+      - name: 검사 스크립트 고정 (claude/* · codex/* 브랜치)
+        if: >-
+          startsWith(inputs.ref, 'claude/') || startsWith(github.head_ref, 'claude/') ||
+          startsWith(inputs.ref, 'codex/') || startsWith(github.head_ref, 'codex/')
         run: |
           git fetch --depth 1 origin main
           git checkout FETCH_HEAD -- scripts/

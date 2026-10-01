@@ -30,6 +30,7 @@
 
 사람이 main 에 직접 푸시해도 `release.yml` 이 동일하게 검사 → 배포한다.
 사람이 연 PR 에 `automerge` 라벨을 붙이면 CI 통과 즉시 머지·배포된다.
+**다른 에이전트(Codex/ChatGPT)** 는 `AGENTS.md` 를 읽고 `codex/*` 브랜치 → PR 로 참여한다 (머지는 사람이 `automerge` 라벨로 승인).
 
 ---
 

@@ -15,7 +15,7 @@
 각 CI 실행의 Artifacts 에 다크/라이트 화면 스크린샷이 남는다.
 
 진행 상황은 이슈 댓글과 **Actions** 탭에서 볼 수 있다. 추가 지시는 이슈/PR 댓글에 `@claude …`.
-자세한 규칙은 [CLAUDE.md](CLAUDE.md).
+자세한 규칙은 [CLAUDE.md](CLAUDE.md). ChatGPT Codex 는 [AGENTS.md](AGENTS.md) 규칙으로 `codex/*` 브랜치 PR 을 올리고, 검토 후 `automerge` 라벨을 붙이면 머지·배포된다.
 
 ## 최초 1회 설정
 
