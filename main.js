@@ -1201,6 +1201,68 @@ ipcMain.handle('fetch-naver-finance', async (_event, code) => {
   }
 });
 
+// ── IPC: 정보센터 뉴스 (네이버 모바일 증권) ─────────────────────────────────
+// kind: 'market' | 'stock'(code 필요) → { ok, items:[{id,title,summary,source,time,code,url}] }
+function _naverNewsFlatten(json) {
+  const out = [];
+  const walk = v => {
+    if (!v) return;
+    if (Array.isArray(v)) { v.forEach(walk); return; }
+    if (typeof v !== 'object') return;
+    if (Array.isArray(v.items)) { v.items.forEach(walk); return; }
+    if (v.title && (v.articleId || v.aid || v.id)) out.push(v);
+  };
+  walk(json);
+  return out;
+}
+function _naverNewsTime(dt) {
+  // 'YYYYMMDDHHmm[ss]' → ISO 유사 문자열 (KST)
+  const s = String(dt || '');
+  if (/^\d{12,14}$/.test(s)) return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}T${s.slice(8,10)}:${s.slice(10,12)}:00+09:00`;
+  return s;
+}
+function _stripHtml(s) {
+  return String(s || '').replace(/<[^>]*>/g, '').replace(/&quot;/g, '"').replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#0?39;/g, "'").replace(/&nbsp;/g, ' ').trim();
+}
+ipcMain.handle('fetch-news', async (_event, opts) => {
+  const kind = opts && opts.kind === 'stock' ? 'stock' : 'market';
+  const code = String((opts && opts.code) || '').trim();
+  if (kind === 'stock' && !/^\d{6}$/.test(code)) return { ok: false, error: '국내 종목(6자리 코드)만 지원합니다', items: [] };
+  const urls = kind === 'stock'
+    ? [`https://m.stock.naver.com/api/news/stock/${code}?pageSize=20&page=1`]
+    : [
+        'https://m.stock.naver.com/api/news/mainnews?pageSize=30&page=1',
+        'https://m.stock.naver.com/api/news/category/mainnews?pageSize=30&page=1',
+        'https://m.stock.naver.com/api/news/list?category=mainnews&pageSize=30&page=1',
+      ];
+  let lastErr = '';
+  for (const url of urls) {
+    try {
+      const raw = _naverNewsFlatten(JSON.parse(await httpsGet(url, 10000, NAVER_HEADERS)));
+      if (!raw.length) continue;
+      const items = raw.map(n => {
+        const oid = n.officeId || n.oid || '';
+        const aid = n.articleId || n.aid || n.id || '';
+        return {
+          id:      `${oid}-${aid}`,
+          title:   _stripHtml(n.title),
+          summary: _stripHtml(n.body || n.summary || n.content || ''),
+          source:  n.officeName || n.press || '',
+          time:    _naverNewsTime(n.datetime || n.dt || n.publishedAt),
+          code:    kind === 'stock' ? code : '',
+          url:     oid && aid ? `https://n.news.naver.com/mnews/article/${oid}/${aid}` : '',
+        };
+      }).filter(n => n.title);
+      if (items.length) return { ok: true, items };
+    } catch (e) {
+      lastErr = e.message;
+      console.error('[StockBook] fetch-news 오류:', e.message);
+    }
+  }
+  return { ok: false, error: lastErr || '뉴스 데이터를 찾지 못했습니다', items: [] };
+});
+
 // ── IPC: API 키 암호화 저장 (safeStorage) ───────────────────────────────────
 function getCredFile(broker) {
   return path.join(app.getPath('userData'), `${broker}-cred.enc`);

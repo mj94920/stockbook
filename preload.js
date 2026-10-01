@@ -23,6 +23,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   fetchStockDetail: (code) => ipcRenderer.invoke('fetch-stock-detail', code),
   // 시장 지수 티커 일괄 조회 (KOSPI·KOSDAQ·나스닥·S&P·DOW·SOX·환율·WTI 등)
   fetchMarketTickers: () => ipcRenderer.invoke('fetch-market-tickers'),
+  // 정보센터 뉴스 — { kind:'market'|'stock', code } → { ok, items, error }
+  fetchNews: (opts) => ipcRenderer.invoke('fetch-news', opts),
   // KIS 실시간 호가 (매도5+매수5 잔량)
   fetchHoga: (code) => ipcRenderer.invoke('fetch-hoga', code),
   // KIS 계좌 잔고 조회 (예수금 + 보유종목) — acctNum 생략 시 첫 번째 저장 계좌 사용

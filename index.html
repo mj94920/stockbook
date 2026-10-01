@@ -2366,6 +2366,39 @@
     margin-top: 2px;
   }
 
+  /* ── 정보센터 (뉴스·시황) ── */
+  .ic-wrap { display:flex; flex-direction:column; height:460px; min-height:320px; padding:var(--sb-space-3) var(--sb-space-4) 0; gap:var(--sb-space-2); }
+  .ic-head { display:flex; align-items:center; gap:var(--sb-space-2); }
+  .ic-tabs { display:flex; gap:2px; border-bottom:1px solid var(--sb-border); flex:1; }
+  .ic-tab { background:none; border:none; border-bottom:2px solid transparent; color:var(--sb-text-2); font-size:13px; font-weight:600; padding:6px 12px; cursor:pointer; margin-bottom:-1px; }
+  .ic-tab:hover { color:var(--sb-text-1); }
+  .ic-tab.active { color:var(--sb-accent); border-bottom-color:var(--sb-accent); }
+  .ic-updated { font-size:11px; color:var(--sb-text-3); white-space:nowrap; }
+  .ic-chips { display:flex; flex-wrap:wrap; gap:var(--sb-space-1); }
+  .ic-chip { background:var(--sb-surface); border:1px solid var(--sb-border-weak); color:var(--sb-text-2); border-radius:var(--sb-radius-3); font-size:11px; padding:2px 8px; cursor:pointer; }
+  .ic-chip:hover { background:var(--sb-hover); }
+  .ic-chip.active { background:var(--sb-accent); border-color:var(--sb-accent); color:var(--sb-on-accent); }
+  .ic-body { flex:1; min-height:0; display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); border:1px solid var(--sb-border); border-radius:var(--sb-radius-2); overflow:hidden; background:var(--sb-panel); }
+  .ic-list { overflow-y:auto; border-right:1px solid var(--sb-border); }
+  .ic-row { display:grid; grid-template-columns:44px 64px minmax(0,1fr); gap:var(--sb-space-2); align-items:baseline; padding:5px var(--sb-space-2); border-bottom:1px solid var(--sb-border-weak); font-size:12px; cursor:pointer; }
+  .ic-row:hover { background:var(--sb-hover); }
+  .ic-row.sel { background:var(--sb-accent-soft); }
+  .ic-row .ic-time { color:var(--sb-text-3); font-family:var(--sb-font-num); font-variant-numeric:tabular-nums; }
+  .ic-row .ic-src { color:var(--sb-text-2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ic-row .ic-title { color:var(--sb-text-1); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ic-row .ic-stk { color:var(--sb-accent); font-size:11px; margin-right:6px; }
+  .ic-detail { overflow-y:auto; padding:var(--sb-space-3) var(--sb-space-4); font-size:13px; color:var(--sb-text-1); }
+  .ic-detail h3 { font-size:15px; line-height:1.4; margin-bottom:var(--sb-space-2); }
+  .ic-meta { font-size:11px; color:var(--sb-text-3); margin-bottom:var(--sb-space-3); }
+  .ic-sum { color:var(--sb-text-2); line-height:1.6; margin-bottom:var(--sb-space-3); white-space:pre-wrap; }
+  .ic-actions { display:flex; gap:var(--sb-space-2); flex-wrap:wrap; margin-top:var(--sb-space-3); }
+  .ic-state { padding:var(--sb-space-5) var(--sb-space-4); text-align:center; color:var(--sb-text-3); font-size:12px; line-height:1.7; white-space:pre-line; }
+  .ic-state.err { color:var(--sb-warn); }
+  .ic-kv { display:grid; grid-template-columns:60px 1fr; gap:var(--sb-space-1) var(--sb-space-2); font-size:12px; margin-bottom:var(--sb-space-2); }
+  .ic-kv dt { color:var(--sb-text-3); }
+  .ic-shortcuts { margin:var(--sb-space-3) var(--sb-space-4) var(--sb-space-3); border:1px solid var(--sb-border); border-radius:var(--sb-radius-2); }
+  .ic-shortcuts > summary { cursor:pointer; padding:var(--sb-space-2) var(--sb-space-3); font-size:12px; font-weight:600; color:var(--sb-text-2); }
+
   /* ── RETURN RATE ── */
   .return-pos {
     color: var(--green);
@@ -3662,6 +3695,28 @@
       </div>
       <div class="mdi-body" id="mdi-body-news">
 
+      <!-- 정보센터: 탭 · 2열(목록/상세) -->
+      <div class="ic-wrap">
+        <div class="ic-head">
+          <div class="ic-tabs" role="tablist">
+            <button type="button" class="ic-tab active" data-ic-tab="market" onclick="icSetTab('market')">시장뉴스</button>
+            <button type="button" class="ic-tab" data-ic-tab="stock" onclick="icSetTab('stock')">종목뉴스</button>
+            <button type="button" class="ic-tab" data-ic-tab="disclosure" onclick="icSetTab('disclosure')">공시</button>
+            <button type="button" class="ic-tab" data-ic-tab="econ" onclick="icSetTab('econ')">경제지표</button>
+          </div>
+          <span class="ic-updated" id="icUpdated"></span>
+          <button type="button" class="sb-btn sb-btn--sm" id="icRefreshBtn" onclick="icRefresh()">↻ 새로고침</button>
+        </div>
+        <div class="ic-chips" id="icChips" style="display:none;"></div>
+        <div class="ic-body">
+          <div class="ic-list" id="icList"></div>
+          <div class="ic-detail" id="icDetail"></div>
+        </div>
+      </div>
+
+      <details class="ic-shortcuts" id="icShortcuts">
+      <summary>바로가기 (외부 사이트)</summary>
+
       <!-- ① 검색창 (드롭다운: position:fixed 로 overflow:auto 극복) -->
       <div style="padding:12px 14px 0;">
         <div style="display:flex;align-items:center;gap:8px;">
@@ -3733,6 +3788,7 @@
           </div>
         </div>
       </div>
+      </details>
     </div>
       <div class="mdi-rz mdi-rz-n"  title="위 크기조절"></div>
       <div class="mdi-rz mdi-rz-s"  title="아래 크기조절"></div>
@@ -9314,6 +9370,7 @@ function _newsQuerySelect(i) {
   _newsQCode = s.code || '';
   if (dd) dd.style.display = 'none';
   _newsQItems = []; _newsQActive = -1;
+  try { icOnStockPicked(); } catch (_) {}
 }
 
 function _newsQueryKeydown(e) {
@@ -9350,6 +9407,194 @@ document.addEventListener('click', e => {
     dd.style.display = 'none'; _newsQActive = -1;
   }
 });
+
+// ── 정보센터 (시장뉴스 / 종목뉴스 / 공시 / 경제지표) ───────────────────────
+const _ic = { tab:'market', scope:'port', items:[], sel:-1, updated:null, loading:false, err:'', seq:0 };
+const _icEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const _icIsKr = t => /^\d{6}$/.test(String(t || '').trim());
+const _icHasApi = () => !!(window.electronAPI && window.electronAPI.fetchNews);
+
+function _icStockName(code) {
+  const hit = (state.portfolio || []).find(s => s.ticker === code) || (state.watchlist || []).find(s => s.ticker === code);
+  if (hit && hit.name) return _cleanName(hit.name);
+  const all = Object.values(_allStockRaw || {}).flat().find(s => s.code === code);
+  return all ? _cleanName(all.name) : code;
+}
+function _icTimeFmt(t, full) {
+  const d = new Date(t);
+  if (isNaN(d)) return full ? '' : '';
+  const p = n => String(n).padStart(2, '0');
+  const hm = `${p(d.getHours())}:${p(d.getMinutes())}`;
+  const md = `${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  if (full) return `${d.getFullYear()}-${md} ${hm}`;
+  return d.toDateString() === new Date().toDateString() ? hm : md;
+}
+function _icScopeCodes() {
+  if (_ic.scope === 'sel') {
+    const q = getNewsQuery();
+    const code = _newsQCode || (_icIsKr(q) ? q : '');
+    return _icIsKr(code) ? [code] : [];
+  }
+  const src = _ic.scope === 'watch' ? (state.watchlist || []) : (state.portfolio || []);
+  return [...new Set(src.map(s => String(s.ticker || '').trim()).filter(_icIsKr))].slice(0, 6);
+}
+
+function icSetTab(tab) {
+  _ic.tab = tab; _ic.sel = -1; _ic.items = []; _ic.err = '';
+  document.querySelectorAll('#mdi-panel-news .ic-tab').forEach(b => b.classList.toggle('active', b.dataset.icTab === tab));
+  icRefresh();
+}
+function icSetScope(scope) { _ic.scope = scope; _ic.sel = -1; icRefresh(); }
+function icOnStockPicked() { if (_ic.tab === 'stock' && _ic.scope === 'sel') icSetScope('sel'); }
+
+function _icRenderChips() {
+  const el = document.getElementById('icChips');
+  if (!el) return;
+  if (_ic.tab !== 'stock' && _ic.tab !== 'disclosure') { el.style.display = 'none'; return; }
+  const chips = [['port', '보유종목'], ['watch', '관심종목'], ['sel', '선택 종목']];
+  el.style.display = 'flex';
+  el.innerHTML = chips.map(([k, l]) =>
+    `<button type="button" class="ic-chip${_ic.scope === k ? ' active' : ''}" onclick="icSetScope('${k}')">${l}</button>`).join('');
+}
+
+function _icRenderList() {
+  const list = document.getElementById('icList');
+  if (!list) return;
+  if (_ic.loading) { list.innerHTML = '<div class="ic-state">불러오는 중…</div>'; return; }
+  if (_ic.err) { list.innerHTML = `<div class="ic-state err">${_icEsc(_ic.err)}</div>`; return; }
+  if (!_ic.items.length) { list.innerHTML = `<div class="ic-state">${_icEsc(_ic.empty || '표시할 항목이 없습니다')}</div>`; return; }
+  list.innerHTML = _ic.items.map((n, i) => {
+    const stk = n.code ? `<span class="ic-stk">${_icEsc(_icStockName(n.code))}</span>` : '';
+    const left = _ic.tab === 'econ' ? _icEsc((n.date || '').slice(5)) : _icEsc(_icTimeFmt(n.time));
+    const src = _ic.tab === 'econ' ? _icEsc(n.country) : _icEsc(n.source);
+    return `<div class="ic-row${i === _ic.sel ? ' sel' : ''}" onclick="icSelect(${i})">
+      <span class="ic-time">${left}</span><span class="ic-src">${src}</span>
+      <span class="ic-title">${stk}${_icEsc(n.title)}</span></div>`;
+  }).join('');
+}
+
+function _icLinkBtn(url, label) {
+  if (!/^https:\/\//.test(url || '')) return '';
+  return `<button type="button" class="sb-btn sb-btn--primary" onclick="openUrl(decodeURIComponent('${encodeURIComponent(url)}'))">${label}</button>`;
+}
+
+function _icRenderDetail() {
+  const el = document.getElementById('icDetail');
+  if (!el) return;
+  const n = _ic.items[_ic.sel];
+  if (!n) {
+    let msg = '목록에서 항목을 선택하세요';
+    if (_ic.tab === 'disclosure') msg = '';
+    el.innerHTML = msg ? `<div class="ic-state">${msg}</div>` : '';
+    return;
+  }
+  if (_ic.tab === 'econ') {
+    const dd = Math.round((new Date(n.date + 'T00:00:00') - new Date(new Date().toDateString())) / 86400000);
+    const ddTxt = dd === 0 ? 'D-Day' : dd > 0 ? `D-${dd}` : `D+${-dd}`;
+    el.innerHTML = `<h3>${_icEsc(n.title)}</h3>
+      <div class="ic-meta">${_icEsc(n.date)} · ${_icEsc(ddTxt)}</div>
+      <dl class="ic-kv"><dt>국가</dt><dd>${_icEsc(n.country)}</dd><dt>중요도</dt><dd>${n.impact === 'high' ? '높음' : '보통'}</dd>
+      <dt>실제</dt><dd>${_icEsc(n.actual || '-')}</dd><dt>예상</dt><dd>${_icEsc(n.forecast || '-')}</dd><dt>이전</dt><dd>${_icEsc(n.prev || '-')}</dd></dl>
+      <div class="ic-actions">${_icLinkBtn('https://www.investing.com/economic-calendar/', 'Investing.com ↗')}</div>`;
+    return;
+  }
+  const codes = n.related && n.related.length ? n.related : (n.code ? [n.code] : []);
+  const chips = codes.map(c => `<button type="button" class="ic-chip" onclick="openStockDrawer('${_icEsc(c)}', decodeURIComponent('${encodeURIComponent(_icStockName(c))}'))">${_icEsc(_icStockName(c))}</button>`).join('');
+  el.innerHTML = `<h3>${_icEsc(n.title)}</h3>
+    <div class="ic-meta">${_icEsc(n.source)}${n.source && n.time ? ' · ' : ''}${_icEsc(_icTimeFmt(n.time, true))}</div>
+    ${n.summary ? `<div class="ic-sum">${_icEsc(n.summary)}</div>` : ''}
+    ${chips ? `<div class="ic-chips" style="margin-bottom:var(--sb-space-2)">${chips}</div>` : ''}
+    <div class="ic-actions">${_icLinkBtn(n.url, '원문 보기 ↗')}${codes.length ? `<button type="button" class="sb-btn" onclick="openStockDrawer('${_icEsc(codes[0])}', decodeURIComponent('${encodeURIComponent(_icStockName(codes[0]))}'))">기업분석 열기</button>` : ''}</div>`;
+}
+
+function icSelect(i) {
+  _ic.sel = i;
+  _icRenderList();
+  _icRenderDetail();
+}
+
+function _icRenderDisclosure() {
+  const codes = _icScopeCodes();
+  const kind = codes.length ? `<button type="button" class="sb-btn sb-btn--sm" onclick="openDartByCode('${_icEsc(codes[0])}')">KRX KIND 공시 (${_icEsc(_icStockName(codes[0]))}) ↗</button>` : '';
+  document.getElementById('icList').innerHTML = '<div class="ic-state">공시 데이터 소스 준비 중입니다.<br>아래 링크에서 공시를 확인할 수 있습니다.</div>';
+  document.getElementById('icDetail').innerHTML = `<div class="ic-actions" style="margin-top:0">
+      <button type="button" class="sb-btn sb-btn--sm" onclick="openUrl('https://kind.krx.co.kr/disclosure/todaydisclosure.do?method=searchTodayDisclosureMain')">KRX KIND 오늘의 공시 ↗</button>
+      <button type="button" class="sb-btn sb-btn--sm" onclick="openUrl('https://dart.fss.or.kr/dsac001/mainY.do')">DART 오늘의 공시 ↗</button>${kind}</div>`;
+}
+
+function _icLoadEcon() {
+  const src = typeof window._infoEconEvents === 'function' ? window._infoEconEvents() : [];
+  const today = new Date().toISOString().slice(0, 10);
+  const up = src.filter(e => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+  const past = src.filter(e => e.date < today).sort((a, b) => b.date.localeCompare(a.date));
+  _ic.items = [...up, ...past].map(e => ({ ...e, title: e.name }));
+  _ic.empty = '경제지표 데이터가 없습니다';
+}
+
+function _icMarkRelated(items) {
+  const names = (state.portfolio || []).filter(s => _icIsKr(s.ticker) && s.name)
+    .map(s => ({ code: s.ticker.trim(), name: _cleanName(s.name) })).filter(s => s.name.length >= 2);
+  items.forEach(n => { n.related = names.filter(s => n.title.includes(s.name)).map(s => s.code).slice(0, 4); });
+}
+
+async function icRefresh() {
+  _icRenderChips();
+  const seq = ++_ic.seq;
+  const btn = document.getElementById('icRefreshBtn');
+  _ic.err = ''; _ic.empty = '';
+  if (_ic.tab === 'disclosure') { _ic.items = []; _ic.loading = false; _icRenderDisclosure(); return; }
+  if (_ic.tab === 'econ') {
+    _ic.loading = false; _icLoadEcon(); _ic.updated = new Date();
+    _icRenderList(); _icRenderDetail(); _icUpdatedLabel(); return;
+  }
+  if (!_icHasApi()) {
+    _ic.items = []; _ic.loading = false;
+    _ic.empty = '뉴스는 데스크톱 앱(Electron)에서만 불러올 수 있습니다.\n아래 [바로가기]에서 외부 사이트를 이용하세요.';
+    _icRenderList(); _icRenderDetail(); _icUpdatedLabel(); return;
+  }
+  _ic.loading = true; _ic.items = []; _ic.sel = -1;
+  if (btn) btn.disabled = true;
+  _icRenderList(); _icRenderDetail();
+  try {
+    let items = [];
+    if (_ic.tab === 'market') {
+      const r = await window.electronAPI.fetchNews({ kind: 'market' });
+      if (!r || !r.ok) throw new Error((r && r.error) || '시장뉴스를 불러오지 못했습니다');
+      items = r.items;
+    } else {
+      const codes = _icScopeCodes();
+      if (!codes.length) {
+        _ic.empty = _ic.scope === 'sel' ? '검색창에서 종목을 선택하세요 (국내 종목만 지원)' : '해당 목록에 국내 종목이 없습니다';
+      } else {
+        const rs = await Promise.all(codes.map(c => window.electronAPI.fetchNews({ kind: 'stock', code: c }).catch(() => null)));
+        rs.forEach(r => { if (r && r.ok) items.push(...r.items); });
+        if (!items.length) throw new Error('종목뉴스를 불러오지 못했습니다');
+      }
+    }
+    const seen = new Set();
+    items = items.filter(n => !seen.has(n.id) && seen.add(n.id)).sort((a, b) => String(b.time).localeCompare(String(a.time)));
+    _icMarkRelated(items);
+    if (seq !== _ic.seq) return;
+    _ic.items = items; _ic.updated = new Date();
+  } catch (e) {
+    if (seq !== _ic.seq) return;
+    _ic.err = e.message || '불러오기 오류';
+  }
+  _ic.loading = false;
+  if (btn) btn.disabled = false;
+  _icRenderList(); _icRenderDetail(); _icUpdatedLabel();
+}
+
+function _icUpdatedLabel() {
+  const el = document.getElementById('icUpdated');
+  if (el) el.textContent = _ic.updated ? `마지막 갱신 ${_icTimeFmt(_ic.updated, true).slice(11)}` : '';
+}
+
+// MDI 패널 열릴 때: 아직 데이터 없으면 현재 탭 로드
+function icOnOpen() {
+  if (_ic.updated || _ic.loading) { _icRenderList(); _icRenderDetail(); return; }
+  icRefresh();
+}
 
 function openDart(q) {
   const query = q || getNewsQuery();
@@ -12285,7 +12530,7 @@ function _toggleCheck(stockKey, checkKey, val) {
         if (pid==='portfolio') renderPortfolio && renderPortfolio();
         if (pid==='trading')   renderTrades    && renderTrades();
         if (pid==='journal')   { renderJournals && renderJournals(); updateJournalDatalist && updateJournalDatalist(); }
-        if (pid==='news')      renderNewsPortfolioLinks && renderNewsPortfolioLinks();
+        if (pid==='news')      { renderNewsPortfolioLinks && renderNewsPortfolioLinks(); icOnOpen && icOnOpen(); }
         if (pid==='allstock')  { renderAllStockTab && renderAllStockTab(); _startAllStockAutoRefresh && _startAllStockAutoRefresh(); }
         if (pid==='theme')     renderThemeTab  && renderThemeTab();
         if (pid==='watchlist') renderWatchlist && renderWatchlist();
@@ -13040,6 +13285,9 @@ function wlAssignGroup(idx, gName) {
     else if (next.diff === 1) el.textContent = `D-1 · ${next.name}`;
     else                       el.textContent = `D-${next.diff} · ${next.name}`;
   };
+
+  /* 정보센터 경제지표 탭에서 재사용 */
+  window._infoEconEvents = function () { return ECON.map(e => ({ ...e })); };
 
   /* ── 초기화 (DOMContentLoaded 또는 즉시) ─────────────── */
   function _calInit() {
