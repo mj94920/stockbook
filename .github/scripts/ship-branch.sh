@@ -38,6 +38,13 @@ gh pr edit "$pr" --repo "$REPO" --add-label automerge
 gh pr merge "$pr" --repo "$REPO" --squash --delete-branch
 echo "PR #$pr 머지 완료"
 
+# 이슈 정리 — GITHUB_TOKEN 머지는 'Closes #N' 자동 종료가 보장되지 않으므로 직접 닫는다 (큐가 다음 항목으로 넘어가는 조건)
+if [ -n "$ISSUE" ] && [ "$(gh issue view "$ISSUE" --repo "$REPO" --json state --jq .state 2>/dev/null)" = "OPEN" ] \
+   && [ "$(gh pr view "$ISSUE" --repo "$REPO" --json number --jq .number 2>/dev/null)" = "" ]; then
+  gh issue edit "$ISSUE" --repo "$REPO" --remove-label in-progress || true
+  gh issue close "$ISSUE" --repo "$REPO" --reason completed --comment "✅ PR #$pr 로 완료되어 main 에 반영했습니다." || true
+fi
+
 # GITHUB_TOKEN 머지는 push 이벤트를 발생시키지 않으므로 릴리스를 직접 호출
 gh workflow run release.yml --repo "$REPO" --ref main
 echo "릴리스 워크플로 트리거 완료"
