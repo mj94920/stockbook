@@ -96,6 +96,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}   # Claude GitHub App 없이도 동작 (PR 생성·머지는 워크플로가 직접 처리)
+          allowed_bots: github-actions                 # 큐/머지 단계가 github-actions 로 실행을 시작하므로 허용
           prompt: |
             저장소 루트의 `.claude-task.md` 에 이번에 처리할 GitHub 이슈 내용이 있다. 그 작업을 끝까지 수행하라.
 
@@ -220,6 +221,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}   # Claude GitHub App 없이도 동작 (PR 생성·머지는 워크플로가 직접 처리)
+          allowed_bots: github-actions
           prompt: |
             브랜치 `${{ needs.claude.outputs.branch }}` 의 변경이 CI 검사(`npm test` = 정적 검사 + 스모크 테스트)를 통과하지 못했다.
             아래 로그(test-tail.log)를 분석해 원인을 고치고, `npm test` 가 통과하는 것을 확인한 뒤
