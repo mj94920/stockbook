@@ -117,3 +117,45 @@
 - 2단계에서 만든 디자인 토큰만 사용한다. 새 하드코딩 색상 금지.
 - `npm test` 통과 필수. CI 가 남기는 스크린샷(smoke-shots 아티팩트, 다크/라이트)으로 결과를 확인할 수 있다.
 - 커밋 메시지: 단계 = `feat(ui): …` / 수정 = `fix(ui): …`.
+
+## 8. 디자인 토큰 표
+
+`index.html` 의 `:root`(다크) / `body.light-mode`(라이트)에 정의. 기존 변수(`--bg`, `--text`, `--red` 등)는 아래 토큰의 별칭이며 신규 코드는 `--sb-*` 만 사용한다.
+
+| 토큰 | 다크 | 라이트 | 용도 |
+|------|------|--------|------|
+| `--sb-bg` | `#0b0f19` | `#f8fafc` | 앱 배경 (기존 `--bg`) |
+| `--sb-panel` | `#111827` | `#ffffff` | 패널·카드 (`--bg2`) |
+| `--sb-surface` | `#1f2937` | `#f1f5f9` | 입력·버튼 서피스 (`--bg3`) |
+| `--sb-hover` | `#374151` | `#e2e8f0` | 호버 (`--bg4`) |
+| `--sb-border` | `#1f2937` | `#e2e8f0` | 기본 경계 |
+| `--sb-border-weak` | `rgba(255,255,255,.08)` | `rgba(0,0,0,.05)` | 약한 경계 |
+| `--sb-text-1` | `#f3f4f6` | `#0f172a` | 본문 텍스트 |
+| `--sb-text-2` | `#9ca3af` | `#475569` | 보조 텍스트 |
+| `--sb-text-3` | `#6b7280` | `#94a3b8` | 비활성·힌트 |
+| `--sb-accent` | `#4f46e5` | `#2563eb` | 강조 |
+| `--sb-accent-hover` | `#4338ca` | `#1d4ed8` | 강조 호버 |
+| `--sb-accent-soft` | `rgba(79,70,229,.4)` | `rgba(37,99,235,.2)` | 강조 글로우 |
+| `--sb-on-accent` | `#ffffff` | `#ffffff` | 강조색 위 글자 |
+| `--sb-up` | `#f43f5e` | `#dc2626` | 상승(빨강) |
+| `--sb-up-strong` | `#be123c` | `#991b1b` | 상승 진한색 |
+| `--sb-up-bg` | `rgba(244,63,94,.08)` | `rgba(220,38,38,.06)` | 상승 배경 |
+| `--sb-up-border` | `rgba(244,63,94,.2)` | `rgba(220,38,38,.15)` | 상승 경계 |
+| `--sb-down` | `#3b82f6` | `#2563eb` | 하락(파랑) |
+| `--sb-down-strong` | `#1d4ed8` | `#1d4ed8` | 하락 진한색 |
+| `--sb-down-bg` | `rgba(59,130,246,.08)` | `rgba(37,99,235,.06)` | 하락 배경 |
+| `--sb-down-border` | `rgba(59,130,246,.2)` | `rgba(37,99,235,.15)` | 하락 경계 |
+| `--sb-flat` | `#9ca3af` | `#64748b` | 보합 |
+| `--sb-warn` | `#f59e0b` | `#d97706` | 경고 |
+| `--sb-success` | `#10b981` | `#16a34a` | 성공 |
+| `--sb-overlay` | `rgba(0,0,0,.6)` | `rgba(15,23,42,.4)` | 모달 뒤 오버레이 |
+| `--sb-space-1…6` | 4 / 8 / 12 / 16 / 24 / 32px | 동일 | 간격 (× `--sb-density`) |
+| `--sb-control-h` / `-sm` | 34 / 28px | 동일 | 버튼·입력 높이 (× 밀도) |
+| `--sb-density` | 1 | 1 | `body[data-density]` compact 0.8 / normal 1 / comfortable 1.2 |
+| `--sb-radius-1…3` | 4 / 6 / 8px | 동일 | 라운드 |
+| `--sb-font-ko` | Pretendard, NanumSquare, Apple SD Gothic Neo, Malgun Gothic | 동일 | 한글 글꼴 |
+| `--sb-font-num` | Inter, Pretendard, … | 동일 | 숫자 글꼴 (`.sb-num` 에 tabular-nums) |
+| `--sb-shadow-1` | `0 1px 2px rgba(0,0,0,.3)` | `0 1px 2px rgba(15,23,42,.06)` | 약한 그림자 |
+| `--sb-shadow-2` | `0 8px 24px rgba(0,0,0,.45)` | `0 8px 24px rgba(15,23,42,.12)` | 모달 그림자 |
+
+공통 컴포넌트 클래스: `.sb-btn`(`--primary/--ghost/--danger/--sm`), `.sb-input`, `.sb-select`, `.sb-field`, `.sb-modal`(`--s/--m/--l`, `__head/__body/__foot`, `__close`), `.sb-stat`(`__label/__value/__sub`), `.sb-up/.sb-down/.sb-flat`, `.sb-num`.
