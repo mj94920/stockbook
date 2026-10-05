@@ -2980,6 +2980,76 @@ body .hdr-row2,body.light-mode .hdr-row2{
 @media(max-width:1050px){.news-center{grid-template-columns:140px 1fr}.news-preview{display:none}}
 @media(max-width:700px){.news-center{grid-template-columns:1fr}.news-rail{display:flex;overflow-x:auto;border-right:0;border-bottom:1px solid var(--border);padding:6px}.news-rail-title{display:none}.news-filter{width:auto;white-space:nowrap}.news-stream{border-right:0}}
 
+/* Comprehensive watch workspace: dense like an HTS, calm like a modern desktop app */
+.watch-workbench{display:grid;grid-template-columns:minmax(520px,1.45fr) minmax(320px,.75fr);height:100%;min-height:0;background:var(--bg);}
+.watch-primary{display:flex;flex-direction:column;min-width:0;min-height:0;border-right:1px solid var(--border);}
+.watch-primary .mdi-ptab-bar{height:42px;padding:0 16px;background:var(--bg2);}
+.watch-primary #mdi-ptc-watchlist-wl,.watch-primary #mdi-ptc-watchlist-as{background:var(--bg);}
+.watch-primary #watchlistBody{gap:0!important;padding:0!important;background:var(--bg);}
+.watch-table-head,.watch-row{display:grid;grid-template-columns:minmax(150px,1.5fr) minmax(90px,.8fr) 72px 82px 28px;align-items:center;column-gap:8px;}
+.watch-table-head{position:sticky;top:0;z-index:2;min-height:30px;padding:0 12px;border-bottom:1px solid var(--border);background:var(--bg2);color:var(--text3);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;}
+.watch-row{min-height:43px;padding:0 12px;border-bottom:1px solid color-mix(in srgb,var(--border) 72%,transparent);cursor:pointer;outline:none;transition:background .12s ease,border-color .12s ease;}
+.watch-row:hover,.watch-row:focus-visible{background:var(--bg2);}.watch-row.selected{background:color-mix(in srgb,var(--accent) 10%,var(--bg));box-shadow:inset 2px 0 var(--accent);}
+.watch-name{min-width:0;font-size:12px;font-weight:650;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.watch-code{font-size:10px;color:var(--text3);font-weight:400;margin-left:6px}.watch-market{font-size:10px;color:var(--text3);}
+.watch-price,.watch-change{text-align:right;font-variant-numeric:tabular-nums}.watch-price{font-size:12px;font-weight:700;color:var(--text)}.watch-change{font-size:11px;font-weight:650}.watch-remove{width:24px;height:24px;padding:0;border:0;background:transparent;color:var(--text3);cursor:pointer;border-radius:3px}.watch-remove:hover{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red)}
+.watch-insight{display:grid;grid-template-rows:minmax(210px,.85fr) minmax(180px,.7fr) minmax(150px,.55fr);min-width:0;min-height:0;background:var(--bg2);overflow:auto;}
+.workbench-pane{min-height:0;padding:16px;border-bottom:1px solid var(--border);background:var(--bg2);}
+.workbench-pane:last-child{border-bottom:0}.workbench-kicker{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase;margin-bottom:11px}.workbench-empty{display:flex;min-height:110px;align-items:center;justify-content:center;text-align:center;color:var(--text3);font-size:12px;line-height:1.65;border:1px dashed var(--border);}
+.workbench-symbol{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}.workbench-symbol h2{font-size:18px;margin:0 0 4px;color:var(--text)}.workbench-symbol p{font-size:11px;margin:0;color:var(--text3)}.workbench-quote{text-align:right}.workbench-quote strong{display:block;font-size:20px;color:var(--text);font-variant-numeric:tabular-nums}.workbench-quote span{font-size:12px;font-weight:700}
+.workbench-metrics{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--border);margin-bottom:12px}.workbench-metric{padding:10px;border-right:1px solid var(--border)}.workbench-metric:last-child{border-right:0}.workbench-metric span{display:block;font-size:10px;color:var(--text3);margin-bottom:5px}.workbench-metric strong{font-size:12px;color:var(--text);font-variant-numeric:tabular-nums}
+.workbench-actions{display:flex;gap:6px}.workbench-actions .btn{flex:1;border-radius:3px;min-height:34px}
+.holding-summary{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--border);margin-bottom:10px}.holding-summary>div{padding:9px;border-right:1px solid var(--border)}.holding-summary>div:last-child{border-right:0}.holding-summary span{display:block;font-size:10px;color:var(--text3);margin-bottom:4px}.holding-summary strong{font-size:12px;font-variant-numeric:tabular-nums}
+.holding-mini{width:100%;border-collapse:collapse;font-size:11px}.holding-mini th{padding:5px 6px;text-align:left;color:var(--text3);font-weight:500;border-bottom:1px solid var(--border)}.holding-mini th:not(:first-child),.holding-mini td:not(:first-child){text-align:right}.holding-mini td{padding:6px;border-bottom:1px solid color-mix(in srgb,var(--border) 65%,transparent);color:var(--text2);font-variant-numeric:tabular-nums}.holding-mini-empty{padding:18px 4px;color:var(--text3);font-size:11px;text-align:center}
+.workbench-links{display:grid;grid-template-columns:1fr 1fr;gap:6px}.workbench-link{display:flex;align-items:center;justify-content:space-between;min-height:36px;padding:0 10px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text2);font:inherit;font-size:11px;cursor:pointer}.workbench-link:hover{border-color:var(--accent);color:var(--text)}
+@media(max-width:1120px){.watch-workbench{grid-template-columns:minmax(480px,1.3fr) minmax(280px,.7fr)}.watch-table-head,.watch-row{grid-template-columns:minmax(130px,1.4fr) 84px 64px 74px 26px}.watch-market{display:none}}
+@media(max-width:900px){.watch-workbench{display:block;overflow:auto}.watch-primary{height:min(58vh,520px);border-right:0;border-bottom:1px solid var(--border)}.watch-insight{grid-template-columns:1fr 1fr;grid-template-rows:auto}.watch-insight .workbench-pane:last-child{grid-column:1/-1}}
+@media(max-width:700px){.watch-primary{height:56vh}.watch-insight{display:block}.watch-table-head,.watch-row{grid-template-columns:minmax(130px,1fr) 80px 66px 26px}.watch-market{display:none}.watch-table-head>:nth-child(4),.watch-row>:nth-child(4){display:none}}
+
+/* UI redesign step 5: market schedule as a calm, full workspace */
+body .mdi-workspace > .mdi-panel > .mdi-tb{display:none;}
+.cal-overlay{display:none!important;}
+.cal-panel.embedded{
+  position:static;inset:auto;width:100%;height:100%;transform:none!important;transition:none;
+  border:0;box-shadow:none;background:var(--bg);z-index:auto;color:var(--text);
+}
+.cal-panel.embedded .cal-hdr{display:none;}
+.cal-panel.embedded .cal-tabbar{height:44px;padding:0 18px;background:var(--bg2);border-color:var(--border);}
+.cal-panel.embedded .cal-tb{flex:0 0 auto;padding:0 18px;color:var(--text3);border-bottom-width:2px;}
+.cal-panel.embedded .cal-tb.active{color:var(--accent);border-bottom-color:var(--accent);}
+.cal-panel.embedded .cal-corp:not([style*="display: none"]),
+.cal-panel.embedded .cal-eco[style*="display: flex"]{
+  display:grid!important;grid-template-columns:minmax(480px,1.35fr) minmax(300px,.65fr);grid-template-rows:48px minmax(0,1fr) auto;min-height:0;overflow:hidden;
+}
+.cal-panel.embedded .cal-corp[style*="display: none"],.cal-panel.embedded .cal-eco:not([style*="display: flex"]){display:none!important;}
+.cal-panel.embedded .cal-cnav{grid-column:1;grid-row:1;padding:10px 18px;border-color:var(--border);background:var(--bg);}
+.cal-panel.embedded .cal-cnav-month{font-size:15px;color:var(--text);}
+.cal-panel.embedded .cal-cnav-btn{width:30px;height:28px;border-color:var(--border);color:var(--text2);background:var(--bg2);}
+.cal-panel.embedded .cal-grid-wrap{grid-column:1;grid-row:2;padding:10px 18px 14px;overflow:auto;}
+.cal-panel.embedded .cal-grid{gap:2px;height:100%;grid-auto-rows:minmax(42px,1fr);}
+.cal-panel.embedded .cal-dow{font-size:11px;color:var(--text3);padding:7px 0;align-self:end;}
+.cal-panel.embedded .cal-day{min-height:46px;align-items:flex-start;text-align:left;padding:7px 8px;border:1px solid transparent;border-radius:2px;color:var(--text3);background:var(--bg2);}
+.cal-panel.embedded .cal-day:hover{background:var(--bg3);border-color:var(--border);}.cal-panel.embedded .cal-day.today{background:color-mix(in srgb,var(--accent) 12%,var(--bg2));color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,var(--border));}.cal-panel.embedded .cal-day.sel{background:color-mix(in srgb,var(--accent) 20%,var(--bg2));color:var(--text);border-color:var(--accent);}
+.cal-panel.embedded .cal-day.empty{background:transparent;border-color:transparent;}.cal-panel.embedded .cal-ev-dots{margin-top:auto;align-self:flex-start}.cal-panel.embedded .cal-ev-dot{width:5px;height:5px;}
+.cal-panel.embedded .cal-evlist{grid-column:2;grid-row:1/4;padding:18px;border-left:1px solid var(--border);background:var(--bg2);}
+.cal-panel.embedded .cal-evlist-hdr{font-size:13px;color:var(--text);padding-bottom:12px;border-color:var(--border);margin-bottom:10px;}
+.cal-panel.embedded .cal-ev-item{padding:11px 12px;margin-bottom:7px;border-radius:3px;border-color:var(--border);background:var(--bg);}.cal-panel.embedded .cal-ev-name{font-size:12px;color:var(--text)}.cal-panel.embedded .cal-ev-sub{color:var(--text3)}
+.cal-panel.embedded .cal-add-wrap,.cal-panel.embedded .cal-eco-nav{grid-column:1;grid-row:3;padding:10px 18px;border-color:var(--border);background:var(--bg);}
+.cal-panel.embedded .cal-add-btn{height:34px;border-radius:3px;background:var(--bg2);border-color:var(--border);color:var(--text3);}
+.cal-panel.embedded .cal-add-form{grid-column:1;grid-row:3;padding:12px 18px;border-color:var(--border);background:var(--bg);}
+.cal-panel.embedded .cal-corp:has(.cal-add-form.show) .cal-add-wrap{display:none;}
+.cal-panel.embedded .cal-finput,.cal-panel.embedded .cal-fselect{min-height:34px;border-radius:3px;background:var(--bg3);border-color:var(--border);color:var(--text);}
+.cal-panel.embedded .cal-eco-link{border-radius:3px;background:var(--bg2);border-color:var(--border);color:var(--text2);}
+@media(max-width:900px){.cal-panel.embedded .cal-corp:not([style*="display: none"]),.cal-panel.embedded .cal-eco[style*="display: flex"]{grid-template-columns:1fr;grid-template-rows:48px minmax(330px,1fr) minmax(180px,.65fr) auto;overflow:auto}.cal-panel.embedded .cal-evlist{grid-column:1;grid-row:3;border-left:0;border-top:1px solid var(--border)}.cal-panel.embedded .cal-add-wrap,.cal-panel.embedded .cal-add-form,.cal-panel.embedded .cal-eco-nav{grid-row:4}}
+@media(max-width:760px){
+  body .mdi-sidebar,body.light-mode .mdi-sidebar{width:56px;min-width:56px;padding:10px 4px;}
+  body .mdi-sidebar .mdi-sb-label,body .mdi-sidebar .mdi-sb-section-label{display:none;}
+  body .mdi-sidebar .mdi-sb-btn{justify-content:center;padding:8px;}
+  body .mdi-sidebar .mdi-sb-toggle{justify-content:center;padding:0;}
+  body .hdr-row2,body.light-mode .hdr-row2{overflow:hidden;padding-left:8px;padding-right:8px;}
+  .market-board{min-width:0;grid-template-columns:repeat(4,minmax(96px,1fr));}
+  .asset-board{display:none;}
+}
+
 /* UI redesign step 3b: one docked workspace instead of overlapping windows */
 body .mdi-workspace,body.light-mode .mdi-workspace{
   position:relative;background:var(--bg);overflow:hidden;min-width:0;
@@ -11095,40 +11165,27 @@ function renderWatchlist() {
     (w.name||'').toLowerCase().includes(filterKw) || (w.ticker||'').toLowerCase().includes(filterKw));
   if (!list.length) {
     body.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0;">'+(filterKw||activeGrp!=='전체'?'검색 결과가 없습니다.':'관심종목을 추가해 보세요.')+'</div>';
-    wlRenderGroupBar(); return;
+    wlRenderGroupBar(); window.renderWatchHubSelection?.(); return;
   }
   const fullList = state.watchlist || [];
-  body.innerHTML = list.map(w => {
+  body.innerHTML = `<div class="watch-table-head"><span>종목</span><span>시장</span><span style="text-align:right">현재가</span><span style="text-align:right">등락률</span><span></span></div>` + list.map(w => {
     const i = fullList.indexOf(w);
-    const priceStr = w.price != null ? w.price.toLocaleString('ko-KR')+'원' : '-';
+    const priceStr = w.price != null ? w.price.toLocaleString('ko-KR') : '-';
     const chg      = w.change;
     const chgColor = chg == null ? 'var(--text3)' : chg > 0 ? 'var(--hts-up)' : chg < 0 ? 'var(--hts-dn)' : 'var(--text2)';
     const chgStr   = chg == null ? '-' : (chg > 0 ? '+' : '') + chg.toFixed(2) + '%';
     const label    = w.name || w.ticker;
-    const sub      = w.name && w.ticker ? `<span style="font-size:11px;color:var(--text3);margin-left:5px;">${w.ticker}</span>` : '';
-    const grps     = (state.watchlistGroups||[]);
-    const grpSel   = grps.length ? `<select onchange="wlAssignGroup(${i},this.value)" style="font-size:10px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text2);padding:1px 3px;cursor:pointer;" title="그룹 지정">
-      <option value="">미분류</option>
-      ${grps.map(g=>`<option value="${g}" ${(w.group===g)?'selected':''}>${g}</option>`).join('')}
-    </select>` : '';
-    return `<div data-name="${label}" style="display:flex;align-items:center;gap:7px;padding:7px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--border);">
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:600;color:var(--text);">${label}${sub}</div>
-        <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
-          ${w.per != null ? `<span style="font-size:10px;color:var(--text3);">PER ${w.per} · ROE ${w.roe??'-'}%</span>` : ''}
-          ${grpSel}
-        </div>
-      </div>
-      <div style="text-align:right;flex-shrink:0;">
-        <div style="font-size:13px;font-weight:700;color:var(--text);">${priceStr}</div>
-        <div style="font-size:11px;color:${chgColor};">${chgStr}</div>
-      </div>
-      <button onclick="removeWatchlistItem(${i})" title="삭제" style="background:none;border:none;cursor:pointer;color:var(--text3);padding:3px;border-radius:5px;flex-shrink:0;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
+    const selected = window._watchHubSelected === i ? ' selected' : '';
+    return `<div class="watch-row${selected}" data-name="${label}" role="button" tabindex="0" onclick="window.selectWatchHubStock?.(${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.selectWatchHubStock?.(${i})}">
+      <div class="watch-name">${label}${w.name && w.ticker ? `<span class="watch-code">${w.ticker}</span>` : ''}</div>
+      <div class="watch-market">${w.market||w.group||'관심종목'}</div>
+      <div class="watch-price">${priceStr}</div>
+      <div class="watch-change" style="color:${chgColor}">${chgStr}</div>
+      <button class="watch-remove" onclick="event.stopPropagation();removeWatchlistItem(${i})" title="관심종목 삭제" aria-label="${label} 관심종목 삭제">×</button>
     </div>`;
   }).join('');
   wlRenderGroupBar();
+  window.renderWatchHubSelection?.();
 }
 
 async function refreshWatchlist() {
@@ -13204,7 +13261,7 @@ function wlAssignGroup(idx, gName) {
  const button=(id,label,icon)=>`<button type="button" class="mdi-sb-btn" data-nav="${id}" title="${label}" aria-label="${label}"><span class="mdi-sb-icon-wrap">${icon||simple}</span><span class="mdi-sb-label">${label}</span></button>`;
  sb.setAttribute('aria-label','주 메뉴');
  sb.innerHTML=`<button type="button" class="mdi-sb-toggle" id="mdiSbToggle" title="사이드바 접기" aria-label="사이드바 접기" aria-expanded="true"><span class="mdi-sb-label">WORKSPACE</span><span class="mdi-sb-toggle-icon">«</span></button>
- <nav aria-label="투자">${button('watchlist','종목 탐색',icons.watchlist)}${button('portfolio','포트폴리오',icons.portfolio)}${button('news','뉴스·시황',icons.news)}${button('records','매매기록',icons.trading)}${button('journal','투자일지',icons.journal)}</nav>
+ <nav aria-label="투자">${button('watchlist','관심종목 종합',icons.watchlist)}${button('portfolio','포트폴리오',icons.portfolio)}${button('news','뉴스·시황',icons.news)}${button('records','매매기록',icons.trading)}${button('journal','투자일지',icons.journal)}</nav>
  <div class="sb-tools"><span class="mdi-sb-section-label">보조 도구</span>${button('trading','호가·거래 입력',icons.trading)}${button('calendar','시장 일정',calendarIcon)}</div>
  <div class="sb-system"><span class="mdi-sb-section-label">시스템</span>${button('accounts','계좌·API',accountIcon)}${button('data','데이터',dataIcon)}${button('settings','설정',settingsIcon)}<div id="sbConnection" role="status" title="실시간 OFF"><span class="sb-status-dot"></span><span class="mdi-sb-label">실시간 OFF</span></div></div>`;
  const hub=document.createElement('div');hub.id='sidebarHub';hub.className='modal-overlay';
@@ -13218,6 +13275,31 @@ function wlAssignGroup(idx, gName) {
  const mdi=window._MDI;
  const workspace=document.getElementById('mdiWorkspace');
  document.querySelectorAll('.mdi-panel').forEach(panel=>workspace.appendChild(panel));
+ const watchBody=document.getElementById('mdi-body-watchlist');
+ const watchWorkbench=document.createElement('div');watchWorkbench.className='watch-workbench';
+ const watchPrimary=document.createElement('section');watchPrimary.className='watch-primary';watchPrimary.setAttribute('aria-label','관심종목 목록');
+ [...watchBody.children].forEach(child=>watchPrimary.append(child));
+ const watchInsight=document.createElement('aside');watchInsight.className='watch-insight';watchInsight.setAttribute('aria-label','선택 종목과 보유 현황');
+ watchInsight.innerHTML=`<section class="workbench-pane" id="watchQuotePane"><div class="workbench-kicker">선택 종목</div><div id="watchQuoteContent" class="workbench-empty">왼쪽 관심종목을 선택하면<br>시세와 보유 상태를 함께 보여줍니다.</div></section><section class="workbench-pane"><div class="workbench-kicker">보유 현황</div><div id="watchHoldingSummary"></div><div id="watchHoldingList"></div></section><section class="workbench-pane"><div class="workbench-kicker">빠른 정보</div><div class="workbench-links"><button class="workbench-link" id="watchOpenNews">뉴스·시황 <span>›</span></button><button class="workbench-link" id="watchOpenCalendar">시장 일정 <span>›</span></button></div></section>`;
+ watchWorkbench.append(watchPrimary,watchInsight);watchBody.append(watchWorkbench);
+ const nfmt=n=>Math.round(Number(n)||0).toLocaleString('ko-KR');
+ function renderWatchHoldings(){
+  const holdings=state.portfolio||[];const buy=holdings.reduce((sum,s)=>sum+(s.avgPrice||0)*(s.qty||0),0);const value=holdings.reduce((sum,s)=>sum+(s.currentPrice||s.avgPrice||0)*(s.qty||0),0);const pnl=value-buy;
+  document.getElementById('watchHoldingSummary').innerHTML=`<div class="holding-summary"><div><span>평가금액</span><strong>${nfmt(value)}</strong></div><div><span>평가손익</span><strong style="color:${pnl>0?'var(--hts-up)':pnl<0?'var(--hts-dn)':'var(--text)'}">${pnl>0?'+':''}${nfmt(pnl)}</strong></div><div><span>보유종목</span><strong>${holdings.length}</strong></div></div>`;
+  document.getElementById('watchHoldingList').innerHTML=holdings.length?`<table class="holding-mini"><thead><tr><th>종목</th><th>현재가</th><th>수익률</th></tr></thead><tbody>${holdings.slice(0,4).map(s=>{const cur=s.currentPrice||s.avgPrice||0,pct=s.avgPrice?((cur-s.avgPrice)/s.avgPrice*100):0;return `<tr><td>${s.name||s.ticker||'-'}</td><td>${nfmt(cur)}</td><td style="color:${pct>0?'var(--hts-up)':pct<0?'var(--hts-dn)':'var(--text2)'}">${pct>0?'+':''}${pct.toFixed(2)}%</td></tr>`}).join('')}</tbody></table>`:'<div class="holding-mini-empty">등록된 보유 종목이 없습니다.</div>';
+ }
+ window.renderWatchHubSelection=function(){
+  renderWatchHoldings();const list=state.watchlist||[];let idx=window._watchHubSelected;
+  if(!Number.isInteger(idx)||!list[idx]){document.getElementById('watchQuoteContent').className='workbench-empty';document.getElementById('watchQuoteContent').innerHTML='왼쪽 관심종목을 선택하면<br>시세와 보유 상태를 함께 보여줍니다.';return;}
+  const w=list[idx],holding=(state.portfolio||[]).find(s=>(w.ticker&&s.ticker===w.ticker)||(w.name&&s.name===w.name));const price=w.price??holding?.currentPrice??null;const change=w.change;const pnl=holding&&holding.avgPrice&&price!=null?(price-holding.avgPrice)*(holding.qty||0):null;
+  const content=document.getElementById('watchQuoteContent');content.className='';content.innerHTML=`<div class="workbench-symbol"><div><h2>${w.name||w.ticker||'종목'}</h2><p>${w.ticker||''}${w.market?' · '+w.market:''}</p></div><div class="workbench-quote"><strong>${price==null?'-':nfmt(price)}</strong><span style="color:${change>0?'var(--hts-up)':change<0?'var(--hts-dn)':'var(--text3)'}">${change==null?'시세 대기':`${change>0?'+':''}${Number(change).toFixed(2)}%`}</span></div></div><div class="workbench-metrics"><div class="workbench-metric"><span>보유수량</span><strong>${holding?nfmt(holding.qty)+'주':'-'}</strong></div><div class="workbench-metric"><span>평균단가</span><strong>${holding?nfmt(holding.avgPrice):'-'}</strong></div><div class="workbench-metric"><span>평가손익</span><strong style="color:${pnl>0?'var(--hts-up)':pnl<0?'var(--hts-dn)':'var(--text)'}">${pnl==null?'-':`${pnl>0?'+':''}${nfmt(pnl)}`}</strong></div></div><div class="workbench-actions"><button class="btn btn-primary" id="watchOpenQuote">호가·거래</button><button class="btn btn-ghost" id="watchOpenAnalysis" ${holding?'':'disabled title="보유 종목에서 사용할 수 있습니다"'}>기업분석</button></div>`;
+  document.getElementById('watchOpenQuote').onclick=()=>{connectToHoga(w.ticker||'',w.name||'');showWorkspace('trading');active('trading');};if(holding)document.getElementById('watchOpenAnalysis').onclick=()=>openAnalysisDrawer(state.portfolio.indexOf(holding));
+ };
+ window.selectWatchHubStock=function(idx){window._watchHubSelected=idx;renderWatchlist();};
+ document.getElementById('watchOpenNews').onclick=()=>showWorkspace('news');document.getElementById('watchOpenCalendar').onclick=()=>openCalendarPanel();
+ const calendar=document.getElementById('calPanel');
+ const calendarWorkspace=document.createElement('div');calendarWorkspace.id='mdi-panel-calendar';calendarWorkspace.className='mdi-panel';calendarWorkspace.dataset.pid='calendar';calendarWorkspace.dataset.mdiState='closed';
+ const calendarBody=document.createElement('div');calendarBody.className='mdi-body';calendarBody.id='mdi-body-calendar';calendar.classList.add('embedded','open');calendarBody.append(calendar);calendarWorkspace.append(calendarBody);workspace.append(calendarWorkspace);document.getElementById('calOverlay')?.classList.remove('open');
  const newsSources=[
   {cat:'domestic',name:'네이버 증권 뉴스',desc:'국내 증시 속보와 종목별 주요 뉴스',url:'https://stock.naver.com/news',color:'#03c75a'},
   {cat:'domestic',name:'한국경제 증권',desc:'시장·기업·채권 흐름',url:'https://www.hankyung.com/finance',color:'#e31937'},
@@ -13255,7 +13337,7 @@ function wlAssignGroup(idx, gName) {
    panel.classList.toggle('workspace-active',on);
    panel.classList.toggle('mdi-focused',on);
    panel.dataset.mdiState=on?'open':'closed';
-   panel.style.removeProperty('left');panel.style.removeProperty('top');panel.style.removeProperty('width');panel.style.removeProperty('height');panel.style.removeProperty('z-index');
+   panel.style.removeProperty('left');panel.style.removeProperty('top');panel.style.removeProperty('width');panel.style.removeProperty('height');panel.style.removeProperty('z-index');panel.style.removeProperty('visibility');
    const body=panel.querySelector('.mdi-body');if(body)body.style.display='';
   });
   try{mdi._render(pid);}catch(e){console.warn('workspace render',pid,e);}
@@ -13276,6 +13358,10 @@ function wlAssignGroup(idx, gName) {
  mdi._front=showWorkspace;
  mdi._syncBtn=()=>{};
  mdi._syncAllBtns=()=>{};
+ const legacyOpenCalendar=window.openCalendarPanel;
+ window.openCalendarPanel=function(){legacyOpenCalendar();document.getElementById('calOverlay')?.classList.remove('open');calendar.classList.add('embedded','open');showWorkspace('calendar');active('calendar');};
+ window.closeCalendarPanel=function(){showWorkspace('watchlist');};
+ window.toggleCalendarPanel=function(){currentWorkspace==='calendar'?closeCalendarPanel():openCalendarPanel();};
  const panelTab=window._MDIPanelTab;window._MDIPanelTab=function(pid,tab){panelTab(pid,tab);if(pid==='portfolio')active(tab==='trd'?'records':'portfolio');};
  mdi.toggleSidebar=function(){const collapsed=sb.classList.toggle('sb-collapsed');const b=document.getElementById('mdiSbToggle');b.setAttribute('aria-expanded',String(!collapsed));b.title=b.ariaLabel=collapsed?'사이드바 펼치기':'사이드바 접기';b.querySelector('.mdi-sb-toggle-icon').textContent=collapsed?'»':'«';try{saveUiState();}catch{}};
  document.getElementById('mdiSbToggle').onclick=()=>mdi.toggleSidebar();
@@ -13283,7 +13369,7 @@ function wlAssignGroup(idx, gName) {
   if(id==='accounts')return openHub('계좌·API',[['계좌 관리',()=>openAccountPanel()],['API 연결 관리',()=>openApiPanel()]]);
   if(id==='data')return openHub('데이터',[['백업 내보내기',()=>exportBackup()],['백업 가져오기',()=>{const f=document.createElement('input');f.type='file';f.accept='.json';f.onchange=e=>importBackup(e);f.click();}]]);
   if(id==='settings')return openHub('설정',[['일반 설정',()=>openSettings()],['테마 전환',()=>toggleTheme()],['작업 배치 초기화',()=>mdi.clearAndReset()]]);
-  if(id==='calendar'){toggleCalendarPanel();return;}
+  if(id==='calendar'){openCalendarPanel();return;}
   mdi.open(id==='records'?'portfolio':id);
   if(id==='records'){window._MDIPanelTab('portfolio','trd');renderTrades();}else if(id==='portfolio'){window._MDIPanelTab('portfolio','pf');}
   active(id);
