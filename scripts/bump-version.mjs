@@ -34,6 +34,12 @@ const commits = sh(`git log ${range} --no-merges --format=%s%x1f%b%x1e`)
 
 // ── 새 버전 계산 ───────────────────────────────────────────────────────────
 let level = mode;
+// 연속 머지로 릴리스가 겹쳐 실행되면 앞선 실행이 이미 모든 커밋을 릴리스했을 수 있다 → 빈 릴리스 방지 (#24)
+if (mode === 'auto' && lastTag && commits.length === 0) {
+  console.log(`마지막 태그(${lastTag}) 이후 새 커밋 없음 → 릴리스 건너뜀`);
+  if (process.env.GITHUB_OUTPUT && !dryRun) appendFileSync(process.env.GITHUB_OUTPUT, `skip=true\nversion=${pkg.version}\n`);
+  process.exit(0);
+}
 if (mode === 'auto') {
   if (commits.some(c => /^\w+(\(.+\))?!:/.test(c.subject) || /BREAKING CHANGE/.test(c.body))) level = 'major';
   else if (commits.some(c => /^feat(\(.+\))?:/.test(c.subject))) level = 'minor';

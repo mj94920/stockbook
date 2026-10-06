@@ -15,7 +15,7 @@
 [claude.yml]  Claude 가 claude/* 브랜치에서 코드 수정 · npm test · 커밋
         │
         ▼
-[ci.yml]      정적 검사 + 스모크 테스트 (검사 스크립트는 main 기준 고정)
+[ci.yml]      정적 검사 + 스모크 테스트 (검사 스크립트는 main 기준 고정, 'tests-approved' 라벨 PR 은 PR 기준)
         ├─ 통과 → PR 자동 생성 → main 동기화(sync-main.sh) → main squash 머지
         │         (릴리스 버전 문자열 충돌은 자동 해결, 그 외 충돌·머지 실패는 'needs-human' + 알림)
         └─ 실패 → Claude 1회 자동 수정 → 재검증 → 실패 시 'needs-human' PR + 이슈 알림
@@ -47,7 +47,10 @@
 5. **Electron 보안 설정 변경 금지**: `contextIsolation: true`, `nodeIntegration: false`, IPC 는 `preload.js` 의 `contextBridge` 로만.
 6. **Windows 빌드는 NSIS 전용** (`build.win.target: "nsis"`, `asar: false`). zip/portable 금지.
 7. **비밀값 금지**: API 키·keystore·비밀번호를 코드/문서에 넣지 않는다 (GitHub Secrets 사용).
-8. `.github/workflows/` 는 Claude GitHub App 권한상 수정할 수 없다 — 워크플로 변경이 필요하면 이슈에 제안만 남긴다.
+8. **작업 큐/Actions 안의 Claude 는 `.github/workflows/` 를 수정할 수 없다** (`GITHUB_TOKEN` 은 워크플로 파일을 푸시할 수 없음).
+   워크플로 변경이 필요하면 이슈에 제안을 남기고, 사람이 승인한 세션에서 별도 PR 로 반영한다.
+9. **검사(`scripts/`)를 바꿔야 하는 PR** (화면 구조 변경·파일 삭제 등): CI 는 claude/*·codex/* 브랜치를 main 의 검사로 돌리므로 실패한다.
+   PR 에 바뀐 검사가 느슨해지지 않았음을 적고, 사람이 검토 후 `tests-approved` 라벨을 붙이면 PR 브랜치의 검사로 CI 가 돈다.
 
 ---
 

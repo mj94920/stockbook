@@ -1,8 +1,12 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # CI — 모든 PR · 릴리스 · Claude 작업 결과가 반드시 통과해야 하는 관문
 #   1) 정적 검사 : JS/HTML 인라인 스크립트 문법, JSON, 프로젝트 규칙(nsis·보안설정)
-#   2) 스모크    : Chromium 으로 index.html / mobile.html 초기화 오류 검사
-#   3) 자동 머지 : 'automerge' 라벨이 붙은 PR 은 통과 즉시 main 에 squash 머지 → 릴리스
+#   2) 스모크    : Chromium 으로 index.html 초기화 오류 · 1차 개편 회귀 검사
+#   3) 자동 머지 : 'automerge' 라벨이 붙은 PR 은 통과 즉시 main 에 squash 머지 → 연결 이슈 종료 → 릴리스 · 작업 큐
+#
+# 검사 스크립트 고정: claude/* · codex/* 브랜치는 scripts/ 를 main 기준으로 검사한다 (검사를 느슨하게 고쳐 통과 방지).
+#   화면 구조 변경처럼 검사 자체를 바꿔야 하는 PR 은 사람이 검토 후 'tests-approved' 라벨을 붙이면
+#   PR 브랜치의 scripts/ 로 검사한다. (라벨은 저장소 쓰기 권한자만 붙일 수 있다)
 # ─────────────────────────────────────────────────────────────────────────────
 name: CI
 
@@ -38,10 +42,12 @@ jobs:
           cache: npm
 
       # Claude 작업 브랜치는 검사 스크립트를 main 기준으로 고정 (검사를 느슨하게 고쳐 통과하는 것 방지)
+      # 단, 사람이 'tests-approved' 라벨로 검사 변경을 승인한 PR 은 PR 브랜치의 검사로 실행
       - name: 검사 스크립트 고정 (claude/* · codex/* 브랜치)
         if: >-
-          startsWith(inputs.ref, 'claude/') || startsWith(github.head_ref, 'claude/') ||
-          startsWith(inputs.ref, 'codex/') || startsWith(github.head_ref, 'codex/')
+          (startsWith(inputs.ref, 'claude/') || startsWith(github.head_ref, 'claude/') ||
+           startsWith(inputs.ref, 'codex/') || startsWith(github.head_ref, 'codex/')) &&
+          !contains(github.event.pull_request.labels.*.name, 'tests-approved')
         run: |
           git fetch --depth 1 origin main
           git checkout FETCH_HEAD -- scripts/
@@ -79,6 +85,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      issues: write
       actions: write
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -88,6 +95,18 @@ jobs:
         run: >-
           gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --squash --delete-branch
           --match-head-commit "${{ github.event.pull_request.head.sha }}"
-      # GITHUB_TOKEN 으로 만든 push 는 다른 워크플로를 깨우지 않으므로 릴리스를 직접 호출
+      # GITHUB_TOKEN 머지는 'Closes #N' 자동 종료·이벤트 트리거가 보장되지 않는다 → 직접 닫는다 (#23)
+      - name: 연결 이슈 종료
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          for n in $(printf '%s' "$BODY" | grep -oiE '(close[sd]?|fix(e[sd])?|resolve[sd]?) +#[0-9]+' | grep -oE '[0-9]+' | sort -u); do
+            [ "$(gh issue view "$n" --repo "$GITHUB_REPOSITORY" --json state --jq .state 2>/dev/null)" = "OPEN" ] || continue
+            gh issue edit "$n" --repo "$GITHUB_REPOSITORY" --remove-label in-progress || true
+            gh issue close "$n" --repo "$GITHUB_REPOSITORY" --reason completed --comment "✅ PR #$PR 로 완료되어 main 에 반영했습니다." || true
+          done
+      # GITHUB_TOKEN 으로 만든 push 는 다른 워크플로를 깨우지 않으므로 릴리스·작업 큐를 직접 호출
       - name: 릴리스 트리거
         run: gh workflow run release.yml --repo "$GITHUB_REPOSITORY" --ref main
+      - name: 작업 큐 다음 항목
+        run: gh workflow run queue.yml --repo "$GITHUB_REPOSITORY" --ref main || true
