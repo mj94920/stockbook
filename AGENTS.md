@@ -33,7 +33,7 @@ Claude 는 `queue` 라벨 이슈를 번호 순서대로 하나씩 처리한다 (
 ## 저장소 구조 (요약)
 
 ```
-index.html   ← PC 앱 본체 (Electron 메인 창 · Pages)     mobile.html ← 모바일 PWA
+index.html   ← PC 앱 본체 (Electron 메인 창 · Pages). 모바일(Android·PWA)은 폐기됨
 main.js / preload.js ← Electron 메인·IPC (외부 API 는 여기서 호출 → IPC)
 scripts/     ← check-syntax · smoke · bump-version
 .github/     ← ci · claude · queue · release 워크플로 (수정은 사람 PR 로만)

@@ -3,13 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="StockBook">
 <meta name="theme-color" content="#ffffff">
-<link rel="manifest" href="./manifest.json">
-<link rel="apple-touch-icon" href="./icon-192.png">
 <title>Stock Book — 주식 포트폴리오 관리</title>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2244,14 +2238,6 @@
     box-shadow:0 4px 16px rgba(0,0,0,.4); pointer-events:none; min-width:140px;
   }
   .port-name-wrap:hover .port-tip { display:block; }
-
-  /* ── 모바일 브라우저 URL바 자동 숨기기 — body 여유 높이 ── */
-  /* Chrome/Whale 등은 스크롤 시 URL바 숨김. body를 URL바 높이만큼 크게 해서 트리거 */
-  @media (max-width: 1100px) {
-    body {
-      min-height: calc(100vh + 80px);
-    }
-  }
 
   /* ── ALERT ── */
   .alert {
@@ -11627,7 +11613,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// 모바일 standalone 인트로 (TWA/PWA 설치 앱 전용)
+// 시작 인트로 (Electron 데스크톱 앱 전용 — standalone 표시 모드일 때만)
 (function() {
   const isElectron = navigator.userAgent.indexOf('Electron') > -1;
   const isStandalone = isElectron ||
@@ -11938,37 +11924,19 @@ function _stopWatchlistAutoRefresh() {
 const _origSwitchSubTab = typeof switchSubTab === 'function' ? switchSubTab : null;
 
 // ============================================================
-// 서비스워커 등록 (PWA)
+// 이전 PWA 서비스워커 정리 — 모바일(PWA/TWA)은 폐기됨.
+// 예전에 설치된 sw.js 가 오래된 캐시로 페이지를 내놓지 않도록 등록 해제·캐시 삭제
 // ============================================================
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
-  });
+  navigator.serviceWorker.getRegistrations()
+    .then(regs => regs.forEach(r => r.unregister()))
+    .catch(() => {});
+  if (window.caches) {
+    caches.keys()
+      .then(keys => keys.filter(k => k.startsWith('stockbook-')).forEach(k => caches.delete(k)))
+      .catch(() => {});
+  }
 }
-
-// ── 모바일 브라우저 URL바 자동 숨기기 ────────────────────────────────────────
-// Chrome/Whale/네이버 앱 등 모바일 브라우저: 스크롤 시 자동으로 URL바 숨김
-// body를 80px 여유롭게 설정한 뒤(CSS) window.scrollTo(0,1)로 트리거
-(function() {
-  const isMobileAgent = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  const isStandalone  = window.navigator.standalone ||
-    window.matchMedia('(display-mode: standalone)').matches;
-  if (!isMobileAgent || isStandalone) return; // 설치된 PWA는 이미 URL바 없음
-
-  const hideUrlBar = () => {
-    if (window.scrollY < 2) window.scrollTo(0, 1);
-  };
-  // 페이지 로드 후 숨기기
-  window.addEventListener('load', () => setTimeout(hideUrlBar, 600), { once: true });
-  // 앱이 백그라운드에서 돌아올 때 다시 숨기기
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) setTimeout(hideUrlBar, 400);
-  });
-  // 탭 전환 시에도 복원
-  document.addEventListener('touchend', () => {
-    setTimeout(hideUrlBar, 200);
-  }, { passive: true });
-})();
 
 // ============================================================
 // 기업 분석 드로어 (v1.4.4)
