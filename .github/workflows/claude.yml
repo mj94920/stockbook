@@ -150,9 +150,10 @@ jobs:
     needs: claude
     if: needs.claude.outputs.branch != ''
     uses: ./.github/workflows/ci.yml
-    permissions:
+    permissions:   # 재사용되는 ci.yml 의 automerge 잡이 요구하는 권한 전부 (부족하면 startup_failure)
       contents: write
       pull-requests: write
+      issues: write
       actions: write
     with:
       ref: ${{ needs.claude.outputs.branch }}
