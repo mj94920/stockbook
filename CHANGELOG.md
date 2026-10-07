@@ -2,6 +2,12 @@
 
 자동 생성 — `scripts/bump-version.mjs`
 
+## v1.8.1 — 2026-10-07
+
+- fix(ci): ci.yml 재사용 시 issues 권한 누락으로 Release·Claude 검증이 startup_failure 나는 문제 수정
+- fix(ci): 검사 변경 PR 승인 라벨·자동 머지 후 이슈 종료·빈 릴리스 방지, Android 빌드 제거
+- chore: 모바일(Android TWA·PWA) 폐기 — mobile.html·manifest·sw.js·android 제거
+
 ## v1.8.0 — 2026-10-01
 
 - feat(ui): 1차 개편 회귀 스모크 테스트 확장 (사이드바·설정 허브·모달·일정 센터·테마·뷰포트) (#19)
