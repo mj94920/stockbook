@@ -64,3 +64,9 @@ Desktop Agent UI
 ## 현재 주의사항
 
 2026-10-07 현재 원본에서는 PR #42가 UI2 1a (`#36`)를 진행 중이다. Agent 통합 초기 작업에서는 이 PR과 충돌하기 쉬운 도킹 레이아웃/메인 UI 변경을 피하고, 데이터 접근 계층 및 Tool Adapter 설계를 우선한다.
+
+## 2026-10-07 실행 목업
+
+`agent/README.md`에 재사용 함수·실행법·캐릭터 연결·검증 범위를 기록했다. 원본 index/main/preload 및 scripts 수정 없이, 본체를 실행할 때 Agent 어댑터와 미니패널만 추가한다. 사용자가 지정한 I-Character-Project의 실제 DesktopPetAgent와 아린 프레임은 로컬 경로에서 불러오며 공개 Stockbook 저장소에 복사하지 않는다.
+
+본체 npm test, Agent 브라우저 검사(1400×900/1024×768, 다크/라이트), PR #42 HTML 호환 검사와 Electron 실제 IPC 전종목 검색을 통과했다. PR #42의 문맥 패널 계산에서 currentPrice 필드 및 복수 계좌 보유 합산 정합성 문제를 Agent integration note로 전달했다. 실계좌 인증/KIS 동기화, LLM 자유 대화 및 독립 캐릭터 창 패키징은 미검증/후속 범위다.
