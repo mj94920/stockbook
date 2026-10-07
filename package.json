@@ -26,8 +26,6 @@
       "preload.js",
       "index.html",
       "splash.html",
-      "manifest.json",
-      "sw.js",
       "icon-192.png",
       "icon-512.png",
       "icon.ico",

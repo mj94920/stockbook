@@ -17,7 +17,7 @@ body:
       multiple: true
       options:
         - PC 앱 (index.html / Electron)
-        - 모바일 (mobile.html / PWA)
+        - 웹 브라우저 (GitHub Pages)
   - type: textarea
     id: notes
     attributes:

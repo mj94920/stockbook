@@ -9,8 +9,7 @@
 //           - 그 외 (fix/refactor/style/…)     → patch
 //   none  : 버전은 그대로 두고 파일 동기화만 수행
 //
-// 갱신 대상: package.json · package-lock.json · index.html/mobile.html 의 "Stock Book vX.Y.Z"
-//            · sw.js 캐시 이름 · android/twa-manifest.json(appVersionCode/Name) · CHANGELOG.md
+// 갱신 대상: package.json · package-lock.json · index.html 의 "Stock Book vX.Y.Z" · CHANGELOG.md
 import { readFileSync, writeFileSync, existsSync, appendFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 
@@ -35,6 +34,12 @@ const commits = sh(`git log ${range} --no-merges --format=%s%x1f%b%x1e`)
 
 // ── 새 버전 계산 ───────────────────────────────────────────────────────────
 let level = mode;
+// 연속 머지로 릴리스가 겹쳐 실행되면 앞선 실행이 이미 모든 커밋을 릴리스했을 수 있다 → 빈 릴리스 방지 (#24)
+if (mode === 'auto' && lastTag && commits.length === 0) {
+  console.log(`마지막 태그(${lastTag}) 이후 새 커밋 없음 → 릴리스 건너뜀`);
+  if (process.env.GITHUB_OUTPUT && !dryRun) appendFileSync(process.env.GITHUB_OUTPUT, `skip=true\nversion=${pkg.version}\n`);
+  process.exit(0);
+}
 if (mode === 'auto') {
   if (commits.some(c => /^\w+(\(.+\))?!:/.test(c.subject) || /BREAKING CHANGE/.test(c.body))) level = 'major';
   else if (commits.some(c => /^feat(\(.+\))?:/.test(c.subject))) level = 'minor';
@@ -50,11 +55,8 @@ else if (level === 'none')  next = cur;
 else { console.error(`알 수 없는 인자: ${level}`); process.exit(2); }
 
 const version = next.join('.');
-// Android versionCode: 단조 증가 보장 (1.2.34 → 10234). 구 규칙(X*100+Y*10+Z)은 Z≥10에서 충돌하므로 폐기.
-const versionCode = next[0] * 10000 + next[1] * 100 + next[2];
-if (next[1] > 99 || next[2] > 99) { console.error('minor/patch 는 99 이하여야 합니다'); process.exit(2); }
 
-console.log(`버전: ${pkg.version} → ${version}  (level=${level}, versionCode=${versionCode}${dryRun ? ', dry-run' : ''})`);
+console.log(`버전: ${pkg.version} → ${version}  (level=${level}${dryRun ? ', dry-run' : ''})`);
 
 // ── 파일 갱신 ──────────────────────────────────────────────────────────────
 pkg.version = version;
@@ -67,25 +69,10 @@ if (existsSync('package-lock.json')) {
   write('package-lock.json', JSON.stringify(lock, null, 2) + '\n');
 }
 
-for (const f of ['index.html', 'mobile.html']) {
-  if (!existsSync(f)) continue;
-  const s = readFileSync(f, 'utf8');
+if (existsSync('index.html')) {
+  const s = readFileSync('index.html', 'utf8');
   const t = s.replace(/Stock Book v\d+\.\d+\.\d+/g, `Stock Book v${version}`);
-  if (t !== s) write(f, t);
-}
-
-if (existsSync('sw.js')) {
-  const s = readFileSync('sw.js', 'utf8');
-  const t = s.replace(/const CACHE = '[^']*';/, `const CACHE = 'stockbook-v${version}';`);
-  if (t !== s) write('sw.js', t);
-}
-
-if (existsSync('android/twa-manifest.json')) {
-  const twa = readJson('android/twa-manifest.json');
-  twa.appVersionCode = versionCode;
-  twa.appVersionName = version;
-  twa.appVersion     = version;
-  write('android/twa-manifest.json', JSON.stringify(twa, null, 2) + '\n');
+  if (t !== s) write('index.html', t);
 }
 
 // ── CHANGELOG ──────────────────────────────────────────────────────────────
@@ -101,5 +88,5 @@ if (level !== 'none') {
 
 // ── GitHub Actions 출력 ────────────────────────────────────────────────────
 if (process.env.GITHUB_OUTPUT && !dryRun) {
-  appendFileSync(process.env.GITHUB_OUTPUT, `version=${version}\nversion_code=${versionCode}\nlevel=${level}\n`);
+  appendFileSync(process.env.GITHUB_OUTPUT, `version=${version}\nlevel=${level}\n`);
 }

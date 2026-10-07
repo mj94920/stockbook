@@ -1,7 +1,7 @@
 # StockBook — 개발 지침 (Claude · 사람 공통)
 
 > 저장소: `https://github.com/mj94920/stockbook` (branch: `main`)
-> 웹/PWA: `https://mj94920.github.io/stockbook/` · 릴리스: GitHub Releases
+> 웹: `https://mj94920.github.io/stockbook/` · 릴리스: GitHub Releases
 > **현재 버전은 `package.json` 의 `version` 이 유일한 기준**이다. 문서에 버전 번호를 적지 않는다.
 
 ---
@@ -15,14 +15,14 @@
 [claude.yml]  Claude 가 claude/* 브랜치에서 코드 수정 · npm test · 커밋
         │
         ▼
-[ci.yml]      정적 검사 + 스모크 테스트 (검사 스크립트는 main 기준 고정)
+[ci.yml]      정적 검사 + 스모크 테스트 (검사 스크립트는 main 기준 고정, 'tests-approved' 라벨 PR 은 PR 기준)
         ├─ 통과 → PR 자동 생성 → main 동기화(sync-main.sh) → main squash 머지
         │         (릴리스 버전 문자열 충돌은 자동 해결, 그 외 충돌·머지 실패는 'needs-human' + 알림)
         └─ 실패 → Claude 1회 자동 수정 → 재검증 → 실패 시 'needs-human' PR + 이슈 알림
         │
         ▼
-[release.yml] 커밋 메시지로 버전 자동 증가 → 태그 → Windows NSIS EXE · Android APK/AAB
-              → GitHub Release 게시 → Pages 갱신(PWA)
+[release.yml] 커밋 메시지로 버전 자동 증가 → 태그 → Windows NSIS EXE
+              → GitHub Release 게시 → Pages 갱신(웹)
 ```
 
 **작업 큐** (`queue.yml`): `queue` 라벨 이슈를 번호 순서대로 **하나씩** Claude 에게 맡긴다.
@@ -39,7 +39,7 @@
 
 1. **접근 금지 폴더**: `독새`, `지소차트`, `키움증권REST API코드` — 읽지도 수정하지도 않는다.
 2. **버전·CHANGELOG 를 직접 수정하지 않는다.** `scripts/bump-version.mjs` 가 릴리스 때 자동 처리한다
-   (package.json · package-lock.json · index/mobile.html 의 `Stock Book vX.Y.Z` · sw.js 캐시명 · android/twa-manifest.json · CHANGELOG.md).
+   (package.json · package-lock.json · index.html 의 `Stock Book vX.Y.Z` · CHANGELOG.md).
 3. **커밋 메시지는 Conventional Commits + 한국어 요약.** 버전 수준이 여기서 결정된다.
    - `feat: …` → minor · `fix:/refactor:/style:/perf:/chore: …` → patch · `feat!: …` 또는 본문 `BREAKING CHANGE` → major
    - 예: `feat(watchlist): 52주 최고가 대비 하락률 열 추가`
@@ -47,7 +47,10 @@
 5. **Electron 보안 설정 변경 금지**: `contextIsolation: true`, `nodeIntegration: false`, IPC 는 `preload.js` 의 `contextBridge` 로만.
 6. **Windows 빌드는 NSIS 전용** (`build.win.target: "nsis"`, `asar: false`). zip/portable 금지.
 7. **비밀값 금지**: API 키·keystore·비밀번호를 코드/문서에 넣지 않는다 (GitHub Secrets 사용).
-8. `.github/workflows/` 는 Claude GitHub App 권한상 수정할 수 없다 — 워크플로 변경이 필요하면 이슈에 제안만 남긴다.
+8. **작업 큐/Actions 안의 Claude 는 `.github/workflows/` 를 수정할 수 없다** (`GITHUB_TOKEN` 은 워크플로 파일을 푸시할 수 없음).
+   워크플로 변경이 필요하면 이슈에 제안을 남기고, 사람이 승인한 세션에서 별도 PR 로 반영한다.
+9. **검사(`scripts/`)를 바꿔야 하는 PR** (화면 구조 변경·파일 삭제 등): CI 는 claude/*·codex/* 브랜치를 main 의 검사로 돌리므로 실패한다.
+   PR 에 바뀐 검사가 느슨해지지 않았음을 적고, 사람이 검토 후 `tests-approved` 라벨을 붙이면 PR 브랜치의 검사로 CI 가 돈다.
 
 ---
 
@@ -55,21 +58,18 @@
 
 | 항목 | 내용 |
 |------|------|
-| 플랫폼 | Electron EXE (Windows) + PWA/TWA (Android, GitHub Pages) |
+| 플랫폼 | Electron EXE (Windows) + 웹 브라우저 (GitHub Pages). 모바일(Android TWA·PWA)은 2026-10 폐기 |
 | PC 앱 | `index.html` 단일 파일 (HTML+CSS+JS, ~13,000줄) — Electron 메인 창 |
-| 모바일 | `mobile.html` 단일 파일 — PWA `start_url`, TWA 가 이 페이지를 연다 |
 | Electron | `main.js`(메인 프로세스·IPC·CORS 우회 fetch) / `preload.js`(contextBridge) / `splash.html` |
-| PWA | `manifest.json`, `sw.js`(HTML network-first, 정적자원 cache-first) |
-| 데이터 | PC: `%APPDATA%\StockBook\stockbook-data.json` / 모바일: localStorage |
+| 데이터 | PC: `%APPDATA%\StockBook\stockbook-data.json` / 웹: localStorage |
 | Electron 버전 | 31.7.7 |
 
 ### 파일 맵
 
 ```
-index.html  mobile.html  splash.html      ← 앱 본체 (Pages 로도 서빙됨)
+index.html  splash.html                  ← 앱 본체 (index.html 은 Pages 로도 서빙됨)
 main.js  preload.js  installer.nsh         ← Electron / NSIS
-manifest.json  sw.js  icon-*.png  icon.ico  logo.svg
-android/twa-manifest.json                  ← TWA 설정 템플릿 (packageId·alias 는 CI 가 주입)
+icon-*.png  icon.ico  logo.svg
 scripts/check-syntax.mjs                   ← 정적 검사   (npm run check)
 scripts/smoke.mjs                          ← 스모크 테스트 (npm run smoke)
 scripts/bump-version.mjs                   ← 버전 일괄 갱신 (릴리스 전용)
@@ -82,7 +82,6 @@ CHANGELOG.md                               ← 릴리스마다 자동 생성
 
 ### 변경 범위 판단
 
-- `mobile.html` / `manifest.json` / `sw.js` 만 바꾼 경우에도 릴리스는 돌지만, 실사용 반영은 Pages 갱신이 핵심이다.
 - `index.html` 은 Electron 과 Pages 양쪽에서 쓰인다. `window.electronAPI` 가 없을 때(브라우저)도 초기화가 깨지지 않아야 한다 — 스모크 테스트가 이것을 검사한다.
 
 ---
@@ -92,9 +91,10 @@ CHANGELOG.md                               ← 릴리스마다 자동 생성
 - **초기화 코드에서 DOM 요소는 null 체크**: `document.getElementById(x)?.addEventListener(...)`. 없는 요소 참조 한 줄이 스크립트 전체를 멈춰 버튼 먹통을 일으켰다(v2.2.3, v2.3.1).
 - **dangling `async` / TDZ 주의**: 선언 전 `let/const` 참조 금지. 스크립트 하나가 통째로 죽는다(v2.2.1).
 - **Electron GPU 합성 레이어 hit-test 버그**: 모달·오버레이에 `backdrop-filter` 금지, 필요한 경우 `transform: translateZ(0)` 로 독립 레이어 승격(v2.2.0, v2.3.2, v2.3.3).
-- 오버레이 페이드아웃 클래스에는 `pointer-events: none` 필수 (`#mobileIntro .fade-out`).
+- 오버레이 페이드아웃 클래스에는 `pointer-events: none` 필수 (`#mobileIntro .fade-out` — 이름과 달리 Electron 시작 인트로).
+- 모바일 전용 파일(`mobile.html`·`manifest.json`·`sw.js`·`android/`)을 다시 만들지 않는다 (2026-10 폐기 결정).
 - 모달 안 `<button>` 은 `type="button"` 명시.
-- **외부 API 는 main.js 에서 호출 → IPC → 렌더러** (CORS 회피). 렌더러 직접 fetch 는 모바일(PWA) 전용 코드에서만.
+- **외부 API 는 main.js 에서 호출 → IPC → 렌더러** (CORS 회피). 렌더러 직접 fetch 는 브라우저(Pages) 폴백 코드에서만.
 - HTML=레이아웃, JS=상태·API·로직, main.js=네트워크 브리지.
 - **UI 는 디자인 토큰(`--sb-*`)과 공통 컴포넌트(`.sb-btn/.sb-input/.sb-modal/.sb-stat`)만 사용**한다. 새 하드코딩 색상 금지 (`docs/UI-REVAMP-PLAN.md` §8).
 - 새 팝업은 `.sb-modal--s/m/l` 규격(head/body/foot, 닫기 버튼)으로 만든다. 설정 항목은 설정 허브(`#settingsModal`, `settingsGo(cat)`) 카테고리에 추가한다.
