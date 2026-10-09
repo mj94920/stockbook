@@ -58,7 +58,7 @@
 
 | 항목 | 내용 |
 |------|------|
-| 플랫폼 | Electron EXE (Windows) + 웹 브라우저 (GitHub Pages). 모바일(Android TWA·PWA)은 2026-10 폐기 |
+| 플랫폼 | Electron EXE (Windows) + 웹 브라우저 (GitHub Pages). Legacy 모바일(Android TWA·PWA)은 2026-10 폐기. **StockBook Android 2.0(Kotlin)** 은 신규 클라이언트로 §8 에 따라 개발 |
 | PC 앱 | `index.html` 단일 파일 (HTML+CSS+JS, ~13,000줄) — Electron 메인 창 |
 | Electron | `main.js`(메인 프로세스·IPC·CORS 우회 fetch) / `preload.js`(contextBridge) / `splash.html` |
 | 데이터 | PC: `%APPDATA%\StockBook\stockbook-data.json` / 웹: localStorage |
@@ -92,7 +92,8 @@ CHANGELOG.md                               ← 릴리스마다 자동 생성
 - **dangling `async` / TDZ 주의**: 선언 전 `let/const` 참조 금지. 스크립트 하나가 통째로 죽는다(v2.2.1).
 - **Electron GPU 합성 레이어 hit-test 버그**: 모달·오버레이에 `backdrop-filter` 금지, 필요한 경우 `transform: translateZ(0)` 로 독립 레이어 승격(v2.2.0, v2.3.2, v2.3.3).
 - 오버레이 페이드아웃 클래스에는 `pointer-events: none` 필수 (`#mobileIntro .fade-out` — 이름과 달리 Electron 시작 인트로).
-- 모바일 전용 파일(`mobile.html`·`manifest.json`·`sw.js`·`android/`)을 다시 만들지 않는다 (2026-10 폐기 결정).
+- **Legacy 모바일(PWA/TWA)은 폐기 상태를 유지한다.** `mobile.html`·루트 `manifest.json`·`sw.js`·Legacy TWA(`twa-manifest.json`, Bubblewrap 산출물)를 복원하거나 다시 만들지 않는다 (2026-10 폐기 결정).
+- StockBook Android 2.0 은 위 Legacy 의 복구가 아니다. 개발 범위와 규칙은 §8 을 따른다.
 - 모달 안 `<button>` 은 `type="button"` 명시.
 - **외부 API 는 main.js 에서 호출 → IPC → 렌더러** (CORS 회피). 렌더러 직접 fetch 는 브라우저(Pages) 폴백 코드에서만.
 - HTML=레이아웃, JS=상태·API·로직, main.js=네트워크 브리지.
@@ -143,6 +144,7 @@ CHANGELOG.md                               ← 릴리스마다 자동 생성
 - [ ] 토스 API 연동 → 전 증권사 합산 뷰
 - [ ] EXE 자동 업데이트 (electron-updater + GitHub Releases)
 - [ ] `index.html` 모듈 분리 검토 (파일이 13,000줄을 넘어 유지보수 부담)
+- [ ] StockBook Android 2.0 — §8 의 게이트 순서대로 (#29 → #47 → Contract → Provider/Engine → PC 기반 완성선 → Android)
 
 ---
 
@@ -157,3 +159,49 @@ npm run dist       # 로컬 NSIS 빌드 → dist/
 ```
 
 로컬 빌드·배포는 더 이상 필요 없다. main 에 들어가면 CI 가 전부 처리한다.
+
+---
+
+## 8. StockBook Android 2.0 (신규 · Kotlin)
+
+> 기획: Notion `Stock Book Android 2.0 — 모바일 전용 기획 메모 (2026-10-09)`. 아래는 저장소 규칙이며, 기획과 다르면 이 절이 아니라 기획을 먼저 갱신한다.
+
+### 8-1. 정의
+
+- Android 2.0 은 **Kotlin 기반 신규 클라이언트**다. Legacy PWA/TWA 의 복구가 아니며, **PC UI 코드(`index.html` 등)를 재사용하지 않는다.**
+- PC 와 Android 가 공유하는 것은 `shared/` 의 **데이터 규격(schemas) · 테스트 정답(fixtures) · 판정 정의(docs)** 뿐이다.
+  계산 코드(JS/Kotlin)·UI·네트워크/저장소 구현은 공유하지 않는다.
+- 위치는 이 저장소의 `android/`. 별도 저장소로 분리하지 않는다 (같은 `shared/` 파일을 양쪽이 검증하기 위해).
+
+### 8-2. 착수 순서 (게이트)
+
+아래 순서를 건너뛰지 않는다. **PC 기반 완성선** 이전에는 `android/` 를 만들지 않는다.
+
+```
+Phase 0    현황 조사 (완료)
+Phase 0.5  정책 변경 (이 절)
+#29  SQLite 저장구조 기반
+#47  Asset / 고유 식별자 (name → stockCode/assetId)
+Contract 핵심 결정  통화 · 정밀도/반올림 · changeRate 단위 · timestamp/priceType · 데이터 부족 처리 · Event 중복 방지
+Shared Contract    schemas · fixtures · docs
+Market Data Provider 분리 → DailyCandle Provider → Indicator Engine → Signal Engine
+JS Fixture Test PASS
+──── PC 기반 완성선 ────
+Android 2.0 프로젝트 생성 → Kotlin 구현 → Kotlin Fixture Test PASS → Android UI
+```
+
+- 자동 개발(Claude/Codex)은 이 절의 **현재 단계에 해당하는 이슈만** 처리한다. 뒤 단계 이슈를 미리 구현하지 않는다.
+- Asset·SQLite·DailyCandle·Indicator/Signal Engine 은 **Android 전용이 아니라 StockBook 자체의 2차 개편 과제**다. Android 는 그 결과를 쓰는 두 번째 클라이언트다.
+  이슈·PR 에는 "Android 때문에 필요한 것"과 "StockBook 자체 개편"을 구분해 적는다.
+
+### 8-3. 규칙
+
+1. `shared/` 는 데이터 규격 · fixture · 규칙 문서만 둔다. 실행 코드(JS/Kotlin)를 넣지 않는다.
+2. **Contract 를 먼저 고치고 구현을 맞춘다.** 한 플랫폼 구현만 바꿔 fixture 결과가 달라지게 하지 않는다. 계약 변경은 양쪽 테스트를 함께 갱신한다.
+3. Contract 는 기존 식별 체계(종목명 연결)를 굳히지 않는다. 종목은 `stockCode`/`assetId` 로 참조한다 (#47 선행).
+4. 금액에는 `currency` 를 붙인다. 통화별 최소단위/정밀도는 `shared/docs/DATA_CONTRACT.md` 가 정한다. **서로 다른 통화의 금액을 단순 합산하지 않는다.**
+5. Android 는 네이버/Yahoo 를 직접 호출하지 않는다. 일봉·기준정보는 `data` 브랜치 일일 JSON(#31), 장중 Snapshot 은 별도 Provider 로 분리한다. 초기판은 장중 실시간성을 포함하지 않는다.
+6. 계산 가능한 판정(이동평균·상태·사건·신호)은 코드가 한다. AI 에 차트 이미지를 읽혀 판정하지 않는다.
+7. API 키·keystore·서명 키를 저장소에 넣지 않는다 (§1-7). Android 앱에 증권사 API 키를 내장하지 않는다.
+8. Android 코드는 `android/` 아래에만 둔다. PC 코드(`index.html`·`main.js`·`preload.js`)에서 Android 를 참조하지 않는다.
+9. **CI/Release 는 Windows 와 완전히 분리**한다. Android 워크플로는 `android-*.yml` 로 따로 두고, Android 변경이 Windows 릴리스를 만들지 않으며 그 반대도 같다. 워크플로 변경은 사람이 PR 로 반영한다 (§1-8).

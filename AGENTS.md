@@ -30,10 +30,17 @@ Claude 는 `queue` 라벨 이슈를 번호 순서대로 하나씩 처리한다 (
 5. **CI 실패 시**: Actions 로그와 Artifacts 의 `smoke-shots`(다크/라이트 스크린샷)를 보고 같은 브랜치에 수정 커밋을 올린다.
 6. 작은 단위로 자주: 한 PR 은 한 가지 목적. `index.html` 대규모 재작성은 큐 작업과 충돌하므로 피한다.
 
+## Android 2.0 관련
+
+- Legacy PWA/TWA(`mobile.html`, 루트 `manifest.json`, `sw.js`)는 복원하지 않는다. StockBook Android 2.0 은 그 복구가 아니라 신규 Kotlin 클라이언트다.
+- `android/`·`shared/` 는 `CLAUDE.md` §8 의 단계(현재 단계의 이슈)에 해당할 때만 건드린다. 뒤 단계를 미리 구현하지 않는다.
+
 ## 저장소 구조 (요약)
 
 ```
-index.html   ← PC 앱 본체 (Electron 메인 창 · Pages). 모바일(Android·PWA)은 폐기됨
+index.html   ← PC 앱 본체 (Electron 메인 창 · Pages). Legacy 모바일(PWA/TWA)은 폐기됨
+shared/      ← (예정) PC·Android 공유 데이터 규격·fixture·규칙 문서. 실행 코드 없음
+android/     ← (예정) StockBook Android 2.0 (Kotlin 신규, PC 코드 재사용 없음). CLAUDE.md §8 게이트 이후에만 생성
 main.js / preload.js ← Electron 메인·IPC (외부 API 는 여기서 호출 → IPC)
 scripts/     ← check-syntax · smoke · bump-version
 .github/     ← ci · claude · queue · release 워크플로 (수정은 사람 PR 로만)
