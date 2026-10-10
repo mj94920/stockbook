@@ -2,6 +2,10 @@
 
 자동 생성 — `scripts/bump-version.mjs`
 
+## v1.8.3 — 2026-10-10
+
+- style(brand): 새 앱 아이콘 채택 + 2차 구조 개편 작업 지시서(에픽 #46) (#53)
+
 ## v1.8.2 — 2026-10-10
 
 - docs(design): StockBook Android 2.0 UI v2 시각 시안 등록 (참고 자료) (#60)
