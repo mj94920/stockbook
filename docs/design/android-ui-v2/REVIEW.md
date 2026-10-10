@@ -1,5 +1,9 @@
 # StockBook Android 2.0 — UI v2 시각 검토 패키지
 
+> **⚠️ Android(모바일) 전용 시안이다. PC 데스크톱 UI(`index.html`·`splash.html`)에 적용하지 않는다.**
+> 하단 탭·모바일 카드 레이아웃·색·간격 등 어떤 요소도 데스크톱으로 옮기지 않는다. PC UI 기준은 `docs/UI-REVAMP-PLAN.md` 와 UI 2차 이슈(#35~#41)다.
+> 이 시안의 구현은 `CLAUDE.md` §8 의 Android Gate 이후 `android/`(Kotlin) 에서만 한다.
+
 ## 산출물
 - `png/`: 18개 화면, 각 780×1688px (390×844dp @2x)
 - `source/`: 동일 화면의 편집 가능한 SVG 원본

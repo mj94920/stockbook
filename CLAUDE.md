@@ -94,6 +94,7 @@ CHANGELOG.md                               ← 릴리스마다 자동 생성
 - 오버레이 페이드아웃 클래스에는 `pointer-events: none` 필수 (`#mobileIntro .fade-out` — 이름과 달리 Electron 시작 인트로).
 - **Legacy 모바일(PWA/TWA)은 폐기 상태를 유지한다.** `mobile.html`·루트 `manifest.json`·`sw.js`·Legacy TWA(`twa-manifest.json`, Bubblewrap 산출물)를 복원하거나 다시 만들지 않는다 (2026-10 폐기 결정).
 - StockBook Android 2.0 은 위 Legacy 의 복구가 아니다. 개발 범위와 규칙은 §8 을 따른다.
+- **`docs/design/android-ui-v2/` 는 Android(모바일) 전용 시안이다. PC UI(`index.html`·`splash.html`)에 적용하지 않는다** — 하단 탭·모바일 레이아웃·간격 등을 데스크톱으로 옮기지 않는다. PC UI 기준은 `docs/UI-REVAMP-PLAN.md` 와 UI 2차 이슈다.
 - 모달 안 `<button>` 은 `type="button"` 명시.
 - **외부 API 는 main.js 에서 호출 → IPC → 렌더러** (CORS 회피). 렌더러 직접 fetch 는 브라우저(Pages) 폴백 코드에서만.
 - HTML=레이아웃, JS=상태·API·로직, main.js=네트워크 브리지.
