@@ -16,6 +16,7 @@ on:
       - '.claude/**'
       - '.gitignore'   # 저장소 설정 파일 — 앱에 포함되지 않음 (build.files 에 없음)
       - 'android/**'   # Android 2.0 은 Windows 릴리스와 무관 — android-*.yml 이 따로 담당 (CLAUDE.md §8-3-9)
+      - 'docs/**'      # 설계 문서·디자인 시안(PNG/SVG 포함)은 앱에 포함되지 않음 (build.files 에 없음). 앱 코드와 함께 바뀌면 그쪽 파일 때문에 정상 실행된다
   workflow_dispatch:
     inputs:
       bump:
