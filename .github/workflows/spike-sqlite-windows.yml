@@ -60,8 +60,11 @@ jobs:
           New-Item -ItemType Directory -Force "$app\resources\app\spike" | Out-Null
           Copy-Item spike\sqlite-windows\spike.cjs "$app\resources\app\spike\"
           $env:ELECTRON_RUN_AS_NODE = "1"
-          & $exe.FullName "$app\resources\app\spike\spike.cjs" "$PWD\spike-out-dir"
-          exit $LASTEXITCODE
+          # GUI 서브시스템 exe 는 `&` 로 호출하면 pwsh 가 종료를 기다리지 않는다 -> Start-Process -Wait 로 대기하고 출력을 파일로 받는다
+          $p = Start-Process -FilePath $exe.FullName -ArgumentList "`"$app\resources\app\spike\spike.cjs`"", "`"$PWD\spike-out-dir`"" -Wait -PassThru -NoNewWindow -RedirectStandardOutput spike-stdout-dir.txt -RedirectStandardError spike-stderr-dir.txt
+          Get-Content spike-stdout-dir.txt; Get-Content spike-stderr-dir.txt
+          "exit code: $($p.ExitCode)"
+          exit $p.ExitCode
 
       - name: 요약 게시 (--dir 산출물)
         if: always()
@@ -101,8 +104,10 @@ jobs:
           New-Item -ItemType Directory -Force "$dest\resources\app\spike" | Out-Null
           Copy-Item spike\sqlite-windows\spike.cjs "$dest\resources\app\spike\"
           $env:ELECTRON_RUN_AS_NODE = "1"
-          & $exe.FullName "$dest\resources\app\spike\spike.cjs" "$PWD\spike-out-installed"
-          $code = $LASTEXITCODE
+          $p = Start-Process -FilePath $exe.FullName -ArgumentList "`"$dest\resources\app\spike\spike.cjs`"", "`"$PWD\spike-out-installed`"" -Wait -PassThru -NoNewWindow -RedirectStandardOutput spike-stdout-inst.txt -RedirectStandardError spike-stderr-inst.txt
+          Get-Content spike-stdout-inst.txt; Get-Content spike-stderr-inst.txt
+          "exit code: $($p.ExitCode)"
+          $code = $p.ExitCode
           if (Test-Path spike-out-installed\spike-summary.md) { "## 설치본(NSIS silent) 결과" | Out-File $env:GITHUB_STEP_SUMMARY -Append; Get-Content spike-out-installed\spike-summary.md | Out-File $env:GITHUB_STEP_SUMMARY -Append }
           exit $code
 
