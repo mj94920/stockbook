@@ -69,7 +69,7 @@
 ```
 index.html  splash.html                  ← 앱 본체 (index.html 은 Pages 로도 서빙됨)
 main.js  preload.js  installer.nsh         ← Electron / NSIS
-icon-*.png  icon.ico  logo.svg
+icon-*.png  icon.ico                     ← 앱 아이콘 (파란 책 + 상승 차트)
 scripts/check-syntax.mjs                   ← 정적 검사   (npm run check)
 scripts/smoke.mjs                          ← 스모크 테스트 (npm run smoke)
 scripts/bump-version.mjs                   ← 버전 일괄 갱신 (릴리스 전용)

@@ -28,8 +28,7 @@
       "splash.html",
       "icon-192.png",
       "icon-512.png",
-      "icon.ico",
-      "logo.svg"
+      "icon.ico"
     ],
     "win": {
       "target": "nsis",

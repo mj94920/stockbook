@@ -275,7 +275,6 @@ StockBook-PWA/
 ├── manifest.json            ← PWA 매니페스트
 ├── sw.js                    ← 서비스워커 (network-first)
 ├── icon-192.png / icon-512.png
-├── logo.svg
 ├── StockBook 1.3.0.exe      ← 최신 포터블 exe
 └── CLAUDE.md                ← 개발 세션 메모
 ```
