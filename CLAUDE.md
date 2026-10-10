@@ -99,7 +99,8 @@ CHANGELOG.md                               ← 릴리스마다 자동 생성
 - 모달 안 `<button>` 은 `type="button"` 명시.
 - **외부 API 는 main.js 에서 호출 → IPC → 렌더러** (CORS 회피). 렌더러 직접 fetch 는 브라우저(Pages) 폴백 코드에서만.
 - HTML=레이아웃, JS=상태·API·로직, main.js=네트워크 브리지.
-- **새 도메인 로직(종목 ID·Provider·타임라인·규칙 등)은 `index.html` 에 쓰지 않고 `src/` 아래 별도 파일로 만든다** (`docs/STRUCTURE-REVAMP-PLAN.md` §11). 종목 간 관계는 `assetId` 로만 건다 — 종목명은 표시값이다.
+- **새 도메인 로직(종목 ID·Provider·타임라인·규칙 등)은 `index.html` 에 쓰지 않고 `src/` 아래 별도 파일로 만든다** (`docs/STRUCTURE-REVAMP-PLAN.md` §11).
+- **종목 연결 경계 (#29 / #47)**: #47 완료 이후 신규·마이그레이션된 도메인 레코드의 종목 연결은 `assetId` 만 사용한다(종목명은 표시값). **#29 에서는 기존 종목 연결 방식(`name`/`ticker`)을 변경하거나 `assetId` 마이그레이션을 수행하지 않는다** — #29 는 저장 계층·백업·롤백·스키마 v1(`asset_id` 컬럼은 구조만, 비워 둠)까지다.
 - **UI 는 디자인 토큰(`--sb-*`)과 공통 컴포넌트(`.sb-btn/.sb-input/.sb-modal/.sb-stat`)만 사용**한다. 새 하드코딩 색상 금지 (`docs/UI-REVAMP-PLAN.md` §8).
 - 새 팝업은 `.sb-modal--s/m/l` 규격(head/body/foot, 닫기 버튼)으로 만든다. 설정 항목은 설정 허브(`#settingsModal`, `settingsGo(cat)`) 카테고리에 추가한다.
 - 사이드바 메뉴는 `.mdi-sb-btn[data-pid]` ↔ `#mdi-panel-{pid}[data-mdi-state]`, 시장 일정은 `#calPanel` — 스모크 테스트가 이 id 들에 의존하므로 바꾸면 `scripts/smoke.mjs` 도 함께 고친다.
@@ -196,7 +197,7 @@ Android 2.0 프로젝트 생성 → Kotlin 구현 → Kotlin Fixture Test PASS �
 ```
 
 - 자동 개발(Claude/Codex)은 이 절의 **현재 단계에 해당하는 이슈만** 처리한다. 뒤 단계 이슈를 미리 구현하지 않는다.
-- #29 착수 조건: UI 2차(#36–#40) 완료. #47 은 #29 의 백업·검증·롤백 체계를 재사용하며 JSON 위에 별도 마이그레이션을 만들지 않는다. 세부는 `docs/STRUCTURE-REVAMP-PLAN.md`.
+- #29 착수 조건: UI 2차(#36–#40) 완료. #29 는 기존 종목 연결(`name`/`ticker`)을 그대로 보존해 옮기며 `assetId` 를 채우지 않는다. #47 은 #29 의 백업·검증·롤백 체계를 재사용하며 JSON 위에 별도 마이그레이션을 만들지 않는다. 세부는 `docs/STRUCTURE-REVAMP-PLAN.md`.
 - **#49(시계열 저장)는 #29(SQLite)에 의존한다.** #48 ~ #52 는 2차 기획의 기존 의존관계를 그대로 따른다.
 - **#51(종목 타임라인) · #52(매수 근거 ↔ 결과)는 Android Gate 밖이다.** Android 가 의존하지 않으므로 게이트 통과 여부와 무관하게 별도로 진행한다.
 - Asset·SQLite·DailyCandle·Indicator/Signal Engine 은 **Android 전용이 아니라 StockBook 자체의 2차 개편 과제**다. Android 는 그 결과를 쓰는 두 번째 클라이언트다.
@@ -207,7 +208,7 @@ Android 2.0 프로젝트 생성 → Kotlin 구현 → Kotlin Fixture Test PASS �
 1. `shared/` 는 데이터 규격 · fixture · 규칙 문서만 둔다. 실행 코드(JS/Kotlin)를 넣지 않는다.
 2. **Contract 를 먼저 고치고 구현을 맞춘다.** 한 플랫폼 구현만 바꿔 fixture 결과가 달라지게 하지 않는다. 계약 변경은 양쪽 테스트를 함께 갱신한다.
 3. Contract 는 기존 식별 체계(종목명 연결)를 굳히지 않는다 (#47 선행). 식별자의 역할은 둘로 나뉜다.
-   - **`assetId`** = StockBook 내부의 **불변 영속 ID** (UUID 계열 opaque 값). **내부 관계(보유·거래·일지·관심·메모)는 `assetId` 만 사용**한다.
+   - **`assetId`** = StockBook 내부의 **불변 영속 ID** (UUID 계열 opaque 값). **#47 완료 이후 내부 관계(보유·거래·일지·관심·메모)는 `assetId` 만 사용**한다.
      최초 마이그레이션에서 발급하고 `(market, stockCode) ↔ assetId` 매핑을 보존한다. 해시 등으로 재계산하지 않으며 발급 후 바뀌지 않는다.
    - **`stockCode`(+`market`)** = 시장에서 쓰는 **외부 식별자**. 시장 데이터 매핑용 속성이며 관계 키가 아니다. 코드·심볼이 바뀌어도 `assetId` 는 유지한다.
 4. 금액에는 `currency` 를 붙인다. 통화별 최소단위/정밀도는 `shared/docs/DATA_CONTRACT.md` 가 정한다. **서로 다른 통화의 금액을 단순 합산하지 않는다.**
