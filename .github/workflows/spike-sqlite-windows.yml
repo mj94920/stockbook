@@ -39,7 +39,9 @@ jobs:
       - name: 드라이버 추가 (러너 작업 사본에서만, 저장소에 커밋되지 않음)
         run: npm install better-sqlite3@${{ env.DRIVER_VERSION }} --save-exact
 
+      # cmd 셸 사용: release.yml 의 `npm run dist`(cmd 로 실행)와 같은 인자 해석. pwsh 는 `-c.directories.output=dist` 를 쪼개 오류가 난다(1차 실행에서 확인).
       - name: 앱 패키징 - electron-builder --win --dir (release.yml 과 같은 설정)
+        shell: cmd
         run: npx electron-builder --win --dir --publish never -c.directories.output=dist
 
       - name: 패키지에 네이티브 바이너리가 포함됐는지 확인
@@ -71,9 +73,14 @@ jobs:
       - name: NSIS 설치 파일 빌드 (npm run dist 와 같은 대상)
         if: always()
         continue-on-error: true
+        shell: cmd
+        run: npx electron-builder --win nsis --publish never -c.directories.output=dist-nsis
+
+      - name: 설치 파일 확인
+        if: always()
+        continue-on-error: true
         shell: pwsh
         run: |
-          npx electron-builder --win nsis --publish never -c.directories.output=dist-nsis
           $s = Get-ChildItem dist-nsis -Filter *.exe | Where-Object { $_.Name -match 'Setup' } | Select-Object -First 1
           if (-not $s) { throw "설치 파일이 생성되지 않았다" }
           "installer: $($s.Name)  $([math]::Round($s.Length/1MB,1)) MB" | Tee-Object -Append $env:GITHUB_STEP_SUMMARY
