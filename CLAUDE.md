@@ -76,6 +76,8 @@ scripts/bump-version.mjs                   ← 버전 일괄 갱신 (릴리스 �
 .github/scripts/{ship-branch,sync-main,pr-scope}.sh ← Claude 브랜치 PR·main 동기화·머지, PR 변경 범위 판정 (워크플로가 호출)
 .github/workflows/{ci,claude,queue,release,repo-setup,android-ci}.yml
 docs/UI-REVAMP-PLAN.md                     ← UI/UX 1차 개편 기준 문서 (진행 중)
+docs/STRUCTURE-REVAMP-PLAN.md              ← 2차 구조 개편 작업 지시서 (#29 → #47 → … → #50, 에픽 #46)
+docs/SQLITE-STORAGE-DESIGN.md              ← #29 SQLite 저장 구조 설계 (승인)
 docs/                                      ← PRD, 과거 개발 로그
 CHANGELOG.md                               ← 릴리스마다 자동 생성
 ```
@@ -97,6 +99,7 @@ CHANGELOG.md                               ← 릴리스마다 자동 생성
 - 모달 안 `<button>` 은 `type="button"` 명시.
 - **외부 API 는 main.js 에서 호출 → IPC → 렌더러** (CORS 회피). 렌더러 직접 fetch 는 브라우저(Pages) 폴백 코드에서만.
 - HTML=레이아웃, JS=상태·API·로직, main.js=네트워크 브리지.
+- **새 도메인 로직(종목 ID·Provider·타임라인·규칙 등)은 `index.html` 에 쓰지 않고 `src/` 아래 별도 파일로 만든다** (`docs/STRUCTURE-REVAMP-PLAN.md` §11). 종목 간 관계는 `assetId` 로만 건다 — 종목명은 표시값이다.
 - **UI 는 디자인 토큰(`--sb-*`)과 공통 컴포넌트(`.sb-btn/.sb-input/.sb-modal/.sb-stat`)만 사용**한다. 새 하드코딩 색상 금지 (`docs/UI-REVAMP-PLAN.md` §8).
 - 새 팝업은 `.sb-modal--s/m/l` 규격(head/body/foot, 닫기 버튼)으로 만든다. 설정 항목은 설정 허브(`#settingsModal`, `settingsGo(cat)`) 카테고리에 추가한다.
 - 사이드바 메뉴는 `.mdi-sb-btn[data-pid]` ↔ `#mdi-panel-{pid}[data-mdi-state]`, 시장 일정은 `#calPanel` — 스모크 테스트가 이 id 들에 의존하므로 바꾸면 `scripts/smoke.mjs` 도 함께 고친다.
@@ -143,7 +146,8 @@ CHANGELOG.md                               ← 릴리스마다 자동 생성
 - [x] **UI/UX 1차 개편** — 완료 (결과: `docs/UI-REVAMP-PLAN.md` §9)
 - [ ] 토스 API 연동 → 전 증권사 합산 뷰
 - [ ] EXE 자동 업데이트 (electron-updater + GitHub Releases)
-- [ ] `index.html` 모듈 분리 검토 (파일이 13,000줄을 넘어 유지보수 부담)
+- [ ] **2차 구조 개편** — `docs/STRUCTURE-REVAMP-PLAN.md`. UI 2차(#36–#40) 완료 후 #29 부터 `queue`
+- [ ] `index.html` 모듈 분리 — 2차 구조 개편의 새 코드(`src/`)부터 단계적으로
 - [ ] StockBook Android 2.0 — §8 의 게이트 순서대로 (#29 → #47 → Contract → Provider/Engine → PC 기반 완성선 → Android)
 
 ---
@@ -192,6 +196,7 @@ Android 2.0 프로젝트 생성 → Kotlin 구현 → Kotlin Fixture Test PASS �
 ```
 
 - 자동 개발(Claude/Codex)은 이 절의 **현재 단계에 해당하는 이슈만** 처리한다. 뒤 단계 이슈를 미리 구현하지 않는다.
+- #29 착수 조건: UI 2차(#36–#40) 완료. #47 은 #29 의 백업·검증·롤백 체계를 재사용하며 JSON 위에 별도 마이그레이션을 만들지 않는다. 세부는 `docs/STRUCTURE-REVAMP-PLAN.md`.
 - **#49(시계열 저장)는 #29(SQLite)에 의존한다.** #48 ~ #52 는 2차 기획의 기존 의존관계를 그대로 따른다.
 - **#51(종목 타임라인) · #52(매수 근거 ↔ 결과)는 Android Gate 밖이다.** Android 가 의존하지 않으므로 게이트 통과 여부와 무관하게 별도로 진행한다.
 - Asset·SQLite·DailyCandle·Indicator/Signal Engine 은 **Android 전용이 아니라 StockBook 자체의 2차 개편 과제**다. Android 는 그 결과를 쓰는 두 번째 클라이언트다.
