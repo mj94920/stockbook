@@ -2,6 +2,16 @@
 
 자동 생성 — `scripts/bump-version.mjs`
 
+## v1.8.2 — 2026-10-10
+
+- docs(design): StockBook Android 2.0 UI v2 시각 시안 등록 (참고 자료) (#60)
+- docs: #29 설계 확정 반영 — D4 섀도 JSON 폐기, 복구 구간 A/B/C 문구 정렬, 종료 훅은 보조 수단
+- docs: #29 설계 승인 반영 — id/asset_id 구분, 무손실 왕복 규칙, 이전 완료·저장 실패·롤백 경계
+- docs: #29 SQLite 저장 구조 설계 검증 — 드라이버 비교·스키마 v1 초안·이전/롤백 설계
+- chore(ci): Windows/Android CI·릴리스 경로 분리, 자동 머지 가드, .gitignore Gradle 규칙 정리, §8 게이트 명시
+- docs: StockBook Android 2.0 정책 추가 — Legacy 모바일 폐기 유지, 게이트 순서 정의
+- docs: add second-phase StockBook information architecture plan
+
 ## v1.8.1 — 2026-10-07
 
 - fix(ci): ci.yml 재사용 시 issues 권한 누락으로 Release·Claude 검증이 startup_failure 나는 문제 수정
