@@ -14,22 +14,28 @@ dist/
 test.log
 test-tail.log
 
-# Android TWA 로컬 빌드 산출물 (CI 는 android/twa-manifest.json 으로 매번 새로 생성)
+# Legacy Android TWA 로컬 빌드 산출물 (폐기됨 — 복원하지 않음, 남은 로컬 파일 보호용으로만 유지)
 /twa/
 /app/
-.gradle/
-build/
-gradle/
-gradlew
-gradlew.bat
-build.gradle
-settings.gradle
-gradle.properties
 /twa-manifest.json
 manifest-checksum.txt
 app-release-*.apk
 sign_apk.bat
 store_icon.png
+
+# StockBook Android 2.0 (android/) — 빌드 산출물·로컬 설정만 무시한다.
+# gradlew · gradlew.bat · gradle/wrapper/ · *.gradle(.kts) · gradle.properties 는 반드시 추적한다
+# (예전의 전역 규칙 gradle/ · gradlew · build.gradle · settings.gradle · gradle.properties 는 android/ 하위 파일까지 가렸다)
+android/.gradle/
+android/build/
+android/**/build/
+android/.idea/
+android/**/*.iml
+android/captures/
+android/.cxx/
+android/.externalNativeBuild/
+android/local.properties
+android/keystore.properties
 
 # 로컬 전용
 .claude/settings.local.json

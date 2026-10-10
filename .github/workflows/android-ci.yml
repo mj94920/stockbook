@@ -1,0 +1,72 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Android CI — StockBook Android 2.0 (Kotlin) 전용. Windows(ci.yml · release.yml)와 완전히 분리.
+#   android/ 프로젝트가 생기기 전에는 아무 일도 하지 않는다 (gate 잡이 확인 → 나머지 잡은 건너뜀).
+#   · 건너뛴 잡은 성공으로 취급되므로 필수 상태 체크로 걸어도 PR 이 막히지 않는다.
+#   · android/ 최초 생성은 Android Gate 통과 후에만 가능 (CLAUDE.md §8-2).
+#
+# 이 파일은 설계 골격이다. Gradle 태스크 이름·JDK·SDK 는 android/ 생성 PR 에서 확정한다 (TODO 표시).
+# Release(서명·배포)는 이 파일의 범위가 아니다 — 별도 android-release.yml · 태그 접두 'android-v*' (Windows 'v*' 와 분리).
+# ─────────────────────────────────────────────────────────────────────────────
+name: Android CI
+
+on:
+  pull_request:
+    paths:
+      - 'android/**'
+      - 'shared/**'      # 공유 fixture 가 바뀌면 Kotlin 구현도 같은 fixture 로 다시 검증
+      - '.github/workflows/android-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: android/ 프로젝트 존재 확인
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      ready: ${{ steps.chk.outputs.ready }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: chk
+        run: |
+          if [ -f android/gradlew ] && ls android/settings.gradle* >/dev/null 2>&1; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::android/ 프로젝트가 아직 없어 Android CI 를 건너뜁니다"
+          fi
+
+  test:
+    name: Kotlin fixture + 단위 테스트
+    needs: gate
+    if: needs.gate.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17      # TODO(android 생성 PR): AGP 버전에 맞춰 확정
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # 공유 계약 fixture(shared/fixtures)를 Kotlin 테스트가 직접 읽는다 — 복사본을 두지 않는다 (CLAUDE.md §8-1)
+      - name: 단위 테스트 (Kotlin fixture 포함)
+        run: ./gradlew testDebugUnitTest   # TODO(android 생성 PR): 태스크 확정
+
+      - name: 린트
+        run: ./gradlew lintDebug           # TODO(android 생성 PR): 태스크 확정
+
+      - name: 디버그 빌드
+        run: ./gradlew assembleDebug       # 서명 없는 디버그 빌드만. 키·keystore 는 CI 에 두지 않는다 (CLAUDE.md §1-7)

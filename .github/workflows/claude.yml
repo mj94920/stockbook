@@ -238,7 +238,7 @@ jobs:
         id: recheck
         run: |
           git fetch origin "$BRANCH" main && git checkout -q "origin/$BRANCH"
-          git checkout origin/main -- scripts/   # 검사 기준은 main 의 스크립트로 고정
+          git checkout origin/main -- scripts/ .github/scripts/   # 검사 기준·자동 머지 가드(ship-branch.sh, pr-scope.sh)는 main 의 스크립트로 고정
           if npm test; then echo "ok=true" >> "$GITHUB_OUTPUT"; else echo "ok=false" >> "$GITHUB_OUTPUT"; fi
 
       - name: 머지 또는 보류

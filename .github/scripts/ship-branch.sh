@@ -47,11 +47,34 @@ hold() {
 bash "$(dirname "$0")/sync-main.sh" "$BRANCH" \
   || hold "main 과 충돌이 있어 자동 머지를 보류했습니다 (버전 문자열 외의 충돌)."
 
+# ── 머지 직전 Android 가드 (CLAUDE.md §8-3-9, 10) ──────────────────────────────────────────
+# Android(android/) 변경이 포함된 PR 은 자동 머지하지 않는다. 이 경로의 검증(verify)에는 Android CI 가 없다.
+# 변경 파일을 판정하지 못한 경우(unknown)도 안전한 쪽으로 보류한다.
+# 검사 뒤에 커밋이 더해지면 검사 결과가 무효이므로, 머지할 커밋(sha)을 먼저 확정하고
+#   ① 그 sha 기준으로 판정 → ② 판정 사이에 브랜치가 움직이지 않았는지 재확인 → ③ 같은 sha 일 때만 머지(--match-head-commit)
+# sync-main 이 방금 푸시했을 수 있으므로 sha 는 PR 이 아니라 브랜치 ref 에서 읽고, PR 이 따라올 때까지 잠시 기다린다.
+branch_sha() { gh api "repos/$REPO/git/ref/heads/$BRANCH" --jq .object.sha 2>/dev/null || true; }
+sha=$(branch_sha)
+[ -n "$sha" ] || hold "브랜치 $BRANCH 의 최신 커밋을 확인하지 못해 자동 머지를 보류했습니다."
+prhead=""
+for i in 1 2 3 4 5 6; do
+  prhead=$(gh pr view "$pr" --repo "$REPO" --json headRefOid --jq .headRefOid 2>/dev/null || true)
+  [ "$prhead" = "$sha" ] && break
+  sleep "${SHIP_SLEEP:-5}"
+done
+[ "$prhead" = "$sha" ] || hold "PR 의 HEAD 가 브랜치 최신 커밋(${sha:0:7})과 일치하지 않아 자동 머지를 보류했습니다."
+scope=$(bash "$(dirname "$0")/pr-scope.sh" "$pr" "$sha")
+android=$(printf '%s\n' "$scope" | sed -n 's/^android=//p')
+[ "$android" = "false" ] \
+  || hold "Android(android/) 변경이 포함되었거나 변경 파일을 확인하지 못해(android=${android:-unknown}) 자동 머지를 보류했습니다. Android PR 은 사람이 검토하고 머지합니다."
+[ "$(branch_sha)" = "$sha" ] || hold "Android 변경 여부를 검사하는 동안 브랜치에 새 커밋이 추가되어 자동 머지를 보류했습니다."
+
 gh pr edit "$pr" --repo "$REPO" --add-label automerge
 merged=false
 for i in 1 2 3 4 5 6; do   # 방금 푸시한 머지 커밋의 mergeable 계산을 잠시 기다린다
-  if gh pr merge "$pr" --repo "$REPO" --squash --delete-branch; then merged=true; break; fi
-  sleep 10
+  # --match-head-commit: 검사한 sha 와 다르면 머지가 거부된다 (검사 이후의 커밋이 섞여 들어가지 못함)
+  if gh pr merge "$pr" --repo "$REPO" --squash --delete-branch --match-head-commit "$sha"; then merged=true; break; fi
+  sleep "${SHIP_SLEEP:-10}"
 done
 [ "$merged" = true ] || hold "자동 머지에 실패했습니다."
 echo "PR #$pr 머지 완료"

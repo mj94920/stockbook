@@ -33,7 +33,9 @@ Claude 는 `queue` 라벨 이슈를 번호 순서대로 하나씩 처리한다 (
 ## Android 2.0 관련
 
 - Legacy PWA/TWA(`mobile.html`, 루트 `manifest.json`, `sw.js`)는 복원하지 않는다. StockBook Android 2.0 은 그 복구가 아니라 신규 Kotlin 클라이언트다.
-- `android/`·`shared/` 는 `CLAUDE.md` §8 의 단계(현재 단계의 이슈)에 해당할 때만 건드린다. 뒤 단계를 미리 구현하지 않는다.
+- `android/`·`shared/` 는 `CLAUDE.md` §8 의 단계(현재 단계의 이슈)에 해당할 때만 건드린다. 뒤 단계를 미리 구현하지 않는다. `android/` 는 Android Gate 통과 전에는 만들지 않는다.
+- 종목 식별: 내부 관계는 `assetId`(불변 영속 ID)만 쓴다. `stockCode`(+`market`)는 외부 시장 식별자이며 관계 키가 아니다 (#47).
+- Android 워크플로(`android-*.yml`)와 Windows 워크플로(`ci.yml`·`release.yml`)는 분리돼 있다. 워크플로 변경은 사람 PR 로만 반영한다.
 
 ## 저장소 구조 (요약)
 

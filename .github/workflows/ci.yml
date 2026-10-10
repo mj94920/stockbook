@@ -29,6 +29,12 @@ jobs:
     name: 정적 검사 + 스모크 테스트
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: read   # PR 변경 파일 목록(API) 조회
+    outputs:
+      # 'false' = android/ 를 건드리지 않음이 확인된 PR 만. 그 외(Android 포함·판정 실패·PR 아님)는 자동 머지 불가.
+      android: ${{ steps.scope.outputs.android }}
     env:
       ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
     steps:
@@ -36,7 +42,28 @@ jobs:
         with:
           ref: ${{ inputs.ref || '' }}
 
+      # PR 의 변경 파일을 GitHub API 로 판정한다 (체크아웃 형태·브랜치 상태와 무관).
+      #   · android/ 만 바꾼 PR → Windows 검사를 건너뛴다 (Android 검사는 android-ci.yml 담당)
+      #   · android/ 를 건드리는 PR → 아래 automerge 를 차단한다 (CLAUDE.md §8-3-9, 10)
+      # 안전 규칙: 판정 스크립트 실행·API 조회가 어떤 이유로든 실패하면 출력이 비므로
+      #   Windows 검사는 건너뛰지 않고(windows != 'false'), 자동 머지는 하지 않는다(android != 'false').
+      # 판정 스크립트는 PR 브랜치가 아니라 main 의 것을 쓴다 (검사를 느슨하게 고쳐 통과하는 것 방지).
+      # 잡 자체는 성공으로 끝나므로 상태 체크 이름('정적 검사 + 스모크 테스트')과 automerge 의존(needs: test)은 그대로다.
+      - name: 검사 범위 판단
+        id: scope
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}   # 이 실행이 검사하는 커밋. PR HEAD 가 달라졌으면 unknown(=머지 불가)
+        run: |
+          git fetch --no-tags --depth=1 origin main
+          git show FETCH_HEAD:.github/scripts/pr-scope.sh > "$RUNNER_TEMP/pr-scope.sh"
+          bash "$RUNNER_TEMP/pr-scope.sh" "$PR" "$HEAD_SHA" | tee -a "$GITHUB_OUTPUT"
+
       - uses: actions/setup-node@v4
+        if: steps.scope.outputs.windows != 'false'
         with:
           node-version: 22
           cache: npm
@@ -45,6 +72,7 @@ jobs:
       # 단, 사람이 'tests-approved' 라벨로 검사 변경을 승인한 PR 은 PR 브랜치의 검사로 실행
       - name: 검사 스크립트 고정 (claude/* · codex/* 브랜치)
         if: >-
+          steps.scope.outputs.windows != 'false' &&
           (startsWith(inputs.ref, 'claude/') || startsWith(github.head_ref, 'claude/') ||
            startsWith(inputs.ref, 'codex/') || startsWith(github.head_ref, 'codex/')) &&
           !contains(github.event.pull_request.labels.*.name, 'tests-approved')
@@ -53,25 +81,52 @@ jobs:
           git checkout FETCH_HEAD -- scripts/
 
       - run: npm ci --ignore-scripts
+        if: steps.scope.outputs.windows != 'false'
 
       - name: 정적 검사
+        if: steps.scope.outputs.windows != 'false'
         run: npm run check
 
       - name: Playwright + Chromium 설치
+        if: steps.scope.outputs.windows != 'false'
         run: npm run test:setup
 
       - name: 스모크 테스트
+        if: steps.scope.outputs.windows != 'false'
         run: npm run smoke
 
       # 다크/라이트 화면 스크린샷 — Actions 실행 페이지 하단 Artifacts 에서 확인
       - name: 스크린샷 업로드
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.scope.outputs.windows != 'false' }}
         uses: actions/upload-artifact@v4
         with:
           name: smoke-shots-${{ github.run_attempt }}
           path: smoke-shots/
           if-no-files-found: ignore
           retention-days: 14
+
+  # Android 변경이 있거나 변경 파일을 판정하지 못한 PR 에 붙은 'automerge' 는 실행하지 않고 라벨을 떼어 알린다.
+  # (unlabeled 는 이 워크플로의 트리거가 아니므로 재실행 루프가 생기지 않는다)
+  automerge-blocked:
+    name: 자동 머지 차단 (Android · 판정 불가)
+    needs: test
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      contains(github.event.pull_request.labels.*.name, 'automerge') &&
+      needs.test.outputs.android != 'false'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PR: ${{ github.event.pull_request.number }}
+    steps:
+      - name: automerge 라벨 제거 + 안내
+        run: |
+          gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --remove-label automerge || true
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body "⚠️ 이 PR 은 \`android/\` 변경이 포함되었거나 변경 파일을 확인하지 못해 자동 머지하지 않습니다 (판정: android=${{ needs.test.outputs.android || 'unknown' }}). Android CI 가 필수 상태 검사로 등록·검증되기 전까지 Android PR 은 사람이 검토하고 머지합니다. (CLAUDE.md §8-3)" || true
 
   automerge:
     name: 자동 머지
@@ -80,7 +135,8 @@ jobs:
       github.event_name == 'pull_request' &&
       !github.event.pull_request.draft &&
       github.event.pull_request.head.repo.full_name == github.repository &&
-      contains(github.event.pull_request.labels.*.name, 'automerge')
+      contains(github.event.pull_request.labels.*.name, 'automerge') &&
+      needs.test.outputs.android == 'false'
     runs-on: ubuntu-latest
     permissions:
       contents: write

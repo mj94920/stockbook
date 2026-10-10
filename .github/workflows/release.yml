@@ -14,6 +14,8 @@ on:
       - '**.md'
       - '.github/**'   # 워크플로·템플릿 변경은 앱 릴리스 불필요
       - '.claude/**'
+      - '.gitignore'   # 저장소 설정 파일 — 앱에 포함되지 않음 (build.files 에 없음)
+      - 'android/**'   # Android 2.0 은 Windows 릴리스와 무관 — android-*.yml 이 따로 담당 (CLAUDE.md §8-3-9)
   workflow_dispatch:
     inputs:
       bump:

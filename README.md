@@ -5,7 +5,7 @@
 - 웹: https://mj94920.github.io/stockbook/ (PC 화면과 같은 `index.html`)
 - 설치 파일: [Releases](../../releases/latest) — `Stock Book Setup x.y.z.exe`
 - Legacy 모바일(Android TWA·PWA)은 2026-10 폐기했다. 복원하지 않는다.
-- Kotlin 기반 신규 클라이언트 **StockBook Android 2.0** 은 별도 계획으로 준비 중이다 (PC 기반 데이터 구조 정리 이후 착수, 기록은 `CLAUDE.md` §8).
+- Kotlin 기반 신규 클라이언트 **StockBook Android 2.0** 은 준비 중이다. Android Gate(#29 → #47 → Contract Gate → #48~#50 → JS Fixture PASS) 통과 후에 착수하며, 규칙은 `CLAUDE.md` §8.
 
 ## 개발 방식 — 이슈만 쓰면 끝
 
