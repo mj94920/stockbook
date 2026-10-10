@@ -1,0 +1,111 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# 검증 전용 스파이크 — #29 의 Windows 드라이버 검증 (docs/SQLITE-STORAGE-DESIGN.md §2-3)
+#   ⚠ 이 브랜치/PR 은 머지하지 않는다. 앱 코드·package.json·저장 계층을 바꾸지 않는다.
+#   러너의 작업 사본에서만 better-sqlite3 를 설치하고(커밋되지 않음) 실제 앱 패키징 설정으로 빌드해 확인한다.
+#   트리거: 이 브랜치로의 push, 수동 실행. 비밀값·쓰기 권한 없음.
+# ─────────────────────────────────────────────────────────────────────────────
+name: Spike - SQLite on Windows (verification only, do not merge)
+
+on:
+  push:
+    branches: [claude/spike-sqlite-windows]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spike-sqlite-windows
+  cancel-in-progress: true
+
+jobs:
+  spike:
+    name: better-sqlite3 12.x · Electron 31 · Windows
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      DRIVER_VERSION: '12.11.1'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: 드라이버 추가 (러너 작업 사본에서만, 저장소에 커밋되지 않음)
+        run: npm install better-sqlite3@${{ env.DRIVER_VERSION }} --save-exact
+
+      - name: 앱 패키징 - electron-builder --win --dir (release.yml 과 같은 설정)
+        run: npx electron-builder --win --dir --publish never -c.directories.output=dist
+
+      - name: 패키지에 네이티브 바이너리가 포함됐는지 확인
+        shell: pwsh
+        run: |
+          Get-ChildItem dist\win-unpacked -Filter *.exe | ForEach-Object { "exe: $($_.Name)" }
+          $m = Get-ChildItem -Recurse dist\win-unpacked\resources\app\node_modules\better-sqlite3 -Filter *.node -ErrorAction SilentlyContinue
+          $m | ForEach-Object { "{0}  {1} bytes" -f $_.FullName, $_.Length }
+          if (-not $m) { throw "better-sqlite3 .node 바이너리가 패키지에 없다" }
+
+      - name: 스파이크 실행 - 패키지된 앱의 Electron 런타임 (ELECTRON_RUN_AS_NODE)
+        shell: pwsh
+        run: |
+          $app = "dist\win-unpacked"
+          $exe = Get-ChildItem $app -Filter *.exe | Where-Object { $_.Name -notmatch 'uninstall|elevate' } | Select-Object -First 1
+          New-Item -ItemType Directory -Force "$app\resources\app\spike" | Out-Null
+          Copy-Item spike\sqlite-windows\spike.cjs "$app\resources\app\spike\"
+          $env:ELECTRON_RUN_AS_NODE = "1"
+          & $exe.FullName "$app\resources\app\spike\spike.cjs" "$PWD\spike-out-dir"
+          exit $LASTEXITCODE
+
+      - name: 요약 게시 (--dir 산출물)
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path spike-out-dir\spike-summary.md) { "## 패키지 산출물(--dir) 결과" | Out-File $env:GITHUB_STEP_SUMMARY -Append; Get-Content spike-out-dir\spike-summary.md | Out-File $env:GITHUB_STEP_SUMMARY -Append }
+          else { "스파이크 리포트가 생성되지 않았다" | Out-File $env:GITHUB_STEP_SUMMARY -Append }
+
+      - name: NSIS 설치 파일 빌드 (npm run dist 와 같은 대상)
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          npx electron-builder --win nsis --publish never -c.directories.output=dist-nsis
+          $s = Get-ChildItem dist-nsis -Filter *.exe | Where-Object { $_.Name -match 'Setup' } | Select-Object -First 1
+          if (-not $s) { throw "설치 파일이 생성되지 않았다" }
+          "installer: $($s.Name)  $([math]::Round($s.Length/1MB,1)) MB" | Tee-Object -Append $env:GITHUB_STEP_SUMMARY
+
+      - name: 설치본에서 스파이크 실행 (silent 설치 후)
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem dist-nsis -Filter *.exe | Where-Object { $_.Name -match 'Setup' } | Select-Object -First 1
+          if (-not $setup) { throw "설치 파일 없음" }
+          $dest = "C:\spike-install"
+          Start-Process -FilePath $setup.FullName -ArgumentList '/S', "/D=$dest" -Wait
+          Start-Sleep -Seconds 5
+          Get-Process | Where-Object { $_.Path -and $_.Path.StartsWith($dest) } | Stop-Process -Force -ErrorAction SilentlyContinue
+          $exe = Get-ChildItem $dest -Filter *.exe | Where-Object { $_.Name -notmatch 'uninstall|elevate' } | Select-Object -First 1
+          if (-not $exe) { throw "설치본 실행 파일 없음" }
+          New-Item -ItemType Directory -Force "$dest\resources\app\spike" | Out-Null
+          Copy-Item spike\sqlite-windows\spike.cjs "$dest\resources\app\spike\"
+          $env:ELECTRON_RUN_AS_NODE = "1"
+          & $exe.FullName "$dest\resources\app\spike\spike.cjs" "$PWD\spike-out-installed"
+          $code = $LASTEXITCODE
+          if (Test-Path spike-out-installed\spike-summary.md) { "## 설치본(NSIS silent) 결과" | Out-File $env:GITHUB_STEP_SUMMARY -Append; Get-Content spike-out-installed\spike-summary.md | Out-File $env:GITHUB_STEP_SUMMARY -Append }
+          exit $code
+
+      - name: 리포트 업로드
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spike-sqlite-windows-report
+          path: |
+            spike-out-dir/
+            spike-out-installed/
+          if-no-files-found: ignore
+          retention-days: 14
