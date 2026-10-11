@@ -1,6 +1,7 @@
 # StockBook 2차 구조 개편 — 작업 지시서
 
-- 에픽: #46 · 하위: #47 #48 #49 #50 #51 #52 · 선행: #29
+- 에픽: #46 · 하위: #47 #48 #49 #50 #51 #52 #64 #65 · 선행: #29 (#63)
+- 갱신: 2026-10-11 — 계좌·장부 구조 승인 반영 (#63 · #64 · #65, Contract 항목 추가). 설계: `docs/ACCOUNT-LEDGER-DESIGN.md`
 - 확정: 2026-10-10. 순서는 `CLAUDE.md` §8-2 게이트와 `docs/SQLITE-STORAGE-DESIGN.md`(#29 설계, 승인)를 따른다.
 - 이 문서와 이슈 본문이 다르면 **이 문서를 먼저 고치고** 이슈를 맞춘다.
 
@@ -20,16 +21,25 @@ UI 2차 개편(#36–#40)과 별개로, 앞으로 만들 기능을 안정적으�
 UI 2차 #36–#40
        │
        ▼
+ #63 예수금 결함 fix (단독)
+       │
+       ▼
    #29 SQLite
        │
        ▼
  #47 Stock ID (assetId)
     ┌──┼──────────┐
     ▼  ▼          ▼
-  #51 #52      Contract
+  #51 #52      Contract (계좌·장부 계약 포함)
 Timeline Reason      │
                      ▼
-                   #48 Provider Adapter
+                   #64 계좌 장부 (#A)
+                     │
+                     ▼
+                   #48 Quote Provider
+                     │
+                     ▼
+                   #65 Broker Account Adapter (#B)
                      │
                      ▼
                    #49 Time Series
@@ -42,10 +52,12 @@ Timeline Reason      │
 ```
 
 1. **UI 2차(#36–#40)를 먼저 끝낸다.** 둘 다 `index.html` 을 직접 고치므로 구조 개편과 동시에 진행하지 않는다.
-2. 그다음 **#29 SQLite → #47 → Contract → #48 → #49 → #50** 순서로 진행한다.
+2. 그다음 **#63 → #29 SQLite → #47 → Contract → #64 → #48 → #65 → #49 → #50** 순서로 진행한다.
+   - #48 과 #65 는 기술적으로 독립이지만 작업 큐에서는 순차로 진행한다 (`docs/ACCOUNT-LEDGER-DESIGN.md` §7-3).
 3. **#51 · #52 는 #47 완료 후 바로 착수할 수 있다.** #49 · #50 을 기다리지 않는다.
 4. **작업 큐 시작 조건**
-   - UI 2차 대기열이 끝나면 **#29 부터** `queue` 라벨을 붙인다.
+   - UI 2차 대기열이 끝나면 **#63 부터** `queue` 라벨을 붙인다. #63 이 머지된 뒤 #29 에 붙인다.
+     - 큐는 번호가 작은 이슈부터 처리한다(#29 < #63). 그래서 **두 이슈에 라벨을 동시에 붙이지 않는다.**
    - 그 전에는 이 묶음에 `queue` 를 붙이지 않는다.
    - #47 의 마이그레이션과 검증이 끝나기 전에는 #51 · #52 본 구현을 시작하지 않는다.
 
@@ -61,6 +73,11 @@ Timeline Reason      │
 - 롤백
 
 `assets` 테이블과 각 사용자 테이블의 `asset_id` 컬럼은 v1 에서 **구조만** 만들고 비워 둔다.
+
+**변경 제안 C-1 (재검토 대기)**
+- `cashflows.account_id`, `accounts.currency` 를 nullable 구조로만 함께 추가하는 안이다. 상세는 `docs/SQLITE-STORAGE-DESIGN.md` §13.
+- #29 착수 전에 재검토하고, 승인돼야 반영한다.
+- #29 에서는 계좌·예수금의 의미를 바꾸지 않는다. `cashManual`, `totalAsset`, `accounts[].cash` 는 그대로 옮긴다.
 
 **#29 의 경계**: #29 는 기존 종목 연결 방식(`name`/`ticker`)을 **변경하지 않고 그대로 보존해 옮긴다.** `assetId` 발급·매핑·기존 레코드 연결 변경은 하지 않는다 — 그것은 #47(스키마 v2)의 일이다. `assetId` 만으로 종목을 연결하는 규칙은 **#47 완료 이후** 신규·마이그레이션된 레코드에 적용된다.
 
@@ -140,6 +157,41 @@ Timeline Reason      │
 - timestamp / priceType
 - 데이터 부족 처리
 - Event 중복 방지
+- **계좌·장부 계약** (`docs/ACCOUNT-LEDGER-DESIGN.md` §8)
+  - `ledgerMode`
+  - 예수금 의미(당일 / D+2)
+  - 정산 필드 7종과 부호·반올림
+  - `amountSource`
+  - opening·보정 이벤트
+  - `asOf`
+  - 미동기화·갱신 실패 상태
+
+## 7-1. #64 — 계좌 장부 (#A, Contract 이후)
+
+- 설계: `docs/ACCOUNT-LEDGER-DESIGN.md` §2–§5
+- 범위
+  - `ledgerMode`(`broker` / `local`)
+  - `getCash` 단일화
+  - local 장부 계산
+  - opening·보정 이벤트
+  - 정산 필드
+  - 입출금의 계좌 귀속
+  - 전역 `cashManual`·`totalAsset`·다단 폴백 이관 후 제거
+- 이관 원칙
+  - **이관 직후 화면 숫자가 바뀌지 않는다.** 차이는 opening·보정 이벤트로 흡수한다.
+  - 계좌 귀속이 불명확한 입출금은 `accountId: null` 로 두고 사용자에게 확인받는다.
+- 스키마 v3. #29 의 백업·검증·롤백을 재사용한다.
+
+## 7-2. #65 — Broker Account Adapter (#B, #64 · #48 이후)
+
+- 설계: `docs/ACCOUNT-LEDGER-DESIGN.md` §6
+- 범위
+  - KIS 동기화를 어댑터로 이전
+  - 체결 조회
+  - 유령 보유 제거
+  - broker snapshot (당일 + D+2, `asOf`)
+  - capabilities
+- Quote Provider(#48)와 **별도 계층**이다. 이후 토스·LS·키움을 이 계층에 붙인다.
 
 ## 8. #48 — Provider Adapter, CORS 프록시 제거
 
