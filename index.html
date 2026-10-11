@@ -11912,17 +11912,27 @@ function dockCtxRender() {
     chgEl.textContent = chg == null ? '-' : (chg > 0 ? '+' : '') + chg.toFixed(2) + '%';
     chgEl.className = 'dock-ctx__chg ' + (chg > 0 ? 'up' : chg < 0 ? 'dn' : '');
   }
-  const h = (state.portfolio || []).find(p => p.ticker === w.ticker && p.qty > 0);
+  // 같은 종목을 여러 계좌에 보유하면 모두 합산. 현재가는 calcAssetSummary() 와 같은 기준
+  // (보유 행의 currentPrice → 없으면 평균단가), 관심종목 시세가 있으면 그것을 우선한다.
+  const rows = (state.portfolio || []).filter(p => p.ticker === w.ticker && (parseFloat(p.qty) || 0) > 0);
   const holdEl = document.getElementById('dockCtxHold');
   if (!holdEl) return;
-  if (!h) { holdEl.innerHTML = '<div class="dock-ctx__none">보유하지 않은 종목입니다.</div>'; return; }
-  const cur = w.price ?? h.price ?? h.avgPrice;
-  const pnl = (cur - h.avgPrice) * h.qty;
-  const rate = h.avgPrice ? (cur / h.avgPrice - 1) * 100 : 0;
+  if (!rows.length) { holdEl.innerHTML = '<div class="dock-ctx__none">보유하지 않은 종목입니다.</div>'; return; }
+  const wPrice = parseFloat(w.price) || 0;
+  let qty = 0, cost = 0, value = 0;
+  rows.forEach(p => {
+    const q = parseFloat(p.qty) || 0;
+    const avg = parseFloat(p.avgPrice) || 0;
+    const cur = wPrice || parseFloat(p.currentPrice) || avg;
+    qty += q; cost += avg * q; value += cur * q;
+  });
+  const avgPrice = qty ? cost / qty : 0;
+  const pnl = value - cost;
+  const rate = cost ? (value / cost - 1) * 100 : 0;
   const cls = pnl > 0 ? 'up' : pnl < 0 ? 'dn' : '';
   holdEl.innerHTML =
-    `<div><span>수량</span><b>${h.qty.toLocaleString('ko-KR')}주</b></div>` +
-    `<div><span>평균단가</span><b>${Math.round(h.avgPrice).toLocaleString('ko-KR')}</b></div>` +
+    `<div><span>수량</span><b>${qty.toLocaleString('ko-KR')}주</b></div>` +
+    `<div><span>평균단가</span><b>${Math.round(avgPrice).toLocaleString('ko-KR')}</b></div>` +
     `<div><span>평가손익</span><b class="${cls}">${pnl > 0 ? '+' : ''}${Math.round(pnl).toLocaleString('ko-KR')} (${rate > 0 ? '+' : ''}${rate.toFixed(2)}%)</b></div>`;
 }
 function dockCtxAction(kind) {

@@ -99,6 +99,30 @@ for (const pg of PAGES) {
       check(await hasClass('#mdiSidebar', 'sb-collapsed') === collapsed0, '사이드바 펼치기 복귀 실패');
     });
 
+    await step('문맥 패널 보유 합산', async () => {
+      // PR #42 리뷰 재현: 관심종목 시세가 없으면 보유 현재가(currentPrice)를 쓰고, 여러 계좌의 같은 종목을 합산해야 한다
+      const res = await page.evaluate(() => {
+        const bak = { wl: state.watchlist, pf: state.portfolio, sel: window._dockSel };
+        try {
+          state.watchlist = [{ ticker: '005930', name: '삼성전자', price: null, change: null }];
+          state.portfolio = [
+            { ticker: '005930', name: '삼성전자', qty: 10, avgPrice: 100, currentPrice: 120, accountId: 'a' },
+            { ticker: '005930', name: '삼성전자', qty: 5,  avgPrice: 130, currentPrice: 120, accountId: 'b' },
+          ];
+          window._dockSel = '005930';
+          dockCtxRender();
+          return document.getElementById('dockCtxHold')?.textContent || '';
+        } finally {
+          state.watchlist = bak.wl; state.portfolio = bak.pf; window._dockSel = bak.sel;
+          try { dockCtxRender(); } catch (_) {}
+        }
+      });
+      // 수량 15주, 평단 (1000+650)/15=110, 평가손익 1800-1650=+150
+      check(res.includes('15주'), `문맥 패널이 복수 계좌 보유를 합산하지 않음: "${res}"`);
+      check(res.includes('110'), `문맥 패널 합산 평균단가 오류: "${res}"`);
+      check(res.includes('+150'), `문맥 패널이 보유 현재가(currentPrice)를 쓰지 않음: "${res}"`);
+    });
+
     await step('설정 허브', async () => {
       await page.evaluate(() => openSettings());
       check(await hasClass('#settingsModal', 'open'), '설정 허브가 열리지 않음');
