@@ -1,6 +1,6 @@
 {
   "name": "stockbook",
-  "version": "1.8.0",
+  "version": "1.8.3",
   "description": "나만의 주식 포트폴리오 관리 앱",
   "main": "main.js",
   "scripts": {
@@ -26,12 +26,9 @@
       "preload.js",
       "index.html",
       "splash.html",
-      "manifest.json",
-      "sw.js",
       "icon-192.png",
       "icon-512.png",
-      "icon.ico",
-      "logo.svg"
+      "icon.ico"
     ],
     "win": {
       "target": "nsis",

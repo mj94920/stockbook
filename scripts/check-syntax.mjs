@@ -4,9 +4,9 @@
 import { readFileSync, existsSync } from 'node:fs';
 import vm from 'node:vm';
 
-const JS_FILES   = ['main.js', 'preload.js', 'sw.js'];
-const HTML_FILES = ['index.html', 'mobile.html', 'splash.html'];
-const JSON_FILES = ['package.json', 'manifest.json', 'android/twa-manifest.json'];
+const JS_FILES   = ['main.js', 'preload.js'];
+const HTML_FILES = ['index.html', 'splash.html'];
+const JSON_FILES = ['package.json'];
 
 let failed = 0;
 const fail = (msg) => { failed++; console.error(`✗ ${msg}`); };
@@ -61,13 +61,6 @@ if (/contextIsolation\s*:\s*false/.test(main)) fail('main.js: contextIsolation:f
 // Electron 파일 목록에 포함된 파일이 실제로 존재하는지
 for (const f of pkg.build?.files ?? []) {
   if (!/[*?]/.test(f) && !existsSync(f)) fail(`build.files 에 있는 ${f} 가 존재하지 않음`);
-}
-
-// 서비스워커가 캐시하는 파일이 실제로 존재하는지 (없으면 SW 설치 자체가 실패함)
-const sw = readFileSync('sw.js', 'utf8');
-const assets = sw.match(/ASSETS\s*=\s*\[([\s\S]*?)\]/)?.[1] ?? '';
-for (const [, p] of assets.matchAll(/['"]\.\/([^'"]+)['"]/g)) {
-  if (!existsSync(p)) fail(`sw.js ASSETS 의 ${p} 가 존재하지 않음`);
 }
 
 if (failed) { console.error(`\n${failed}건 실패`); process.exit(1); }

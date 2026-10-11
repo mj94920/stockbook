@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// StockBook 스모크 테스트: 실제 브라우저(Chromium)로 index.html · mobile.html 을 띄워
+// StockBook 스모크 테스트: 실제 브라우저(Chromium)로 index.html 을 띄워
 // 초기화 중 발생하는 치명적 JS 오류(null 참조, TDZ, 미정의 함수 등)를 잡는다.
 // 외부 네트워크는 전부 차단 → 시세 API 장애와 무관하게 결정적으로 동작.
 // 실행: npm run smoke
@@ -10,7 +10,6 @@ import { chromium } from 'playwright';
 
 const PAGES = [
   { path: '/index.html',  viewport: { width: 1400, height: 900 } },
-  { path: '/mobile.html', viewport: { width: 390,  height: 844 } },
 ];
 const SETTLE_MS = Number(process.env.SMOKE_SETTLE_MS ?? 4000);
 const SHOT_DIR  = process.env.SMOKE_SHOT_DIR ?? 'smoke-shots';   // UI 확인용 스크린샷 (CI 아티팩트로 업로드)

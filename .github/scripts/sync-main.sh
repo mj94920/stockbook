@@ -31,7 +31,7 @@ if git merge --no-edit origin/main >/dev/null 2>&1; then
   echo "main 을 $BRANCH 에 머지 (충돌 없음)"
 else
   # 릴리스 전용 파일 — 작업 브랜치는 수정하지 않으므로(CLAUDE.md §1-2) main 쪽을 택한다
-  RELEASE_FILES="package.json package-lock.json sw.js android/twa-manifest.json CHANGELOG.md"
+  RELEASE_FILES="package.json package-lock.json CHANGELOG.md"
   ver=$(git show origin/main:package.json | sed -n 's/^  "version": "\([^"]*\)".*/\1/p')
   norm() { sed -E 's/Stock Book v[0-9]+\.[0-9]+\.[0-9]+/Stock Book v__SB_VERSION__/g'; }
 
