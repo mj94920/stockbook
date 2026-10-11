@@ -674,10 +674,10 @@ CREATE TRIGGER calendar_events_id_immutable BEFORE UPDATE OF id ON calendar_even
 
 1. #55 정책 반영(머지) 확인
 2. ~~D1 Windows 스파이크 결과 보고와 드라이버 최종 확정~~ → 완료(§2-4)
-6. **저장 계층 구현 승인**(별도 결정, 이 문서 PR 과 #57 정리 후)
-3. ~~D4 섀도 JSON 정책~~ → 확정(폐기)
-4. 단일 인스턴스 잠금(§6-4)과 `before-quit` 훅(§6-5)은 저장 계층 구현의 선행 작업
-5. `index.html` 의 `state` 대입·변경 지점 전수 조사(§12)
+3. **저장 계층 구현 승인**(별도 결정, 이 문서 PR 과 #57 정리 후)
+4. ~~D4 섀도 JSON 정책~~ → 확정(폐기)
+5. 단일 인스턴스 잠금(§6-4)과 `before-quit` 훅(§6-5)은 저장 계층 구현의 선행 작업
+6. `index.html` 의 `state` 대입·변경 지점 전수 조사(§12)
 
 ## 12. 위험·한계·미검증
 
