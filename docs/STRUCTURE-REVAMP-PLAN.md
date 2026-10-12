@@ -74,7 +74,10 @@ Timeline Reason      │
 
 `assets` 테이블과 각 사용자 테이블의 `asset_id` 컬럼은 v1 에서 **구조만** 만들고 비워 둔다.
 
-**변경 제안 C-1 (재검토 대기)**
+**변경 제안 C-1 — 재검증 결과 "불필요" 권장 (2026-10-12, 미팅룸 확정 대기)**
+- SQLite 는 nullable 컬럼을 `ALTER TABLE ADD COLUMN` 으로 테이블 재생성 없이 추가한다(검증 완료). 그래서 v1 은 바꾸지 않고 #64(v3)에서 추가하는 안을 권장한다. 근거는 `docs/SQLITE-STORAGE-DESIGN.md` §13-4.
+
+원 제안:
 - `cashflows.account_id`, `accounts.currency` 를 nullable 구조로만 함께 추가하는 안이다. 상세는 `docs/SQLITE-STORAGE-DESIGN.md` §13.
 - #29 착수 전에 재검토하고, 승인돼야 반영한다.
 - #29 에서는 계좌·예수금의 의미를 바꾸지 않는다. `cashManual`, `totalAsset`, `accounts[].cash` 는 그대로 옮긴다.

@@ -8,8 +8,9 @@
   - 숫자 단위와 반올림은 Contract 에서 확정한다(§8).
 - 작성: Claude (시스템). 기준 코드는 `main` @ 409cc4c 이후의 `index.html`, `main.js`.
 - 관련 문서
+  - `docs/LEDGER-CONTRACT-DRAFT.md` (계약 초안: 모델 · 함수 계약 · 어댑터 계약 · 불변조건 · 결정 필요 항목 · 결함 추적)
   - `docs/STRUCTURE-REVAMP-PLAN.md` (순서)
-  - `docs/SQLITE-STORAGE-DESIGN.md` (#29, 변경 제안 C-1)
+  - `docs/SQLITE-STORAGE-DESIGN.md` (#29, 변경 제안 C-1 → 재검증 "불필요" 권장 §13-4)
 - Desktop Main v2 UI 범위와 섞지 않는다.
 
 ### 최종 원칙
@@ -231,7 +232,7 @@ UI · 분석 ──→  Quote Provider (#48)  ──→ KIS 시세 · KRX · 네
 ```
 UI 2차 (#36–#40)
   → #63 예수금 결함 fix   (단독 · UI 2차 머지 후 · #29 전)
-  → #29 SQLite            (의미 변경 없음 · 변경 제안 C-1: 구조만 선반영)
+  → #29 SQLite            (의미 변경 없음 · C-1 재검증: 불필요 권장 → #64 에서 ALTER ADD COLUMN)
   → #47 assetId           (종목 식별 전용 · 계좌 의미를 섞지 않음)
   → Contract              (계좌·장부 계약 포함, §8)
   → #64 계좌 장부          (#A)
@@ -246,7 +247,7 @@ UI 2차 (#36–#40)
 | 단계 | 반영 내용 |
 |---|---|
 | #63 | 결함 1(`> 0` 필터), 결함 4(`total`/`totalAmt`)를 **읽기 쪽만** 수정한다. 데이터 형식과 폴백 구조는 그대로 둔다 |
-| #29 | 의미 변경 없음. **변경 제안 C-1**: `cashflows.account_id`, `accounts.currency` 를 nullable 구조로만 추가. `docs/SQLITE-STORAGE-DESIGN.md` §13, 구현 착수 전 재검토 |
+| #29 | 의미 변경 없음. **변경 제안 C-1**: `cashflows.account_id`, `accounts.currency` 를 nullable 구조로만 추가. `docs/SQLITE-STORAGE-DESIGN.md` §13. **재검증(§13-4): 불필요 권장**, v3 에서 `ALTER ADD COLUMN` 으로 추가 |
 | #47 | 반영 안 함 |
 | Contract | §8 의 항목을 확정한다 |
 | #64 | §2 ~ §5. `ledgerMode`, `getCash` 단일화, 정산 필드, opening·보정 이벤트, 입출금 귀속, 전역 구조 이관 |

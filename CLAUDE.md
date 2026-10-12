@@ -79,6 +79,7 @@ docs/UI-REVAMP-PLAN.md                     ← UI/UX 1차 개편 기준 문서 (
 docs/STRUCTURE-REVAMP-PLAN.md              ← 2차 구조 개편 작업 지시서 (#29 → #47 → … → #50, 에픽 #46)
 docs/SQLITE-STORAGE-DESIGN.md              ← #29 SQLite 저장 구조 설계 (승인)
 docs/ACCOUNT-LEDGER-DESIGN.md              ← 계좌·예수금·정산 원본(ledgerMode) 설계 (승인 · #63 #64 #65)
+docs/LEDGER-CONTRACT-DRAFT.md              ← 계좌·장부 계약 초안 (Contract 입력 · #64 #65 함수·어댑터 계약)
 docs/                                      ← PRD, 과거 개발 로그
 CHANGELOG.md                               ← 릴리스마다 자동 생성
 ```
