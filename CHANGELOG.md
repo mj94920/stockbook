@@ -2,6 +2,12 @@
 
 자동 생성 — `scripts/bump-version.mjs`
 
+## v1.9.0 — 2026-10-14
+
+- feat(ui): 기본 화면을 '관심종목 종합' 도킹 레이아웃으로 전환 (#36) (#42)
+- docs(ui): Desktop Main v2 구현 대기 기록 갱신
+- chore(ci): Release 트리거에서 docs/** 제외 — 설계 문서·디자인 시안 머지가 Windows 릴리스를 만들지 않도록
+
 ## v1.8.3 — 2026-10-10
 
 - style(brand): 새 앱 아이콘 채택 + 2차 구조 개편 작업 지시서(에픽 #46) (#53)
