@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   fetchQuote:        (ticker) => ipcRenderer.invoke('fetch-quote', ticker),
   // 네이버 금융 재무 데이터 (annual + summary)
   fetchNaverFinance: (code)   => ipcRenderer.invoke('fetch-naver-finance', code),
+  // 기업분석용 일봉 시계열 (볼린저밴드·이동평균 자동 판정)
+  fetchPriceHistory: (ticker) => ipcRenderer.invoke('fetch-price-history', ticker),
   // API 키 암호화 저장/불러오기/삭제/확인 (safeStorage)
   saveApiKey:   (broker, fields) => ipcRenderer.invoke('save-api-key', { broker, fields }),
   loadApiKey:   (broker)         => ipcRenderer.invoke('load-api-key', broker),

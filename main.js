@@ -1145,6 +1145,38 @@ ipcMain.handle('fetch-naver-finance', async (_event, code) => {
   }
 });
 
+// ── IPC: 기업분석용 일봉 시계열 (Yahoo chart, 최근 1년) ─────────────────────
+ipcMain.handle('fetch-price-history', async (_event, rawTicker) => {
+  if (!rawTicker || typeof rawTicker !== 'string') return null;
+  const ticker = rawTicker.trim().toUpperCase();
+  if (!ticker) return null;
+  const symbols = /^\d{6}$/.test(ticker) ? [`${ticker}.KS`, `${ticker}.KQ`] : [ticker];
+
+  for (const symbol of symbols) {
+    for (const host of ['query1', 'query2']) {
+      try {
+        const body = await httpsGet(
+          `https://${host}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1y&interval=1d&includePrePost=false&events=div%2Csplits`,
+          10000
+        );
+        const result = JSON.parse(body)?.chart?.result?.[0];
+        const timestamps = result?.timestamp || [];
+        const quote = result?.indicators?.quote?.[0] || {};
+        const numeric = value => value == null ? NaN : Number(value);
+        const candles = timestamps.map((timestamp, index) => ({
+          timestamp,
+          open:  numeric(quote.open?.[index]),
+          high:  numeric(quote.high?.[index]),
+          low:   numeric(quote.low?.[index]),
+          close: numeric(quote.close?.[index]),
+        })).filter(candle => Number.isFinite(candle.close));
+        if (candles.length >= 40) return { symbol, candles };
+      } catch (_) {}
+    }
+  }
+  return null;
+});
+
 // ── IPC: API 키 암호화 저장 (safeStorage) ───────────────────────────────────
 function getCredFile(broker) {
   return path.join(app.getPath('userData'), `${broker}-cred.enc`);

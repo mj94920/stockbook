@@ -1170,6 +1170,20 @@
     flex-shrink: 0; margin-top: 2px;
     width: 15px; height: 15px; accent-color: #0ea5e9; cursor: pointer;
   }
+  .bb-analysis-card {
+    padding: 11px; background: var(--bg3);
+    border: 1px solid var(--border); border-radius: 7px;
+  }
+  .bb-analysis-head { display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:8px; }
+  .bb-analysis-head strong { font-size:13px; color:var(--text); }
+  .bb-analysis-head span { font-size:10px; color:var(--text3); font-family:monospace; }
+  .bb-analysis-result { font-size:13px; line-height:1.5; font-weight:700; }
+  .bb-analysis-values { margin-top:8px; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; }
+  .bb-analysis-values div { padding:6px; background:var(--bg2); border:1px solid var(--border); border-radius:5px; min-width:0; }
+  .bb-analysis-values span { display:block; font-size:9px; color:var(--text3); margin-bottom:2px; }
+  .bb-analysis-values b { display:block; font-size:11px; color:var(--text2); overflow:hidden; text-overflow:ellipsis; }
+  .bb-analysis-note { margin-top:8px; font-size:11px; line-height:1.45; color:var(--text3); }
+  @media(max-width:700px) { .bb-analysis-values { grid-template-columns:repeat(2,minmax(0,1fr)); } }
   .analysis-spinner {
     display: inline-block; width: 28px; height: 28px;
     border: 3px solid var(--border); border-top-color: #0ea5e9;
@@ -5746,14 +5760,15 @@ async function _openAnalysisForStock(stock) {
 
   const ticker = stock.ticker || '';
   const isKr   = /^\d{6}$/.test(ticker.trim());
-  let naverData = null, yfData = null;
+  let naverData = null, yfData = null, priceHistory = null;
   if (isKr && window.electronAPI) {
     try { naverData = await window.electronAPI.fetchNaverFinance(ticker.trim()); } catch(_) {}
   }
   if (!naverData) {
     try { yfData = await _fetchYFSummary(ticker); } catch(_) {}
   }
-  _renderAnalysisBody(body, stock, naverData, yfData);
+  try { priceHistory = await _fetchPriceHistory(ticker); } catch(_) {}
+  _renderAnalysisBody(body, stock, naverData, yfData, priceHistory);
 }
 function openCorpLink(type) {
   const q = (document.getElementById('corpSearchInput')?.value || '').trim();
@@ -11324,6 +11339,7 @@ async function openAnalysisDrawer(idx) {
 
   let naverData = null;
   let yfData    = null;
+  let priceHistory = null;
 
   if (isKr && isElec) {
     // 데스크탑 + 한국 주식 → 네이버 금융 IPC
@@ -11334,7 +11350,9 @@ async function openAnalysisDrawer(idx) {
     try { yfData = await _fetchYFSummary(ticker); } catch (_) {}
   }
 
-  _renderAnalysisBody(body, stock, naverData, yfData);
+  try { priceHistory = await _fetchPriceHistory(ticker); } catch (_) {}
+
+  _renderAnalysisBody(body, stock, naverData, yfData, priceHistory);
 }
 
 function closeAnalysisDrawer() {
@@ -11390,7 +11408,145 @@ async function _fetchYFSummary(ticker) {
   return null;
 }
 
-function _renderAnalysisBody(body, stock, naverData, yf) {
+async function _fetchPriceHistory(ticker) {
+  if (!ticker) return null;
+  if (window.electronAPI?.fetchPriceHistory) {
+    return await window.electronAPI.fetchPriceHistory(ticker);
+  }
+
+  const clean = ticker.trim().toUpperCase();
+  const symbols = /^\d{6}$/.test(clean) ? [`${clean}.KS`, `${clean}.KQ`] : [clean];
+  for (const symbol of symbols) {
+    try {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1y&interval=1d&includePrePost=false`;
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const result = (await res.json())?.chart?.result?.[0];
+      const timestamps = result?.timestamp || [];
+      const quote = result?.indicators?.quote?.[0] || {};
+      const numeric = value => value == null ? NaN : Number(value);
+      const candles = timestamps.map((timestamp, index) => ({
+        timestamp,
+        open: numeric(quote.open?.[index]),
+        high: numeric(quote.high?.[index]),
+        low: numeric(quote.low?.[index]),
+        close: numeric(quote.close?.[index]),
+      })).filter(candle => Number.isFinite(candle.close));
+      if (candles.length >= 40) return { symbol, candles };
+    } catch (_) {}
+  }
+  return null;
+}
+
+function _calculateBollingerTransition(priceHistory) {
+  const candles = (priceHistory?.candles || []).filter(candle =>
+    candle?.close != null && Number.isFinite(Number(candle.close))
+  ).map(candle => ({
+    timestamp: Number(candle.timestamp) || null,
+    close: Number(candle.close),
+    high: candle.high != null && Number.isFinite(Number(candle.high)) ? Number(candle.high) : Number(candle.close),
+    low: candle.low != null && Number.isFinite(Number(candle.low)) ? Number(candle.low) : Number(candle.close),
+  }));
+
+  if (candles.length < 41) {
+    return { signal:'insufficient', text:'일봉 데이터가 41개 미만이라 자동 판정을 보류합니다.' };
+  }
+
+  const snapshotAt = index => {
+    const periodCloses = candles.slice(index - 39, index + 1).map(candle => candle.close);
+    const midCloses = candles.slice(index - 25, index + 1).map(candle => candle.close);
+    const ma5Closes = candles.slice(index - 4, index + 1).map(candle => candle.close);
+    const ma10Closes = candles.slice(index - 9, index + 1).map(candle => candle.close);
+    if (periodCloses.length < 40 || midCloses.length < 26 || ma5Closes.length < 5) return null;
+    const periodMean = periodCloses.reduce((sum, value) => sum + value, 0) / 40;
+    const middle = midCloses.reduce((sum, value) => sum + value, 0) / 26;
+    const variance = periodCloses.reduce((sum, value) => sum + Math.pow(value - periodMean, 2), 0) / 40;
+    const deviation = Math.sqrt(variance);
+    const ma5 = ma5Closes.reduce((sum, value) => sum + value, 0) / 5;
+    const ma10 = ma10Closes.reduce((sum, value) => sum + value, 0) / ma10Closes.length;
+    const candle = candles[index];
+    return {
+      ...candle,
+      middle,
+      upper: middle + (1.9 * deviation),
+      lower: middle - (1.9 * deviation),
+      ma5,
+      ma10,
+    };
+  };
+
+  const current = snapshotAt(candles.length - 1);
+  const previous = snapshotAt(candles.length - 2);
+  if (!current || !previous) {
+    return { signal:'insufficient', text:'볼린저밴드 계산에 필요한 일봉 데이터가 부족합니다.' };
+  }
+
+  const upTogether = current.close > current.upper && current.ma5 > current.upper;
+  const downTogether = current.close < current.lower && current.ma5 < current.lower;
+  const previousUpTogether = previous.close > previous.upper && previous.ma5 > previous.upper;
+  const previousDownTogether = previous.close < previous.lower && previous.ma5 < previous.lower;
+  const candlePiercedUp = current.high > current.upper;
+  const candlePiercedDown = current.low < current.lower;
+
+  let signal = 'inside';
+  let text = '봉과 MA5의 동반 돌파가 확인되지 않았습니다.';
+  if (upTogether) {
+    signal = 'up';
+    text = previousUpTogether
+      ? '봉과 MA5가 상단 밴드 위에서 동반 돌파 상태를 유지 중입니다. 상승 전환 가능성을 높게 봅니다.'
+      : '봉과 MA5가 상단 밴드를 함께 상향 돌파했습니다. 상승 전환 가능성을 높게 봅니다.';
+  } else if (downTogether) {
+    signal = 'down';
+    text = previousDownTogether
+      ? '봉과 MA5가 하단 밴드 아래에서 동반 돌파 상태를 유지 중입니다. 하락 전환 가능성을 높게 봅니다.'
+      : '봉과 MA5가 하단 밴드를 함께 하향 돌파했습니다. 하락 전환 가능성을 높게 봅니다.';
+  } else if (candlePiercedUp && candlePiercedDown) {
+    signal = 'candle-only';
+    text = '한 봉이 상·하단 밴드를 모두 건드렸지만 MA5가 동반하지 않았습니다. 방향을 확정하지 않습니다.';
+  } else if (candlePiercedUp) {
+    signal = 'candle-only';
+    text = '봉이 상단 밴드를 돌파했지만 MA5가 동반하지 않았습니다. 상승 전환을 확정하지 않습니다.';
+  } else if (candlePiercedDown) {
+    signal = 'candle-only';
+    text = '봉이 하단 밴드를 돌파했지만 MA5가 동반하지 않았습니다. 하락 전환을 확정하지 않습니다.';
+  }
+
+  return { signal, text, current, previous, symbol:priceHistory.symbol || '' };
+}
+
+function _renderBollingerAnalysis(priceHistory) {
+  const result = _calculateBollingerTransition(priceHistory);
+  const presentation = {
+    up:            { label:'↗ 상승 전환 확률 높음', color:'var(--hts-up)' },
+    down:          { label:'↘ 하락 전환 확률 높음', color:'var(--hts-dn)' },
+    'candle-only': { label:'— 봉 단독 돌파 · 방향 미확정', color:'var(--yellow)' },
+    inside:        { label:'— 동반 돌파 없음', color:'var(--text2)' },
+    insufficient:  { label:'분석 보류 · 데이터 부족', color:'var(--text3)' },
+  }[result.signal];
+  const f = value => Number.isFinite(value) ? value.toLocaleString('ko-KR', { maximumFractionDigits:2 }) : '-';
+  const date = result.current?.timestamp
+    ? new Date(result.current.timestamp * 1000).toLocaleDateString('ko-KR')
+    : '최근 일봉';
+  const values = result.current ? `<div class="bb-analysis-values">
+    <div><span>종가</span><b>${f(result.current.close)}</b></div>
+    <div><span>상단 BB</span><b>${f(result.current.upper)}</b></div>
+    <div><span>중심선</span><b>${f(result.current.middle)}</b></div>
+    <div><span>하단 BB</span><b>${f(result.current.lower)}</b></div>
+    <div><span>MA5</span><b>${f(result.current.ma5)}</b></div>
+    <div><span>MA10</span><b>${f(result.current.ma10)}</b></div>
+  </div>` : '';
+  return `<div class="analysis-section">
+    <div class="analysis-section-title">📐 AI 기술적 조건 분석</div>
+    <div class="bb-analysis-card">
+      <div class="bb-analysis-head"><strong>볼린저밴드 전환 판단</strong><span>σ40 × 1.9 · mid 26 · short MA5</span></div>
+      <div class="bb-analysis-result" style="color:${presentation.color}">${presentation.label}</div>
+      ${values}
+      <div class="bb-analysis-note">${result.text}<br>${date} 기준 · 확률적 판단 조건이며 방향을 확정하지 않습니다.</div>
+    </div>
+  </div>`;
+}
+
+function _renderAnalysisBody(body, stock, naverData, yf, priceHistory) {
   const isElectron = !!window.electronAPI;
   const ticker  = stock.ticker || '';
   const isKr    = /^\d{6}$/.test(ticker.trim());
@@ -11603,10 +11759,11 @@ function _renderAnalysisBody(body, stock, naverData, yf) {
     { key:'index',   text:'지수 대비 -10% 이하 이탈하지 않았는가?' },
   ];
   const total = principles.length;
-  const cnt   = Object.values(checks).filter(Boolean).length;
+  const cnt   = principles.filter(p => checks[p.key] === true).length;
   const pctChk = Math.round(cnt/total*100);
   const scoreColor = pctChk >= 70 ? '#22c55e' : pctChk >= 40 ? '#f59e0b' : 'var(--text3)';
   const scoreLabel = pctChk >= 70 ? '✅ 매수 조건 우호적' : pctChk >= 40 ? '⚠️ 조건 일부 미충족' : '🔴 조건 대부분 미충족';
+  const safeCKey = cKey.replace(/'/g,"\\'");
 
   const checklistSection = `<div class="analysis-section">
     <div class="analysis-section-title">✅ 매매 원칙 체크리스트</div>
@@ -11615,7 +11772,7 @@ function _renderAnalysisBody(body, stock, naverData, yf) {
       ${principles.map(p=>`
         <label class="mj-check-item">
           <input type="checkbox" ${checks[p.key] ? 'checked' : ''}
-            onchange="_toggleCheck('${cKey.replace(/'/g,"\\'")}','${p.key}',this.checked)">
+            onchange="_toggleCheck('${safeCKey}','${p.key}',this.checked)">
           <span>${p.text}</span>
         </label>`).join('')}
     </div>
@@ -11624,7 +11781,8 @@ function _renderAnalysisBody(body, stock, naverData, yf) {
     </div>
   </div>`;
 
-  body.innerHTML = portSection + finSection + checklistSection;
+  const technicalSection = _renderBollingerAnalysis(priceHistory);
+  body.innerHTML = portSection + finSection + technicalSection + checklistSection;
 }
 
 function _buildComments(yf) {
@@ -11693,21 +11851,26 @@ function _buildCommentsNaver(perN, roeN, deN, npmN) {
   return c;
 }
 
+const ANALYSIS_PRINCIPLE_KEYS = ['pos','align','knee','golden','ma20','ma200','pivot','gap','monthly','index'];
+
+function _updateAnalysisScore(stockKey) {
+  const scoreEl = document.getElementById('analysisScore');
+  if (!scoreEl) return;
+  const checks = state.analysisChecks?.[stockKey] || {};
+  const total = ANALYSIS_PRINCIPLE_KEYS.length;
+  const cnt = ANALYSIS_PRINCIPLE_KEYS.filter(key => checks[key] === true).length;
+  const pct = Math.round(cnt/total*100);
+  const color = pct >= 70 ? '#22c55e' : pct >= 40 ? '#f59e0b' : 'var(--text3)';
+  const label = pct >= 70 ? '✅ 매수 조건 우호적' : pct >= 40 ? '⚠️ 조건 일부 미충족' : '🔴 조건 대부분 미충족';
+  scoreEl.innerHTML = `체크 <strong>${cnt}/${total}</strong> — <span style="color:${color};font-weight:700">${label}</span>`;
+}
+
 function _toggleCheck(stockKey, checkKey, val) {
   if (!state.analysisChecks) state.analysisChecks = {};
   if (!state.analysisChecks[stockKey]) state.analysisChecks[stockKey] = {};
   state.analysisChecks[stockKey][checkKey] = val;
   save();
-  // 점수 업데이트
-  const scoreEl = document.getElementById('analysisScore');
-  if (!scoreEl) return;
-  const checks = state.analysisChecks[stockKey];
-  const total  = 10;
-  const cnt    = Object.values(checks).filter(Boolean).length;
-  const p      = Math.round(cnt/total*100);
-  const color  = p >= 70 ? '#22c55e' : p >= 40 ? '#f59e0b' : 'var(--text3)';
-  const label  = p >= 70 ? '✅ 매수 조건 우호적' : p >= 40 ? '⚠️ 조건 일부 미충족' : '🔴 조건 대부분 미충족';
-  scoreEl.innerHTML = `체크 <strong>${cnt}/${total}</strong> — <span style="color:${color};font-weight:700">${label}</span>`;
+  _updateAnalysisScore(stockKey);
 }
 
 
