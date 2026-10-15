@@ -4218,8 +4218,12 @@
         </div>
         <div class="dock-ctx__price" id="dockCtxPrice">-</div>
         <div class="dock-ctx__chg" id="dockCtxChg">-</div>
+        <div class="dock-ctx__none" id="dockCtxStatus" role="status"></div>
+        <div class="dock-ctx__rows" id="dockCtxQuote"></div>
         <div class="dock-ctx__sec">보유 현황</div>
         <div class="dock-ctx__rows" id="dockCtxHold"></div>
+        <div class="dock-ctx__sec">다가오는 종목 일정</div>
+        <div class="dock-ctx__rows" id="dockCtxEvents"></div>
         <div class="dock-ctx__actions">
           <button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('hoga')">호가 확인</button>
           <button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('chart')">차트·기업분석</button>
@@ -4924,11 +4928,23 @@ function setWsStatusUI(status) {
 }
 
 function handleRealtimePrice({ ticker, price, change, changePct }) {
-  const s = state.portfolio.find(p => p.ticker === ticker);
-  if (!s || !price) return;
-  const prevPrice = s.currentPrice;
-  prevPricesMap[s.name] = prevPrice;  // 보유종목 플래시 애니메이션용
-  s.currentPrice = price;
+  if (!(price > 0)) return;
+  const holdings = state.portfolio.filter(p => p.ticker === ticker);
+  const prevPrice = holdings[0]?.currentPrice;
+  holdings.forEach(s => {
+    prevPricesMap[s.name] = s.currentPrice;
+    s.currentPrice = price;
+  });
+  (state.watchlist || []).filter(w => w.ticker === ticker).forEach(w => {
+    w.price = price;
+    w.change = Number.isFinite(changePct) ? changePct : null;
+    w.priceChange = Number.isFinite(change) ? change : null;
+    w.quoteAt = Date.now();
+    w.quoteSource = 'KIS 실시간';
+    w.quoteStatus = '';
+    const ticks = window._dockQuoteTicks ||= {};
+    ticks[ticker] = (ticks[ticker] || 0) + 1;
+  });
 
   // ── 전종목 테이블 직접 업데이트 (현재 페이지에 있을 때 실시간 깜빡임) ──
   const rowId = `asr-${ticker}`;
@@ -4961,6 +4977,7 @@ function handleRealtimePrice({ ticker, price, change, changePct }) {
   _rtDebounce = setTimeout(() => {
     renderPortfolio();
     renderSummary();
+    renderWatchlist();
   }, 100);
 }
 
@@ -7428,6 +7445,8 @@ function onQONameInput() {
   // 포트폴리오에서 먼저 검색
   const portMatch = (state.portfolio || []).find(s => s.name === val);
   if (portMatch) { codeEl.value = portMatch.ticker || ''; return; }
+  const watchMatch = (state.watchlist || []).find(s => s.name === val || s.ticker === val);
+  if (watchMatch) { codeEl.value = watchMatch.ticker || ''; return; }
   // 전종목 캐시에서 검색 (이름 또는 코드로)
   const allMatch = (Object.values(_allStockRaw || {}).flat() || []).find(s => s.name === val || s.code === val);
   if (allMatch) {
@@ -7455,9 +7474,15 @@ function updateHogaDisplay() {
   let curPrice = null, prevClose = null, openPrice = null;
   const portS = (state.portfolio || []).find(s => s.name === name || s.ticker === code);
   if (portS) {
-    curPrice  = portS.price ?? null;  // 실시간 현재가만 사용 (avgPrice 절대 폴백 금지)
+    curPrice  = portS.currentPrice ?? null;  // 평균단가를 시세로 사용하지 않는다
     prevClose = portS.prevClose ?? null;
     openPrice = portS.openPrice ?? null;
+  }
+  const watch = (state.watchlist || []).find(s => s.ticker === code);
+  if (watch?.price != null) {
+    curPrice = watch.price;
+    prevClose = watch.prevClose ?? null;
+    openPrice = watch.openPrice ?? null;
   }
   if (!curPrice) {
     const allS = (Object.values(_allStockRaw || {}).flat()).find(s => s.name === name || s.code === code);
@@ -10082,8 +10107,8 @@ function buildRtTickers() {
   const ok = t => t && /^\d{6}$/.test(t);
   const groups = {
     holding:  (state.portfolio || []).map(s => s.ticker),
-    selected: [typeof _hogaCurrentCode !== 'undefined' ? _hogaCurrentCode : null],
-    watch:    (state.watchlist || []).map(w => w.ticker),
+    selected: [window._dockSel, typeof _hogaCurrentCode !== 'undefined' ? _hogaCurrentCode : null],
+    watch:    dockVisibleWatchTickers(),
     other:    [],
   };
   const seen = new Set();
@@ -11762,6 +11787,7 @@ function removeWatchlistItem(idx) {
 function renderWatchlist() {
   const body = document.getElementById('watchlistBody');
   if (!body) return;
+  const focusedTicker = document.activeElement?.closest('#watchlistBody [data-watch-ticker]')?.dataset.watchTicker;
   if (!state.watchlist || state.watchlist.length === 0) {
     const legacy = (() => { try { return JSON.parse(localStorage.getItem('sb_watchlist_v1') || '[]'); } catch { return []; } })();
     if (legacy.length > 0) { state.watchlist = legacy; save(); localStorage.removeItem('sb_watchlist_v1'); }
@@ -11774,7 +11800,7 @@ function renderWatchlist() {
     (w.name||'').toLowerCase().includes(filterKw) || (w.ticker||'').toLowerCase().includes(filterKw));
   if (!list.length) {
     body.innerHTML = `<div style="color:var(--text3);font-size:13px;text-align:center;padding:40px 0;">${filterKw||activeGrp!=='전체'?'검색 결과가 없습니다.':'관심종목을 추가해 보세요.'}</div>`;
-    wlRenderGroupBar(); return;
+    wlRenderGroupBar(); dockCtxRender(); dockQueueSubscription(); return;
   }
   const fullList = state.watchlist || [];
 
@@ -11807,7 +11833,7 @@ function renderWatchlist() {
     const safeName = (w.name||w.ticker||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
     const isKr = /^\d{6}$/.test(w.ticker);
     // 가격
-    const priceStr = w.price != null ? w.price.toLocaleString('ko-KR') : '-';
+    const priceStr = w.price != null ? Number(w.price).toLocaleString('ko-KR') : '--';
     // 등락률
     const chgPct = w.change;
     const up = chgPct > 0, dn = chgPct < 0;
@@ -11832,8 +11858,9 @@ function renderWatchlist() {
     const vol    = w.volume ? Number(w.volume).toLocaleString() : '-';
     const cap    = w.marketCap ? Math.round(w.marketCap/100000000).toLocaleString() : '-';
     const sector = w.industry || w.sector || '-';
+    const held = dockHoldingSummary(w);
 
-    return `<tr id="wl-row-${safeCode}" style="cursor:pointer;"
+    return `<tr id="wl-row-${safeCode}" data-watch-ticker="${escHtml(w.ticker || '')}" tabindex="${window._dockSel === w.ticker ? '0' : '-1'}" aria-selected="${window._dockSel === w.ticker}" style="cursor:pointer;"
         onclick="dockSelectStock('${safeCode}')">
       <td style="text-align:center;width:26px;padding:2px 3px;"
           onclick="event.stopPropagation();removeWatchlistItem(${i})" title="관심 해제">
@@ -11842,10 +11869,12 @@ function renderWatchlist() {
       <td style="font-weight:600;white-space:nowrap;">${w.name||w.ticker}</td>
       <td style="font-family:monospace;font-size:11px;color:var(--text3);">${w.ticker||'-'}</td>
       <td style="font-size:11px;color:var(--text3);white-space:nowrap;">${sector}</td>
-      <td id="wl-price-${safeCode}" style="text-align:right;font-weight:600;">${priceStr}</td>
+      <td id="wl-price-${safeCode}" style="text-align:right;font-weight:600;">${priceStr}<div class="dock-ctx__none">${escHtml(dockQuoteLabel(w))}</div></td>
       <td id="wl-chg-${safeCode}"   style="text-align:right;" class="${cls}">${diffStr}</td>
       <td id="wl-pct-${safeCode}"   style="text-align:right;font-weight:600;" class="${cls}">${pctStr}</td>
       <td style="text-align:right;font-size:11px;color:var(--text2);">${vol}</td>
+      <td class="sb-num">${held.qty ? `${held.qty.toLocaleString()}주 / ${Math.round(held.pnl).toLocaleString()}` : '보유 없음'}</td>
+      <td>${escHtml([w.group, getStockMemo(w.ticker)].filter(Boolean).join(' · '))}</td>
       <td style="text-align:right;font-size:11px;">${cap}</td>
       <td style="text-align:right;font-size:11px;color:var(--text3);">${epsStr}</td>
       <td style="text-align:right;font-size:11px;color:var(--text3);">${roeStr}</td>
@@ -11869,6 +11898,7 @@ function renderWatchlist() {
       ${_wlSortHead('chg','전일대비')}
       ${_wlSortHead('chg','등락률')}
       <th style="text-align:right;">거래량</th>
+      <th>보유 / 평가손익</th><th>메모·태그</th>
       <th style="text-align:right;">시총(억)</th>
       <th style="text-align:right;" title="기업분석 조회 시 자동 기록">EPS</th>
       ${_wlSortHead('roe','ROE')}
@@ -11881,30 +11911,93 @@ function renderWatchlist() {
   </table>`;
   wlRenderGroupBar();
   try { dockCtxRender(); } catch(e) {}
+  if (focusedTicker) document.getElementById('wl-row-' + focusedTicker)?.focus({ preventScroll: true });
+  dockQueueSubscription();
 }
 
 // ── 관심종목 종합: 선택 종목 문맥 패널 ──────────────────────────────────
 window._dockSel = window._dockSel || null;   // 선택 종목 ticker
+function dockQuoteLabel(w) {
+  const at = Number(w.quoteAt);
+  const age = at > 0 ? `${w.quoteSource === 'KIS 실시간' ? '수신' : '조회'} ${Math.max(0, Math.floor((Date.now() - at) / 1000))}초 전 · ${w.quoteSource || '시세'}` : (w.price != null ? '기준 시각 미확인' : '시세 없음');
+  return [w.quoteStatus, age].filter(Boolean).join(' · ');
+}
+function dockHoldingSummary(w) {
+  const rows = (state.portfolio || []).filter(p => w.ticker && p.ticker === w.ticker && (parseFloat(p.qty) || 0) > 0);
+  let qty = 0, cost = 0, value = 0;
+  rows.forEach(p => {
+    const q = parseFloat(p.qty) || 0, avg = parseFloat(p.avgPrice) || 0;
+    qty += q; cost += avg * q;
+    value += (parseFloat(w.price) || parseFloat(p.currentPrice) || avg) * q;
+  });
+  return { rows, qty, cost, value, avgPrice: qty ? cost / qty : 0, pnl: value - cost, rate: cost ? (value / cost - 1) * 100 : 0 };
+}
+function dockVisibleWatchTickers() {
+  const body = document.getElementById('watchlistBody');
+  if (!body || !body.getClientRects().length) return [];
+  const viewport = body.getBoundingClientRect();
+  return [...body.querySelectorAll('[data-watch-ticker]')].filter(row => {
+    const r = row.getBoundingClientRect();
+    return r.bottom > viewport.top && r.top < viewport.bottom;
+  }).map(row => row.dataset.watchTicker);
+}
+function dockQueueSubscription() {
+  clearTimeout(window._dockSubTimer);
+  window._dockSubTimer = setTimeout(() => {
+    const key = buildRtTickers().join(',');
+    if (key === window._dockSubKey) return;
+    window._dockSubKey = key;
+    resubscribeRealtime().catch(() => {});
+  }, 200);
+}
+document.getElementById('watchlistBody')?.addEventListener('scroll', dockQueueSubscription, { passive: true });
+window.addEventListener('resize', dockQueueSubscription);
+document.getElementById('watchlistBody')?.addEventListener('keydown', event => {
+  if (!['ArrowUp', 'ArrowDown'].includes(event.key) || event.target.closest('button,input,textarea,select')) return;
+  const rows = [...document.querySelectorAll('#watchlistBody [data-watch-ticker]')];
+  if (!rows.length) return;
+  event.preventDefault();
+  const current = rows.findIndex(row => row.dataset.watchTicker === window._dockSel);
+  const next = Math.max(0, Math.min(rows.length - 1, current < 0 ? 0 : current + (event.key === 'ArrowDown' ? 1 : -1)));
+  dockSelectStock(rows[next].dataset.watchTicker);
+  rows[next].focus({ preventScroll: true });
+  rows[next].scrollIntoView({ block: 'nearest' });
+});
 function dockSelectStock(code) {
+  if (!(state.watchlist || []).some(w => w.ticker === code)) return;
   window._dockSel = code;
   document.querySelectorAll('#watchlistBody tr.dock-sel').forEach(r => r.classList.remove('dock-sel'));
   document.getElementById('wl-row-' + code)?.classList.add('dock-sel');
   dockCtxRender();
+  dockQueueSubscription();
+  const w = state.watchlist.find(w => w.ticker === code);
+  if (!w.quoteAt || Date.now() - w.quoteAt > 30000) dockLoadQuote(w).then(() => renderWatchlist());
 }
 function dockCtxRender() {
   const empty = document.getElementById('dockCtxEmpty');
   const box   = document.getElementById('dockCtxBody');
   if (!empty || !box) return;
   const list = state.watchlist || [];
-  if (!window._dockSel && list.length) window._dockSel = list[0].ticker;
+  if (!list.some(w => w.ticker === window._dockSel)) window._dockSel = list[0]?.ticker || null;
   const w = list.find(x => x.ticker === window._dockSel) || null;
   empty.style.display = w ? 'none' : '';
   box.style.display   = w ? '' : 'none';
   if (!w) return;
   document.getElementById('wl-row-' + w.ticker)?.classList.add('dock-sel');
+  document.querySelectorAll('#watchlistBody [data-watch-ticker]').forEach(row => {
+    const selected = row.dataset.watchTicker === w.ticker;
+    row.tabIndex = selected ? 0 : -1;
+    row.setAttribute('aria-selected', String(selected));
+  });
   const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
   set('dockCtxName', w.name || w.ticker);
   set('dockCtxCode', w.ticker || '');
+  set('dockCtxStatus', dockQuoteLabel(w));
+  const upcoming = (state.calEvents || []).filter(e => e.ticker === w.ticker && e.date >= new Date().toLocaleDateString('sv-SE')).sort((a, b) => a.date.localeCompare(b.date));
+  const eventsEl = document.getElementById('dockCtxEvents');
+  if (eventsEl) eventsEl.innerHTML = upcoming.length ? upcoming.slice(0, 3).map(e => `<div><span>${escHtml(e.date)}</span><b>${escHtml(e.name)}</b></div>`).join('') : '<div class="dock-ctx__none">등록된 종목 일정 없음</div>';
+  const quoteEl = document.getElementById('dockCtxQuote');
+  if (quoteEl) quoteEl.innerHTML = [['시가', w.openPrice], ['고가', w.highPrice], ['저가', w.lowPrice], ['거래량', w.volume], ['52주 최저', w.low52], ['52주 최고', w.high52]].map(([label, value]) => `<div><span>${label}</span><b>${value == null ? '--' : Number(value).toLocaleString('ko-KR')}</b></div>`).join('');
   set('dockCtxPrice', w.price != null ? w.price.toLocaleString('ko-KR') : '-');
   const chg = w.change;
   const chgEl = document.getElementById('dockCtxChg');
@@ -11914,142 +12007,99 @@ function dockCtxRender() {
   }
   // 같은 종목을 여러 계좌에 보유하면 모두 합산. 현재가는 calcAssetSummary() 와 같은 기준
   // (보유 행의 currentPrice → 없으면 평균단가), 관심종목 시세가 있으면 그것을 우선한다.
-  const rows = (state.portfolio || []).filter(p => p.ticker === w.ticker && (parseFloat(p.qty) || 0) > 0);
+  const { rows, qty, value, avgPrice, pnl, rate } = dockHoldingSummary(w);
   const holdEl = document.getElementById('dockCtxHold');
   if (!holdEl) return;
   if (!rows.length) { holdEl.innerHTML = '<div class="dock-ctx__none">보유하지 않은 종목입니다.</div>'; return; }
-  const wPrice = parseFloat(w.price) || 0;
-  let qty = 0, cost = 0, value = 0;
-  rows.forEach(p => {
-    const q = parseFloat(p.qty) || 0;
-    const avg = parseFloat(p.avgPrice) || 0;
-    const cur = wPrice || parseFloat(p.currentPrice) || avg;
-    qty += q; cost += avg * q; value += cur * q;
-  });
-  const avgPrice = qty ? cost / qty : 0;
-  const pnl = value - cost;
-  const rate = cost ? (value / cost - 1) * 100 : 0;
   const cls = pnl > 0 ? 'up' : pnl < 0 ? 'dn' : '';
   holdEl.innerHTML =
     `<div><span>수량</span><b>${qty.toLocaleString('ko-KR')}주</b></div>` +
     `<div><span>평균단가</span><b>${Math.round(avgPrice).toLocaleString('ko-KR')}</b></div>` +
-    `<div><span>평가손익</span><b class="${cls}">${pnl > 0 ? '+' : ''}${Math.round(pnl).toLocaleString('ko-KR')} (${rate > 0 ? '+' : ''}${rate.toFixed(2)}%)</b></div>`;
+    `<div><span>평가금액</span><b>${Math.round(value).toLocaleString('ko-KR')}</b></div>` +
+    `<div><span>평가손익</span><b class="${cls}">${pnl > 0 ? '+' : ''}${Math.round(pnl).toLocaleString('ko-KR')} (${rate > 0 ? '+' : ''}${rate.toFixed(2)}%)</b></div>` +
+    `<details${window._dockAccountsOpen ? ' open' : ''} ontoggle="window._dockAccountsOpen=this.open"><summary>계좌별 보유</summary>${rows.map(p => {
+      const account = (state.accounts || []).find(a => a.id === p.accountId);
+      return `<div><span>${escHtml(account?.nickname || account?.broker || '계좌 미지정')}</span><b>${Number(p.qty).toLocaleString()}주 · 평단 ${Number(p.avgPrice).toLocaleString()}</b></div>`;
+    }).join('')}</details>`;
 }
 function dockCtxAction(kind) {
   const w = (state.watchlist || []).find(x => x.ticker === window._dockSel);
   if (!w) return;
   if (kind === 'chart') { allStockOpenChart(w.ticker, w.name || w.ticker); return; }
   if (kind === 'cal')   { openCalendarPanel(); return; }
-  if (kind === 'news')  { window._MDI?.open('news'); return; }
+  if (kind === 'news')  {
+    window._MDI?.open('news');
+    const query = document.getElementById('sn_newsQuery');
+    if (query) query.value = w.name || w.ticker;
+    if (typeof _newsQCode !== 'undefined') _newsQCode = w.ticker;
+    icSetTab('stock');
+    icSetScope('sel');
+    return;
+  }
   if (kind === 'hoga') {
-    window._MDI?.open('trading');
-    window._MDIPanelTab?.('trading', 'ord');
-    const nameEl = document.getElementById('qo_name_input');
-    const codeEl = document.getElementById('qo_stock_code');
-    if (nameEl) nameEl.value = w.name || '';
-    if (codeEl) codeEl.value = w.ticker || '';
-    const priceEl = document.getElementById('qo_price');
-    if (priceEl && w.price) priceEl.value = Math.round(w.price).toLocaleString();
-    try { updateHogaDisplay?.(); } catch(e) {}
+    connectToHoga(w.ticker, w.name || w.ticker);
   }
 }
 setInterval(() => { try { dockCtxRender(); } catch(e) {} }, 3000);
 
-async function refreshWatchlist() {
-  if (!state.watchlist) state.watchlist = [];
-  const list = state.watchlist;
-  if (!list.length) return;
-  const api = window.electronAPI; // Electron IPC (CORS 없음)
-  for (let i = 0; i < list.length; i++) {
-    const w = list[i];
-    if (!w.ticker && !w.name) continue;
-    const isKr = /^\d{6}$/.test(w.ticker);
+// 기존 fetchQuote IPC: 국내 KIS 우선, EXE 보조 소스는 출처를 표시한다.
+async function dockLoadQuote(w) {
+  const pending = window._dockQuotePending ||= new Map();
+  if (pending.has(w.ticker)) return pending.get(w.ticker);
+  if (!window.electronAPI?.fetchQuote) {
+    w.quoteStatus = 'KIS 연결 필요';
+    dockCtxRender();
+    return;
+  }
+  const tickBefore = (window._dockQuoteTicks || {})[w.ticker];
+  w.quoteStatus = '불러오는 중';
+  dockCtxRender();
+  const task = (async () => {
     try {
-      if (api) {
-        if (isKr) {
-          // 국내: fetchQuote IPC (확장된 Naver basic 데이터 — 가격+재무 한번에)
-          // fetchStockDetail(ok:true + 빈data 버그) 대신 fetchQuote를 사용해 안정성 확보
-          const r = await api.fetchQuote(w.ticker);
-          console.log('[WL-DEBUG]', w.ticker, JSON.stringify(r));
-          if (r?.price) {
-            w.price  = r.price;
-            // 등락률: changeRatio(%) 우선, 없으면 prevClose로 계산
-            w.change = (r.changeRatio != null) ? r.changeRatio
-                     : (r.prevClose && r.prevClose > 0 ? ((r.price - r.prevClose) / r.prevClose * 100) : 0);
-            if (!w.name && r.stockName) w.name = r.stockName;
-            if (r.volume      != null) w.volume        = r.volume;
-            if (r.marketCap   != null) w.marketCap     = r.marketCap;
-            if (r.per         != null) w.per            = r.per;
-            if (r.pbr         != null) w.pbr            = r.pbr;
-            if (r.eps         != null) w.eps            = r.eps;
-            if (r.dividendYield != null) w.dividendYield = r.dividendYield;
-            if (r.industry)            w.industry       = r.industry;
-            // ROE는 annual API 필요 — 상세 팝업으로 열었을 때 캐시된 값 유지
-          }
-          // ROE 보완: fetchStockDetail(연간 데이터) — 실패해도 무시
-          if (!w.roe) {
-            try {
-              const det = await api.fetchStockDetail(w.ticker);
-              if (det?.ok && det?.data) {
-                const _sp = v => { const n = parseFloat(String(v||'').replace(/,/g,'')); return (!isNaN(n) && n !== 0) ? n : null; };
-                const d = det.data;
-                if (d.roe || d.roa) w.roe = _sp(d.roe || d.roa);
-                if (!w.eps && d.eps) w.eps = _sp(d.eps);
-                if (!w.dividendYield && d.dividendYield) w.dividendYield = _sp(d.dividendYield);
-              }
-            } catch(_) {}
-          }
-        } else {
-          // 해외: fetch-quote IPC (Yahoo Finance, CORS 없음)
-          const r = await api.fetchQuote(w.ticker);
-          if (r?.price) {
-            w.price = r.price;
-            const prev = r.prevClose;
-            w.change = prev && prev > 0 ? ((r.price - prev) / prev * 100) : null;
-            w.currency = r.currency || 'USD';
-            // 재무지표·업종 (parseYFv7 확장으로 추가됨)
-            if (r.volume    != null) w.volume   = r.volume;
-            if (r.marketCap != null) w.marketCap = r.marketCap;
-            if (r.industry)          w.industry  = r.industry;
-            if (r.per       != null) w.per       = r.per;
-            if (r.pbr       != null) w.pbr       = r.pbr;
-            if (r.eps       != null) w.eps       = r.eps;
-            if (r.dividendYield != null) w.dividendYield = r.dividendYield;
-          }
-        }
-      } else {
-        // 비-Electron(웹 브라우저) 폴백: 직접 fetch
-        if (isKr) {
-          const res = await fetch(`https://m.stock.naver.com/api/stock/${w.ticker}/basic`, { credentials: 'omit' });
-          if (res.ok) {
-            const d = await res.json();
-            w.price  = parseFloat((d.closePrice || '0').replace(/,/g,''));
-            w.change = parseFloat(d.fluctuationsRatio || 0);
-            if (!w.name && d.stockName) w.name = d.stockName;
-            w.per  = d.per  ?? null;
-            w.pbr  = d.pbr  ?? null;
-            w.roe  = d.roe  ?? null;
-          }
-        } else {
-          const enc = encodeURIComponent(w.ticker || w.name);
-          const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${enc}?interval=1d&range=1d`, { credentials: 'omit' });
-          if (res.ok) {
-            const d = await res.json();
-            const meta = d?.chart?.result?.[0]?.meta;
-            if (meta) {
-              w.price  = meta.regularMarketPrice ?? null;
-              const prev = meta.previousClose ?? meta.chartPreviousClose ?? null;
-              w.change = prev && w.price ? ((w.price - prev) / prev * 100) : null;
-              if (!w.name && meta.symbol) w.name = meta.symbol;
+      const r = await window.electronAPI.fetchQuote(w.ticker);
+      if (!(state.watchlist || []).includes(w)) return;
+      if (!(r?.price > 0)) throw new Error('시세 없음');
+      // REST 응답 대기 중 도착한 WebSocket 현재가를 과거 응답으로 덮지 않는다.
+      const freshTick = (window._dockQuoteTicks || {})[w.ticker] !== tickBefore;
+      if (!freshTick) {
+        w.price = r.price;
+        w.change = r.prevClose > 0 ? (r.price / r.prevClose - 1) * 100 : (r.changeRatio ?? null);
+        w.priceChange = r.prevClose > 0 ? r.price - r.prevClose : null;
+        w.quoteAt = Date.now();
+        w.quoteSource = r.source || 'EXE 보조 시세';
+      }
+      for (const key of ['prevClose', 'openPrice', 'highPrice', 'lowPrice', 'high52', 'low52', 'volume']) w[key] = r[key] ?? null;
+      for (const key of ['marketCap', 'per', 'pbr', 'eps', 'roe', 'dividendYield', 'industry', 'currency']) {
+        if (r[key] != null) w[key] = r[key];
+      }
+      if (!w.name && r.stockName) w.name = r.stockName;
+      w.quoteStatus = '';
+      // 기존 재무 보완 기능 유지. 이 응답으로 시세를 덮지 않는다.
+      if (!w.roe && window.electronAPI.fetchStockDetail && /^\d{6}$/.test(w.ticker)) {
+        try {
+          const det = await window.electronAPI.fetchStockDetail(w.ticker);
+          if (det?.ok && det.data && (state.watchlist || []).includes(w)) {
+            for (const key of ['roe', 'eps', 'dividendYield']) {
+              const n = parseFloat(String(det.data[key] ?? '').replace(/,/g, ''));
+              if (w[key] == null && Number.isFinite(n)) w[key] = n;
             }
           }
-        }
+        } catch (_) {}
       }
-    } catch(e) {}
-    list[i] = w;
-  }
+    } catch (_) {
+      if ((state.watchlist || []).includes(w) && (window._dockQuoteTicks || {})[w.ticker] === tickBefore) w.quoteStatus = '시세 조회 실패 · 다시 갱신해 주세요';
+    } finally {
+      pending.delete(w.ticker);
+      dockCtxRender();
+    }
+  })();
+  pending.set(w.ticker, task);
+  return task;
+}
+async function refreshWatchlist() {
+  // 순차 호출로 기존 증권사 API 호출량을 유지한다.
+  for (const w of [...(state.watchlist || [])]) await dockLoadQuote(w);
   save();
-  // 펀더멘털 포함 전체 재렌더 (PER·EPS·업종 등도 반영)
   renderWatchlist();
 }
 
@@ -12538,6 +12588,7 @@ function _toggleCheck(stockKey, checkKey, val) {
       this._syncAllBtns();
       this._render(pid);
       if (pid === 'watchlist') try { window._MDIPanelTab('watchlist', 'wl'); } catch(e) {}
+      dockQueueSubscription();
     },
 
     // ── 레이아웃 저장 (localStorage) ──────────────────────────────────
@@ -13097,6 +13148,7 @@ function _toggleCheck(stockKey, checkKey, val) {
         if (tabKey === 'trd') renderTrades && renderTrades();
       }
     } catch(e) {}
+    dockQueueSubscription();
   };
 
     // ── 구버전 호환 stubs ─────────────────────────────────────────────────
