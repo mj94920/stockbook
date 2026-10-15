@@ -1,0 +1,405 @@
+{
+  "note": "기존 코드 표시명 대응·목업 designKey 대응·제안서 예시 키 대응을 구분한다. 확정 계약이나 실행 매핑이 아니다.",
+  "legacyCode": [
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "ETF/인덱스",
+      "iconAssetKey": "fund/etf-index",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "반도체",
+      "iconAssetKey": "industry/semiconductor",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "이차전지/배터리",
+      "iconAssetKey": "industry/battery",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "디스플레이",
+      "iconAssetKey": "industry/display",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "전자부품",
+      "iconAssetKey": "industry/electronic-components",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "전기전자/반도체",
+      "iconAssetKey": "industry/electronics",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "게임",
+      "iconAssetKey": "industry/gaming",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "엔터테인먼트",
+      "iconAssetKey": "industry/entertainment",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "인공지능/로봇",
+      "iconAssetKey": "industry/ai-robotics",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "IT/플랫폼",
+      "iconAssetKey": "industry/internet-platform",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "통신/보안/서버",
+      "iconAssetKey": "industry/telecom-security-server",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "항공우주",
+      "iconAssetKey": "industry/aerospace",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "방위산업",
+      "iconAssetKey": "industry/defense",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "자동차",
+      "iconAssetKey": "industry/automotive",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "원자력/에너지",
+      "iconAssetKey": "industry/nuclear-energy",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "수소/가스",
+      "iconAssetKey": "industry/hydrogen-gas",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "석유에너지",
+      "iconAssetKey": "industry/petroleum",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "제약/바이오",
+      "iconAssetKey": "industry/biopharma",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "의료장비",
+      "iconAssetKey": "industry/medical-equipment",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "건설/기계장비",
+      "iconAssetKey": "industry/construction-machinery",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "조선/해양산업",
+      "iconAssetKey": "industry/shipbuilding",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "운송",
+      "iconAssetKey": "industry/transport",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "금융/은행",
+      "iconAssetKey": "industry/finance",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "지주",
+      "iconAssetKey": "industry/holding-company",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "화학/소재",
+      "iconAssetKey": "industry/chemical-materials",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "철강/금속",
+      "iconAssetKey": "industry/steel-metals",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "4차산업",
+      "iconAssetKey": "industry/fourth-industry",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "식품/유통",
+      "iconAssetKey": "industry/food-retail",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "소비재",
+      "iconAssetKey": "industry/consumer-goods",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "부동산/임대",
+      "iconAssetKey": "industry/real-estate",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoSector",
+      "legacyLabel": "기타",
+      "iconAssetKey": "fallback/unknown-industry",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "레버리지",
+      "iconAssetKey": "fund/leverage",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "인버스",
+      "iconAssetKey": "fund/inverse",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "2차전지",
+      "iconAssetKey": "industry/battery",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "반도체",
+      "iconAssetKey": "industry/semiconductor",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "AI/로봇",
+      "iconAssetKey": "industry/ai-robotics",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "방산/우주",
+      "iconAssetKey": "theme/defense-space",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "바이오/헬스",
+      "iconAssetKey": "industry/biopharma",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "게임/엔터",
+      "iconAssetKey": "theme/game-entertainment",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "미국주식",
+      "iconAssetKey": "fund/us-equities",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "중국주식",
+      "iconAssetKey": "fund/china-equities",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "일본주식",
+      "iconAssetKey": "fund/japan-equities",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "인도주식",
+      "iconAssetKey": "fund/india-equities",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "신흥국주식",
+      "iconAssetKey": "fund/emerging-equities",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "글로벌주식",
+      "iconAssetKey": "fund/global-equities",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "코스피200",
+      "iconAssetKey": "fund/kospi200",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "코스닥150",
+      "iconAssetKey": "fund/kosdaq150",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "채권",
+      "iconAssetKey": "fund/bonds",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "원자재",
+      "iconAssetKey": "fund/commodities",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "리츠",
+      "iconAssetKey": "fund/reits",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "배당",
+      "iconAssetKey": "fund/dividend",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "단기/현금",
+      "iconAssetKey": "fund/cash",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    },
+    {
+      "sourceFunction": "_getAutoETFTheme",
+      "legacyLabel": "기타ETF",
+      "iconAssetKey": "fallback/other-etf",
+      "mappingStatus": "design_correspondence_only",
+      "contractKey": null
+    }
+  ],
+  "mockupDesignKeys": {
+    "semiconductor": "industry/semiconductor",
+    "automotive": "industry/automotive",
+    "finance": "industry/finance",
+    "healthcare": "industry/biopharma",
+    "energy": "industry/energy",
+    "construction": "industry/construction",
+    "shipbuilding": "industry/shipbuilding",
+    "defense": "industry/defense",
+    "internet": "industry/internet-platform",
+    "consumer": "industry/consumer-goods",
+    "ai": "theme/ai",
+    "battery": "industry/battery",
+    "robotics": "theme/robotics",
+    "space": "theme/space",
+    "renewable": "theme/renewable",
+    "content": "theme/content"
+  },
+  "proposalExampleIndustryKeys": {
+    "semiconductor": "industry/semiconductor",
+    "memory-chip": "industry/memory-chip",
+    "foundry": "industry/foundry",
+    "semi-equipment": "industry/semiconductor-equipment",
+    "semi-materials": "industry/semiconductor-materials",
+    "consumer-electronics": "industry/consumer-electronics"
+  },
+  "proposalExampleThemeKeys": {
+    "ai": "theme/ai"
+  }
+}
