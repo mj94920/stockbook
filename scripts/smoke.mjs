@@ -123,6 +123,71 @@ for (const pg of PAGES) {
       check(res.includes('+150'), `문맥 패널이 보유 현재가(currentPrice)를 쓰지 않음: "${res}"`);
     });
 
+    await step('관심종목 실데이터·선택·구독', async () => {
+      const result = await page.evaluate(async () => {
+        const bak = { wl: state.watchlist, pf: state.portfolio, accounts: state.accounts, sel: window._dockSel, api: window.electronAPI, priority: localStorage.getItem(RT_PRIO_KEY) };
+        const input = document.getElementById('wlSearchInput');
+        const search = input.value;
+        try {
+          localStorage.removeItem(RT_PRIO_KEY);
+          input.value = '';
+          state.accounts = [{ id: 'a', nickname: '<계좌 A>' }, { id: 'b', nickname: '계좌 B' }];
+          state.portfolio = [
+            { ticker: '005930', qty: 10, avgPrice: 100, currentPrice: 120, accountId: 'a' },
+            { ticker: '005930', qty: 5, avgPrice: 130, currentPrice: 120, accountId: 'b' },
+          ];
+          state.watchlist = Array.from({ length: 80 }, (_, i) => ({ ticker: String(100001 + i), name: `종목 ${i}`, quoteAt: Date.now() }));
+          window._dockSel = state.watchlist[0].ticker;
+          renderWatchlist();
+          const first = document.querySelector('#watchlistBody [data-watch-ticker]');
+          first.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+          const keyboard = window._dockSel === '100002';
+          dockSelectStock('100080');
+          const visible = dockVisibleWatchTickers();
+          const tickers = buildRtTickers();
+          const subscription = tickers[0] === '005930' && tickers[1] === '100080' && tickers.length <= 40 && new Set(tickers).size === tickers.length && tickers.every(t => ['005930', '100080'].includes(t) || visible.includes(t));
+          handleRealtimePrice({ ticker: '100080', price: 150, change: 5, changePct: 3.45 });
+          dockCtxRender();
+          const realtime = state.watchlist[79].price === 150 && document.getElementById('dockCtxPrice').textContent === '150';
+          state.watchlist = [{ ticker: '005930', name: '삼성전자', price: null }];
+          window._dockSel = '005930';
+          window.electronAPI = undefined;
+          await dockLoadQuote(state.watchlist[0]);
+          const offline = document.getElementById('dockCtxStatus').textContent.includes('연결 필요') && state.watchlist[0].price === null;
+          window.electronAPI = { fetchQuote: async () => ({ price: 140, prevClose: 120, openPrice: 125, highPrice: 145, lowPrice: 120, volume: 0, high52: 160, low52: 80, source: 'KIS' }) };
+          await dockLoadQuote(state.watchlist[0]);
+          renderWatchlist();
+          const quote = document.getElementById('dockCtxQuote').textContent;
+          const hold = document.getElementById('dockCtxHold');
+          const snapshot = quote.includes('145') && quote.includes('160') && state.watchlist[0].volume === 0 && document.getElementById('dockCtxStatus').textContent.includes('KIS');
+          const accounts = hold.textContent.includes('15주') && hold.textContent.includes('+450') && hold.textContent.includes('<계좌 A>') && hold.querySelector('details') && !hold.querySelector('계좌');
+          state.watchlist.push({ ticker: '100001', name: '미보유 종목', price: 50, quoteAt: Date.now() });
+          window._dockSel = '100001';
+          dockCtxAction('hoga');
+          const hoga = document.getElementById('mdiWorkspace').dataset.dockScreen === 'trading' && document.getElementById('qo_stock_code').value === '100001' && document.getElementById('qo_cur_price').textContent.includes('50');
+          window._MDI.show('watchlist');
+          window._dockSel = '005930';
+          let resolve;
+          window.electronAPI.fetchQuote = () => new Promise(r => { resolve = r; });
+          const pending = dockLoadQuote(state.watchlist[0]);
+          handleRealtimePrice({ ticker: '005930', price: 155, change: 35, changePct: 29.17 });
+          resolve({ price: 130, source: 'KIS', openPrice: 125 });
+          await pending;
+          const stale = state.watchlist[0].price === 155 && state.portfolio.every(p => p.currentPrice === 155);
+          window.electronAPI.fetchQuote = async () => { throw new Error('offline'); };
+          await dockLoadQuote(state.watchlist[0]);
+          const failed = state.watchlist[0].quoteStatus.includes('조회 실패') && state.watchlist[0].price === 155;
+          return { keyboard, subscription, realtime, offline, snapshot, accounts: !!accounts, hoga, stale, failed };
+        } finally {
+          state.watchlist = bak.wl; state.portfolio = bak.pf; state.accounts = bak.accounts; window._dockSel = bak.sel; window.electronAPI = bak.api;
+          if (bak.priority == null) localStorage.removeItem(RT_PRIO_KEY); else localStorage.setItem(RT_PRIO_KEY, bak.priority);
+          input.value = search;
+          renderWatchlist();
+        }
+      });
+      for (const [name, ok] of Object.entries(result)) check(ok, `관심종목 회귀 실패: ${name}`);
+    });
+
     await step('설정 허브', async () => {
       await page.evaluate(() => openSettings());
       check(await hasClass('#settingsModal', 'open'), '설정 허브가 열리지 않음');
@@ -205,3 +270,4 @@ await browser.close();
 server.close();
 if (failed) { console.error(`\n스모크 테스트 ${failed}건 실패`); process.exit(1); }
 console.log('\n스모크 테스트 통과');
+
