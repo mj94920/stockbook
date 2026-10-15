@@ -885,6 +885,11 @@ async function fetchKisPrice(code) {
       price,
       prevClose: prevClose || null,
       openPrice: openPrice || null,
+      highPrice: parseFloat(o.stck_hgpr) || null,
+      lowPrice: parseFloat(o.stck_lwpr) || null,
+      volume: o.acml_vol != null && o.acml_vol !== '' && Number.isFinite(Number(o.acml_vol)) ? Number(o.acml_vol) : null,
+      high52: parseFloat(o.w52_hgpr) || null,
+      low52: parseFloat(o.w52_lwpr) || null,
       currency:  'KRW',
       source:    'KIS',
     };
@@ -957,6 +962,11 @@ ipcMain.handle('fetch-quote', async (_event, rawTicker) => {
         price:          r.regularMarketPrice,
         prevClose:      r.regularMarketPreviousClose ?? null,
         openPrice:      r.regularMarketOpen          ?? null,
+        highPrice:      r.regularMarketDayHigh ?? null,
+        lowPrice:       r.regularMarketDayLow ?? null,
+        high52:         r.fiftyTwoWeekHigh ?? null,
+        low52:          r.fiftyTwoWeekLow ?? null,
+        source:         'Yahoo Finance',
         currency:       r.currency                   ?? 'USD',
         // 거래량·시총
         volume:         _n(r.regularMarketVolume),
@@ -1032,10 +1042,14 @@ ipcMain.handle('fetch-quote', async (_event, rawTicker) => {
         price:       kis.price,
         prevClose:   kis.prevClose ?? naverData.prevClose,
         openPrice:   kis.openPrice ?? naverData.openPrice,
+        highPrice:   kis.highPrice,
+        lowPrice:    kis.lowPrice,
+        high52:      kis.high52,
+        low52:       kis.low52,
         currency:    'KRW',
         source:      'KIS',
-        changeRatio: naverData.changeRatio,
-        volume:      naverData.volume,
+        changeRatio: kis.prevClose ? (kis.price / kis.prevClose - 1) * 100 : null,
+        volume:      kis.volume ?? naverData.volume,
         marketCap:   naverData.marketCap,
         per:         naverData.per,
         pbr:         naverData.pbr,
@@ -1046,7 +1060,7 @@ ipcMain.handle('fetch-quote', async (_event, rawTicker) => {
       };
     }
     if (kis)       return kis;           // KIS만 성공 (Naver 실패)
-    if (naverData) return { symbol: rawTicker, currency: 'KRW', ...naverData };
+    if (naverData) return { symbol: rawTicker, currency: 'KRW', source: '네이버 보조 시세', ...naverData };
 
     // 3) 야후 파이낸스 v7 quote .KS / .KQ (최후 폴백)
     for (const suffix of ['.KS', '.KQ']) {
@@ -1463,3 +1477,4 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
+
