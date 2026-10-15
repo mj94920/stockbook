@@ -78,6 +78,8 @@ scripts/bump-version.mjs                   ← 버전 일괄 갱신 (릴리스 �
 docs/UI-REVAMP-PLAN.md                     ← UI/UX 1차 개편 기준 문서 (진행 중)
 docs/STRUCTURE-REVAMP-PLAN.md              ← 2차 구조 개편 작업 지시서 (#29 → #47 → … → #50, 에픽 #46)
 docs/SQLITE-STORAGE-DESIGN.md              ← #29 SQLite 저장 구조 설계 (승인)
+docs/ACCOUNT-LEDGER-DESIGN.md              ← 계좌·예수금·정산 원본(ledgerMode) 설계 (승인 · #63 #64 #65)
+docs/LEDGER-CONTRACT-DRAFT.md              ← 계좌·장부 계약 초안 (Contract 입력 · #64 #65 함수·어댑터 계약)
 docs/                                      ← PRD, 과거 개발 로그
 CHANGELOG.md                               ← 릴리스마다 자동 생성
 ```
@@ -110,13 +112,23 @@ CHANGELOG.md                               ← 릴리스마다 자동 생성
 
 ## 4. 핵심 로직 메모
 
-### 예수금 `getCashBalance()` — 우선순위
+### 예수금 `getCashBalance()` — 현재 우선순위 (이관 전 레거시)
 
-1. `state.cashManual` (잔고탭 "예수금 직접 설정")
-2. `state.totalAsset − 총매입원가`
-3. `calcExsugeum()` (입출금 내역 폴백)
+1. `accounts[].cash` 합계. 현재는 `> 0` 인 계좌만 센다. 이 필터는 결함이며 #63 에서 고친다
+2. `state.cashManual` (잔고탭 "예수금 직접 설정")
+3. `state.totalAsset − 총매입원가`
+4. `calcExsugeum()` (입출금 내역 폴백)
 
-`renderBalanceSummary()` / `renderBalanceDonut()` / `renderPortfolioBar()` 가 공유 → 한 곳만 고친다.
+`renderBalanceSummary()` / `renderBalanceDonut()` / `renderPortfolioBar()` 가 공유하므로 한 곳만 고친다.
+
+**목표 구조**: `docs/ACCOUNT-LEDGER-DESIGN.md` (승인 2026-10-11)
+
+- 계좌별 `ledgerMode` 로 원본을 정한다.
+  - `broker` 계좌는 증권사가 원본이다.
+  - `local` 계좌는 StockBook 장부가 원본이다.
+- 예수금은 `getCash(accountId)` 하나로 계산하고, 통화별로만 합산한다.
+- 위 폴백 체인과 전역 `cashManual`·`totalAsset` 은 #64 에서 이관한 뒤 제거한다.
+- 그 전에는 이 레거시 체인의 **순서를 바꾸지 않는다.**
 
 ### API 키 저장 (Electron safeStorage)
 
@@ -199,6 +211,7 @@ Android 2.0 프로젝트 생성 → Kotlin 구현 → Kotlin Fixture Test PASS �
 
 - 자동 개발(Claude/Codex)은 이 절의 **현재 단계에 해당하는 이슈만** 처리한다. 뒤 단계 이슈를 미리 구현하지 않는다.
 - #29 착수 조건: UI 2차(#36–#40) 완료. #29 는 기존 종목 연결(`name`/`ticker`)을 그대로 보존해 옮기며 `assetId` 를 채우지 않는다. #47 은 #29 의 백업·검증·롤백 체계를 재사용하며 JSON 위에 별도 마이그레이션을 만들지 않는다. 세부는 `docs/STRUCTURE-REVAMP-PLAN.md`.
+- **계좌·장부(2026-10-11 승인)**: 2차 기획 순서는 `#63 → #29 → #47 → Contract → #64 계좌 장부 → #48 → #65 Broker Account Adapter → #49 → #50` 이다(`docs/STRUCTURE-REVAMP-PLAN.md`). #64 · #65 를 Android Gate 조건에 포함할지는 **미팅룸 결정 대기**다. 결정 전까지 Gate 조건(#48~#50 + JS Fixture)은 바꾸지 않는다.
 - **#49(시계열 저장)는 #29(SQLite)에 의존한다.** #48 ~ #52 는 2차 기획의 기존 의존관계를 그대로 따른다.
 - **#51(종목 타임라인) · #52(매수 근거 ↔ 결과)는 Android Gate 밖이다.** Android 가 의존하지 않으므로 게이트 통과 여부와 무관하게 별도로 진행한다.
 - Asset·SQLite·DailyCandle·Indicator/Signal Engine 은 **Android 전용이 아니라 StockBook 자체의 2차 개편 과제**다. Android 는 그 결과를 쓰는 두 번째 클라이언트다.
