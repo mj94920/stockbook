@@ -1,0 +1,20 @@
+/* Preview harness only; product styling is preserved in source/*.html. */
+body{margin:0;padding:20px 12px;background:#eef1f6;font-family:Arial,'Malgun Gothic',sans-serif;color:#17243a}
+.preview-heading{max-width:410px;margin:0 auto 12px;font-size:13px;line-height:1.7}
+.preview-heading h1{font-size:18px;margin:0 0 4px}
+.preview-heading a{color:#40558a;margin-right:14px}
+.preview-status{max-width:386px;margin:10px auto;padding:10px 12px;background:#fff;border-radius:12px;font-size:12px;line-height:1.7}
+.approved-market-shell{max-width:410px;margin:auto;background:#f7f8fc;border:1px solid #e4e8f0;border-radius:26px;overflow:hidden}
+.approved-market-head{background:#fff;padding:20px 18px 8px}
+.approved-market-head h1{font-size:23px;margin:0}
+.approved-market-tabs{display:flex;gap:15px;background:#fff;padding:0 14px}
+.approved-market-tabs button{font:14px Arial,'Malgun Gothic',sans-serif;background:transparent;border:0;border-bottom:2px solid transparent;color:#475569;min-height:46px;padding:8px 3px}
+.approved-market-tabs button[aria-current]{color:#493b7c;border-bottom-color:#7862ad}
+.approved-news-content{padding:12px 14px}
+#all-market-sb-disclosure-feed{padding:0}
+#all-market-sb-disclosure-feed .preview{padding:0;max-width:none;background:transparent}
+[data-lucide]{width:19px;height:19px;display:block}
+[hidden]{display:none!important}
+/* Match the integration shell instead of nesting a second preview frame. */
+#all-market-sb-disclosure-feed{padding:0!important}
+#all-market-sb-disclosure-feed .preview{padding:0!important;max-width:none!important;background:transparent!important;border-radius:0!important}
