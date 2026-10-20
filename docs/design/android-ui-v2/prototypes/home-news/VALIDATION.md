@@ -5,12 +5,12 @@
 ## 통과
 
 - `node --check app.js`, `node --check news-data.js`.
-- Python Playwright + 시스템 Chromium: 홈 카드 6개와 순서, 판정 근거 열기, 기사 5건 최신순, 원문 새 창/rel, 공시 3건과 가상 원문 안내.
+- Python Playwright + 시스템 Chromium: 홈 카드 6개와 순서, 판정 근거 열기, 기사 5건 최신순, 내부 리딩·본문 미연결 표시, 보조 원문 새 창/rel, 공시 3건과 가상 원문 안내.
 - 필터: 선택 초안과 적용 분리, 전체/단독/0개, 빈 결과 복구, 공시 왕복·홈 왕복·브라우저 뒤로가기 후 선택 유지.
 - 가상 예시/미연결/로딩/오류/실제 결과 없음 상태 분리. 미수신을 0원으로 대체하지 않음.
 - 320/360/390px와 자체 글자 배율 100%/200%에서 문서 가로 넘침 없음.
 - 안내 토스트가 하단 도구 클릭을 가로막는 문제를 검사에서 발견해 pointer-events:none으로 수정하고 재검사 통과.
-- 브라우저 pageerror 0. 자동 외부 요청 0(CSP connect-src:none, 내장 사진, 로컬 SVG). 외부 원문 링크는 클릭하지 않고 속성만 검사.
+- 브라우저 pageerror 0. 자동 외부 요청 0(CSP connect-src:none, 내장 사진, 로컬 SVG). 보조 외부 원문 링크는 클릭하지 않고 속성만 검사. 기사 카드는 내부 리딩을 열며 새 창이나 자동 외부 요청을 만들지 않는지 검사.
 - main 77c7497의 필요한 PC 파일을 GitHub 연결 도구로 복원한 격리 스냅샷에서 변경하지 않은 `npm test`(정적 검사+기존 PC smoke) 통과. 저장소 전체 clone이나 npm ci를 완료한 것으로 주장하지 않음. 기존 환경 Playwright와 시스템 Chromium을 사용했고, 로컬 PLAYWRIGHT_BROWSERS_PATH로 바이너리 경로만 지정. 검사 스크립트와 package.json을 수정하지 않음.
 
 ## 한계·미수행
@@ -24,3 +24,7 @@
 ## 실행 재현
 
 `python check.py` (Python Playwright 설치 및 Chromium 필요). 시스템 Chromium 경로가 다르면 `CHROMIUM_EXECUTABLE` 환경변수 지정. 테스트는 로컬 127.0.0.1 임시 포트만 사용한다. 이 실행 환경에서는 로컬 서버/Chromium 실행에 sandbox network 추가 권한이 필요했다. 검토 산출물은 home-390.png/news-390.png/news-360-large.png로 로컬 생성되며 중복 바이너리를 PR에 추가하지 않는다.
+
+## 내부 리딩 정정 검증
+
+기사 클릭 → 내부 리딩 → 목록 버튼/브라우저 뒤로가기/앞으로가기, 필터·스크롤·포커스 복원, 직접 기사 URL 진입과 잘못된 기사 ID의 안전한 복귀를 추가 검증해 통과했다. 리딩도 320/360/390px·100/200%에서 가로 넘침 없이 통과했다. 실제 본문 수집/요약은 하지 않는다.

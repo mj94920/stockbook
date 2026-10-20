@@ -9,7 +9,7 @@
 | 홈 | 홈 | 총자산·보유/관심종목·지수·신호·일정·일지 초안 | 01-approved/source/home.html | PR #76 README HOME: 사용자 통과 | index.html + app.js home() / ui.css | 6개 카드 순서·라이트 톤 유지; 데이터 상태 분리·통화 단위 보강 | 총자산·예수금 의미/규칙 엔진/시세·일지 데이터 |
 | 홈 | 발견 | 탐색 진입 및 발견 피드 | 02-current/stockbook-mobile-trade-detail-integration-review.html (화면: 홈 / 발견) | 시안 존재; 최종 승인 근거 없음 | 로컬/저장소 독립 프로토타입에 구현 없음; PC는 재사용 대상 아님 | 현재 통합본의 승인 범위는 아님; 이번 구현 보류 | Shared Contract·Provider·식별/기준시각·사용자 승인 대기 |
 | 시장 | 시장 개요 | 시장 흐름·수급·오늘 뜨는 업종·테마 | 02-current/stockbook-mobile-trade-detail-integration-review.html (화면: 시장 / 시장 개요) | 시안 존재; 최종 승인 근거 없음 | 로컬/저장소 독립 프로토타입에 구현 없음; PC는 재사용 대상 아님 | 기존 시험구동 구조 유지, 업종은 목록형 카드; 이번 구현 보류 | Shared Contract·Provider·식별/기준시각·사용자 승인 대기 |
-| 시장 | 뉴스 | 일반 기사·공시, 언론사 필터 | 01-approved/source/news-disclosures.html | PR #76 README NEWS: 데이터 방식 미확정 조건의 시각 합격 | app.js newsShell()/newsResults(), news-data.js | 일반/공시·필터 유지·발행일순 유지; 상태 검토 추가 | 기사·사진·본문/원문 정책, 공시 제공원·식별자 |
+| 시장 | 뉴스 | 일반 기사·공시, 언론사 필터 | 01-approved/source/news-disclosures.html | PR #76 README NEWS: 데이터 방식 미확정 조건의 시각 합격 | app.js newsShell()/newsResults(), news-data.js | 일반/공시·필터 유지·발행일순 유지; 내부 기사 리딩·목록 복귀; 상태 검토 추가 | 기사·사진·본문/원문 정책, 공시 제공원·식별자 |
 | 시장 | 일정 | 날짜·기간 선택, 일정 상세 | 02-current/stockbook-mobile-trade-detail-integration-review.html (화면: 시장 / 일정) | 시안 존재; 최종 승인 근거 없음 | 로컬/저장소 독립 프로토타입에 구현 없음; PC는 재사용 대상 아님 | 예시 일정·미수신 값을 실데이터로 확정하지 않음; 이번 구현 보류 | Shared Contract·Provider·식별/기준시각·사용자 승인 대기 |
 | 종목 | 목록 | 관심·보유·최근, 검색, 관심종목 편집 | 02-current/stockbook-mobile-trade-detail-integration-review.html (화면: 종목 / 목록) | 시안 존재; 최종 승인 근거 없음 | 로컬/저장소 독립 프로토타입에 구현 없음; PC는 재사용 대상 아님 | 기업 심볼 일괄 정리는 후속 구현 시; 이번 구현 보류 | Shared Contract·Provider·식별/기준시각·사용자 승인 대기 |
 | 종목 | 개요 | 가격·차트·사업 요약·뉴스·보유·일지·일정 | 02-current/stockbook-mobile-trade-detail-integration-review.html (화면: 종목 / 개요) | 시안 존재; 최종 승인 근거 없음 | 로컬/저장소 독립 프로토타입에 구현 없음; PC는 재사용 대상 아님 | 요약 카드 중복 생성 중지; 이번 구현 보류 | Shared Contract·Provider·식별/기준시각·사용자 승인 대기 |
@@ -46,3 +46,7 @@
 - 이전 시장/70종 로컬 프로토타입은 이 환경에 없어 대화 보고만 존재한다. 현재 첨부 통합본과 동일하다고 가정하지 않는다.
 - 실제 비교 가능한 기존 모바일 UI 코드는 2026-10-19 작성된 /workspace/stockbook-home-news 독립 프로토타입이다. 이번 PR은 이 코드를 검토용 docs 경로로 전달한다.
 - 데이터 연결·AI 결과·정산·기업 분류 신규 구현 없음.
+
+## 뉴스 읽기 최신 지시
+
+사용자는 2026-10-20 기사 클릭의 목적지를 외부 링크가 아닌 프로그램 내 리딩으로 정정하고 승인했다. PR #76의 외부 원문 동작 설명과 차이가 있으며 최신 사용자 지시를 반영한다. 리딩은 별도 도구/중복 카드 세트가 아니라 뉴스의 하위 탐색 상태다. 본문 계약은 미확정이므로 예시 설명만 표시하고, 외부 원문은 보조 링크로 유지한다.

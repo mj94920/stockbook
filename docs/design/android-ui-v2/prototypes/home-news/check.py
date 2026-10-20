@@ -20,32 +20,68 @@ with sync_playwright() as p:
  assert page.locator('details').get_attribute('open') is not None
  page.screenshot(path=str(r/'home-390.png'),full_page=True)
  page.locator('[data-nav="market"]').click()
- assert page.locator('a.sb-article').count()==5
+ assert page.locator('button[data-article]').count()==5
  dates=page.locator('time').all_text_contents();assert dates==sorted(dates,reverse=True)
- assert page.locator('a.sb-article').evaluate_all('(a)=>a.every(e=>e.target==="_blank"&&e.rel.includes("noopener")&&e.rel.includes("noreferrer"))')
+ assert page.locator('a.sb-article').count()==0
  page.locator('#filter-toggle').click()
  for box in page.locator('[data-publisher]').all(): box.uncheck()
  page.locator('#apply').click()
- assert page.locator('a.sb-article').count()==0
+ assert page.locator('button[data-article]').count()==0
  page.locator('#reset-empty').click()
- assert page.locator('a.sb-article').count()==5
+ assert page.locator('button[data-article]').count()==5
  page.locator('#filter-toggle').click()
  for box in page.locator('[data-publisher]').all(): box.uncheck()
  page.locator('[data-publisher="연합뉴스"]').check()
- assert page.locator('a.sb-article').count()==5 # Draft selection must not apply early.
+ assert page.locator('button[data-article]').count()==5 # Draft selection must not apply early.
  page.locator('#apply').click()
- assert page.locator('a.sb-article').count()==1
+ assert page.locator('button[data-article]').count()==1
  page.locator('[data-type="disclosure"]').click()
  assert page.locator('.sb-filing').count()==3
  assert page.locator('#filter-toggle').is_hidden()
  page.locator('[data-filing="1"]').click()
  assert page.locator('#filing-note-1').is_visible()
  page.locator('[data-type="news"]').click()
- assert page.locator('a.sb-article').count()==1
+ assert page.locator('button[data-article]').count()==1
  page.locator('#filter-toggle').click()
  page.locator('#select-all').click()
  page.locator('#apply').click()
  page.screenshot(path=str(r/'news-390.png'),full_page=True)
+ # Reading is internal, opens no popup and makes no external request.
+ page.locator('#filter-toggle').click()
+ for box in page.locator('[data-publisher]').all():box.uncheck()
+ for media in ['연합뉴스','매일경제']:page.locator('[data-publisher="'+media+'"]').check()
+ page.locator('#apply').click()
+ target=page.locator('[data-article="0"]')
+ target.scroll_into_view_if_needed()
+ previous_y=page.evaluate('window.scrollY')
+ target.click()
+ page.wait_for_selector('.sb-reader-body')
+ assert len(page.context.pages)==1
+ assert '본문 미연결' in page.locator('main').inner_text()
+ assert page.locator('.sb-original').get_attribute('target')=='_blank'
+ assert page.locator('.sb-original').get_attribute('rel')=='noopener noreferrer'
+ page.screenshot(path=str(r/'reader-390.png'),full_page=True)
+ page.locator('[data-reader-back]').first.click()
+ page.wait_for_selector('[data-article="0"]')
+ assert page.locator('[data-article]').count()==2
+ page.wait_for_timeout(100)
+ assert abs(page.evaluate('window.scrollY')-previous_y)<3
+ assert page.evaluate('document.activeElement.dataset.article')=='0'
+ page.go_forward()
+ page.wait_for_selector('.sb-reader-body')
+ page.go_back()
+ page.wait_for_selector('[data-article="0"]')
+ for width in [320,360,390]:
+  page.set_viewport_size({'width':width,'height':844})
+  for scale in ['1','2']:
+   page.select_option('#text-scale',scale)
+   page.locator('[data-article="0"]').click()
+   assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
+   page.locator('[data-reader-back]').first.click()
+   page.wait_for_selector('[data-article="0"]')
+ page.select_option('#text-scale','1')
+ page.set_viewport_size({'width':390,'height':844})
+
  for width in [320,360,390]:
   page.set_viewport_size({'width':width,'height':844})
   for scale in ['1','2']:
@@ -65,16 +101,26 @@ with sync_playwright() as p:
  page.locator('#apply').click()
  page.locator('[data-nav="home"]').click()
  page.go_back()
- page.wait_for_selector('a.sb-article')
- assert page.locator('a.sb-article').count()==1
+ page.wait_for_selector('button[data-article]')
+ assert page.locator('button[data-article]').count()==1
  assert '블로터' in page.locator('.sb-publisher').inner_text()
  for value,label in [('unconnected','미연결'),('loading','불러오는 중'),('error','실패'),('empty','조회 완료')]:
   page.select_option('#data-state',value)
   assert label in page.locator('main').inner_text()
-  assert page.locator('a.sb-article').count()==0
+  assert page.locator('button[data-article]').count()==0
  page.locator('#return-sample').click()
- assert page.locator('a.sb-article').count()==1
+ assert page.locator('button[data-article]').count()==1
+
+ # Deep-link and invalid article IDs must have a safe return path.
+ page.goto(f'http://127.0.0.1:{server.server_port}/index.html?direct=1#news/article/1')
+ page.wait_for_selector('.sb-reader-body')
+ page.locator('[data-reader-back]').first.click()
+ assert page.locator('[data-article]').count()==5
+ page.goto(f'http://127.0.0.1:{server.server_port}/index.html?direct=2#news/article/999')
+ assert '기사를 찾을 수 없습니다' in page.locator('main').inner_text()
+ page.locator('[data-reader-back]').click()
+ assert page.locator('[data-article]').count()==5
  assert not errors,errors
  assert not [x for x in requests if x.startswith(('https:','http:')) and not x.startswith(f'http://127.0.0.1:{server.server_port}/')],requests
  b.close()
-print('PASS: 6 home cards; news/disclosure/filters/back/state separation; 320/360/390 at 100/200%; no runtime errors or automatic external requests')
+print('PASS: 6 home cards; news/disclosure/filters/back/state separation; 320/360/390 at 100/200%; internal reader/back/forward/scroll/focus/deep-link; no runtime errors or automatic external requests')
