@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <title>Stock Book — 주식 포트폴리오 관리</title>
+<link rel="icon" type="image/png" href="./icon-192.png">
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -496,29 +497,8 @@
     gap: 10px;
     letter-spacing: -0.02em;
   }
-  .logo img {
-    width: 30px;
-    height: 30px;
-    border-radius: 7px;
-    flex-shrink: 0;
-  }
-  .logo img {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    filter: drop-shadow(0 2px 8px var(--accent-glow));
-  }
-  .logo span {
-    background: linear-gradient(135deg, #a5b4fc, var(--accent));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-weight: 800;
-  }
-  .light-mode .logo span {
-    background: linear-gradient(135deg, var(--accent), #1d4ed8);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
+  .logo .sb-brand-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+  .sb-brand-wordmark { width: 124px; height: 24px; color: var(--sb-text-1); flex-shrink: 0; }
 
   /* 헤더 액션 버튼 */
   .header-action-btn {
@@ -3209,7 +3189,7 @@
   #mdi-panel-portfolio .hts-s2r-sub-item .s2r-sv { font-family: var(--sb-font-num); font-variant-numeric: tabular-nums; color: var(--sb-text-1); }
   #mdi-panel-portfolio .hts-s2r-sub-item .s2r-sv.up { color: var(--sb-up); }
   #mdi-panel-portfolio .hts-s2r-sub-item .s2r-sv.dn { color: var(--sb-down); }
-  @media (max-width: 720px) { .pf-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 720px) { .pf-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
   /* 호가 확인 + 거래 기록 */
   .tr-rec-title { font-size: 12px; font-weight: 700; color: var(--sb-text-1); display: flex; align-items: baseline; justify-content: space-between; gap: var(--sb-space-2); }
@@ -3225,6 +3205,170 @@
   #mdi-panel-journal .checkbox-item { border-radius: var(--sb-radius-2); border-color: var(--sb-border); background: var(--sb-surface); color: var(--sb-text-2); }
   #mdi-panel-journal .jc-tag { background: var(--sb-surface); border-radius: var(--sb-radius-1); color: var(--sb-text-2); }
   #mdi-panel-journal .card { position: static; }
+
+  /* Desktop Main v2 — composed shell, shared theme tokens, existing data paths. */
+  body { height: 100vh; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  body .header { flex-shrink: 0; position: relative; background: var(--sb-panel); border-bottom: 1px solid var(--sb-border); backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: var(--sb-shadow-1); }
+  body.light-mode .header { background: var(--sb-panel); border-color: var(--sb-border); box-shadow: var(--sb-shadow-1); }
+  .hdr-row1 { height: 62px; padding: 0 14px; gap: 14px; }
+  .hdr-row2 { display: none; }
+  .sb-desktop-search { flex: 1; min-width: 100px; max-width: 390px; }
+  .sb-desktop-search input { width: 100%; background: var(--sb-bg); }
+  .hdr-row1 > .hdr-group--idx { flex: 1; max-width: 450px; min-width: 160px; }
+  .hdr-idx-card { min-width: 96px; padding: 0 12px; border: 0; border-right: 1px solid var(--sb-border-weak); background: transparent; box-shadow: none; border-radius: 0; }
+  .hdr-idx-card .hdr-idx-val { font-size: 13px; }
+  .hdr-status { gap: 5px; flex-shrink: 0; }
+  .hdr-badge { font-size: 10px; padding: 4px 7px; }
+  #headerDate { display: none; }
+  #calDdayBadge { max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
+  .content.mdi-content { flex: 1; min-height: 0; height: auto !important; animation: none; }
+  .mdi-sidebar { width: 64px; min-width: 64px; padding: 6px 4px; background: var(--sb-panel); }
+  .mdi-sb-section-label { display: none; }
+  .mdi-sidebar .mdi-sb-btn { flex-direction: column; justify-content: center; gap: 5px; padding: 10px 0; height: auto; min-height: 58px; border-radius: var(--sb-radius-2); margin: 3px 0; border-left: 0; }
+  .mdi-sidebar .mdi-sb-label { font-size: 10px; white-space: nowrap; }
+  .mdi-sb-icon-wrap svg { width: 21px; height: 21px; }
+  .mdi-sb-btn-active { color: var(--sb-accent); background: var(--sb-accent-soft); }
+  .mdi-sb-toggle { height: 22px; }
+  .mdi-sb-status { padding: 7px 0; justify-content: center; }
+  #apiStatusLabel { display: none; }
+  .mdi-workspace.mdi-dock { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); background: var(--sb-bg); }
+  .mdi-dock.sb-desktop-home { grid-template-rows: 0 minmax(250px, 1.2fr) minmax(250px, 1fr); padding: 10px; gap: 10px; }
+  .mdi-dock.sb-desktop-home > .dock-bar { display: none; }
+  .mdi-dock.sb-desktop-home > #mdi-panel-watchlist { grid-column: 1; grid-row: 2 / 4; }
+  .mdi-dock.sb-desktop-home > :is(#mdi-panel-portfolio,#mdi-panel-journal) { grid-column: 2; grid-row: 3; }
+  .mdi-dock.sb-desktop-home > .dock-ctx { display: flex; grid-column: 2; grid-row: 2; min-width: 0; padding: 0; border: 1px solid var(--sb-border); border-radius: var(--sb-radius-3); background: var(--sb-panel); }
+  .mdi-dock.sb-desktop-home > .mdi-panel { background: var(--sb-panel); border: 1px solid var(--sb-border); border-radius: var(--sb-radius-3); box-shadow: var(--sb-shadow-1); }
+  .mdi-dock .mdi-ptab-bar { flex-shrink: 0; background: var(--sb-panel); padding: 0 8px; min-height: 40px; border-color: var(--sb-border-weak); }
+  .mdi-dock .mdi-ptab { padding: 10px 12px; color: var(--sb-text-2); font-size: 12px; }
+  .mdi-dock .mdi-ptab.active { color: var(--sb-accent); border-color: var(--sb-accent); background: linear-gradient(var(--sb-panel),var(--sb-bg)); }
+  .mdi-dock.sb-desktop-home #mdi-body-watchlist { padding: 0; }
+  .mdi-dock.sb-desktop-home #mdi-body-portfolio { padding: 0 10px 10px; min-width: 0; }
+  .mdi-dock.sb-desktop-home #mdi-ptc-portfolio-pf > .card { min-height: 0 !important; padding: 8px 0; border: 0; border-radius: 0; flex-shrink: 0; }
+  .mdi-dock.sb-desktop-home .pf-stats { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; }
+  .mdi-dock.sb-desktop-home .pf-stats .sb-stat { padding: 8px; gap: 3px; border-radius: 5px; background: linear-gradient(var(--sb-panel),var(--sb-bg)); }
+  .mdi-dock.sb-desktop-home .pf-stats .sb-stat__label { font-size: 10px; flex-wrap: wrap; }
+  .mdi-dock.sb-desktop-home .pf-stats .sb-stat__value { font-size: 13px; white-space: normal; overflow-wrap: anywhere; }
+  .mdi-dock.sb-desktop-home .pf-stats .sb-stat__sub { font-size: 10px; }
+  .mdi-dock.sb-desktop-home .hts-s2r-sub { display: flex; flex-wrap: wrap; padding: 6px; }
+  .mdi-dock.sb-desktop-home .section-row { flex-wrap: wrap; gap: 6px; }
+  .mdi-dock.sb-desktop-home #htsSummary { margin-bottom: 0; }
+  .mdi-dock table { font-size: 11px; }
+  .mdi-dock th { background: var(--sb-bg); color: var(--sb-text-3); border-color: var(--sb-border-weak); font-size: 10px; padding: 8px; }
+  .mdi-dock td { padding: 8px; border-color: var(--sb-border-weak); }
+  #watchlistBody td { font-size: 11px; }
+  #watchlistBody td .dock-ctx__none { font-size: 9px; }
+  #watchlistBody tr.dock-sel td { background: var(--sb-accent-soft); }
+  .sb-detail-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--sb-border-weak); display: flex; justify-content: space-between; gap: 14px; align-items: center; }
+  .sb-detail-identity { display: flex; gap: 9px; align-items: baseline; flex-wrap: wrap; }
+  .dock-ctx__name { font-size: 22px; letter-spacing: -.6px; }
+  .dock-ctx__code { font-size: 12px; }
+  .sb-detail-price { display: flex; align-items: baseline; gap: 12px; margin-top: 8px; }
+  .dock-ctx__price { font-size: 34px; letter-spacing: -1px; }
+  .dock-ctx__chg { font-size: 15px; }
+  .dock-ctx__none { font-size: 11px; line-height: 1.7; }
+  .dock-ctx__empty { padding: 24px; }
+  .dock-ctx__body { gap: 0; min-width: 0; }
+  .sb-detail-tabs { display: flex; gap: 4px; padding: 0 12px; overflow-x: auto; border-bottom: 1px solid var(--sb-border-weak); }
+  .sb-detail-tabs button { white-space: nowrap; border: 0; background: none; color: var(--sb-text-2); padding: 11px 12px; cursor: pointer; font: inherit; font-size: 12px; }
+  .sb-detail-tabs button.active { color: var(--sb-accent); border-bottom: 2px solid var(--sb-accent); font-weight: 700; }
+  .sb-detail-content { display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; padding: 12px; }
+  .sb-detail-card { min-width: 0; padding: 12px; border: 1px solid var(--sb-border-weak); border-radius: var(--sb-radius-2); background: var(--sb-panel); }
+  .sb-detail-card h3 { margin: 0 0 10px; font-size: 12px; color: var(--sb-text-1); }
+  .dock-ctx__rows > div { gap: 8px; flex-wrap: wrap; font-size: 11px; padding: 4px 0; }
+  .dock-ctx__rows b { overflow-wrap: anywhere; font-size: 12px; }
+  .dock-ctx__quote-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0 12px; }
+  .sb-detail-bottom { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; padding: 0 12px 12px; }
+  .sb-signal { background: linear-gradient(var(--sb-panel),var(--sb-bg)); }
+  .sb-signal strong { display: block; font-size: 17px; margin: 12px 0 6px; }
+  .sb-signal small { color: var(--sb-text-3); font-size: 10px; }
+  .sb-work-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 9px 0; }
+  .sb-work-toolbar strong { font-size: 13px; margin-right: auto; }
+  .sb-work-toolbar .sb-btn--ghost { color: var(--sb-accent); }
+  .sb-work-toolbar .sb-btn--primary { background: linear-gradient(var(--sb-accent),var(--sb-accent-hover)); box-shadow: var(--sb-shadow-1); }
+  .sb-work-toolbar .sb-btn--secondary { color: var(--sb-accent); border-color: var(--sb-accent); background: var(--sb-panel); }
+  #mdi-panel-journal #journalLayout { display: block !important; }
+  #mdi-panel-journal #journalLayout > div { min-width: 0; }
+  #mdi-panel-journal .card { padding: 12px; margin-bottom: 10px; background: var(--sb-panel); border: 1px solid var(--sb-border-weak); border-radius: var(--sb-radius-2); }
+  #mdi-panel-journal .journal-section { margin-top: 10px; padding-top: 4px; }
+  #mdi-panel-journal .journal-section h3 { color: var(--sb-accent); font-size: 12px; margin: 0 0 9px; }
+  #mdi-panel-journal .form-grid { grid-template-columns: repeat(3,minmax(0,1fr)) !important; gap: 8px; }
+  #mdi-panel-journal label { font-size: 11px; }
+  #mdi-panel-journal input,#mdi-panel-journal select,#mdi-panel-journal textarea { font-size: 12px; border-color: var(--sb-border); background: var(--sb-bg); color: var(--sb-text-1); }
+  #mdi-panel-journal .checkbox-item { font-size: 10px; padding: 5px 7px; background: var(--sb-bg); border: 1px solid var(--sb-border-weak); border-radius: 4px; }
+  #accountPanel { width: min(760px,92vw); background: var(--sb-panel); border-color: var(--sb-border); box-shadow: var(--sb-shadow-2); }
+  #accountPanel input,#accountPanel select { background: var(--sb-bg); border-color: var(--sb-border); color: var(--sb-text-1); }
+  #accountPanel button { font-family: inherit; }
+  @media(max-width:1200px) {
+    .hdr-row1 { gap: 9px; padding: 0 10px; }
+    .hdr-row1 > .hdr-group--idx { max-width: 270px; }
+    #calDdayBadge { display: none; }
+    .sb-brand-wordmark { width: 110px; }
+    .sb-detail-content { gap: 8px; padding: 8px; }
+    .sb-detail-card { padding: 9px; }
+    .sb-work-toolbar .sb-btn { padding: 0 8px; font-size: 11px; }
+  }
+  @media(max-width:960px) { .hdr-row1 > .hdr-group--idx { display: none; } .sb-detail-content { grid-template-columns: 1fr; } #mdi-panel-journal .form-grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; } }
+  @media(max-width:760px) {
+    .mdi-dock.sb-desktop-home { grid-template-columns: minmax(0,1fr); grid-template-rows: 0 300px 350px 400px; overflow: auto; }
+    .mdi-dock.sb-desktop-home > #mdi-panel-watchlist { grid-column: 1; grid-row: 2; }
+    .mdi-dock.sb-desktop-home > .dock-ctx { grid-column: 1; grid-row: 3; }
+    .mdi-dock.sb-desktop-home > :is(#mdi-panel-portfolio,#mdi-panel-journal) { grid-column: 1; grid-row: 4; }
+  }
+
+  .mdi-dock #watchlistBody.sb-compact-quotes table { min-width: 510px !important; }
+  #watchlistBody.sb-compact-quotes :is(th,td):is(:nth-child(3),:nth-child(4),:nth-child(6),:nth-child(8),:nth-child(9),:nth-child(10),:nth-child(12),:nth-child(13),:nth-child(16)) { display: none; }
+  #watchlistBody.sb-compact-quotes td .dock-ctx__none { display: none; }
+  #watchlistBody td { white-space: nowrap; }
+  #watchlistBody tr.dock-sel td { background: color-mix(in srgb,var(--sb-accent) 8%,var(--sb-panel)); }
+  .sb-table-options { display: flex; justify-content: flex-end; gap: 6px; padding: 7px 10px; border-bottom: 1px solid var(--sb-border-weak); color: var(--sb-text-3); font-size: 10px; }
+  .sb-table-options label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+  .mdi-dock.sb-desktop-home .portfolio-table { min-width: 680px; }
+  .sb-compact-holdings .portfolio-table :is(th,td):is(:nth-child(2),:nth-child(3),:nth-child(5),:nth-child(8),:nth-child(12)) { display: none; }
+  #mdi-panel-journal .form-group input,#mdi-panel-journal .form-group select { min-height: 30px; padding: 6px 8px; box-shadow: none; border-radius: var(--sb-radius-1); }
+  #mdi-panel-journal .journal-section h3 svg { width: 12px; }
+  #mdi-panel-journal .card-title { font-size: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--sb-border-weak); }
+  #mdi-panel-journal textarea { min-height: 70px; }
+
+
+  .sb-journal-section { border: 1px solid var(--sb-border-weak); border-radius: var(--sb-radius-2); margin: 9px 0; background: var(--sb-panel); }
+  .sb-journal-section > summary { padding: 10px; color: var(--sb-accent); font-weight: 700; font-size: 12px; cursor: pointer; border-bottom: 1px solid var(--sb-border-weak); }
+  .sb-journal-section-body { padding: 10px; }
+  .sb-journal-section-body > .form-group { margin-bottom: 8px; }
+
+  .mdi-dock.sb-desktop-home { grid-template-columns: minmax(0,2fr) minmax(0,2fr) minmax(160px,1fr); grid-template-rows: 0 minmax(250px,1fr) minmax(260px,1fr); }
+  .mdi-dock.sb-desktop-home > .dock-ctx { grid-column: 2 / 4; }
+  .mdi-dock.sb-desktop-home > :is(#mdi-panel-portfolio,#mdi-panel-journal) { grid-column: 2; }
+  .sb-analysis { display: none; }
+  .mdi-dock.sb-desktop-home > .sb-analysis { display: grid; grid-template-rows: repeat(2,minmax(0,1fr)); grid-column: 3; grid-row: 3; min-width: 0; min-height: 0; overflow: auto; border: 1px solid var(--sb-border); border-radius: var(--sb-radius-3); background: var(--sb-panel); }
+  .sb-analysis-section { padding: 12px; min-height: 0; overflow: auto; border-bottom: 1px solid var(--sb-border-weak); }
+  .sb-analysis-section h3 { font-size: 13px; margin: 0; }
+  .sb-analysis-section > strong { display: block; font-size: 15px; margin: 12px 0 8px; }
+  .sb-analysis-section p { font-size: 11px; color: var(--sb-text-3); line-height: 1.7; }
+  .sb-analysis-section summary { font-size: 11px; color: var(--sb-accent); cursor: pointer; }
+  .sb-analysis-section small { font-size: 10px; color: var(--sb-text-3); }
+  .sb-analysis-stock { font-size: 10px; color: var(--sb-text-3); overflow-wrap: anywhere; }
+  .sb-region-title { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; font-size: 12px; }
+  .sb-market-stage { display: grid; grid-template-columns: minmax(0,2fr) minmax(160px,1fr); gap: 10px; padding: 10px; }
+  .sb-chart-region,.sb-order-region { border: 1px solid var(--sb-border-weak); border-radius: var(--sb-radius-2); padding: 10px; min-width: 0; }
+  .sb-chart-region { background: linear-gradient(var(--sb-panel),var(--sb-bg)); }
+  .sb-data-empty { min-height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--sb-text-3); }
+  .sb-data-empty strong { font-size: 13px; }.sb-data-empty span { font-size: 10px; text-align: center; }
+  .sb-hoga-table { width: 100%; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .sb-hoga-table th,.sb-hoga-table td { padding: 4px; font-size: 10px; }
+  .sb-hoga-table .ask { color: var(--sb-down); background: var(--sb-down-bg); }
+  .sb-hoga-table .bid { color: var(--sb-up); background: var(--sb-up-bg); }
+  .sb-context-details { padding: 4px 12px 10px; font-size: 11px; color: var(--sb-text-2); }
+  .sb-context-details > summary { cursor: pointer; }
+  .sb-detail-head { padding: 10px 14px; }.dock-ctx__price { font-size: 29px; }.dock-ctx__name { font-size: 19px; }
+  .mdi-dock.sb-desktop-home .pf-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .mdi-dock.sb-desktop-home #mdi-panel-journal .form-grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+  @media(max-width:760px) {
+    .mdi-dock.sb-desktop-home { grid-template-columns: minmax(0,1fr); grid-template-rows: 0 280px 360px 400px 350px; }
+    .mdi-dock.sb-desktop-home > .dock-ctx { grid-column: 1; grid-row: 3; }
+    .mdi-dock.sb-desktop-home > :is(#mdi-panel-portfolio,#mdi-panel-journal) { grid-column: 1; grid-row: 4; }
+    .mdi-dock.sb-desktop-home > .sb-analysis { grid-column: 1; grid-row: 5; }
+  }
+
 </style>
 </head>
 <body>
@@ -3246,26 +3390,14 @@
   <!-- ── 1행: 로고 + 우측 액션 버튼 ── -->
   <div class="hdr-row1">
     <div class="logo">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="30" height="30" style="border-radius:7px;flex-shrink:0">
-        <rect width="512" height="512" rx="112" ry="112" fill="#0d1f3c"/>
-        <line x1="108" y1="344" x2="108" y2="325" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
-        <line x1="108" y1="402" x2="108" y2="385" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
-        <rect x="87" y="344" width="42" height="42" rx="5" ry="5" fill="white" opacity="0.9"/>
-        <line x1="196" y1="292" x2="196" y2="273" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
-        <line x1="196" y1="354" x2="196" y2="338" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
-        <rect x="175" y="292" width="42" height="58" rx="5" ry="5" fill="white" opacity="0.9"/>
-        <line x1="284" y1="236" x2="284" y2="215" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
-        <line x1="284" y1="314" x2="284" y2="295" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
-        <rect x="263" y="236" width="42" height="74" rx="5" ry="5" fill="white" opacity="0.9"/>
-        <line x1="372" y1="175" x2="372" y2="152" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
-        <line x1="372" y1="285" x2="372" y2="264" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>
-        <rect x="351" y="175" width="42" height="96" rx="5" ry="5" fill="white" opacity="0.9"/>
-        <path d="M 88,365 C 135,340 175,305 220,278 C 265,252 315,215 405,168" fill="none" stroke="#4ade80" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
-        <polygon points="405,168 378,172 390,196" fill="#4ade80" opacity="0.95"/>
-      </svg>
-      <span style="font-size:15px;font-weight:700;color:var(--sb-text-1);letter-spacing:.5px;user-select:none;">Stock Book</span>
+      <img class="sb-brand-icon" src="./icon-192.png" alt="" width="32" height="32">
+      <svg class="sb-brand-wordmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 408 63" role="img" aria-label="Stock Book">
+<path fill="currentColor" fill-rule="evenodd" d="M35,0 40,1 40,2 42,3 42,14 17,14 17,15 15,15 15,17 14,17 14,21 15,21 16,23 18,23 18,24 28,25 28,26 32,26 32,27 35,27 35,28 39,29 39,30 44,34 44,36 45,36 45,38 46,38 46,43 47,43 46,51 45,51 44,55 43,55 39,60 37,60 37,61 35,61 35,62 31,62 31,63 8,63 4,63 4,62 2,62 2,61 0,60 0,49 30,49 31,46 32,46 32,42 31,42 30,40 28,40 28,39 19,38 19,37 14,37 14,36 11,36 11,35 7,34 7,33 3,30 3,28 1,27 1,24 0,24 0,13 1,13 3,7 4,7 6,4 8,4 8,3 10,3 10,2 12,2 12,1 35,1Z M171,1 181,1 181,2 182,2 182,32 186,29 186,27 187,27 194,19 211,19 211,20 205,25 205,27 197,34 197,36 193,39 193,40 196,42 196,44 199,46 199,48 203,51 203,53 204,53 206,56 207,56 207,58 211,61 211,63 195,63 195,62 192,60 192,58 188,55 188,53 185,51 185,49 182,47 182,59 181,59 181,61 178,62 178,63 168,63 168,4 169,4 169,2 171,2Z M228,1 259,1 259,2 262,2 262,3 266,4 266,5 269,7 269,9 270,9 270,11 271,11 271,14 272,14 272,21 271,21 271,24 270,24 269,28 267,29 267,31 269,31 269,32 272,34 273,38 274,38 274,50 273,50 273,52 272,52 271,55 268,59 266,59 266,60 263,61 263,62 259,62 259,63 228,63Z M368,1 379,1 379,32 385,27 385,25 386,25 392,18 408,18 408,20 406,21 406,23 405,23 405,24 398,30 398,32 391,38 391,41 395,44 395,46 399,49 399,51 403,54 403,56 406,58 406,60 408,61 408,63 392,63 391,60 387,57 387,55 383,52 383,50 379,47 379,60 378,60 376,63 365,63 365,4 366,4Z M53,7 65,7 65,18 76,18 76,30 65,30 65,48 66,48 68,51 75,51 75,50 77,50 77,59 77,61 74,62 74,63 63,63 63,62 58,61 58,60 55,58 54,54 53,54 53,51 52,51 52,30 45,30 45,18 52,18 52,8 53,8Z M243,14 242,14 242,25 254,25 254,24 256,24 257,21 258,21 257,15 255,15 255,14Z M148,17 160,19 160,20 164,21 164,24 161,26 161,28 159,29 158,32 153,31 153,30 146,30 146,31 144,31 144,32 141,34 140,39 139,39 140,45 141,45 141,47 142,47 144,50 147,50 147,51 153,51 153,50 158,49 159,52 161,53 161,55 162,55 163,57 164,60 162,60 162,61 160,61 160,62 157,62 157,63 142,63 142,62 137,61 135,58 133,58 133,57 131,56 131,54 129,53 128,49 127,49 127,46 126,46 126,35 127,35 127,32 128,32 130,26 131,26 134,22 136,22 137,20 142,19 142,18 148,18Z M94,18 108,18 108,19 114,21 115,23 117,23 117,24 119,25 119,27 121,28 122,32 123,32 124,44 123,44 122,51 121,51 121,53 118,55 118,57 117,57 116,59 114,59 114,60 111,61 111,62 108,62 108,63 94,63 94,62 88,60 88,59 82,54 82,52 81,52 81,50 80,50 80,47 79,47 79,33 80,33 80,31 81,31 81,28 82,28 88,21 90,21 90,20 92,20 92,19 94,19Z M291,18 303,18 303,19 306,19 307,21 309,21 309,22 315,27 315,29 316,29 316,31 317,31 317,34 318,34 318,47 317,47 317,50 316,50 315,54 314,54 309,60 307,60 307,61 305,61 305,62 303,62 303,63 291,63 291,62 286,61 284,58 281,57 281,55 279,54 279,52 278,52 278,50 277,50 277,48 276,48 276,34 277,34 277,31 278,31 279,27 280,27 286,20 291,19Z M335,18 347,18 347,19 352,20 354,23 357,24 357,26 359,27 359,29 360,29 360,31 361,31 361,33 362,33 363,43 362,43 362,48 361,48 359,54 358,54 358,55 356,56 356,58 354,58 352,61 347,62 347,63 335,63 335,62 330,61 330,60 323,54 323,52 322,52 322,50 321,50 321,47 320,47 320,34 321,34 321,31 322,31 323,27 324,27 330,20 335,19Z M99,30 96,31 96,32 93,34 93,36 92,36 92,44 93,44 93,47 94,47 96,50 103,51 103,50 106,50 106,49 109,47 109,45 110,45 110,36 109,36 109,34 108,34 106,31 104,31 104,30Z M296,30 293,31 293,32 290,34 290,36 289,36 289,44 290,44 290,47 291,47 293,50 298,51 298,50 301,50 301,49 303,48 304,43 305,43 305,38 304,38 304,34 303,34 301,31Z M340,30 337,31 337,32 334,34 333,43 334,43 334,46 335,46 335,48 336,48 337,50 341,50 341,51 342,51 342,50 345,50 345,49 348,47 348,44 349,44 349,36 348,36 347,32 345,32 345,31 343,31 343,30Z M243,37 242,37 242,50 256,50 256,49 258,49 259,46 260,46 260,41 259,41 259,39 257,39 257,38 243,38Z"/>
+</svg>
+
     </div>
 
+    <div class="sb-desktop-search"><input class="sb-input" id="sbDesktopSearch" placeholder="종목명·코드 검색" aria-label="종목명·코드 검색" oninput="sbDesktopSearch(this.value)"></div>
     <!-- 상태 배지: KIS 연결 · 실시간 -->
     <div class="hdr-status" id="hdrStatus">
       <span class="hdr-badge off" id="hdrKisBadge" title="KIS 연결 상태"><span class="dot"></span><span id="hdrKisText">KIS</span></span>
@@ -4209,28 +4341,27 @@
     </div><!-- /mdi-panel-journal -->
 
     <!-- ─ 문맥 패널: 관심종목 종합 화면에서만 표시 ─ -->
-    <aside class="dock-ctx" id="dockCtx" aria-label="선택 종목">
+    <aside class="dock-ctx" id="dockCtx" aria-label="선택 종목 종합">
       <div class="dock-ctx__empty" id="dockCtxEmpty">관심종목을 선택하면 시세·보유 현황이 여기에 표시됩니다.</div>
       <div class="dock-ctx__body" id="dockCtxBody" style="display:none">
-        <div class="dock-ctx__head">
-          <div class="dock-ctx__name" id="dockCtxName">-</div>
-          <div class="dock-ctx__code" id="dockCtxCode">-</div>
+        <div class="sb-detail-head"><div>
+          <div class="sb-detail-identity"><strong class="dock-ctx__name" id="dockCtxName">--</strong><span class="dock-ctx__code" id="dockCtxCode">--</span></div>
+          <div class="sb-detail-price"><strong class="dock-ctx__price" id="dockCtxPrice">--</strong><span class="dock-ctx__chg" id="dockCtxChg">--</span></div>
+          <div class="dock-ctx__none" id="dockCtxStatus" role="status"></div>
+        </div><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('chart')">기업분석 ↗</button></div>
+        <div class="sb-detail-tabs" aria-label="선택 종목 메뉴">
+          <button type="button" class="active">요약</button><button type="button" onclick="dockCtxAction('hoga')">5호가 · 거래 기록 ↗</button><button type="button" onclick="dockCtxAction('news')">뉴스 · 공시 ↗</button><button type="button" onclick="dockCtxAction('cal')">일정 ↗</button>
         </div>
-        <div class="dock-ctx__price" id="dockCtxPrice">-</div>
-        <div class="dock-ctx__chg" id="dockCtxChg">-</div>
-        <div class="dock-ctx__none" id="dockCtxStatus" role="status"></div>
-        <div class="dock-ctx__rows" id="dockCtxQuote"></div>
-        <div class="dock-ctx__sec">보유 현황</div>
-        <div class="dock-ctx__rows" id="dockCtxHold"></div>
-        <div class="dock-ctx__sec">다가오는 종목 일정</div>
-        <div class="dock-ctx__rows" id="dockCtxEvents"></div>
-        <div class="dock-ctx__actions">
-          <button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('hoga')">호가 확인</button>
-          <button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('chart')">차트·기업분석</button>
-          <button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('news')">뉴스 ↗</button>
-          <button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('cal')">일정 ↗</button>
+        <div class="sb-market-stage">
+          <section class="sb-chart-region" aria-label="선택 종목 차트"><div class="sb-region-title"><strong>가격 차트</strong><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('chart')">종목 자료 확인 ↗</button></div><div class="sb-data-empty"><strong>차트 데이터 없음</strong><span>일봉 데이터가 연결되면 여기에 표시됩니다.</span></div><div class="dock-ctx__rows dock-ctx__quote-grid" id="dockCtxQuote"></div></section>
+          <section class="sb-order-region" aria-label="선택 종목 5호가"><div class="sb-region-title"><strong>5호가</strong><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" id="sbHogaRefresh" onclick="sbDesktopHoga()">조회</button></div><div id="sbHogaStatus" class="dock-ctx__none" role="status">호가 데이터 없음 · 조회 대기</div><table class="sb-hoga-table"><thead><tr><th>매도잔량</th><th>가격</th><th>매수잔량</th></tr></thead><tbody id="sbHogaRows"></tbody></table></section>
         </div>
+        <details class="sb-context-details"><summary>보유 · 목표/손절 · 일정</summary><div class="sb-detail-content"><div class="dock-ctx__rows" id="dockCtxHold"></div><div class="dock-ctx__rows" id="sbDesktopTargets"></div><div class="dock-ctx__rows" id="dockCtxEvents"></div></div></details>
       </div>
+    </aside>
+    <aside id="sbAnalysis" class="sb-analysis" aria-label="AI 분석과 규칙 신호">
+      <section class="sb-analysis-section"><div class="sb-region-title"><h3>AI 분석</h3><span class="sb-analysis-stock">종목 선택</span></div><strong>분석 데이터 없음</strong><p>선택 종목의 AI 분석 결과가 연결되지 않았습니다.</p><details id="sbAiCheck"><summary>분석 상태 확인</summary><p>분석 결과: 없음<br>생성 시각: --<br>출처: 연결되지 않음</p><button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('chart')">참고 기업자료 확인 ↗</button></details></section>
+      <section class="sb-analysis-section"><div class="sb-region-title"><h3>규칙 신호</h3><span class="sb-analysis-stock">종목 선택</span></div><strong>판정 대기</strong><p>규칙 엔진과 판정에 필요한 시계열 데이터가 아직 연결되지 않았습니다.</p><details id="sbSignalCheck"><summary>판정 조건 확인</summary><p>시계열 데이터: 없음<br>규칙 엔진: 연결 대기<br>마지막 판정: --</p><small>규칙 판정 · 투자 권유 아님</small></details></section>
     </aside>
 </div><!-- /mdi-workspace -->
 </div><!-- /mdi-content -->
@@ -11916,6 +12047,130 @@ function renderWatchlist() {
 }
 
 // ── 관심종목 종합: 선택 종목 문맥 패널 ──────────────────────────────────
+let sbHogaSelection = null;
+let sbHogaRequest = 0;
+function sbDesktopSelection(w) {
+  document.querySelectorAll('.sb-analysis-stock').forEach(el => { el.textContent = w ? (w.name || w.ticker) : '종목 선택'; });
+  const ticker = w?.ticker || null;
+  if (ticker !== sbHogaSelection) {
+    sbHogaSelection = ticker; sbHogaRequest++;
+    document.getElementById('sbHogaRows').replaceChildren();
+    document.getElementById('sbHogaStatus').textContent = ticker ? '호가 데이터 없음 · 조회 대기' : '종목 선택 후 조회하세요.';
+    document.getElementById('sbHogaRefresh').disabled = false;
+  }
+}
+async function sbDesktopHoga() {
+  const ticker = sbHogaSelection;
+  const status = document.getElementById('sbHogaStatus');
+  if (!ticker) { status.textContent = '종목 선택 후 조회하세요.'; return; }
+  if (!window.electronAPI?.fetchHoga) { status.textContent = '연결 필요 · 호가 데이터 없음'; return; }
+  const request = ++sbHogaRequest;
+  const button = document.getElementById('sbHogaRefresh'); button.disabled = true;
+  status.textContent = '호가 조회 중…';
+  try {
+    const data = await window.electronAPI.fetchHoga(ticker);
+    if (request !== sbHogaRequest || ticker !== sbHogaSelection) return;
+    const valid = level => Number.isFinite(level?.price) && level.price > 0 && Number.isFinite(level?.qty) && level.qty >= 0;
+    if (!data?.asks?.length || !data?.bids?.length || !data.asks.every(valid) || !data.bids.every(valid)) throw new Error('missing');
+    const rows = document.getElementById('sbHogaRows'); rows.replaceChildren();
+    for (const [side,levels] of [['ask',data.asks],['bid',data.bids]]) for (const level of levels.slice(0,5)) {
+      const tr = document.createElement('tr'); tr.className=side;
+      for (const value of [side==='ask'?fmt(level.qty):'',fmt(level.price),side==='bid'?fmt(level.qty):'']) { const td=document.createElement('td');td.textContent=value;tr.appendChild(td); }
+      rows.appendChild(tr);
+    }
+    status.textContent = '조회 시각 ' + new Date().toLocaleTimeString('ko-KR') + ' · 수동 조회';
+  } catch (_) { if (request===sbHogaRequest) { document.getElementById('sbHogaRows').replaceChildren(); status.textContent='조회 실패 · 호가 데이터 없음 · 다시 조회하세요.'; } }
+  finally { if (request===sbHogaRequest) button.disabled=false; }
+}
+function sbDesktopCash() {
+  const balance = document.getElementById('sbDesktopCashBalance');
+  if (balance) balance.textContent = fmt(getCashBalance()) + '원';
+  const body = document.getElementById('sbDesktopAccountRows');
+  if (!body) return;
+  body.innerHTML = '';
+  for (const a of state.accounts || []) {
+    const tr = document.createElement('tr');
+    for (const value of [a.nickname || a.broker || '계좌', a.broker || '직접 관리', typeof a.cash === 'number' ? fmt(a.cash) + '원' : '--']) {
+      const td = document.createElement('td'); td.textContent = value; tr.appendChild(td);
+    }
+    body.appendChild(tr);
+  }
+  document.getElementById('sbDesktopAccountEmpty').hidden = !!(state.accounts || []).length;
+}
+function sbDesktopSearch(value) {
+  if (document.getElementById('mdiWorkspace')?.dataset.dockScreen !== 'watchlist') window._MDI?.show('watchlist');
+  const input = document.getElementById('wlSearchInput');
+  if (input) { input.value = value; _wlOnInput(); }
+}
+function sbDesktopAction(action) {
+  const w = (state.watchlist || []).find(x => x.ticker === window._dockSel);
+  if (action === 'journal') {
+    window._MDI?.show('journal');
+    document.getElementById('j_name')?.focus();
+    // Preserve unfinished journal text; fill the instrument only when the field is empty.
+    const name = document.getElementById('j_name');
+    if (name && !name.value && w) name.value = w.name || w.ticker;
+    return;
+  }
+  if (w) connectToHoga(w.ticker, w.name || w.ticker);
+  else window._MDI?.show('trading');
+  if (action === 'holding') setQOMode('buy');
+  document.getElementById('qo_qty')?.focus();
+}
+function sbDesktopMount() {
+  const row = document.querySelector('.hdr-row1');
+  const indices = document.querySelector('.hdr-group--idx');
+  const status = document.getElementById('hdrStatus');
+  if (row && indices && status) row.insertBefore(indices, status);
+  const toolbar = document.createElement('div');
+  toolbar.className = 'sb-work-toolbar';
+  toolbar.innerHTML = '<strong>내 포트폴리오</strong><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="sbDesktopAction(\'holding\')">보유종목 추가</button><button type="button" class="sb-btn sb-btn--secondary sb-btn--sm" onclick="sbDesktopAction(\'journal\')">빠른 일지</button><button type="button" class="sb-btn sb-btn--primary sb-btn--sm" onclick="sbDesktopAction(\'trade\')">＋ 거래 등록</button>';
+  const summary = document.getElementById('htsSummary');
+  summary?.before(toolbar);
+  const wlBody = document.getElementById('watchlistBody');
+  wlBody?.classList.add('sb-compact-quotes');
+  const options = document.createElement('div'); options.className = 'sb-table-options';
+  options.innerHTML = '<label><input type="checkbox" id="sbQuoteColumns"> 상세 열 보기</label>';
+  options.querySelector('input').onchange = e => wlBody?.classList.toggle('sb-compact-quotes', !e.target.checked);
+  wlBody?.before(options);
+  const pfBody = document.getElementById('mdi-body-portfolio');
+  pfBody?.classList.add('sb-compact-holdings');
+  const pfOptions = document.createElement('label'); pfOptions.className = 'sb-table-options';
+  pfOptions.innerHTML = '<input type="checkbox" id="sbHoldingColumns"> 상세 열';
+  pfOptions.querySelector('input').onchange = e => pfBody?.classList.toggle('sb-compact-holdings', !e.target.checked);
+  toolbar.prepend(pfOptions);
+  const tabBar = pfBody?.querySelector('.mdi-ptab-bar');
+  const cashTab = document.createElement('button'); cashTab.type='button'; cashTab.className='mdi-ptab';
+  cashTab.textContent='예수금'; cashTab.setAttribute('onclick', "window._MDIPanelTab('portfolio','cash');sbDesktopCash()"); tabBar?.appendChild(cashTab);
+  const cashPane = document.createElement('div'); cashPane.className='mdi-ptab-pane'; cashPane.id='mdi-ptc-portfolio-cash'; cashPane.style.display='none';
+  cashPane.innerHTML='<div class="sb-work-toolbar"><strong>계좌 · 예수금</strong><button type="button" class="sb-btn sb-btn--secondary sb-btn--sm" onclick="openAccountPanel()">계좌 관리</button><button type="button" class="sb-btn sb-btn--primary sb-btn--sm" onclick="openCashManualModal()">예수금 설정</button></div><section class="sb-detail-card"><h3>내 예수금</h3><strong id="sbDesktopCashBalance" style="font-size:24px"></strong></section><div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>계좌명</th><th>증권사</th><th>저장된 예수금</th></tr></thead><tbody id="sbDesktopAccountRows"></tbody></table></div><div id="sbDesktopAccountEmpty" class="empty-state">등록된 계좌가 없습니다. 계좌 관리에서 추가하세요.</div>';
+  pfBody?.appendChild(cashPane);
+  const journalTab=document.createElement('button');journalTab.type='button';journalTab.className='mdi-ptab';journalTab.textContent='투자일지';journalTab.onclick=()=>window._MDI.show('journal');tabBar?.appendChild(journalTab);
+  const journalTabs=document.createElement('div');journalTabs.className='mdi-ptab-bar';
+  journalTabs.innerHTML='<button type="button" class="mdi-ptab" onclick="window._MDI.show(\'portfolio\');window._MDIPanelTab(\'portfolio\',\'pf\')">잔고</button><button type="button" class="mdi-ptab" onclick="window._MDI.show(\'portfolio\');window._MDIPanelTab(\'portfolio\',\'trd\');renderTrades()">거래내역</button><button type="button" class="mdi-ptab active">투자일지</button>';
+  document.getElementById('mdi-body-journal')?.prepend(journalTabs);
+  const pfTab = document.querySelector('#mdi-body-portfolio .mdi-ptab');
+  if (pfTab) pfTab.textContent = '잔고';
+  // Existing navigation ids remain intact. Add shortcuts rather than rename data-pid.
+  const rail = document.getElementById('mdiSidebar');
+  const anchor = document.querySelector('.mdi-sb-section-label');
+  const calendar = document.createElement('button'); calendar.type='button'; calendar.className='mdi-sb-btn'; calendar.title='캘린더';
+  calendar.innerHTML='<span class="mdi-sb-icon-wrap"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 2v6m8-6v6M4 11h16"/></svg></span><span class="mdi-sb-label">캘린더</span>';
+  calendar.onclick = () => openCalendarPanel();
+  document.querySelectorAll('#mdi-panel-journal .journal-section').forEach((section, i) => {
+    const heading = section.querySelector('h3');
+    if (!heading) return;
+    const details = document.createElement('details'); details.className='sb-journal-section'; details.open = i < 3;
+    const summary = document.createElement('summary'); summary.textContent = String(i+1).padStart(2,'0') + '  ' + heading.textContent.trim();
+    details.appendChild(summary); heading.remove();
+    const content = document.createElement('div'); content.className='sb-journal-section-body';
+    while (section.firstChild) content.appendChild(section.firstChild);
+    details.appendChild(content); section.replaceWith(details);
+  });
+  const journal = rail?.querySelector('[data-pid="journal"]');
+  journal?.after(calendar);
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', sbDesktopMount); else sbDesktopMount();
 window._dockSel = window._dockSel || null;   // 선택 종목 ticker
 function dockQuoteLabel(w) {
   const at = Number(w.quoteAt);
@@ -11974,6 +12229,7 @@ function dockSelectStock(code) {
   if (!w.quoteAt || Date.now() - w.quoteAt > 30000) dockLoadQuote(w).then(() => renderWatchlist());
 }
 function dockCtxRender() {
+  if (document.getElementById('mdi-ptc-portfolio-cash')?.style.display !== 'none') sbDesktopCash();
   const empty = document.getElementById('dockCtxEmpty');
   const box   = document.getElementById('dockCtxBody');
   if (!empty || !box) return;
@@ -11981,8 +12237,14 @@ function dockCtxRender() {
   if (!list.some(w => w.ticker === window._dockSel)) window._dockSel = list[0]?.ticker || null;
   const w = list.find(x => x.ticker === window._dockSel) || null;
   empty.style.display = w ? 'none' : '';
-  box.style.display   = w ? '' : 'none';
-  if (!w) return;
+  box.style.display = '';
+  sbDesktopSelection(w);
+  if (!w) {
+    for (const id of ['dockCtxName','dockCtxCode','dockCtxPrice','dockCtxChg']) { const el=document.getElementById(id); if(el) el.textContent='--'; }
+    for (const id of ['dockCtxQuote','dockCtxHold','dockCtxEvents','sbDesktopTargets']) document.getElementById(id)?.replaceChildren();
+    document.getElementById('dockCtxStatus').textContent='종목 선택 대기';
+    return;
+  }
   document.getElementById('wl-row-' + w.ticker)?.classList.add('dock-sel');
   document.querySelectorAll('#watchlistBody [data-watch-ticker]').forEach(row => {
     const selected = row.dataset.watchTicker === w.ticker;
@@ -12004,10 +12266,18 @@ function dockCtxRender() {
   if (chgEl) {
     chgEl.textContent = chg == null ? '-' : (chg > 0 ? '+' : '') + chg.toFixed(2) + '%';
     chgEl.className = 'dock-ctx__chg ' + (chg > 0 ? 'up' : chg < 0 ? 'dn' : '');
+    const price = document.getElementById('dockCtxPrice');
+    if (price) price.style.color = chg > 0 ? 'var(--sb-up)' : chg < 0 ? 'var(--sb-down)' : 'var(--sb-text-1)';
   }
   // 같은 종목을 여러 계좌에 보유하면 모두 합산. 현재가는 calcAssetSummary() 와 같은 기준
   // (보유 행의 currentPrice → 없으면 평균단가), 관심종목 시세가 있으면 그것을 우선한다.
   const { rows, qty, value, avgPrice, pnl, rate } = dockHoldingSummary(w);
+  const targetEl = document.getElementById('sbDesktopTargets');
+  if (targetEl) targetEl.innerHTML = rows.length ? rows.map(p => {
+    const idx = state.portfolio.indexOf(p);
+    const account = (state.accounts || []).find(a => a.id === p.accountId);
+    return `<div><span>${escHtml(account?.nickname || account?.broker || '계좌 미지정')}</span><b>${p.target1 ? fmt(p.target1) : '--'} / ${p.stop1 ? fmt(p.stop1) : '--'}</b><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="openTargetModal(${idx})">설정</button></div>`;
+  }).join('') : '<div class="dock-ctx__none">보유종목 등록 후 개인 기준을 설정할 수 있습니다.</div>';
   const holdEl = document.getElementById('dockCtxHold');
   if (!holdEl) return;
   if (!rows.length) { holdEl.innerHTML = '<div class="dock-ctx__none">보유하지 않은 종목입니다.</div>'; return; }
@@ -12575,18 +12845,24 @@ function _toggleCheck(stockKey, checkKey, val) {
       Object.keys(this.DOCK_NAMES).forEach(p => {
         const el = document.getElementById('mdi-panel-' + p);
         if (!el) return;
-        const on = p === pid;
+        const home = ['watchlist', 'portfolio', 'journal'].includes(pid);
+        const on = p === pid || (home && p === 'watchlist') || (pid === 'watchlist' && p === 'portfolio');
         el.style.display = on ? '' : 'none';
         el.dataset.mdiState = on ? 'open' : 'closed';
         const body = document.getElementById('mdi-body-' + p);
         if (body) body.style.display = '';
         if (!on && p === 'watchlist') try { _stopWatchlistAutoRefresh && _stopWatchlistAutoRefresh(); } catch(e) {}
       });
-      if (ws) ws.dataset.dockScreen = pid;
+      if (ws) { ws.dataset.dockScreen = pid; ws.classList.toggle('sb-desktop-home', ['watchlist','portfolio','journal'].includes(pid)); }
       const nm = document.getElementById('dockScreenName');
       if (nm) nm.textContent = this.DOCK_NAMES[pid] || '';
       this._syncAllBtns();
       this._render(pid);
+      if (['watchlist','portfolio','journal'].includes(pid)) {
+        if (pid === 'watchlist') this._render('portfolio');
+        else this._render('watchlist');
+        renderSummary();
+      }
       if (pid === 'watchlist') try { window._MDIPanelTab('watchlist', 'wl'); } catch(e) {}
       dockQueueSubscription();
     },
@@ -12984,7 +13260,9 @@ function _toggleCheck(stockKey, checkKey, val) {
     // ── 메뉴버튼 active 동기화 ──────────────────────────────────────────
     _syncBtn(pid) {
       const el = document.getElementById('mdi-panel-' + pid);
-      const isOpen = el && el.dataset.mdiState !== 'closed';
+      const isOpen = this.dock
+        ? document.getElementById('mdiWorkspace')?.dataset.dockScreen === pid
+        : el && el.dataset.mdiState !== 'closed';
       // 사이드바 버튼 동기화
       document.querySelectorAll('.mdi-sb-btn[data-pid="'+pid+'"]').forEach(btn => {
         btn.classList.toggle('mdi-sb-btn-active', isOpen);

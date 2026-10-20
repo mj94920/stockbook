@@ -70,11 +70,11 @@ for (const pg of PAGES) {
     const step = async (name, fn) => { try { await fn(); } catch (e) { errors.push(`${name}: ${e.message}`); } await page.waitForTimeout(150); };
 
     await step('사이드바 메뉴', async () => {
-      // 첫 화면 = 관심종목 종합 도킹 (창 겹침 없음, 제목줄·창 버튼 없음)
+      // 첫 화면 = 좌측 종목창 + 우측 종합 + 우측 하단 기존 포트폴리오
       const openPids = () => page.evaluate(() => [...document.querySelectorAll('.mdi-panel')]
         .filter(el => el.dataset.mdiState === 'open' && getComputedStyle(el).display !== 'none').map(el => el.dataset.pid));
       const first = await openPids();
-      check(first.length === 1 && first[0] === 'watchlist', `첫 화면이 관심종목 종합 단독이 아님: [${first}]`);
+      check(first.length === 2 && first.includes('watchlist') && first.includes('portfolio'), `첫 화면 종목창/하단 작업 패널 표시 오류: [${first}]`);
       const dbg = await page.evaluate(() => { const w = document.getElementById('mdiWorkspace'), c = document.getElementById('dockCtx'); return `ws=${getComputedStyle(w).display}/${w.dataset.dockScreen} ctx=${getComputedStyle(c).display} parent=${c.parentElement.id || c.parentElement.className}`; });
       check(await page.evaluate(() => ['watchlist', 'trading', 'portfolio', 'news', 'journal'].every(p => document.getElementById('mdi-panel-' + p)?.parentElement.id === 'mdiWorkspace')), '모든 중앙 화면 패널은 #mdiWorkspace 직속이어야 함 (HTML 닫힘 태그 불일치)');
       check(await page.evaluate(() => getComputedStyle(document.getElementById('dockCtx')).display !== 'none'), `관심종목 화면에 문맥 패널이 보이지 않음 (${dbg})`);
@@ -83,7 +83,8 @@ for (const pg of PAGES) {
         check(await click(`.mdi-sb-btn[data-pid="${pid}"]`), `사이드바 버튼 없음: ${pid}`);
         await page.waitForTimeout(250);
         const open = await openPids();
-        check(open.length === 1 && open[0] === pid, `사이드바 '${pid}' 클릭 후 중앙 화면이 '${pid}' 단독이 아님: [${open}]`);
+        const expected = pid === 'watchlist' || pid === 'portfolio' ? ['watchlist', 'portfolio'] : pid === 'journal' ? ['watchlist','journal'] : [pid];
+        check(open.length === expected.length && expected.every(p => open.includes(p)), `사이드바 '${pid}' 화면 구성 오류: [${open}]`);
         const inside = await page.evaluate(p => {
           const r = document.getElementById('mdi-panel-' + p)?.getBoundingClientRect();
           const ws = document.getElementById('mdiWorkspace').getBoundingClientRect();
@@ -97,6 +98,73 @@ for (const pg of PAGES) {
       check(await hasClass('#mdiSidebar', 'sb-collapsed') !== collapsed0, '사이드바 접기/펼치기 동작 안 함');
       await click('#mdiSbToggle');
       check(await hasClass('#mdiSidebar', 'sb-collapsed') === collapsed0, '사이드바 펼치기 복귀 실패');
+    });
+
+    await step('데스크톱 새 셸과 기존 작업 연결', async () => {
+      const result = await page.evaluate(() => {
+        const bak = { wl: state.watchlist, pf: state.portfolio, sel: window._dockSel, journal: document.getElementById('j_name').value };
+        try {
+          state.watchlist = [{ ticker:'005930', name:'삼성전자', price:100, change:1, quoteAt:Date.now() }];
+          state.portfolio = [{ ticker:'005930', name:'삼성전자', qty:1, avgPrice:90, currentPrice:100, target1:120, stop1:80 }];
+          window._dockSel = '005930';
+          window._MDI.show('watchlist');
+          const rail = document.getElementById('mdiSidebar').getBoundingClientRect().width <= 64;
+          const header = document.querySelector('.header').getBoundingClientRect().height <= 70;
+          const actions = document.querySelector('.sb-work-toolbar .sb-btn--primary')?.textContent.includes('거래 등록');
+          const columns = document.getElementById('sbQuoteColumns');
+          columns.click(); const full = !document.getElementById('watchlistBody').classList.contains('sb-compact-quotes');
+          columns.click(); const compact = document.getElementById('watchlistBody').classList.contains('sb-compact-quotes');
+          const targets = document.getElementById('sbDesktopTargets').textContent.includes('120 / 80');
+          window._MDIPanelTab('portfolio','cash'); sbDesktopCash();
+          const cash = document.getElementById('sbDesktopCashBalance').textContent === fmt(getCashBalance()) + '원';
+          window._MDIPanelTab('portfolio','pf');
+          document.getElementById('j_name').value = '미완성 일지';
+          sbDesktopAction('journal');
+          const draft = document.getElementById('j_name').value === '미완성 일지' && document.getElementById('mdiWorkspace').dataset.dockScreen === 'journal';
+          const left = document.getElementById('mdi-panel-watchlist').getBoundingClientRect();
+          const journal = document.getElementById('mdi-panel-journal').getBoundingClientRect();
+          const journalLayout = left.height > journal.height && journal.x >= left.right;
+          sbDesktopAction('trade');
+          const trade = document.getElementById('mdiWorkspace').dataset.dockScreen === 'trading' && document.getElementById('qo_stock_code').value === '005930';
+          return { rail, header, actions:!!actions, full, compact, targets, cash, draft, journalLayout, trade };
+        } finally {
+          state.watchlist=bak.wl; state.portfolio=bak.pf; window._dockSel=bak.sel;
+          document.getElementById('j_name').value=bak.journal;
+          window._MDI.show('watchlist');
+        }
+      });
+      for (const [name, passed] of Object.entries(result)) check(passed, `새 데스크톱 셸 회귀: ${name}`);
+    });
+
+    await step('동시 분석 영역과 실제 호가 상태', async () => {
+      const result = await page.evaluate(async () => {
+        const backup={wl:state.watchlist,sel:window._dockSel,api:window.electronAPI};
+        try {
+          state.watchlist=[{ticker:'005930',name:'삼성전자',price:100,change:1,quoteAt:Date.now()},{ticker:'000660',name:'SK하이닉스',price:200,change:2,quoteAt:Date.now()}];
+          window._dockSel='005930';window._MDI.show('watchlist');
+          window.electronAPI=undefined;await sbDesktopHoga();
+          const disconnected=document.getElementById('sbHogaRows').children.length===0 && document.getElementById('sbHogaStatus').textContent.includes('연결 필요');
+          window.electronAPI={fetchHoga:async()=>({asks:[{price:101,qty:0}],bids:[{price:99,qty:2}]})};
+          await sbDesktopHoga();
+          const book=document.getElementById('sbHogaRows');const real=book.children.length===2 && book.textContent.includes('101') && book.textContent.includes('99');
+          let resolve;window.electronAPI.fetchHoga=()=>new Promise(r=>resolve=r);
+          const pending=sbDesktopHoga();dockSelectStock('000660');resolve({asks:[{price:101,qty:1}],bids:[{price:99,qty:1}]});await pending;
+          const stale=book.children.length===0 && document.getElementById('sbHogaStatus').textContent.includes('조회 대기');
+          window.electronAPI.fetchHoga=async()=>{throw new Error('offline')};await sbDesktopHoga();
+          const failure=book.children.length===0 && document.getElementById('sbHogaStatus').textContent.includes('조회 실패');
+          const checks=[];
+          for (const screen of ['watchlist','portfolio','journal']) {
+            window._MDI.show(screen);
+            const region=document.getElementById('sbAnalysis'),r=region.getBoundingClientRect();
+            checks.push(r.width>100 && r.height>100 && r.right<=innerWidth && getComputedStyle(region).display!=='none' && region.textContent.includes('AI 분석') && region.textContent.includes('규칙 신호'));
+          }
+          document.getElementById('sbAiCheck').open=true;document.getElementById('sbSignalCheck').open=true;
+          const flow=document.getElementById('sbAiCheck').textContent.includes('생성 시각') && document.getElementById('sbSignalCheck').textContent.includes('시계열 데이터');
+          document.getElementById('sbAiCheck').open=false;document.getElementById('sbSignalCheck').open=false;
+          return {disconnected,real,stale,failure,simultaneous:checks.every(Boolean),flow};
+        } finally {state.watchlist=backup.wl;window._dockSel=backup.sel;window.electronAPI=backup.api;window._MDI.show('watchlist');}
+      });
+      for(const [key,value] of Object.entries(result)) check(value, `분석/호가 동시 화면 회귀: ${key}`);
     });
 
     await step('문맥 패널 보유 합산', async () => {
@@ -239,13 +307,15 @@ for (const pg of PAGES) {
       for (const vp of [{ width: 1400, height: 900 }, { width: 1024, height: 768 }]) {
         await page.setViewportSize(vp);
         await page.waitForTimeout(300);
-        // 좁은 창(<1024)은 관심종목 표 → 문맥 패널 순서로 세로 배치
-        const stacked = await page.evaluate(() => {
-          const t = document.getElementById('mdi-panel-watchlist').getBoundingClientRect();
-          const c = document.getElementById('dockCtx').getBoundingClientRect();
-          return c.top >= t.bottom - 1;
+        await page.evaluate(() => window._MDI.show('watchlist'));
+        const layout = await page.evaluate(() => {
+          const rect = id => { const r = document.getElementById(id).getBoundingClientRect(); return { x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height }; };
+          return { left:rect('mdi-panel-watchlist'),ctx:rect('dockCtx'),work:rect('mdi-panel-portfolio'),analysis:rect('sbAnalysis'),workspace:rect('mdiWorkspace'),header:document.querySelector('.header').getBoundingClientRect().bottom };
         });
-        check(stacked === (vp.width < 1024), `${vp.width}px: 문맥 패널 배치 오류 (세로 쌓임=${stacked})`);
+        check(Math.abs(layout.left.width / (layout.left.width + layout.ctx.width) - .4) < .02, `${vp.width}px: 좌우 40:60 비율 오류`);
+        check(layout.work.y >= layout.ctx.bottom && Math.abs(layout.work.x-layout.ctx.x) < 2 && layout.analysis.x >= layout.work.right && Math.abs(layout.analysis.right-layout.ctx.right) < 2 && Math.abs(layout.analysis.y-layout.work.y) < 2, `${vp.width}px: 하단 작업 패널이 우측 종합 패널 아래에 정렬되지 않음`);
+        check(Math.abs(layout.left.bottom-layout.work.bottom)<2 && layout.left.y >= layout.workspace.y, `${vp.width}px: 좌측 종목창 전체 높이 오류`);
+        check(layout.workspace.y >= layout.header-1 && layout.work.bottom <= vp.height+1, `${vp.width}px: 상단 겹침 또는 하단 잘림`);
         for (const mode of ['dark', 'light']) {
           await page.evaluate(m => setTheme(m), mode);
           await page.waitForTimeout(300);
