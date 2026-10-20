@@ -1,0 +1,25 @@
+{
+  "zipFile": "StockBook-mobile-v03-design-collection-20261020.zip",
+  "representatives": {
+    "01-approved/VALIDATION.md": "7ad728e119ccca865146b584bb98beecb05dac4729fba856e566902107dd3070",
+    "01-approved/README.md": "2fbbeeaea1d5fb48ce8e59001a4ba6e7e5c52b8703a50190ec6417868af9c37a",
+    "01-approved/manifest.json": "417244147fa951245f12618d606ca46ccb76309cd699769edf7059f24c110472",
+    "01-approved/news-disclosures.html": "5238f5599c5e289a78bae0b54688d04a0a6df135c103c84ce08aa275049a9de5",
+    "01-approved/preview.css": "9a3c9b3df8f76a7e86307b1cb6b8cf4287c93ded794526673ca10ee5a88f7b20",
+    "01-approved/preview.js": "1c50c0fdc284643659e1e6355b44052a1434b805b7d54928516bc365d3bebf99",
+    "01-approved/home.html": "d891be114f831f655cad30580023395dbdeb1b8c98d6d1d3b00f9960ae7883e9",
+    "01-approved/source/news-disclosures.html": "1b716b7d382a88cd1af1b071f2973b8a80608c7e707fdc0691940917f3034f13",
+    "01-approved/source/home.html": "fecf8e1f737e53083957dac193b46efd178cf4da7d10f401e99fc691a90efeff",
+    "02-current/stockbook-mobile-trade-detail-integration-review.html": "39dd793d0fb65e4b9bf0dc39a60db3e6808785e4781624e84621b4a85baf45e7",
+    "03-journal-patches/stockbook-journal-save-failure.html": "bf2d09b4c7a9e42556b9dcb1963ae3395ef84d61599717988ca58704ea980a35",
+    "03-journal-patches/stockbook-journal-link-trades.html": "93d1104f0451b3066e26473b08a476509875f492166a5971f84252e423e8d92c",
+    "03-journal-patches/stockbook-journal-reasons.html": "e67cfd25163374fba1861213cc7ab315deaef812e6002b0c822aeff4b2ab75df",
+    "03-journal-patches/stockbook-journal-filter.html": "58c52058ff29f316d6d35a3ceaca57d720770af019ed896df3710a0209d33bb4",
+    "03-journal-patches/stockbook-journal-leave.html": "60897b622dd5478c9de1deaf2d0732a735a188800ea214ec3a2a9643aae9806b",
+    "03-journal-patches/stockbook-journal-resume.html": "c24d750cbc9b62b8cf24a34954c6e7626e6038c50958ca89e8cd5b50d5e0edb0",
+    "03-journal-patches/stockbook-journal-trade-result.html": "aacea6d9bed1fea508ec7138ea2552583342aa150e46102956f957e2531bfce9",
+    "03-journal-patches/stockbook-journal-five-topics.html": "2c05b2fc2491e4d7a37705561255134f67342406147a8e29cacd9f3a492266fb",
+    "03-journal-patches/stockbook-journal-mental.html": "d661ce4cf3c5c90ce41a258596e4bd1354200e3f493ea6e0c56812b57b7d6d18"
+  },
+  "note": "원본 해시 목록. 원본 파일은 이 PR의 추가 코드와 구분."
+}
