@@ -3334,6 +3334,41 @@
   .sb-journal-section > summary { padding: 10px; color: var(--sb-accent); font-weight: 700; font-size: 12px; cursor: pointer; border-bottom: 1px solid var(--sb-border-weak); }
   .sb-journal-section-body { padding: 10px; }
   .sb-journal-section-body > .form-group { margin-bottom: 8px; }
+
+  .mdi-dock.sb-desktop-home { grid-template-columns: minmax(0,2fr) minmax(0,2fr) minmax(160px,1fr); grid-template-rows: 0 minmax(250px,1fr) minmax(260px,1fr); }
+  .mdi-dock.sb-desktop-home > .dock-ctx { grid-column: 2 / 4; }
+  .mdi-dock.sb-desktop-home > :is(#mdi-panel-portfolio,#mdi-panel-journal) { grid-column: 2; }
+  .sb-analysis { display: none; }
+  .mdi-dock.sb-desktop-home > .sb-analysis { display: grid; grid-template-rows: repeat(2,minmax(0,1fr)); grid-column: 3; grid-row: 3; min-width: 0; min-height: 0; overflow: auto; border: 1px solid var(--sb-border); border-radius: var(--sb-radius-3); background: var(--sb-panel); }
+  .sb-analysis-section { padding: 12px; min-height: 0; overflow: auto; border-bottom: 1px solid var(--sb-border-weak); }
+  .sb-analysis-section h3 { font-size: 13px; margin: 0; }
+  .sb-analysis-section > strong { display: block; font-size: 15px; margin: 12px 0 8px; }
+  .sb-analysis-section p { font-size: 11px; color: var(--sb-text-3); line-height: 1.7; }
+  .sb-analysis-section summary { font-size: 11px; color: var(--sb-accent); cursor: pointer; }
+  .sb-analysis-section small { font-size: 10px; color: var(--sb-text-3); }
+  .sb-analysis-stock { font-size: 10px; color: var(--sb-text-3); overflow-wrap: anywhere; }
+  .sb-region-title { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; font-size: 12px; }
+  .sb-market-stage { display: grid; grid-template-columns: minmax(0,2fr) minmax(160px,1fr); gap: 10px; padding: 10px; }
+  .sb-chart-region,.sb-order-region { border: 1px solid var(--sb-border-weak); border-radius: var(--sb-radius-2); padding: 10px; min-width: 0; }
+  .sb-chart-region { background: linear-gradient(var(--sb-panel),var(--sb-bg)); }
+  .sb-data-empty { min-height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--sb-text-3); }
+  .sb-data-empty strong { font-size: 13px; }.sb-data-empty span { font-size: 10px; text-align: center; }
+  .sb-hoga-table { width: 100%; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .sb-hoga-table th,.sb-hoga-table td { padding: 4px; font-size: 10px; }
+  .sb-hoga-table .ask { color: var(--sb-down); background: var(--sb-down-bg); }
+  .sb-hoga-table .bid { color: var(--sb-up); background: var(--sb-up-bg); }
+  .sb-context-details { padding: 4px 12px 10px; font-size: 11px; color: var(--sb-text-2); }
+  .sb-context-details > summary { cursor: pointer; }
+  .sb-detail-head { padding: 10px 14px; }.dock-ctx__price { font-size: 29px; }.dock-ctx__name { font-size: 19px; }
+  .mdi-dock.sb-desktop-home .pf-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .mdi-dock.sb-desktop-home #mdi-panel-journal .form-grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+  @media(max-width:760px) {
+    .mdi-dock.sb-desktop-home { grid-template-columns: minmax(0,1fr); grid-template-rows: 0 280px 360px 400px 350px; }
+    .mdi-dock.sb-desktop-home > .dock-ctx { grid-column: 1; grid-row: 3; }
+    .mdi-dock.sb-desktop-home > :is(#mdi-panel-portfolio,#mdi-panel-journal) { grid-column: 1; grid-row: 4; }
+    .mdi-dock.sb-desktop-home > .sb-analysis { grid-column: 1; grid-row: 5; }
+  }
+
 </style>
 </head>
 <body>
@@ -4317,16 +4352,16 @@
         <div class="sb-detail-tabs" aria-label="선택 종목 메뉴">
           <button type="button" class="active">요약</button><button type="button" onclick="dockCtxAction('hoga')">5호가 · 거래 기록 ↗</button><button type="button" onclick="dockCtxAction('news')">뉴스 · 공시 ↗</button><button type="button" onclick="dockCtxAction('cal')">일정 ↗</button>
         </div>
-        <div class="sb-detail-content">
-          <section class="sb-detail-card"><h3>시장 시세</h3><div class="dock-ctx__rows dock-ctx__quote-grid" id="dockCtxQuote"></div></section>
-          <section class="sb-detail-card"><h3>내 보유 현황</h3><div class="dock-ctx__rows" id="dockCtxHold"></div></section>
+        <div class="sb-market-stage">
+          <section class="sb-chart-region" aria-label="선택 종목 차트"><div class="sb-region-title"><strong>가격 차트</strong><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('chart')">종목 자료 확인 ↗</button></div><div class="sb-data-empty"><strong>차트 데이터 없음</strong><span>일봉 데이터가 연결되면 여기에 표시됩니다.</span></div><div class="dock-ctx__rows dock-ctx__quote-grid" id="dockCtxQuote"></div></section>
+          <section class="sb-order-region" aria-label="선택 종목 5호가"><div class="sb-region-title"><strong>5호가</strong><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" id="sbHogaRefresh" onclick="sbDesktopHoga()">조회</button></div><div id="sbHogaStatus" class="dock-ctx__none" role="status">호가 데이터 없음 · 조회 대기</div><table class="sb-hoga-table"><thead><tr><th>매도잔량</th><th>가격</th><th>매수잔량</th></tr></thead><tbody id="sbHogaRows"></tbody></table></section>
         </div>
-        <div class="sb-detail-bottom">
-          <section class="sb-detail-card sb-signal"><h3>AI Signal</h3><strong>준비 중</strong><small>규칙 판정 · 투자 권유 아님</small></section>
-          <section class="sb-detail-card"><h3>내 목표가 · 손절가</h3><div class="dock-ctx__rows" id="sbDesktopTargets"></div></section>
-        </div>
-        <section class="sb-detail-card" style="margin:0 12px 12px"><h3>다가오는 종목 일정</h3><div class="dock-ctx__rows" id="dockCtxEvents"></div></section>
+        <details class="sb-context-details"><summary>보유 · 목표/손절 · 일정</summary><div class="sb-detail-content"><div class="dock-ctx__rows" id="dockCtxHold"></div><div class="dock-ctx__rows" id="sbDesktopTargets"></div><div class="dock-ctx__rows" id="dockCtxEvents"></div></div></details>
       </div>
+    </aside>
+    <aside id="sbAnalysis" class="sb-analysis" aria-label="AI 분석과 규칙 신호">
+      <section class="sb-analysis-section"><div class="sb-region-title"><h3>AI 분석</h3><span class="sb-analysis-stock">종목 선택</span></div><strong>분석 데이터 없음</strong><p>선택 종목의 AI 분석 결과가 연결되지 않았습니다.</p><details id="sbAiCheck"><summary>분석 상태 확인</summary><p>분석 결과: 없음<br>생성 시각: --<br>출처: 연결되지 않음</p><button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('chart')">참고 기업자료 확인 ↗</button></details></section>
+      <section class="sb-analysis-section"><div class="sb-region-title"><h3>규칙 신호</h3><span class="sb-analysis-stock">종목 선택</span></div><strong>판정 대기</strong><p>규칙 엔진과 판정에 필요한 시계열 데이터가 아직 연결되지 않았습니다.</p><details id="sbSignalCheck"><summary>판정 조건 확인</summary><p>시계열 데이터: 없음<br>규칙 엔진: 연결 대기<br>마지막 판정: --</p><small>규칙 판정 · 투자 권유 아님</small></details></section>
     </aside>
 </div><!-- /mdi-workspace -->
 </div><!-- /mdi-content -->
@@ -12012,6 +12047,41 @@ function renderWatchlist() {
 }
 
 // ── 관심종목 종합: 선택 종목 문맥 패널 ──────────────────────────────────
+let sbHogaSelection = null;
+let sbHogaRequest = 0;
+function sbDesktopSelection(w) {
+  document.querySelectorAll('.sb-analysis-stock').forEach(el => { el.textContent = w ? (w.name || w.ticker) : '종목 선택'; });
+  const ticker = w?.ticker || null;
+  if (ticker !== sbHogaSelection) {
+    sbHogaSelection = ticker; sbHogaRequest++;
+    document.getElementById('sbHogaRows').replaceChildren();
+    document.getElementById('sbHogaStatus').textContent = ticker ? '호가 데이터 없음 · 조회 대기' : '종목 선택 후 조회하세요.';
+    document.getElementById('sbHogaRefresh').disabled = false;
+  }
+}
+async function sbDesktopHoga() {
+  const ticker = sbHogaSelection;
+  const status = document.getElementById('sbHogaStatus');
+  if (!ticker) { status.textContent = '종목 선택 후 조회하세요.'; return; }
+  if (!window.electronAPI?.fetchHoga) { status.textContent = '연결 필요 · 호가 데이터 없음'; return; }
+  const request = ++sbHogaRequest;
+  const button = document.getElementById('sbHogaRefresh'); button.disabled = true;
+  status.textContent = '호가 조회 중…';
+  try {
+    const data = await window.electronAPI.fetchHoga(ticker);
+    if (request !== sbHogaRequest || ticker !== sbHogaSelection) return;
+    const valid = level => Number.isFinite(level?.price) && level.price > 0 && Number.isFinite(level?.qty) && level.qty >= 0;
+    if (!data?.asks?.length || !data?.bids?.length || !data.asks.every(valid) || !data.bids.every(valid)) throw new Error('missing');
+    const rows = document.getElementById('sbHogaRows'); rows.replaceChildren();
+    for (const [side,levels] of [['ask',data.asks],['bid',data.bids]]) for (const level of levels.slice(0,5)) {
+      const tr = document.createElement('tr'); tr.className=side;
+      for (const value of [side==='ask'?fmt(level.qty):'',fmt(level.price),side==='bid'?fmt(level.qty):'']) { const td=document.createElement('td');td.textContent=value;tr.appendChild(td); }
+      rows.appendChild(tr);
+    }
+    status.textContent = '조회 시각 ' + new Date().toLocaleTimeString('ko-KR') + ' · 수동 조회';
+  } catch (_) { if (request===sbHogaRequest) { document.getElementById('sbHogaRows').replaceChildren(); status.textContent='조회 실패 · 호가 데이터 없음 · 다시 조회하세요.'; } }
+  finally { if (request===sbHogaRequest) button.disabled=false; }
+}
 function sbDesktopCash() {
   const balance = document.getElementById('sbDesktopCashBalance');
   if (balance) balance.textContent = fmt(getCashBalance()) + '원';
@@ -12075,6 +12145,10 @@ function sbDesktopMount() {
   const cashPane = document.createElement('div'); cashPane.className='mdi-ptab-pane'; cashPane.id='mdi-ptc-portfolio-cash'; cashPane.style.display='none';
   cashPane.innerHTML='<div class="sb-work-toolbar"><strong>계좌 · 예수금</strong><button type="button" class="sb-btn sb-btn--secondary sb-btn--sm" onclick="openAccountPanel()">계좌 관리</button><button type="button" class="sb-btn sb-btn--primary sb-btn--sm" onclick="openCashManualModal()">예수금 설정</button></div><section class="sb-detail-card"><h3>내 예수금</h3><strong id="sbDesktopCashBalance" style="font-size:24px"></strong></section><div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>계좌명</th><th>증권사</th><th>저장된 예수금</th></tr></thead><tbody id="sbDesktopAccountRows"></tbody></table></div><div id="sbDesktopAccountEmpty" class="empty-state">등록된 계좌가 없습니다. 계좌 관리에서 추가하세요.</div>';
   pfBody?.appendChild(cashPane);
+  const journalTab=document.createElement('button');journalTab.type='button';journalTab.className='mdi-ptab';journalTab.textContent='투자일지';journalTab.onclick=()=>window._MDI.show('journal');tabBar?.appendChild(journalTab);
+  const journalTabs=document.createElement('div');journalTabs.className='mdi-ptab-bar';
+  journalTabs.innerHTML='<button type="button" class="mdi-ptab" onclick="window._MDI.show(\'portfolio\');window._MDIPanelTab(\'portfolio\',\'pf\')">잔고</button><button type="button" class="mdi-ptab" onclick="window._MDI.show(\'portfolio\');window._MDIPanelTab(\'portfolio\',\'trd\');renderTrades()">거래내역</button><button type="button" class="mdi-ptab active">투자일지</button>';
+  document.getElementById('mdi-body-journal')?.prepend(journalTabs);
   const pfTab = document.querySelector('#mdi-body-portfolio .mdi-ptab');
   if (pfTab) pfTab.textContent = '잔고';
   // Existing navigation ids remain intact. Add shortcuts rather than rename data-pid.
@@ -12163,8 +12237,14 @@ function dockCtxRender() {
   if (!list.some(w => w.ticker === window._dockSel)) window._dockSel = list[0]?.ticker || null;
   const w = list.find(x => x.ticker === window._dockSel) || null;
   empty.style.display = w ? 'none' : '';
-  box.style.display   = w ? '' : 'none';
-  if (!w) return;
+  box.style.display = '';
+  sbDesktopSelection(w);
+  if (!w) {
+    for (const id of ['dockCtxName','dockCtxCode','dockCtxPrice','dockCtxChg']) { const el=document.getElementById(id); if(el) el.textContent='--'; }
+    for (const id of ['dockCtxQuote','dockCtxHold','dockCtxEvents','sbDesktopTargets']) document.getElementById(id)?.replaceChildren();
+    document.getElementById('dockCtxStatus').textContent='종목 선택 대기';
+    return;
+  }
   document.getElementById('wl-row-' + w.ticker)?.classList.add('dock-sel');
   document.querySelectorAll('#watchlistBody [data-watch-ticker]').forEach(row => {
     const selected = row.dataset.watchTicker === w.ticker;

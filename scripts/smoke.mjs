@@ -136,6 +136,37 @@ for (const pg of PAGES) {
       for (const [name, passed] of Object.entries(result)) check(passed, `새 데스크톱 셸 회귀: ${name}`);
     });
 
+    await step('동시 분석 영역과 실제 호가 상태', async () => {
+      const result = await page.evaluate(async () => {
+        const backup={wl:state.watchlist,sel:window._dockSel,api:window.electronAPI};
+        try {
+          state.watchlist=[{ticker:'005930',name:'삼성전자',price:100,change:1,quoteAt:Date.now()},{ticker:'000660',name:'SK하이닉스',price:200,change:2,quoteAt:Date.now()}];
+          window._dockSel='005930';window._MDI.show('watchlist');
+          window.electronAPI=undefined;await sbDesktopHoga();
+          const disconnected=document.getElementById('sbHogaRows').children.length===0 && document.getElementById('sbHogaStatus').textContent.includes('연결 필요');
+          window.electronAPI={fetchHoga:async()=>({asks:[{price:101,qty:0}],bids:[{price:99,qty:2}]})};
+          await sbDesktopHoga();
+          const book=document.getElementById('sbHogaRows');const real=book.children.length===2 && book.textContent.includes('101') && book.textContent.includes('99');
+          let resolve;window.electronAPI.fetchHoga=()=>new Promise(r=>resolve=r);
+          const pending=sbDesktopHoga();dockSelectStock('000660');resolve({asks:[{price:101,qty:1}],bids:[{price:99,qty:1}]});await pending;
+          const stale=book.children.length===0 && document.getElementById('sbHogaStatus').textContent.includes('조회 대기');
+          window.electronAPI.fetchHoga=async()=>{throw new Error('offline')};await sbDesktopHoga();
+          const failure=book.children.length===0 && document.getElementById('sbHogaStatus').textContent.includes('조회 실패');
+          const checks=[];
+          for (const screen of ['watchlist','portfolio','journal']) {
+            window._MDI.show(screen);
+            const region=document.getElementById('sbAnalysis'),r=region.getBoundingClientRect();
+            checks.push(r.width>100 && r.height>100 && r.right<=innerWidth && getComputedStyle(region).display!=='none' && region.textContent.includes('AI 분석') && region.textContent.includes('규칙 신호'));
+          }
+          document.getElementById('sbAiCheck').open=true;document.getElementById('sbSignalCheck').open=true;
+          const flow=document.getElementById('sbAiCheck').textContent.includes('생성 시각') && document.getElementById('sbSignalCheck').textContent.includes('시계열 데이터');
+          document.getElementById('sbAiCheck').open=false;document.getElementById('sbSignalCheck').open=false;
+          return {disconnected,real,stale,failure,simultaneous:checks.every(Boolean),flow};
+        } finally {state.watchlist=backup.wl;window._dockSel=backup.sel;window.electronAPI=backup.api;window._MDI.show('watchlist');}
+      });
+      for(const [key,value] of Object.entries(result)) check(value, `분석/호가 동시 화면 회귀: ${key}`);
+    });
+
     await step('문맥 패널 보유 합산', async () => {
       // PR #42 리뷰 재현: 관심종목 시세가 없으면 보유 현재가(currentPrice)를 쓰고, 여러 계좌의 같은 종목을 합산해야 한다
       const res = await page.evaluate(() => {
@@ -279,10 +310,10 @@ for (const pg of PAGES) {
         await page.evaluate(() => window._MDI.show('watchlist'));
         const layout = await page.evaluate(() => {
           const rect = id => { const r = document.getElementById(id).getBoundingClientRect(); return { x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height }; };
-          return { left:rect('mdi-panel-watchlist'),ctx:rect('dockCtx'),work:rect('mdi-panel-portfolio'),workspace:rect('mdiWorkspace'),header:document.querySelector('.header').getBoundingClientRect().bottom };
+          return { left:rect('mdi-panel-watchlist'),ctx:rect('dockCtx'),work:rect('mdi-panel-portfolio'),analysis:rect('sbAnalysis'),workspace:rect('mdiWorkspace'),header:document.querySelector('.header').getBoundingClientRect().bottom };
         });
         check(Math.abs(layout.left.width / (layout.left.width + layout.ctx.width) - .4) < .02, `${vp.width}px: 좌우 40:60 비율 오류`);
-        check(layout.work.y >= layout.ctx.bottom && Math.abs(layout.work.x-layout.ctx.x) < 2 && Math.abs(layout.work.right-layout.ctx.right) < 2, `${vp.width}px: 하단 작업 패널이 우측 종합 패널 아래에 정렬되지 않음`);
+        check(layout.work.y >= layout.ctx.bottom && Math.abs(layout.work.x-layout.ctx.x) < 2 && layout.analysis.x >= layout.work.right && Math.abs(layout.analysis.right-layout.ctx.right) < 2 && Math.abs(layout.analysis.y-layout.work.y) < 2, `${vp.width}px: 하단 작업 패널이 우측 종합 패널 아래에 정렬되지 않음`);
         check(Math.abs(layout.left.bottom-layout.work.bottom)<2 && layout.left.y >= layout.workspace.y, `${vp.width}px: 좌측 종목창 전체 높이 오류`);
         check(layout.workspace.y >= layout.header-1 && layout.work.bottom <= vp.height+1, `${vp.width}px: 상단 겹침 또는 하단 잘림`);
         for (const mode of ['dark', 'light']) {
