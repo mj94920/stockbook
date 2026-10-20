@@ -3189,7 +3189,7 @@
   #mdi-panel-portfolio .hts-s2r-sub-item .s2r-sv { font-family: var(--sb-font-num); font-variant-numeric: tabular-nums; color: var(--sb-text-1); }
   #mdi-panel-portfolio .hts-s2r-sub-item .s2r-sv.up { color: var(--sb-up); }
   #mdi-panel-portfolio .hts-s2r-sub-item .s2r-sv.dn { color: var(--sb-down); }
-  @media (max-width: 720px) { .pf-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 720px) { .pf-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
   /* 호가 확인 + 거래 기록 */
   .tr-rec-title { font-size: 12px; font-weight: 700; color: var(--sb-text-1); display: flex; align-items: baseline; justify-content: space-between; gap: var(--sb-space-2); }
@@ -3205,6 +3205,44 @@
   #mdi-panel-journal .checkbox-item { border-radius: var(--sb-radius-2); border-color: var(--sb-border); background: var(--sb-surface); color: var(--sb-text-2); }
   #mdi-panel-journal .jc-tag { background: var(--sb-surface); border-radius: var(--sb-radius-1); color: var(--sb-text-2); }
   #mdi-panel-journal .card { position: static; }
+
+  /* Desktop Main v2: header participates in layout; no fixed header offset. */
+  body { height: 100vh; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .header { flex-shrink: 0; position: relative; }
+  .content.mdi-content { flex: 1; min-height: 0; height: auto !important; animation: none; }
+  .mdi-workspace.mdi-dock { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
+  .mdi-dock[data-dock-screen="watchlist"] {
+    grid-template-rows: auto minmax(180px, 1fr) minmax(210px, 1fr);
+    gap: var(--sb-space-2); padding: var(--sb-space-2);
+  }
+  .mdi-dock[data-dock-screen="watchlist"] > .dock-bar { grid-column: 1 / -1; padding: 0 var(--sb-space-2); }
+  .mdi-dock[data-dock-screen="watchlist"] > #mdi-panel-watchlist { grid-column: 1; grid-row: 2 / 4; }
+  .mdi-dock[data-dock-screen="watchlist"] > #mdi-panel-portfolio { grid-column: 2; grid-row: 3; }
+  .mdi-dock[data-dock-screen="watchlist"] > .dock-ctx {
+    grid-column: 2; grid-row: 2; border: 1px solid var(--sb-border-weak); min-width: 0;
+  }
+  .mdi-dock[data-dock-screen="watchlist"] > .mdi-panel { border: 1px solid var(--sb-border-weak); }
+  .mdi-dock[data-dock-screen="watchlist"] #mdi-body-portfolio { padding: var(--sb-space-2); min-width: 0; }
+  .mdi-dock[data-dock-screen="watchlist"] #mdi-ptc-portfolio-pf > .card { min-height: 0 !important; flex-shrink: 0; }
+  .mdi-dock[data-dock-screen="watchlist"] .pf-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .mdi-dock[data-dock-screen="watchlist"] .pf-stats .sb-stat { padding: var(--sb-space-2); gap: 2px; }
+  .mdi-dock[data-dock-screen="watchlist"] .pf-stats .sb-stat__value { font-size: 13px; overflow-wrap: anywhere; white-space: normal; }
+  .mdi-dock[data-dock-screen="watchlist"] .pf-stats .sb-stat__label { font-size: 11px; flex-wrap: wrap; }
+  .mdi-dock[data-dock-screen="watchlist"] .pf-stats .sb-stat__sub { font-size: 10px; }
+  .mdi-dock[data-dock-screen="watchlist"] .hts-s2r-sub { display: flex; flex-wrap: wrap; }
+  .mdi-dock[data-dock-screen="watchlist"] .section-row { flex-wrap: wrap; gap: var(--sb-space-2); }
+  .dock-ctx__body { min-width: 0; }
+  .dock-ctx__rows { min-width: 0; }
+  .dock-ctx__rows > div { flex-wrap: wrap; }
+  .dock-ctx__rows b { overflow-wrap: anywhere; }
+  .dock-ctx__quote-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--sb-space-4); }
+  @media (max-width: 760px) {
+    .mdi-dock[data-dock-screen="watchlist"] { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 300px 260px 360px; overflow: auto; }
+    .mdi-dock[data-dock-screen="watchlist"] > #mdi-panel-watchlist { grid-column: 1; grid-row: 2; }
+    .mdi-dock[data-dock-screen="watchlist"] > .dock-ctx { grid-column: 1; grid-row: 3; }
+    .mdi-dock[data-dock-screen="watchlist"] > #mdi-panel-portfolio { grid-column: 1; grid-row: 4; }
+  }
+
 </style>
 </head>
 <body>
@@ -4186,7 +4224,7 @@
         <div class="dock-ctx__price" id="dockCtxPrice">-</div>
         <div class="dock-ctx__chg" id="dockCtxChg">-</div>
         <div class="dock-ctx__none" id="dockCtxStatus" role="status"></div>
-        <div class="dock-ctx__rows" id="dockCtxQuote"></div>
+        <div class="dock-ctx__rows dock-ctx__quote-grid" id="dockCtxQuote"></div>
         <div class="dock-ctx__sec">보유 현황</div>
         <div class="dock-ctx__rows" id="dockCtxHold"></div>
         <div class="dock-ctx__sec">다가오는 종목 일정</div>
@@ -12542,7 +12580,7 @@ function _toggleCheck(stockKey, checkKey, val) {
       Object.keys(this.DOCK_NAMES).forEach(p => {
         const el = document.getElementById('mdi-panel-' + p);
         if (!el) return;
-        const on = p === pid;
+        const on = p === pid || (pid === 'watchlist' && p === 'portfolio');
         el.style.display = on ? '' : 'none';
         el.dataset.mdiState = on ? 'open' : 'closed';
         const body = document.getElementById('mdi-body-' + p);
@@ -12554,6 +12592,10 @@ function _toggleCheck(stockKey, checkKey, val) {
       if (nm) nm.textContent = this.DOCK_NAMES[pid] || '';
       this._syncAllBtns();
       this._render(pid);
+      if (pid === 'watchlist') {
+        this._render('portfolio');
+        renderSummary();
+      }
       if (pid === 'watchlist') try { window._MDIPanelTab('watchlist', 'wl'); } catch(e) {}
       dockQueueSubscription();
     },
@@ -12951,7 +12993,9 @@ function _toggleCheck(stockKey, checkKey, val) {
     // ── 메뉴버튼 active 동기화 ──────────────────────────────────────────
     _syncBtn(pid) {
       const el = document.getElementById('mdi-panel-' + pid);
-      const isOpen = el && el.dataset.mdiState !== 'closed';
+      const isOpen = this.dock
+        ? document.getElementById('mdiWorkspace')?.dataset.dockScreen === pid
+        : el && el.dataset.mdiState !== 'closed';
       // 사이드바 버튼 동기화
       document.querySelectorAll('.mdi-sb-btn[data-pid="'+pid+'"]').forEach(btn => {
         btn.classList.toggle('mdi-sb-btn-active', isOpen);

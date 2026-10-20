@@ -70,11 +70,11 @@ for (const pg of PAGES) {
     const step = async (name, fn) => { try { await fn(); } catch (e) { errors.push(`${name}: ${e.message}`); } await page.waitForTimeout(150); };
 
     await step('사이드바 메뉴', async () => {
-      // 첫 화면 = 관심종목 종합 도킹 (창 겹침 없음, 제목줄·창 버튼 없음)
+      // 첫 화면 = 좌측 종목창 + 우측 종합 + 우측 하단 기존 포트폴리오
       const openPids = () => page.evaluate(() => [...document.querySelectorAll('.mdi-panel')]
         .filter(el => el.dataset.mdiState === 'open' && getComputedStyle(el).display !== 'none').map(el => el.dataset.pid));
       const first = await openPids();
-      check(first.length === 1 && first[0] === 'watchlist', `첫 화면이 관심종목 종합 단독이 아님: [${first}]`);
+      check(first.length === 2 && first.includes('watchlist') && first.includes('portfolio'), `첫 화면 종목창/하단 작업 패널 표시 오류: [${first}]`);
       const dbg = await page.evaluate(() => { const w = document.getElementById('mdiWorkspace'), c = document.getElementById('dockCtx'); return `ws=${getComputedStyle(w).display}/${w.dataset.dockScreen} ctx=${getComputedStyle(c).display} parent=${c.parentElement.id || c.parentElement.className}`; });
       check(await page.evaluate(() => ['watchlist', 'trading', 'portfolio', 'news', 'journal'].every(p => document.getElementById('mdi-panel-' + p)?.parentElement.id === 'mdiWorkspace')), '모든 중앙 화면 패널은 #mdiWorkspace 직속이어야 함 (HTML 닫힘 태그 불일치)');
       check(await page.evaluate(() => getComputedStyle(document.getElementById('dockCtx')).display !== 'none'), `관심종목 화면에 문맥 패널이 보이지 않음 (${dbg})`);
@@ -83,7 +83,8 @@ for (const pg of PAGES) {
         check(await click(`.mdi-sb-btn[data-pid="${pid}"]`), `사이드바 버튼 없음: ${pid}`);
         await page.waitForTimeout(250);
         const open = await openPids();
-        check(open.length === 1 && open[0] === pid, `사이드바 '${pid}' 클릭 후 중앙 화면이 '${pid}' 단독이 아님: [${open}]`);
+        const expected = pid === 'watchlist' ? ['watchlist', 'portfolio'] : [pid];
+        check(open.length === expected.length && expected.every(p => open.includes(p)), `사이드바 '${pid}' 화면 구성 오류: [${open}]`);
         const inside = await page.evaluate(p => {
           const r = document.getElementById('mdi-panel-' + p)?.getBoundingClientRect();
           const ws = document.getElementById('mdiWorkspace').getBoundingClientRect();
@@ -239,13 +240,15 @@ for (const pg of PAGES) {
       for (const vp of [{ width: 1400, height: 900 }, { width: 1024, height: 768 }]) {
         await page.setViewportSize(vp);
         await page.waitForTimeout(300);
-        // 좁은 창(<1024)은 관심종목 표 → 문맥 패널 순서로 세로 배치
-        const stacked = await page.evaluate(() => {
-          const t = document.getElementById('mdi-panel-watchlist').getBoundingClientRect();
-          const c = document.getElementById('dockCtx').getBoundingClientRect();
-          return c.top >= t.bottom - 1;
+        await page.evaluate(() => window._MDI.show('watchlist'));
+        const layout = await page.evaluate(() => {
+          const rect = id => { const r = document.getElementById(id).getBoundingClientRect(); return { x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height }; };
+          return { left:rect('mdi-panel-watchlist'),ctx:rect('dockCtx'),work:rect('mdi-panel-portfolio'),workspace:rect('mdiWorkspace'),header:document.querySelector('.header').getBoundingClientRect().bottom };
         });
-        check(stacked === (vp.width < 1024), `${vp.width}px: 문맥 패널 배치 오류 (세로 쌓임=${stacked})`);
+        check(Math.abs(layout.left.width / (layout.left.width + layout.ctx.width) - .4) < .02, `${vp.width}px: 좌우 40:60 비율 오류`);
+        check(layout.work.y >= layout.ctx.bottom && Math.abs(layout.work.x-layout.ctx.x) < 2 && Math.abs(layout.work.right-layout.ctx.right) < 2, `${vp.width}px: 하단 작업 패널이 우측 종합 패널 아래에 정렬되지 않음`);
+        check(Math.abs(layout.left.bottom-layout.work.bottom)<2 && layout.left.y >= layout.workspace.y, `${vp.width}px: 좌측 종목창 전체 높이 오류`);
+        check(layout.workspace.y >= layout.header-1 && layout.work.bottom <= vp.height+1, `${vp.width}px: 상단 겹침 또는 하단 잘림`);
         for (const mode of ['dark', 'light']) {
           await page.evaluate(m => setTheme(m), mode);
           await page.waitForTimeout(300);
