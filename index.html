@@ -12232,6 +12232,22 @@ async function _fetchYFSummary(ticker) {
   return null;
 }
 
+// 표시와 집계가 같은 원칙 목록을 사용하며 알 수 없는 저장 키는 점수에서 제외한다.
+function _getAnalysisPrinciples() {
+  return [
+    { key:'pos',     text:'주가가 바닥에 가깝고 위로 열려 있는가? (뚜껑 없음)' },
+    { key:'align',   text:'이평선 완전 정배열 상태인가?' },
+    { key:'knee',    text:'5일선이 저점에서 꺾여 상승 중인가? (무릎)' },
+    { key:'golden',  text:'5-10일선 골든크로스 (히말라야) 형성됐는가?' },
+    { key:'ma20',    text:'20일선이 우상향 중인가?' },
+    { key:'ma200',   text:'200일선·300일선이 우상향 중인가?' },
+    { key:'pivot',   text:'대량거래 급등 양봉 기준봉이 있는가?' },
+    { key:'gap',     text:'갭상승 후 추가 상승이 이어졌는가? (갭 유지)' },
+    { key:'monthly', text:'월봉 기준봉 절반 이상 돌파했는가?' },
+    { key:'index',   text:'지수 대비 -10% 이하 이탈하지 않았는가?' },
+  ];
+}
+
 function _renderAnalysisBody(body, stock, naverData, yf) {
   const isElectron = !!window.electronAPI;
   const ticker  = stock.ticker || '';
@@ -12432,20 +12448,9 @@ function _renderAnalysisBody(body, stock, naverData, yf) {
   if (!state.analysisChecks[cKey]) state.analysisChecks[cKey] = {};
   const checks = state.analysisChecks[cKey];
 
-  const principles = [
-    { key:'pos',     text:'주가가 바닥에 가깝고 위로 열려 있는가? (뚜껑 없음)' },
-    { key:'align',   text:'이평선 완전 정배열 상태인가?' },
-    { key:'knee',    text:'5일선이 저점에서 꺾여 상승 중인가? (무릎)' },
-    { key:'golden',  text:'5-10일선 골든크로스 (히말라야) 형성됐는가?' },
-    { key:'ma20',    text:'20일선이 우상향 중인가?' },
-    { key:'ma200',   text:'200일선·300일선이 우상향 중인가?' },
-    { key:'pivot',   text:'대량거래 급등 양봉 기준봉이 있는가?' },
-    { key:'gap',     text:'갭상승 후 추가 상승이 이어졌는가? (갭 유지)' },
-    { key:'monthly', text:'월봉 기준봉 절반 이상 돌파했는가?' },
-    { key:'index',   text:'지수 대비 -10% 이하 이탈하지 않았는가?' },
-  ];
+  const principles = _getAnalysisPrinciples();
   const total = principles.length;
-  const cnt   = Object.values(checks).filter(Boolean).length;
+  const cnt   = principles.filter(p => checks[p.key]).length;
   const pctChk = Math.round(cnt/total*100);
   const scoreColor = pctChk >= 70 ? '#22c55e' : pctChk >= 40 ? '#f59e0b' : 'var(--text3)';
   const scoreLabel = pctChk >= 70 ? '✅ 매수 조건 우호적' : pctChk >= 40 ? '⚠️ 조건 일부 미충족' : '🔴 조건 대부분 미충족';
@@ -12544,8 +12549,9 @@ function _toggleCheck(stockKey, checkKey, val) {
   const scoreEl = document.getElementById('analysisScore');
   if (!scoreEl) return;
   const checks = state.analysisChecks[stockKey];
-  const total  = 10;
-  const cnt    = Object.values(checks).filter(Boolean).length;
+  const principles = _getAnalysisPrinciples();
+  const total  = principles.length;
+  const cnt    = principles.filter(p => checks[p.key]).length;
   const p      = Math.round(cnt/total*100);
   const color  = p >= 70 ? '#22c55e' : p >= 40 ? '#f59e0b' : 'var(--text3)';
   const label  = p >= 70 ? '✅ 매수 조건 우호적' : p >= 40 ? '⚠️ 조건 일부 미충족' : '🔴 조건 대부분 미충족';
