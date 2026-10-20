@@ -2,6 +2,8 @@ const { app, BrowserWindow, ipcMain, dialog, shell, safeStorage, net } = require
 const path  = require('path');
 const fs    = require('fs');
 const https = require('https');
+const { prepareRendererFiles } = require('./src/desktop/renderer-files.cjs');
+const rendererDirectories = new Set();
 
 // ── userData 경로 통일: 개발 모드(stockbook)와 설치 모드(Stock Book) 동일하게 ──
 // 반드시 app.whenReady() 이전에 설정해야 한다.
@@ -1387,14 +1389,18 @@ function createWindow() {
     ).catch(() => {});
   });
 
-  // HTML 파일을 임시 ASCII 경로에 복사 후 로드 (Electron 파일 로드 안정성)
-  const srcHtml = path.join(__dirname, 'index.html');
-  const tmpHtml = path.join(app.getPath('temp'), 'stockbook-app.html');
-  try { fs.copyFileSync(srcHtml, tmpHtml); } catch (e) {
-    console.error('[StockBook] HTML 복사 실패:', e);
+  // HTML과 상대경로 리소스를 실행별 전용 임시 폴더에 함께 배치한다.
+  let renderer;
+  try {
+    renderer = prepareRendererFiles(__dirname, app.getPath('temp'));
+    rendererDirectories.add(renderer.directory);
+  } catch (error) {
+    console.error('[StockBook] 렌더러 파일 준비 실패:', error);
+    if (!splash.isDestroyed()) splash.close();
+    dialog.showErrorBox('Stock Book 실행 오류', '화면 파일을 준비하지 못했습니다. 설치 파일을 확인해 주세요.');
+    app.quit();
+    return;
   }
-  // icon-192.png도 임시 디렉터리에 복사 (HTML의 ./icon-192.png 상대경로 참조를 위해)
-  try { fs.copyFileSync(path.join(__dirname, 'icon-192.png'), path.join(app.getPath('temp'), 'icon-192.png')); } catch (e) { /* 무시 */ }
 
   win = new BrowserWindow({
     width:     1440,
@@ -1412,7 +1418,7 @@ function createWindow() {
     }
   });
 
-  win.loadFile(tmpHtml);
+  win.loadFile(renderer.htmlPath);
   win.setMenuBarVisibility(false);
   // 스플래시 최소 1.4초 표시 후 메인 창 표시, 스플래시 닫기
   win.once('ready-to-show', () => {
@@ -1478,3 +1484,10 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
+
+app.on('will-quit', () => {
+  for (const directory of rendererDirectories) {
+    try { fs.rmSync(directory, { recursive: true, force: true }); }
+    catch (error) { console.warn('[StockBook] 임시 화면 파일 정리 실패:', error.message); }
+  }
+});

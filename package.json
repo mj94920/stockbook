@@ -11,7 +11,8 @@
     "test": "npm run check && npm run smoke",
     "build": "electron-builder --win nsis",
     "dist": "electron-builder --win nsis --publish never -c.directories.output=dist",
-    "release:bump": "node scripts/bump-version.mjs"
+    "release:bump": "node scripts/bump-version.mjs",
+    "posttest": "node --test test/renderer-files.test.cjs"
   },
   "build": {
     "appId": "com.mj.stockbook",
@@ -23,6 +24,7 @@
     },
     "files": [
       "main.js",
+      "src/desktop/renderer-files.cjs",
       "preload.js",
       "index.html",
       "splash.html",
