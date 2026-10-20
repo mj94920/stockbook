@@ -12,6 +12,7 @@
 | 2차 작업 순서·보존 범위 | [STRUCTURE-REVAMP-PLAN.md](STRUCTURE-REVAMP-PLAN.md) |
 | Desktop Main v2 검토 기록 | [DESKTOP-MAIN-V2-IMPLEMENTATION-WAIT.md](DESKTOP-MAIN-V2-IMPLEMENTATION-WAIT.md) — 작성 당시 상태는 이슈·PR로 재확인 |
 | SQLite 설계 | [SQLITE-STORAGE-DESIGN.md](SQLITE-STORAGE-DESIGN.md) — 설계와 구현 구분 |
+| AI 분석 전송 정책·자료 미리보기 | [ANALYSIS-AI-CONTRACT.md](ANALYSIS-AI-CONTRACT.md) — 미리보기 구현, CLI 미연결 |
 | 계좌·장부 설계 / 계약 초안 | [ACCOUNT-LEDGER-DESIGN.md](ACCOUNT-LEDGER-DESIGN.md), [LEDGER-CONTRACT-DRAFT.md](LEDGER-CONTRACT-DRAFT.md) |
 | 신규 Android 전용 시안 | [android-ui-v2/REVIEW.md](design/android-ui-v2/REVIEW.md) — 폐기된 PWA/TWA와 별개, PC 적용 금지 |
 

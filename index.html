@@ -3369,6 +3369,13 @@
     .mdi-dock.sb-desktop-home > .sb-analysis { grid-column: 1; grid-row: 5; }
   }
 
+#sbAiPreviewDialog:not([open]) { display: none; }
+#sbAiPreviewDialog { margin: auto; padding: 0; }
+#sbAiPreviewDialog::backdrop { background: var(--sb-overlay); }
+.sb-ai-preview-actions { display: flex; flex-wrap: wrap; gap: var(--sb-space-2); margin-top: var(--sb-space-3); }
+.sb-ai-payload { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; color: var(--sb-text-1); background: var(--sb-surface); border: 1px solid var(--sb-border); border-radius: var(--sb-radius-1); padding: var(--sb-space-3); margin: 0; }
+.sb-ai-journal-choice { display: flex; gap: var(--sb-space-2); align-items: baseline; margin: var(--sb-space-2) 0; color: var(--sb-text-1); }
+.sb-ai-note { font-size: 12px; color: var(--sb-text-2); line-height: 1.6; }
 </style>
 </head>
 <body>
@@ -4360,7 +4367,7 @@
       </div>
     </aside>
     <aside id="sbAnalysis" class="sb-analysis" aria-label="AI 분석과 규칙 신호">
-      <section class="sb-analysis-section"><div class="sb-region-title"><h3>AI 분석</h3><span class="sb-analysis-stock">종목 선택</span></div><strong>분석 데이터 없음</strong><p>선택 종목의 AI 분석 결과가 연결되지 않았습니다.</p><details id="sbAiCheck"><summary>분석 상태 확인</summary><p>분석 결과: 없음<br>생성 시각: --<br>출처: 연결되지 않음</p><button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('chart')">참고 기업자료 확인 ↗</button></details></section>
+      <section class="sb-analysis-section"><div class="sb-region-title"><h3>AI 분석</h3><span class="sb-analysis-stock">종목 선택</span></div><strong>분석 데이터 없음</strong><p>선택 종목의 AI 분석 결과가 연결되지 않았습니다.</p><div class="sb-ai-preview-actions"><button type="button" id="sbAiPreviewOpen" class="sb-btn sb-btn--sm">보낼 자료 보기</button><button type="button" class="sb-btn sb-btn--sm" disabled title="CLI 실행·취소 연결은 다음 단계입니다.">네로 실행 · 준비 중</button><button type="button" class="sb-btn sb-btn--sm" disabled title="아린 호출은 사용자 선택으로만 실행됩니다.">아린 설명 · 준비 중</button></div><p id="sbAiPreviewStatus" role="status">자료를 확인해도 외부로 전송하지 않습니다.</p><details id="sbAiCheck"><summary>분석 상태 확인</summary><p>분석 결과: 없음<br>생성 시각: --<br>출처: 연결되지 않음</p><button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('chart')">참고 기업자료 확인 ↗</button></details></section>
       <section class="sb-analysis-section"><div class="sb-region-title"><h3>규칙 신호</h3><span class="sb-analysis-stock">종목 선택</span></div><strong>판정 대기</strong><p>규칙 엔진과 판정에 필요한 시계열 데이터가 아직 연결되지 않았습니다.</p><details id="sbSignalCheck"><summary>판정 조건 확인</summary><p>시계열 데이터: 없음<br>규칙 엔진: 연결 대기<br>마지막 판정: --</p><small>규칙 판정 · 투자 권유 아님</small></details></section>
     </aside>
 </div><!-- /mdi-workspace -->
@@ -14538,5 +14545,27 @@ function wlAssignGroup(idx, gName) {
     </div>
   </div>
 </div>
+<dialog id="sbAiPreviewDialog" class="sb-modal sb-modal--l" aria-labelledby="sbAiPreviewTitle">
+  <div class="sb-modal__head"><span id="sbAiPreviewTitle">AI 분석 · 보낼 자료 보기</span><button type="button" id="sbAiPreviewClose" class="sb-btn sb-btn--ghost sb-btn--sm sb-modal__close" aria-label="미리보기 닫기">✕</button></div>
+  <div class="sb-modal__body">
+    <p class="sb-ai-note">현재 선택 종목·이미 수신한 시세·종목별 합산 보유 정보와 아래에서 고른 일지만 포함합니다. 계좌명·계좌번호·API 키·전체 거래 내역은 포함하지 않습니다.</p>
+    <p class="sb-ai-note">이 화면은 연 시점의 자료입니다. 실시간 변경분을 반영하려면 닫았다 다시 여세요. null은 미수신·미확인 값이며 0으로 추정하지 않습니다.</p>
+    <details id="sbAiJournalChecks"><summary>함께 보낼 일지 선택</summary><div id="sbAiJournalChoices"></div></details>
+    <span id="sbAiPreviewCount" class="sb-ai-note">선택한 일지: 0건</span>
+    <pre id="sbAiPayload" class="sb-ai-payload" tabindex="0" aria-label="전송 예정 자료 원문"></pre>
+    <label class="sb-ai-note"><input type="checkbox" id="sbAiConsent"> 실제 실행 시 위 자료가 선택한 CLI의 외부 모델 제공자에게 전달되는 데 동의합니다.</label>
+    <p class="sb-ai-note">현재는 미리보기 단계로 실행·외부 전송이 없습니다. 동의 선택은 이번 앱 실행 중에만 유지하며 철회할 수 있습니다. 분석 결과는 앱 메모리에만 보관하고 종료 시 폐기하는 계약입니다.</p>
+  </div>
+  <div class="sb-modal__foot"><button type="button" id="sbAiPreviewDone" class="sb-btn">닫기</button><button type="button" class="sb-btn sb-btn--primary" disabled>CLI 연결 준비 중</button></div>
+</dialog>
+<script src="src/analysis-ai/preview.js"></script>
+<script src="src/analysis-ai/preview-ui.js"></script>
+<script>
+// Existing Stock Book state adapter only. No character capsules or private engine code.
+window.StockBookAnalysisPreviewUI?.configure(() => ({
+  selected: (state.watchlist || []).find(row => row.ticker === window._dockSel) || null,
+  holdings: state.portfolio || [], journals: state.journals || [], capturedAt: Date.now()
+}));
+</script>
 </body>
 </html>
