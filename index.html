@@ -3206,43 +3206,134 @@
   #mdi-panel-journal .jc-tag { background: var(--sb-surface); border-radius: var(--sb-radius-1); color: var(--sb-text-2); }
   #mdi-panel-journal .card { position: static; }
 
-  /* Desktop Main v2: header participates in layout; no fixed header offset. */
+  /* Desktop Main v2 — composed shell, shared theme tokens, existing data paths. */
   body { height: 100vh; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
-  .header { flex-shrink: 0; position: relative; }
+  body .header { flex-shrink: 0; position: relative; background: var(--sb-panel); border-bottom: 1px solid var(--sb-border); backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: var(--sb-shadow-1); }
+  body.light-mode .header { background: var(--sb-panel); border-color: var(--sb-border); box-shadow: var(--sb-shadow-1); }
+  .hdr-row1 { height: 62px; padding: 0 14px; gap: 14px; }
+  .hdr-row2 { display: none; }
+  .sb-desktop-search { flex: 1; min-width: 100px; max-width: 390px; }
+  .sb-desktop-search input { width: 100%; background: var(--sb-bg); }
+  .hdr-row1 > .hdr-group--idx { flex: 1; max-width: 450px; min-width: 160px; }
+  .hdr-idx-card { min-width: 96px; padding: 0 12px; border: 0; border-right: 1px solid var(--sb-border-weak); background: transparent; box-shadow: none; border-radius: 0; }
+  .hdr-idx-card .hdr-idx-val { font-size: 13px; }
+  .hdr-status { gap: 5px; flex-shrink: 0; }
+  .hdr-badge { font-size: 10px; padding: 4px 7px; }
+  #headerDate { display: none; }
+  #calDdayBadge { max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
   .content.mdi-content { flex: 1; min-height: 0; height: auto !important; animation: none; }
-  .mdi-workspace.mdi-dock { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
-  .mdi-dock[data-dock-screen="watchlist"] {
-    grid-template-rows: auto minmax(180px, 1fr) minmax(210px, 1fr);
-    gap: var(--sb-space-2); padding: var(--sb-space-2);
+  .mdi-sidebar { width: 64px; min-width: 64px; padding: 6px 4px; background: var(--sb-panel); }
+  .mdi-sb-section-label { display: none; }
+  .mdi-sidebar .mdi-sb-btn { flex-direction: column; justify-content: center; gap: 5px; padding: 10px 0; height: auto; min-height: 58px; border-radius: var(--sb-radius-2); margin: 3px 0; border-left: 0; }
+  .mdi-sidebar .mdi-sb-label { font-size: 10px; white-space: nowrap; }
+  .mdi-sb-icon-wrap svg { width: 21px; height: 21px; }
+  .mdi-sb-btn-active { color: var(--sb-accent); background: var(--sb-accent-soft); }
+  .mdi-sb-toggle { height: 22px; }
+  .mdi-sb-status { padding: 7px 0; justify-content: center; }
+  #apiStatusLabel { display: none; }
+  .mdi-workspace.mdi-dock { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); background: var(--sb-bg); }
+  .mdi-dock.sb-desktop-home { grid-template-rows: 0 minmax(250px, 1.2fr) minmax(250px, 1fr); padding: 10px; gap: 10px; }
+  .mdi-dock.sb-desktop-home > .dock-bar { display: none; }
+  .mdi-dock.sb-desktop-home > #mdi-panel-watchlist { grid-column: 1; grid-row: 2 / 4; }
+  .mdi-dock.sb-desktop-home > :is(#mdi-panel-portfolio,#mdi-panel-journal) { grid-column: 2; grid-row: 3; }
+  .mdi-dock.sb-desktop-home > .dock-ctx { display: flex; grid-column: 2; grid-row: 2; min-width: 0; padding: 0; border: 1px solid var(--sb-border); border-radius: var(--sb-radius-3); background: var(--sb-panel); }
+  .mdi-dock.sb-desktop-home > .mdi-panel { background: var(--sb-panel); border: 1px solid var(--sb-border); border-radius: var(--sb-radius-3); box-shadow: var(--sb-shadow-1); }
+  .mdi-dock .mdi-ptab-bar { flex-shrink: 0; background: var(--sb-panel); padding: 0 8px; min-height: 40px; border-color: var(--sb-border-weak); }
+  .mdi-dock .mdi-ptab { padding: 10px 12px; color: var(--sb-text-2); font-size: 12px; }
+  .mdi-dock .mdi-ptab.active { color: var(--sb-accent); border-color: var(--sb-accent); background: linear-gradient(var(--sb-panel),var(--sb-bg)); }
+  .mdi-dock.sb-desktop-home #mdi-body-watchlist { padding: 0; }
+  .mdi-dock.sb-desktop-home #mdi-body-portfolio { padding: 0 10px 10px; min-width: 0; }
+  .mdi-dock.sb-desktop-home #mdi-ptc-portfolio-pf > .card { min-height: 0 !important; padding: 8px 0; border: 0; border-radius: 0; flex-shrink: 0; }
+  .mdi-dock.sb-desktop-home .pf-stats { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; }
+  .mdi-dock.sb-desktop-home .pf-stats .sb-stat { padding: 8px; gap: 3px; border-radius: 5px; background: linear-gradient(var(--sb-panel),var(--sb-bg)); }
+  .mdi-dock.sb-desktop-home .pf-stats .sb-stat__label { font-size: 10px; flex-wrap: wrap; }
+  .mdi-dock.sb-desktop-home .pf-stats .sb-stat__value { font-size: 13px; white-space: normal; overflow-wrap: anywhere; }
+  .mdi-dock.sb-desktop-home .pf-stats .sb-stat__sub { font-size: 10px; }
+  .mdi-dock.sb-desktop-home .hts-s2r-sub { display: flex; flex-wrap: wrap; padding: 6px; }
+  .mdi-dock.sb-desktop-home .section-row { flex-wrap: wrap; gap: 6px; }
+  .mdi-dock.sb-desktop-home #htsSummary { margin-bottom: 0; }
+  .mdi-dock table { font-size: 11px; }
+  .mdi-dock th { background: var(--sb-bg); color: var(--sb-text-3); border-color: var(--sb-border-weak); font-size: 10px; padding: 8px; }
+  .mdi-dock td { padding: 8px; border-color: var(--sb-border-weak); }
+  #watchlistBody td { font-size: 11px; }
+  #watchlistBody td .dock-ctx__none { font-size: 9px; }
+  #watchlistBody tr.dock-sel td { background: var(--sb-accent-soft); }
+  .sb-detail-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--sb-border-weak); display: flex; justify-content: space-between; gap: 14px; align-items: center; }
+  .sb-detail-identity { display: flex; gap: 9px; align-items: baseline; flex-wrap: wrap; }
+  .dock-ctx__name { font-size: 22px; letter-spacing: -.6px; }
+  .dock-ctx__code { font-size: 12px; }
+  .sb-detail-price { display: flex; align-items: baseline; gap: 12px; margin-top: 8px; }
+  .dock-ctx__price { font-size: 34px; letter-spacing: -1px; }
+  .dock-ctx__chg { font-size: 15px; }
+  .dock-ctx__none { font-size: 11px; line-height: 1.7; }
+  .dock-ctx__empty { padding: 24px; }
+  .dock-ctx__body { gap: 0; min-width: 0; }
+  .sb-detail-tabs { display: flex; gap: 4px; padding: 0 12px; overflow-x: auto; border-bottom: 1px solid var(--sb-border-weak); }
+  .sb-detail-tabs button { white-space: nowrap; border: 0; background: none; color: var(--sb-text-2); padding: 11px 12px; cursor: pointer; font: inherit; font-size: 12px; }
+  .sb-detail-tabs button.active { color: var(--sb-accent); border-bottom: 2px solid var(--sb-accent); font-weight: 700; }
+  .sb-detail-content { display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; padding: 12px; }
+  .sb-detail-card { min-width: 0; padding: 12px; border: 1px solid var(--sb-border-weak); border-radius: var(--sb-radius-2); background: var(--sb-panel); }
+  .sb-detail-card h3 { margin: 0 0 10px; font-size: 12px; color: var(--sb-text-1); }
+  .dock-ctx__rows > div { gap: 8px; flex-wrap: wrap; font-size: 11px; padding: 4px 0; }
+  .dock-ctx__rows b { overflow-wrap: anywhere; font-size: 12px; }
+  .dock-ctx__quote-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0 12px; }
+  .sb-detail-bottom { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; padding: 0 12px 12px; }
+  .sb-signal { background: linear-gradient(var(--sb-panel),var(--sb-bg)); }
+  .sb-signal strong { display: block; font-size: 17px; margin: 12px 0 6px; }
+  .sb-signal small { color: var(--sb-text-3); font-size: 10px; }
+  .sb-work-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 9px 0; }
+  .sb-work-toolbar strong { font-size: 13px; margin-right: auto; }
+  .sb-work-toolbar .sb-btn--ghost { color: var(--sb-accent); }
+  .sb-work-toolbar .sb-btn--primary { background: linear-gradient(var(--sb-accent),var(--sb-accent-hover)); box-shadow: var(--sb-shadow-1); }
+  .sb-work-toolbar .sb-btn--secondary { color: var(--sb-accent); border-color: var(--sb-accent); background: var(--sb-panel); }
+  #mdi-panel-journal #journalLayout { display: block !important; }
+  #mdi-panel-journal #journalLayout > div { min-width: 0; }
+  #mdi-panel-journal .card { padding: 12px; margin-bottom: 10px; background: var(--sb-panel); border: 1px solid var(--sb-border-weak); border-radius: var(--sb-radius-2); }
+  #mdi-panel-journal .journal-section { margin-top: 10px; padding-top: 4px; }
+  #mdi-panel-journal .journal-section h3 { color: var(--sb-accent); font-size: 12px; margin: 0 0 9px; }
+  #mdi-panel-journal .form-grid { grid-template-columns: repeat(3,minmax(0,1fr)) !important; gap: 8px; }
+  #mdi-panel-journal label { font-size: 11px; }
+  #mdi-panel-journal input,#mdi-panel-journal select,#mdi-panel-journal textarea { font-size: 12px; border-color: var(--sb-border); background: var(--sb-bg); color: var(--sb-text-1); }
+  #mdi-panel-journal .checkbox-item { font-size: 10px; padding: 5px 7px; background: var(--sb-bg); border: 1px solid var(--sb-border-weak); border-radius: 4px; }
+  #accountPanel { width: min(760px,92vw); background: var(--sb-panel); border-color: var(--sb-border); box-shadow: var(--sb-shadow-2); }
+  #accountPanel input,#accountPanel select { background: var(--sb-bg); border-color: var(--sb-border); color: var(--sb-text-1); }
+  #accountPanel button { font-family: inherit; }
+  @media(max-width:1200px) {
+    .hdr-row1 { gap: 9px; padding: 0 10px; }
+    .hdr-row1 > .hdr-group--idx { max-width: 270px; }
+    #calDdayBadge { display: none; }
+    .sb-brand-wordmark { width: 110px; }
+    .sb-detail-content { gap: 8px; padding: 8px; }
+    .sb-detail-card { padding: 9px; }
+    .sb-work-toolbar .sb-btn { padding: 0 8px; font-size: 11px; }
   }
-  .mdi-dock[data-dock-screen="watchlist"] > .dock-bar { grid-column: 1 / -1; padding: 0 var(--sb-space-2); }
-  .mdi-dock[data-dock-screen="watchlist"] > #mdi-panel-watchlist { grid-column: 1; grid-row: 2 / 4; }
-  .mdi-dock[data-dock-screen="watchlist"] > #mdi-panel-portfolio { grid-column: 2; grid-row: 3; }
-  .mdi-dock[data-dock-screen="watchlist"] > .dock-ctx {
-    grid-column: 2; grid-row: 2; border: 1px solid var(--sb-border-weak); min-width: 0;
-  }
-  .mdi-dock[data-dock-screen="watchlist"] > .mdi-panel { border: 1px solid var(--sb-border-weak); }
-  .mdi-dock[data-dock-screen="watchlist"] #mdi-body-portfolio { padding: var(--sb-space-2); min-width: 0; }
-  .mdi-dock[data-dock-screen="watchlist"] #mdi-ptc-portfolio-pf > .card { min-height: 0 !important; flex-shrink: 0; }
-  .mdi-dock[data-dock-screen="watchlist"] .pf-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .mdi-dock[data-dock-screen="watchlist"] .pf-stats .sb-stat { padding: var(--sb-space-2); gap: 2px; }
-  .mdi-dock[data-dock-screen="watchlist"] .pf-stats .sb-stat__value { font-size: 13px; overflow-wrap: anywhere; white-space: normal; }
-  .mdi-dock[data-dock-screen="watchlist"] .pf-stats .sb-stat__label { font-size: 11px; flex-wrap: wrap; }
-  .mdi-dock[data-dock-screen="watchlist"] .pf-stats .sb-stat__sub { font-size: 10px; }
-  .mdi-dock[data-dock-screen="watchlist"] .hts-s2r-sub { display: flex; flex-wrap: wrap; }
-  .mdi-dock[data-dock-screen="watchlist"] .section-row { flex-wrap: wrap; gap: var(--sb-space-2); }
-  .dock-ctx__body { min-width: 0; }
-  .dock-ctx__rows { min-width: 0; }
-  .dock-ctx__rows > div { flex-wrap: wrap; }
-  .dock-ctx__rows b { overflow-wrap: anywhere; }
-  .dock-ctx__quote-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--sb-space-4); }
-  @media (max-width: 760px) {
-    .mdi-dock[data-dock-screen="watchlist"] { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 300px 260px 360px; overflow: auto; }
-    .mdi-dock[data-dock-screen="watchlist"] > #mdi-panel-watchlist { grid-column: 1; grid-row: 2; }
-    .mdi-dock[data-dock-screen="watchlist"] > .dock-ctx { grid-column: 1; grid-row: 3; }
-    .mdi-dock[data-dock-screen="watchlist"] > #mdi-panel-portfolio { grid-column: 1; grid-row: 4; }
+  @media(max-width:960px) { .hdr-row1 > .hdr-group--idx { display: none; } .sb-detail-content { grid-template-columns: 1fr; } #mdi-panel-journal .form-grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; } }
+  @media(max-width:760px) {
+    .mdi-dock.sb-desktop-home { grid-template-columns: minmax(0,1fr); grid-template-rows: 0 300px 350px 400px; overflow: auto; }
+    .mdi-dock.sb-desktop-home > #mdi-panel-watchlist { grid-column: 1; grid-row: 2; }
+    .mdi-dock.sb-desktop-home > .dock-ctx { grid-column: 1; grid-row: 3; }
+    .mdi-dock.sb-desktop-home > :is(#mdi-panel-portfolio,#mdi-panel-journal) { grid-column: 1; grid-row: 4; }
   }
 
+  .mdi-dock #watchlistBody.sb-compact-quotes table { min-width: 510px !important; }
+  #watchlistBody.sb-compact-quotes :is(th,td):is(:nth-child(3),:nth-child(4),:nth-child(6),:nth-child(8),:nth-child(9),:nth-child(10),:nth-child(12),:nth-child(13),:nth-child(16)) { display: none; }
+  #watchlistBody.sb-compact-quotes td .dock-ctx__none { display: none; }
+  #watchlistBody td { white-space: nowrap; }
+  #watchlistBody tr.dock-sel td { background: color-mix(in srgb,var(--sb-accent) 8%,var(--sb-panel)); }
+  .sb-table-options { display: flex; justify-content: flex-end; gap: 6px; padding: 7px 10px; border-bottom: 1px solid var(--sb-border-weak); color: var(--sb-text-3); font-size: 10px; }
+  .sb-table-options label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+  .mdi-dock.sb-desktop-home .portfolio-table { min-width: 680px; }
+  .sb-compact-holdings .portfolio-table :is(th,td):is(:nth-child(2),:nth-child(3),:nth-child(5),:nth-child(8),:nth-child(12)) { display: none; }
+  #mdi-panel-journal .form-group input,#mdi-panel-journal .form-group select { min-height: 30px; padding: 6px 8px; box-shadow: none; border-radius: var(--sb-radius-1); }
+  #mdi-panel-journal .journal-section h3 svg { width: 12px; }
+  #mdi-panel-journal .card-title { font-size: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--sb-border-weak); }
+  #mdi-panel-journal textarea { min-height: 70px; }
+
+
+  .sb-journal-section { border: 1px solid var(--sb-border-weak); border-radius: var(--sb-radius-2); margin: 9px 0; background: var(--sb-panel); }
+  .sb-journal-section > summary { padding: 10px; color: var(--sb-accent); font-weight: 700; font-size: 12px; cursor: pointer; border-bottom: 1px solid var(--sb-border-weak); }
+  .sb-journal-section-body { padding: 10px; }
+  .sb-journal-section-body > .form-group { margin-bottom: 8px; }
 </style>
 </head>
 <body>
@@ -3271,6 +3362,7 @@
 
     </div>
 
+    <div class="sb-desktop-search"><input class="sb-input" id="sbDesktopSearch" placeholder="종목명·코드 검색" aria-label="종목명·코드 검색" oninput="sbDesktopSearch(this.value)"></div>
     <!-- 상태 배지: KIS 연결 · 실시간 -->
     <div class="hdr-status" id="hdrStatus">
       <span class="hdr-badge off" id="hdrKisBadge" title="KIS 연결 상태"><span class="dot"></span><span id="hdrKisText">KIS</span></span>
@@ -4214,27 +4306,26 @@
     </div><!-- /mdi-panel-journal -->
 
     <!-- ─ 문맥 패널: 관심종목 종합 화면에서만 표시 ─ -->
-    <aside class="dock-ctx" id="dockCtx" aria-label="선택 종목">
+    <aside class="dock-ctx" id="dockCtx" aria-label="선택 종목 종합">
       <div class="dock-ctx__empty" id="dockCtxEmpty">관심종목을 선택하면 시세·보유 현황이 여기에 표시됩니다.</div>
       <div class="dock-ctx__body" id="dockCtxBody" style="display:none">
-        <div class="dock-ctx__head">
-          <div class="dock-ctx__name" id="dockCtxName">-</div>
-          <div class="dock-ctx__code" id="dockCtxCode">-</div>
+        <div class="sb-detail-head"><div>
+          <div class="sb-detail-identity"><strong class="dock-ctx__name" id="dockCtxName">--</strong><span class="dock-ctx__code" id="dockCtxCode">--</span></div>
+          <div class="sb-detail-price"><strong class="dock-ctx__price" id="dockCtxPrice">--</strong><span class="dock-ctx__chg" id="dockCtxChg">--</span></div>
+          <div class="dock-ctx__none" id="dockCtxStatus" role="status"></div>
+        </div><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('chart')">기업분석 ↗</button></div>
+        <div class="sb-detail-tabs" aria-label="선택 종목 메뉴">
+          <button type="button" class="active">요약</button><button type="button" onclick="dockCtxAction('hoga')">5호가 · 거래 기록 ↗</button><button type="button" onclick="dockCtxAction('news')">뉴스 · 공시 ↗</button><button type="button" onclick="dockCtxAction('cal')">일정 ↗</button>
         </div>
-        <div class="dock-ctx__price" id="dockCtxPrice">-</div>
-        <div class="dock-ctx__chg" id="dockCtxChg">-</div>
-        <div class="dock-ctx__none" id="dockCtxStatus" role="status"></div>
-        <div class="dock-ctx__rows dock-ctx__quote-grid" id="dockCtxQuote"></div>
-        <div class="dock-ctx__sec">보유 현황</div>
-        <div class="dock-ctx__rows" id="dockCtxHold"></div>
-        <div class="dock-ctx__sec">다가오는 종목 일정</div>
-        <div class="dock-ctx__rows" id="dockCtxEvents"></div>
-        <div class="dock-ctx__actions">
-          <button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('hoga')">호가 확인</button>
-          <button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('chart')">차트·기업분석</button>
-          <button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('news')">뉴스 ↗</button>
-          <button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('cal')">일정 ↗</button>
+        <div class="sb-detail-content">
+          <section class="sb-detail-card"><h3>시장 시세</h3><div class="dock-ctx__rows dock-ctx__quote-grid" id="dockCtxQuote"></div></section>
+          <section class="sb-detail-card"><h3>내 보유 현황</h3><div class="dock-ctx__rows" id="dockCtxHold"></div></section>
         </div>
+        <div class="sb-detail-bottom">
+          <section class="sb-detail-card sb-signal"><h3>AI Signal</h3><strong>준비 중</strong><small>규칙 판정 · 투자 권유 아님</small></section>
+          <section class="sb-detail-card"><h3>내 목표가 · 손절가</h3><div class="dock-ctx__rows" id="sbDesktopTargets"></div></section>
+        </div>
+        <section class="sb-detail-card" style="margin:0 12px 12px"><h3>다가오는 종목 일정</h3><div class="dock-ctx__rows" id="dockCtxEvents"></div></section>
       </div>
     </aside>
 </div><!-- /mdi-workspace -->
@@ -11921,6 +12012,91 @@ function renderWatchlist() {
 }
 
 // ── 관심종목 종합: 선택 종목 문맥 패널 ──────────────────────────────────
+function sbDesktopCash() {
+  const balance = document.getElementById('sbDesktopCashBalance');
+  if (balance) balance.textContent = fmt(getCashBalance()) + '원';
+  const body = document.getElementById('sbDesktopAccountRows');
+  if (!body) return;
+  body.innerHTML = '';
+  for (const a of state.accounts || []) {
+    const tr = document.createElement('tr');
+    for (const value of [a.nickname || a.broker || '계좌', a.broker || '직접 관리', typeof a.cash === 'number' ? fmt(a.cash) + '원' : '--']) {
+      const td = document.createElement('td'); td.textContent = value; tr.appendChild(td);
+    }
+    body.appendChild(tr);
+  }
+  document.getElementById('sbDesktopAccountEmpty').hidden = !!(state.accounts || []).length;
+}
+function sbDesktopSearch(value) {
+  if (document.getElementById('mdiWorkspace')?.dataset.dockScreen !== 'watchlist') window._MDI?.show('watchlist');
+  const input = document.getElementById('wlSearchInput');
+  if (input) { input.value = value; _wlOnInput(); }
+}
+function sbDesktopAction(action) {
+  const w = (state.watchlist || []).find(x => x.ticker === window._dockSel);
+  if (action === 'journal') {
+    window._MDI?.show('journal');
+    document.getElementById('j_name')?.focus();
+    // Preserve unfinished journal text; fill the instrument only when the field is empty.
+    const name = document.getElementById('j_name');
+    if (name && !name.value && w) name.value = w.name || w.ticker;
+    return;
+  }
+  if (w) connectToHoga(w.ticker, w.name || w.ticker);
+  else window._MDI?.show('trading');
+  if (action === 'holding') setQOMode('buy');
+  document.getElementById('qo_qty')?.focus();
+}
+function sbDesktopMount() {
+  const row = document.querySelector('.hdr-row1');
+  const indices = document.querySelector('.hdr-group--idx');
+  const status = document.getElementById('hdrStatus');
+  if (row && indices && status) row.insertBefore(indices, status);
+  const toolbar = document.createElement('div');
+  toolbar.className = 'sb-work-toolbar';
+  toolbar.innerHTML = '<strong>내 포트폴리오</strong><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="sbDesktopAction(\'holding\')">보유종목 추가</button><button type="button" class="sb-btn sb-btn--secondary sb-btn--sm" onclick="sbDesktopAction(\'journal\')">빠른 일지</button><button type="button" class="sb-btn sb-btn--primary sb-btn--sm" onclick="sbDesktopAction(\'trade\')">＋ 거래 등록</button>';
+  const summary = document.getElementById('htsSummary');
+  summary?.before(toolbar);
+  const wlBody = document.getElementById('watchlistBody');
+  wlBody?.classList.add('sb-compact-quotes');
+  const options = document.createElement('div'); options.className = 'sb-table-options';
+  options.innerHTML = '<label><input type="checkbox" id="sbQuoteColumns"> 상세 열 보기</label>';
+  options.querySelector('input').onchange = e => wlBody?.classList.toggle('sb-compact-quotes', !e.target.checked);
+  wlBody?.before(options);
+  const pfBody = document.getElementById('mdi-body-portfolio');
+  pfBody?.classList.add('sb-compact-holdings');
+  const pfOptions = document.createElement('label'); pfOptions.className = 'sb-table-options';
+  pfOptions.innerHTML = '<input type="checkbox" id="sbHoldingColumns"> 상세 열';
+  pfOptions.querySelector('input').onchange = e => pfBody?.classList.toggle('sb-compact-holdings', !e.target.checked);
+  toolbar.prepend(pfOptions);
+  const tabBar = pfBody?.querySelector('.mdi-ptab-bar');
+  const cashTab = document.createElement('button'); cashTab.type='button'; cashTab.className='mdi-ptab';
+  cashTab.textContent='예수금'; cashTab.setAttribute('onclick', "window._MDIPanelTab('portfolio','cash');sbDesktopCash()"); tabBar?.appendChild(cashTab);
+  const cashPane = document.createElement('div'); cashPane.className='mdi-ptab-pane'; cashPane.id='mdi-ptc-portfolio-cash'; cashPane.style.display='none';
+  cashPane.innerHTML='<div class="sb-work-toolbar"><strong>계좌 · 예수금</strong><button type="button" class="sb-btn sb-btn--secondary sb-btn--sm" onclick="openAccountPanel()">계좌 관리</button><button type="button" class="sb-btn sb-btn--primary sb-btn--sm" onclick="openCashManualModal()">예수금 설정</button></div><section class="sb-detail-card"><h3>내 예수금</h3><strong id="sbDesktopCashBalance" style="font-size:24px"></strong></section><div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>계좌명</th><th>증권사</th><th>저장된 예수금</th></tr></thead><tbody id="sbDesktopAccountRows"></tbody></table></div><div id="sbDesktopAccountEmpty" class="empty-state">등록된 계좌가 없습니다. 계좌 관리에서 추가하세요.</div>';
+  pfBody?.appendChild(cashPane);
+  const pfTab = document.querySelector('#mdi-body-portfolio .mdi-ptab');
+  if (pfTab) pfTab.textContent = '잔고';
+  // Existing navigation ids remain intact. Add shortcuts rather than rename data-pid.
+  const rail = document.getElementById('mdiSidebar');
+  const anchor = document.querySelector('.mdi-sb-section-label');
+  const calendar = document.createElement('button'); calendar.type='button'; calendar.className='mdi-sb-btn'; calendar.title='캘린더';
+  calendar.innerHTML='<span class="mdi-sb-icon-wrap"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 2v6m8-6v6M4 11h16"/></svg></span><span class="mdi-sb-label">캘린더</span>';
+  calendar.onclick = () => openCalendarPanel();
+  document.querySelectorAll('#mdi-panel-journal .journal-section').forEach((section, i) => {
+    const heading = section.querySelector('h3');
+    if (!heading) return;
+    const details = document.createElement('details'); details.className='sb-journal-section'; details.open = i < 3;
+    const summary = document.createElement('summary'); summary.textContent = String(i+1).padStart(2,'0') + '  ' + heading.textContent.trim();
+    details.appendChild(summary); heading.remove();
+    const content = document.createElement('div'); content.className='sb-journal-section-body';
+    while (section.firstChild) content.appendChild(section.firstChild);
+    details.appendChild(content); section.replaceWith(details);
+  });
+  const journal = rail?.querySelector('[data-pid="journal"]');
+  journal?.after(calendar);
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', sbDesktopMount); else sbDesktopMount();
 window._dockSel = window._dockSel || null;   // 선택 종목 ticker
 function dockQuoteLabel(w) {
   const at = Number(w.quoteAt);
@@ -11979,6 +12155,7 @@ function dockSelectStock(code) {
   if (!w.quoteAt || Date.now() - w.quoteAt > 30000) dockLoadQuote(w).then(() => renderWatchlist());
 }
 function dockCtxRender() {
+  if (document.getElementById('mdi-ptc-portfolio-cash')?.style.display !== 'none') sbDesktopCash();
   const empty = document.getElementById('dockCtxEmpty');
   const box   = document.getElementById('dockCtxBody');
   if (!empty || !box) return;
@@ -12009,10 +12186,18 @@ function dockCtxRender() {
   if (chgEl) {
     chgEl.textContent = chg == null ? '-' : (chg > 0 ? '+' : '') + chg.toFixed(2) + '%';
     chgEl.className = 'dock-ctx__chg ' + (chg > 0 ? 'up' : chg < 0 ? 'dn' : '');
+    const price = document.getElementById('dockCtxPrice');
+    if (price) price.style.color = chg > 0 ? 'var(--sb-up)' : chg < 0 ? 'var(--sb-down)' : 'var(--sb-text-1)';
   }
   // 같은 종목을 여러 계좌에 보유하면 모두 합산. 현재가는 calcAssetSummary() 와 같은 기준
   // (보유 행의 currentPrice → 없으면 평균단가), 관심종목 시세가 있으면 그것을 우선한다.
   const { rows, qty, value, avgPrice, pnl, rate } = dockHoldingSummary(w);
+  const targetEl = document.getElementById('sbDesktopTargets');
+  if (targetEl) targetEl.innerHTML = rows.length ? rows.map(p => {
+    const idx = state.portfolio.indexOf(p);
+    const account = (state.accounts || []).find(a => a.id === p.accountId);
+    return `<div><span>${escHtml(account?.nickname || account?.broker || '계좌 미지정')}</span><b>${p.target1 ? fmt(p.target1) : '--'} / ${p.stop1 ? fmt(p.stop1) : '--'}</b><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="openTargetModal(${idx})">설정</button></div>`;
+  }).join('') : '<div class="dock-ctx__none">보유종목 등록 후 개인 기준을 설정할 수 있습니다.</div>';
   const holdEl = document.getElementById('dockCtxHold');
   if (!holdEl) return;
   if (!rows.length) { holdEl.innerHTML = '<div class="dock-ctx__none">보유하지 않은 종목입니다.</div>'; return; }
@@ -12580,20 +12765,22 @@ function _toggleCheck(stockKey, checkKey, val) {
       Object.keys(this.DOCK_NAMES).forEach(p => {
         const el = document.getElementById('mdi-panel-' + p);
         if (!el) return;
-        const on = p === pid || (pid === 'watchlist' && p === 'portfolio');
+        const home = ['watchlist', 'portfolio', 'journal'].includes(pid);
+        const on = p === pid || (home && p === 'watchlist') || (pid === 'watchlist' && p === 'portfolio');
         el.style.display = on ? '' : 'none';
         el.dataset.mdiState = on ? 'open' : 'closed';
         const body = document.getElementById('mdi-body-' + p);
         if (body) body.style.display = '';
         if (!on && p === 'watchlist') try { _stopWatchlistAutoRefresh && _stopWatchlistAutoRefresh(); } catch(e) {}
       });
-      if (ws) ws.dataset.dockScreen = pid;
+      if (ws) { ws.dataset.dockScreen = pid; ws.classList.toggle('sb-desktop-home', ['watchlist','portfolio','journal'].includes(pid)); }
       const nm = document.getElementById('dockScreenName');
       if (nm) nm.textContent = this.DOCK_NAMES[pid] || '';
       this._syncAllBtns();
       this._render(pid);
-      if (pid === 'watchlist') {
-        this._render('portfolio');
+      if (['watchlist','portfolio','journal'].includes(pid)) {
+        if (pid === 'watchlist') this._render('portfolio');
+        else this._render('watchlist');
         renderSummary();
       }
       if (pid === 'watchlist') try { window._MDIPanelTab('watchlist', 'wl'); } catch(e) {}

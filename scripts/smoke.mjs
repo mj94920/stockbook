@@ -83,7 +83,7 @@ for (const pg of PAGES) {
         check(await click(`.mdi-sb-btn[data-pid="${pid}"]`), `사이드바 버튼 없음: ${pid}`);
         await page.waitForTimeout(250);
         const open = await openPids();
-        const expected = pid === 'watchlist' ? ['watchlist', 'portfolio'] : [pid];
+        const expected = pid === 'watchlist' || pid === 'portfolio' ? ['watchlist', 'portfolio'] : pid === 'journal' ? ['watchlist','journal'] : [pid];
         check(open.length === expected.length && expected.every(p => open.includes(p)), `사이드바 '${pid}' 화면 구성 오류: [${open}]`);
         const inside = await page.evaluate(p => {
           const r = document.getElementById('mdi-panel-' + p)?.getBoundingClientRect();
@@ -98,6 +98,42 @@ for (const pg of PAGES) {
       check(await hasClass('#mdiSidebar', 'sb-collapsed') !== collapsed0, '사이드바 접기/펼치기 동작 안 함');
       await click('#mdiSbToggle');
       check(await hasClass('#mdiSidebar', 'sb-collapsed') === collapsed0, '사이드바 펼치기 복귀 실패');
+    });
+
+    await step('데스크톱 새 셸과 기존 작업 연결', async () => {
+      const result = await page.evaluate(() => {
+        const bak = { wl: state.watchlist, pf: state.portfolio, sel: window._dockSel, journal: document.getElementById('j_name').value };
+        try {
+          state.watchlist = [{ ticker:'005930', name:'삼성전자', price:100, change:1, quoteAt:Date.now() }];
+          state.portfolio = [{ ticker:'005930', name:'삼성전자', qty:1, avgPrice:90, currentPrice:100, target1:120, stop1:80 }];
+          window._dockSel = '005930';
+          window._MDI.show('watchlist');
+          const rail = document.getElementById('mdiSidebar').getBoundingClientRect().width <= 64;
+          const header = document.querySelector('.header').getBoundingClientRect().height <= 70;
+          const actions = document.querySelector('.sb-work-toolbar .sb-btn--primary')?.textContent.includes('거래 등록');
+          const columns = document.getElementById('sbQuoteColumns');
+          columns.click(); const full = !document.getElementById('watchlistBody').classList.contains('sb-compact-quotes');
+          columns.click(); const compact = document.getElementById('watchlistBody').classList.contains('sb-compact-quotes');
+          const targets = document.getElementById('sbDesktopTargets').textContent.includes('120 / 80');
+          window._MDIPanelTab('portfolio','cash'); sbDesktopCash();
+          const cash = document.getElementById('sbDesktopCashBalance').textContent === fmt(getCashBalance()) + '원';
+          window._MDIPanelTab('portfolio','pf');
+          document.getElementById('j_name').value = '미완성 일지';
+          sbDesktopAction('journal');
+          const draft = document.getElementById('j_name').value === '미완성 일지' && document.getElementById('mdiWorkspace').dataset.dockScreen === 'journal';
+          const left = document.getElementById('mdi-panel-watchlist').getBoundingClientRect();
+          const journal = document.getElementById('mdi-panel-journal').getBoundingClientRect();
+          const journalLayout = left.height > journal.height && journal.x >= left.right;
+          sbDesktopAction('trade');
+          const trade = document.getElementById('mdiWorkspace').dataset.dockScreen === 'trading' && document.getElementById('qo_stock_code').value === '005930';
+          return { rail, header, actions:!!actions, full, compact, targets, cash, draft, journalLayout, trade };
+        } finally {
+          state.watchlist=bak.wl; state.portfolio=bak.pf; window._dockSel=bak.sel;
+          document.getElementById('j_name').value=bak.journal;
+          window._MDI.show('watchlist');
+        }
+      });
+      for (const [name, passed] of Object.entries(result)) check(passed, `새 데스크톱 셸 회귀: ${name}`);
     });
 
     await step('문맥 패널 보유 합산', async () => {
