@@ -80,7 +80,8 @@ docs/STRUCTURE-REVAMP-PLAN.md              ← 2차 구조 개편 작업 지시�
 docs/SQLITE-STORAGE-DESIGN.md              ← #29 SQLite 저장 구조 설계 (승인)
 docs/ACCOUNT-LEDGER-DESIGN.md              ← 계좌·예수금·정산 원본(ledgerMode) 설계 (승인 · #63 #64 #65)
 docs/LEDGER-CONTRACT-DRAFT.md              ← 계좌·장부 계약 초안 (Contract 입력 · #64 #65 함수·어댑터 계약)
-docs/                                      ← PRD, 과거 개발 로그
+docs/README.md                            ← 현행 문서와 보관 자료 안내
+docs/archive/pre-revamp/                   ← 초기 PRD 원문·과거 개발 로그 (현행 지시 아님)
 CHANGELOG.md                               ← 릴리스마다 자동 생성
 ```
 
