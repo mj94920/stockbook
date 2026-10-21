@@ -15,6 +15,10 @@
 | 계좌·장부 설계 / 계약 초안 | [ACCOUNT-LEDGER-DESIGN.md](ACCOUNT-LEDGER-DESIGN.md), [LEDGER-CONTRACT-DRAFT.md](LEDGER-CONTRACT-DRAFT.md) |
 | 신규 Android 전용 시안 | [android-ui-v2/REVIEW.md](design/android-ui-v2/REVIEW.md) — 폐기된 PWA/TWA와 별개, PC 적용 금지 |
 
+## 환경 이동 인계
+
+[2026-10-21 인계서](handoff/2026-10-21/HANDOFF.md) · [승인·자료 목록](handoff/2026-10-21/APPROVALS.md)
+
 ## 개편 전 자료
 
 [보관함 안내](archive/pre-revamp/README.md)에서 초기 PRD와 개발 로그 원문을 확인한다.
