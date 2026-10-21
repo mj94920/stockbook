@@ -155,6 +155,12 @@ for (const pg of PAGES) {
           checks.articleFilter=document.querySelectorAll('#icList .ic-row').length===1;
           document.querySelector('#icList .ic-row').click();
           checks.filteredDetail=document.getElementById('icDetail').textContent.includes('찾을 기사');
+          dockSelectStock('000660');
+          checks.newsContextUpdatesImmediately=document.getElementById('icStockSearch').value==='SK하이닉스 000660'&&document.getElementById('icSearchStatus').textContent==='SK하이닉스 종목뉴스';
+          await icRefresh();
+          checks.newsContextMatchesArticles=_ic.selectedCode==='000660'&&_ic.items.length>0&&_ic.items.every(n=>n.code==='000660')&&document.getElementById('icDetail').textContent.includes('목록에서 항목을 선택하세요');
+          document.getElementById('icStockSearch').value='삼성전자';icPickStock();await icRefresh();
+          checks.newsSearchContextMatches=document.getElementById('icStockSearch').value==='삼성전자 005930'&&document.getElementById('icSearchStatus').textContent==='삼성전자 종목뉴스'&&_ic.items.every(n=>n.code==='005930');
           checks.newsUsesHeight=document.querySelector('.ic-wrap').getBoundingClientRect().height>450;
           openSettings('general');
           checks.noEmptySettings=!document.querySelector('#settingsNav [data-cat="advanced"]').checkVisibility();
@@ -185,7 +191,7 @@ for (const pg of PAGES) {
           window._MDI.show('watchlist');
           const rail = document.getElementById('mdiSidebar').getBoundingClientRect().width <= 64;
           const header = document.querySelector('.header').getBoundingClientRect().height <= 70;
-          const actions = document.querySelector('.sb-work-toolbar .sb-btn--primary')?.textContent.includes('거래 등록');
+          const actions = document.querySelector('#mdi-body-portfolio [data-work-tab="ord"]')?.textContent === '매매' && !document.querySelector('#mdi-ptc-portfolio-pf .sb-work-toolbar');
           const columns = document.getElementById('sbQuoteColumns');
           columns.click(); const full = !document.getElementById('watchlistBody').classList.contains('sb-compact-quotes');
           columns.click(); const compact = document.getElementById('watchlistBody').classList.contains('sb-compact-quotes');
@@ -209,6 +215,34 @@ for (const pg of PAGES) {
         }
       });
       for (const [name, passed] of Object.entries(result)) check(passed, `새 데스크톱 셸 회귀: ${name}`);
+    });
+
+    await step('종합 작업 탭 전환과 입력 보존', async () => {
+      const backup = await page.evaluate(() => ({ price:document.getElementById('qo_price').value,principal:document.getElementById('mc_principal').value,journal:document.getElementById('j_name').value }));
+      try {
+        await page.evaluate(() => {
+          sbWorkTab('ord');document.getElementById('qo_price').value='12345';
+          document.getElementById('j_name').value='탭 전환 중 일지 초안';
+        });
+        for (const key of ['calc','journal','trd','rlz','cash','pf','ord']) {
+          await page.locator(`.sb-task-tabs:visible [data-work-tab="${key}"]`).click();
+          check(await page.locator(`.sb-task-tabs:visible [data-work-tab="${key}"]`).getAttribute('aria-current') === 'page', `종합 작업 탭 활성 표시 실패: ${key}`);
+          check(await page.evaluate(() => ['mdi-panel-watchlist','dockCtx','sbAnalysis'].every(id=>document.getElementById(id).checkVisibility())), `작업 탭에서 종합 문맥 사라짐: ${key}`);
+          if (key === 'calc') {
+            await page.locator('#mc_principal').fill('10000');
+            await page.locator('#mc_rate').fill('1');
+            await page.locator('#mc_months').fill('1');
+            check(await page.locator('#mc_result').isVisible(), '계산기 탭에서 계산 결과가 표시되지 않음');
+          }
+        }
+        check(await page.locator('#qo_price').inputValue() === '12345', '작업 탭 전환 시 거래 단가 유실');
+        check(await page.locator('#j_name').inputValue() === '탭 전환 중 일지 초안', '작업 탭 전환 시 일지 초안 유실');
+      } finally {
+        await page.evaluate(b=>{
+          document.getElementById('qo_price').value=b.price;document.getElementById('mc_principal').value=b.principal;document.getElementById('j_name').value=b.journal;
+          sbWorkTab('pf');
+        },backup);
+      }
     });
 
     await step('동시 분석 영역과 실제 호가 상태', async () => {
@@ -391,6 +425,14 @@ for (const pg of PAGES) {
         check(layout.work.y >= layout.ctx.bottom && Math.abs(layout.work.x-layout.ctx.x) < 2 && layout.analysis.x >= layout.work.right && Math.abs(layout.analysis.right-layout.ctx.right) < 2 && Math.abs(layout.analysis.y-layout.work.y) < 2, `${vp.width}px: 하단 작업 패널이 우측 종합 패널 아래에 정렬되지 않음`);
         check(Math.abs(layout.left.bottom-layout.work.bottom)<2 && layout.left.y >= layout.workspace.y, `${vp.width}px: 좌측 종목창 전체 높이 오류`);
         check(layout.workspace.y >= layout.header-1 && layout.work.bottom <= vp.height+1, `${vp.width}px: 상단 겹침 또는 하단 잘림`);
+        check(layout.ctx.height < layout.workspace.height * .4, `${vp.width}px: 종목·차트 영역이 작업 공간을 과도하게 차지함`);
+        await page.evaluate(() => window._MDI.show('news'));
+        const newsLayout = await page.evaluate(() => {
+          const list=document.getElementById('icList').getBoundingClientRect(),detail=document.getElementById('icDetail').getBoundingClientRect();
+          return {sideBySide:detail.x>=list.right-1,fullHeight:Math.abs(detail.height-list.height)<2};
+        });
+        check(newsLayout.sideBySide && newsLayout.fullHeight, `${vp.width}px: 뉴스 목록·상세가 공간을 나눠 쓰지 못함`);
+        await page.evaluate(() => window._MDI.show('watchlist'));
         for (const mode of ['dark', 'light']) {
           await page.evaluate(m => setTheme(m), mode);
           await page.waitForTimeout(300);
