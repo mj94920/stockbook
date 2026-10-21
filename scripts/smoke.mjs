@@ -83,7 +83,7 @@ for (const pg of PAGES) {
         check(await click(`.mdi-sb-btn[data-pid="${pid}"]`), `사이드바 버튼 없음: ${pid}`);
         await page.waitForTimeout(250);
         const open = await openPids();
-        const expected = pid === 'watchlist' || pid === 'portfolio' ? ['watchlist', 'portfolio'] : pid === 'journal' ? ['watchlist','journal'] : [pid];
+        const expected = pid === 'watchlist' || pid === 'portfolio' ? ['watchlist', 'portfolio'] : ['journal','trading','news'].includes(pid) ? ['watchlist',pid] : [pid];
         check(open.length === expected.length && expected.every(p => open.includes(p)), `사이드바 '${pid}' 화면 구성 오류: [${open}]`);
         const inside = await page.evaluate(p => {
           const r = document.getElementById('mdi-panel-' + p)?.getBoundingClientRect();
@@ -98,6 +98,81 @@ for (const pg of PAGES) {
       check(await hasClass('#mdiSidebar', 'sb-collapsed') !== collapsed0, '사이드바 접기/펼치기 동작 안 함');
       await click('#mdiSbToggle');
       check(await hasClass('#mdiSidebar', 'sb-collapsed') === collapsed0, '사이드바 펼치기 복귀 실패');
+    });
+
+    await step('사용성 검토: 분류·추가·호가 기록·뉴스 탐색', async () => {
+      const result = await page.evaluate(async () => {
+        const backup = { wl:state.watchlist, groups:state.watchlistGroups, pf:state.portfolio,
+          raw:_allStockRaw, group:window._wlActiveGroup, sel:window._dockSel, api:window.electronAPI, hogaCode:_hogaCurrentCode, ic:{..._ic} };
+        const checks = {};
+        try {
+          state.watchlist = [{ticker:'005930',name:'삼성전자',group:'반도체',price:100,change:1,quoteAt:Date.now()},
+            {ticker:'000660',name:'SK하이닉스',group:'전력',price:200,change:1,quoteAt:Date.now()}];
+          state.watchlistGroups=[];state.portfolio=[];window._wlActiveGroup='전체';window._dockSel='005930';
+          _allStockRaw={KOSPI:[{code:'000001',name:'추가 검증 종목',market:'KOSPI'}]};
+          window._MDI.show('watchlist');renderWatchlist();
+          checks.themeRecovery=document.getElementById('wlGroupBar').textContent.includes('반도체');
+          checks.assignment=!!document.querySelector('#watchlistBody select[aria-label="삼성전자 테마"]');
+          wlSetGroup('반도체');checks.groupFilter=document.querySelectorAll('#watchlistBody tr[data-watch-ticker]').length===1;
+          window.electronAPI={...backup.api,saveState:async()=>true,fetchNaverStocks:async()=>({ok:true,data:[{code:'000002',name:'목록 조회 검증',market:'KOSDAQ'}]})};
+          document.getElementById('sbWatchAdd').click();
+          document.getElementById('sbWatchMarket').value='KOSDAQ';
+          await document.getElementById('sbWatchCatalog').onclick({currentTarget:document.getElementById('sbWatchCatalog')});
+          checks.catalogWithoutNavigation=_allStockRaw.KOSDAQ[0].code==='000002'&&document.getElementById('sbWatchAddDialog').open;
+          document.getElementById('sbWatchAddSearch').value='추가 검증';
+          document.getElementById('sbWatchAddSearch').dispatchEvent(new Event('input'));
+          document.querySelector('#sbWatchAddResults button').click();
+          checks.explicitAdd=state.watchlist.some(w=>w.ticker==='000001'&&w.group==='반도체');
+          document.getElementById('wlSearchInput').value='이름만 검색';_wlOnInput();
+          checks.filterDoesNotAdd=state.watchlist.length===3;
+          document.getElementById('wlSearchInput').value='';window._wlActiveGroup='전체';renderWatchlist();
+          sbDesktopAction('trade');
+          const visible=id=>document.getElementById(id)?.checkVisibility();
+          checks.compactTrade=visible('mdi-panel-trading')&&visible('mdi-panel-watchlist')&&visible('dockCtx');
+          document.getElementById('qo_price').value='100';document.getElementById('qo_qty').value='2';
+          dockSelectStock('000660');
+          checks.newStockClearsPrice=document.getElementById('qo_stock_code').value==='000660'&&document.getElementById('qo_price').value!=='100';
+          _renderHogaTable([{price:201,askVol:12,bidVol:0,isCur:false},{price:199,askVol:0,bidVol:15,isCur:false}]);
+          document.querySelector('#qo_hoga_body tr').click();
+          checks.quoteToPrice=document.getElementById('qo_price').value==='201';
+          _renderSimulatedHoga(200);checks.noSyntheticHoga=!document.querySelector('#qo_hoga_body tr[onclick]')&&document.getElementById('qo_hoga_body').textContent.includes('호가 미수신');
+          checks.noDuplicateMenu=!document.querySelector('.mdi-sidebar [data-pid="portfolio"]').checkVisibility()&&!document.querySelector('.mdi-sidebar [data-pid="trading"]').checkVisibility();
+          const requests=[];
+          window.electronAPI={...backup.api,saveState:async()=>true,fetchHoga:async()=>({asks:[{price:202,qty:10}],bids:[{price:198,qty:10}]}),fetchNews:async opts=>{requests.push(opts);return {ok:true,items:[
+            {id:'article-a',code:opts.code,title:'다른 기사',source:'검증 출처',summary:'첫 요약',time:'2026-10-21T09:00:00'},
+            {id:'article-b',code:opts.code,title:'찾을 기사',source:'검증 출처',summary:'내용 검색어',time:'2026-10-21T08:00:00'}]};}};
+          await sbDesktopHoga();document.querySelector('#sbHogaRows tr').click();
+          checks.receivedHogaToTrade=document.getElementById('qo_price').value==='202'&&document.getElementById('mdiWorkspace').dataset.dockScreen==='trading';
+          const fetchHoga=window.electronAPI.fetchHoga;let resolveOldHoga;
+          window.electronAPI.fetchHoga=code=>code==='005930'?new Promise(resolve=>{resolveOldHoga=resolve;}):fetchHoga(code);
+          connectToHoga('005930','삼성전자');connectToHoga('000660','SK하이닉스');
+          resolveOldHoga({asks:[{price:999,qty:10}],bids:[{price:998,qty:10}]});await new Promise(resolve=>setTimeout(resolve,0));
+          checks.noStaleHoga=!document.getElementById('qo_hoga_body').textContent.includes('999');
+          window.electronAPI.fetchHoga=fetchHoga;
+          window._MDI.show('news');document.getElementById('icStockSearch').value='005930';icPickStock();await icRefresh();
+          checks.newsLocalSelection=requests.some(r=>r.kind==='stock'&&r.code==='005930')&&document.getElementById('mdiWorkspace').dataset.dockScreen==='news';
+          document.getElementById('icArticleSearch').value='내용 검색어';_icRenderList();
+          checks.articleFilter=document.querySelectorAll('#icList .ic-row').length===1;
+          document.querySelector('#icList .ic-row').click();
+          checks.filteredDetail=document.getElementById('icDetail').textContent.includes('찾을 기사');
+          checks.newsUsesHeight=document.querySelector('.ic-wrap').getBoundingClientRect().height>450;
+          openSettings('general');
+          checks.noEmptySettings=!document.querySelector('#settingsNav [data-cat="advanced"]').checkVisibility();
+          checks.compactSettings=document.querySelector('#settingsModal .sb-modal').getBoundingClientRect().height<550;
+          const sidebar=document.getElementById('mdiSidebar').getBoundingClientRect();
+          checks.modalCoversSidebar=!document.elementFromPoint(sidebar.x+10,sidebar.y+80)?.closest('#mdiSidebar');
+          closeSettings();
+          return checks;
+        } finally {
+          document.getElementById('sbWatchAddDialog')?.remove();closeSettings();
+          state.watchlist=backup.wl;state.watchlistGroups=backup.groups;state.portfolio=backup.pf;
+          _allStockRaw=backup.raw;window._wlActiveGroup=backup.group;window._dockSel=backup.sel;window.electronAPI=backup.api;
+          _stopHogaAutoRefresh();_hogaCurrentCode=backup.hogaCode;
+          Object.assign(_ic,backup.ic);document.getElementById('icArticleSearch').value='';
+          window._MDI.show('watchlist');
+        }
+      });
+      for (const [name, passed] of Object.entries(result)) check(passed, `사용성 회귀: ${name}`);
     });
 
     await step('데스크톱 새 셸과 기존 작업 연결', async () => {
