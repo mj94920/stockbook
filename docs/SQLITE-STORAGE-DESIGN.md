@@ -662,6 +662,8 @@ CREATE TRIGGER calendar_events_id_immutable BEFORE UPDATE OF id ON calendar_even
 
 ## 13. 변경 제안 C-1 — 계좌 장부 대비 구조 선반영 (2026-10-11, **재검토 대기**)
 
+> §13-1~§13-3은 최초 제안과 당시 검토 항목의 이력이다. 재검증 결과는 §13-4이며, nullable 컬럼 추가에 테이블 재생성이 필요하다는 초기 근거는 철회된 권장안이다. 최종 채택은 미팅룸 결정 대기다.
+
 > **상태: 제안.** 승인된 v1 설계(§4)를 변경하는 사항이다. #29 구현에 착수하기 전에 이 절을 §4 DDL 과 다시 대조하고, 사람이 승인해야 반영한다.
 >
 > 근거:
@@ -687,7 +689,7 @@ CREATE TRIGGER calendar_events_id_immutable BEFORE UPDATE OF id ON calendar_even
 - [ ] §4 DDL 과 추가 컬럼이 충돌하는지 확인 (FK, 인덱스, 트리거)
 - [ ] §4-5 무손실 왕복 검증에서 두 컬럼을 확실히 제외하는지 확인
 - [ ] §6 이전 완료 판정, 행 수와 해시 비교에 영향이 없는지 확인
-- [ ] 반영하지 않기로 결정하면, #64 에서 v3 마이그레이션으로 테이블을 재생성하는 비용을 감수한다는 것을 이 절에 기록한다
+- [ ] 반영하지 않기로 결정하면, #64의 v3 마이그레이션 방식을 §13-4 재검증 결과와 함께 기록한다. nullable ADD COLUMN에는 테이블 재생성이 필요하지 않다
 
 ### 13-4. 재검증 결과 (2026-10-12) — **권장: 불필요 (v1 은 변경하지 않음)**
 
@@ -719,4 +721,4 @@ CREATE TRIGGER calendar_events_id_immutable BEFORE UPDATE OF id ON calendar_even
 
 **드라이버 메모**
 - `better-sqlite3` 12.x 와 `sql.js` 모두 SQLite 3.x 엔진이다. `ADD COLUMN … REFERENCES … (기본값 NULL)` 은 두 드라이버 모두에서 지원된다.
-- 최종 확정은 Windows 스파이크(§2-3)에서 실제 드라이버로 한 번 더 확인한다.
+- 검증 전용 Windows 스파이크(run 38026482159, 커밋 1d2ddca)는 ADD COLUMN을 시험하지 않았다. 드라이버·패키징 시험과 컬럼 추가 검증을 구분한다. 승인된 #64 마이그레이션에서 실제 채택 드라이버로 ADD COLUMN과 FK 동작을 검증한다.
