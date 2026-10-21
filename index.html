@@ -3354,6 +3354,7 @@
   .sb-data-empty { min-height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--sb-text-3); }
   .sb-data-empty strong { font-size: 13px; }.sb-data-empty span { font-size: 10px; text-align: center; }
   .sb-hoga-table { width: 100%; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .sb-hoga-table tr[tabindex] { cursor:pointer; }
   .sb-hoga-table th,.sb-hoga-table td { padding: 4px; font-size: 10px; }
   .sb-hoga-table .ask { color: var(--sb-down); background: var(--sb-down-bg); }
   .sb-hoga-table .bid { color: var(--sb-up); background: var(--sb-up-bg); }
@@ -3368,6 +3369,129 @@
     .mdi-dock.sb-desktop-home > :is(#mdi-panel-portfolio,#mdi-panel-journal) { grid-column: 1; grid-row: 4; }
     .mdi-dock.sb-desktop-home > .sb-analysis { grid-column: 1; grid-row: 5; }
   }
+
+  /* 사용성 검토: 종목 문맥을 유지하고 작업 패널을 종합화면에 묶는다. */
+  .mdi-sidebar .mdi-sb-btn:is([data-pid="portfolio"],[data-pid="trading"]) { display:none; }
+  .mdi-dock.sb-desktop-home > #mdi-panel-trading { grid-column:2;grid-row:3;min-height:0; }
+  .mdi-dock.sb-desktop-home > #mdi-panel-news { grid-column:2/4;grid-row:2/4;min-height:0; }
+  .mdi-dock[data-dock-screen="news"] > :is(.dock-ctx,.sb-analysis) { display:none; }
+  .mdi-dock #mdi-body-trading { padding:0 6px 6px;min-height:0; }
+  .mdi-dock #mdi-panel-trading :is(input,select) { min-height:26px;height:26px;padding:3px 5px!important;font-size:11px!important; }
+  .mdi-dock #mdi-panel-trading button { padding:4px 6px!important;font-size:11px!important; }
+  .mdi-dock #qo_cur_price { font-size:18px!important; }
+  .mdi-dock #ord-hoga-direct { padding:0 4px 4px!important; }
+  .mdi-dock #qo_hoga_split { gap:6px!important;overflow:auto!important; }
+  .mdi-dock #qo_hoga_col { flex:1!important;min-width:125px; }
+  .mdi-dock #qo_hoga_split > div:last-child { flex:0 0 46%!important;min-width:145px; }
+  .mdi-dock #qo_hoga_body td { font-size:10px!important;padding:2px 3px!important;height:15px; }
+  .mdi-dock #mdi-ptc-trading-calc .card { padding:8px!important; }
+  .mdi-dock #mdi-ptc-trading-calc .card-title { font-size:12px!important;margin:0 0 6px; }
+  .mdi-dock #mdi-panel-trading .mdi-ptab { padding:7px!important; }
+  .sb-watch-group { display:block;max-width:120px;height:23px!important;min-height:0;margin-top:3px;padding:1px 4px;font-size:10px; }
+  .sb-watch-candidate { display:block;width:100%;text-align:left;margin:4px 0; }
+  #sbWatchAddDialog { width:min(540px,90vw);padding:0;background:var(--sb-panel);color:var(--sb-text-1);border:1px solid var(--sb-border);border-radius:var(--sb-radius-2); }
+  #sbWatchAddDialog::backdrop { background:var(--sb-overlay); }
+  #sbWatchAddDialog label { display:block;font-size:12px;margin:8px 0; }
+  #sbWatchAddDialog :is(input,select) { width:100%;margin-top:4px; }
+  #sbWatchAddResults { max-height:230px;overflow:auto; }
+  #mdi-body-news { display:flex;flex-direction:column;min-height:0; }
+  .ic-wrap { flex:1;height:auto;min-height:0;padding:10px; }
+  .ic-body { min-height:180px;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); }
+  .ic-list { min-width:0; }.ic-detail { min-width:0;overflow:auto; }
+  .ic-detail :is(.ic-title-lg,.ic-sum) { max-width:65ch; }
+  .sb-news-tools { display:flex;gap:6px;flex-wrap:wrap;align-items:end; }
+  .sb-news-tools label { display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--sb-text-2);flex:1;min-width:140px; }
+  .sb-news-tools input { min-width:0;width:100%;font-size:11px; }
+  #icSearchStatus { flex-basis:100%;font-size:11px;color:var(--sb-text-3); }
+  .analysis-drawer-overlay,.analysis-drawer,.modal-overlay,#accountPanelOverlay { backdrop-filter:none!important;-webkit-backdrop-filter:none!important; }
+  @media(max-width:1100px) { .ic-body{grid-template-columns:minmax(0,1fr);} .ic-detail{border-top:1px solid var(--sb-border);max-height:230px;} }
+
+  .hdr-row1 { gap:10px;height:58px; }
+  .hdr-row1 .sb-desktop-search { flex:0 1 270px;max-width:270px;min-width:130px; }
+  .hdr-row1 > .hdr-group--idx { max-width:none;min-width:0;flex:1; }
+  .hdr-idx-list { min-width:0;overflow-x:auto;scrollbar-width:thin; }
+  .hdr-idx-card { min-width:86px;flex:1;padding:0 8px; }
+  .hdr-idx-card .hdr-idx-val { font-size:14px; }
+  .hdr-idx-card .hdr-idx-name { font-size:11px; }
+  #settingsNav [data-cat="portfolio"],#settingsNav [data-cat="data"],#settingsNav [data-cat="classify"],#settingsNav [data-cat="news"],#settingsNav [data-cat="notify"],#settingsNav [data-cat="advanced"] { display:none; }
+  #settingsModal .sb-hub__content { height:auto;min-height:230px;max-height:calc(100vh - 180px); }
+  #settingsModal [data-page="account"] > .sb-hub__row:first-child { display:none; }
+  @media(max-width:1100px) { .hdr-row1 .sb-desktop-search { max-width:180px; }.hdr-row1 .hdr-badge{font-size:10px;padding:3px;} }
+
+  .mdi-dock #qo_hoga_split { max-width:680px;width:100%; }
+  #settingsModal[data-settings-section="data"] #settingsNav .sb-hub__nav-btn { display:none; }
+  #settingsModal[data-settings-section="data"] #settingsNav [data-cat="data"] { display:block; }
+
+  .mdi-sidebar { z-index:20; }
+  .sb-watch-group { display:inline-block;vertical-align:middle;max-width:85px;margin:0 0 0 5px; }
+  .mdi-dock #qo_price_header { display:none!important; }
+  .mdi-dock #qo_hoga_split > div:last-child { display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start; }
+  .mdi-dock #qo_hoga_split > div:last-child > * { grid-column:1/-1; }
+  .mdi-dock #qo_hoga_split > div:last-child > .sb-trade-number { grid-column:auto;min-width:0; }
+
+
+  /* Compact quote stage, shared task strip and space for the working forms. */
+  @media (min-width: 901px) {
+    .mdi-dock.sb-desktop-home { grid-template-rows:0 minmax(240px, .65fr) minmax(360px, 1.35fr); }
+    .mdi-dock[data-dock-screen="news"] { grid-template-columns:minmax(240px,1fr) minmax(0,2fr) minmax(0,1fr); }
+  }
+  .sb-detail-head { padding:8px 12px;gap:8px; }
+  .sb-detail-head > div:first-child { display:flex;align-items:center;gap:12px;flex-wrap:wrap; }
+  .sb-detail-identity { gap:6px; }
+  .dock-ctx__name { font-size:16px;letter-spacing:0; }
+  .dock-ctx__price { font-size:23px;letter-spacing:0; }
+  .dock-ctx__chg { font-size:12px; }
+  .sb-detail-price { margin:0;gap:8px; }
+  #dockCtxQuote { font-size:11px; }
+  .sb-market-stage { padding:8px;gap:8px;grid-template-columns:minmax(0,3fr) minmax(160px,2fr); }
+  .sb-data-empty { min-height:70px;gap:4px; }
+  .sb-chart-region,.sb-order-region { padding:8px; }
+  .mdi-dock .sb-task-tabs { gap:0;padding:0 4px;min-height:36px;overflow-x:auto;scrollbar-width:thin; }
+  .mdi-dock .sb-task-tabs .mdi-ptab { flex:0 0 auto;padding:9px 8px!important;font-size:12px!important;white-space:nowrap; }
+  .mdi-dock.sb-desktop-home .pf-stats { grid-template-columns:repeat(4,minmax(0,1fr)); }
+  #mdi-panel-portfolio .section-row > .sb-table-options { margin-left:auto; }
+  .ic-body { grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr); }
+  .mdi-dock[data-dock-screen="news"] #watchlistBody.sb-compact-quotes table { min-width:0!important;width:100%; }
+  .mdi-dock[data-dock-screen="news"] #watchlistBody.sb-compact-quotes :is(th,td):not(:nth-child(1)):not(:nth-child(2)):not(:nth-child(5)) { display:none; }
+  .mdi-dock[data-dock-screen="news"] .sb-table-options > label { display:none; }
+  .ic-row { padding:8px;line-height:1.5; }
+  .ic-row .ic-title { white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical; }
+  .ic-detail { max-height:none;border-top:0; }
+  .ic-detail h3 { font-size:18px;line-height:1.5; }
+  .ic-sum { font-size:14px;line-height:1.8; }
+  .sb-news-tools { display:grid;grid-template-columns:minmax(140px,1fr) auto minmax(140px,1fr); }
+  #icSearchStatus { grid-column:1/-1; }
+  @media (min-width:901px) and (max-width:1200px) {
+    .mdi-dock .sb-task-tabs .mdi-ptab { padding:9px 5px!important;font-size:11px!important; }
+    .mdi-dock.sb-desktop-home .pf-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  }
+  @media(max-width:900px) {
+    .ic-body { grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(180px,1fr) minmax(180px,1fr); }
+    .ic-detail { border-top:1px solid var(--sb-border); }
+    .sb-news-tools { grid-template-columns:minmax(0,1fr) auto; }
+    .sb-news-tools label:last-of-type { grid-column:1/-1; }
+    .mdi-dock.sb-desktop-home .pf-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  }
+
+
+  /* Balance is a table workspace: a flat summary, with secondary figures on demand. */
+  #htsSummary .sb-balance-totals { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;padding:0;margin:6px 0;border-top:1px solid var(--sb-border);border-left:1px solid var(--sb-border); }
+  #htsSummary .sb-balance-metric { display:grid;grid-template-columns:64px minmax(0,1fr);align-items:baseline;gap:2px 8px;margin:0;padding:0 8px 0 0;border:0;border-right:1px solid var(--sb-border);border-bottom:1px solid var(--sb-border);border-radius:0;background:none;box-shadow:none;color:var(--sb-text-1);font:inherit;font-size:14px;text-align:left;min-width:0; }
+  #htsSummary button.sb-balance-metric { cursor:pointer; }
+  #htsSummary button.sb-balance-metric:hover > span { color:var(--sb-accent);text-decoration:underline; }
+  #htsSummary button.sb-balance-metric:focus-visible { outline:2px solid var(--sb-accent);outline-offset:3px; }
+  .sb-balance-metric > span { grid-row:1 / 3;align-self:stretch;display:flex;align-items:center;padding:7px 6px;background:var(--sb-surface);color:var(--sb-text-2);font-size:12px; }
+  .sb-balance-metric b,.sb-balance-metric small { font-family:var(--sb-font-num);font-variant-numeric:tabular-nums;overflow-wrap:anywhere; }
+  .sb-balance-metric b { font-size:15px;text-align:right;padding-top:5px; }
+  .sb-balance-metric small { grid-column:2;font-size:12px;text-align:right;padding-bottom:5px; }
+  .sb-balance-more { font-size:12px;color:var(--sb-text-2);padding:6px 0; }
+  .sb-balance-more > summary { cursor:pointer;width:fit-content; }
+  #mdi-panel-portfolio .sb-balance-more .hts-s2r-sub { border:0;border-radius:0;background:none;padding:6px 0; }
+
+  .sb-cash-summary { width:100%;border-collapse:collapse;border-block:1px solid var(--sb-border); }
+  #mdi-panel-portfolio .sb-cash-summary th { width:110px;font-size:12px;text-align:left;background:var(--sb-surface); }
+  #mdi-panel-portfolio .sb-cash-summary td { font-family:var(--sb-font-num);font-size:15px;padding:8px;text-align:right; }
+  #mdi-ptc-portfolio-rlz > .card { border:0;border-radius:0;box-shadow:none;background:none;padding:8px 0; }
 
 </style>
 </head>
@@ -3468,7 +3592,7 @@
         <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>
     </span>
-    <span class="mdi-sb-label">관심종목</span>
+    <span class="mdi-sb-label">종합</span>
   </button>
 
   <button type="button" class="mdi-sb-btn mdi-sb-btn-active" data-pid="portfolio"
@@ -3521,13 +3645,13 @@
   <div class="mdi-sb-sep"></div>
   <div class="mdi-sb-section-label">시스템</div>
 
-  <button type="button" class="mdi-sb-btn" onclick="openSettings('account')" title="계좌·API">
+  <button type="button" class="mdi-sb-btn" onclick="openAccountPanel()" title="계좌 관리">
     <span class="mdi-sb-icon-wrap">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
       </svg>
     </span>
-    <span class="mdi-sb-label">계좌·API (<span id="acctCount">0</span>)</span>
+    <span class="mdi-sb-label">계좌 (<span id="acctCount">0</span>)</span>
   </button>
 
   <button type="button" class="mdi-sb-btn" id="sbDataBtn" onclick="openSettings('data')" title="데이터 (백업·복원·레이아웃 초기화)">
@@ -3541,7 +3665,7 @@
     <span class="mdi-sb-label">데이터</span>
   </button>
 
-  <button type="button" class="mdi-sb-btn" onclick="openSettings()" title="설정">
+  <button type="button" class="mdi-sb-btn" onclick="openSettings('general')" title="환경설정">
     <span class="mdi-sb-icon-wrap">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="3"/>
@@ -3593,8 +3717,8 @@
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
           <input id="wlSearchInput" type="text" autocomplete="off"
-            placeholder="종목명·코드 검색 또는 추가"
-            oninput="_wlOnInput()" onkeydown="_wlKeydown(event)"
+            placeholder="관심종목 이름·코드 필터"
+            oninput="_wlOnInput()"
             style="width:100%;box-sizing:border-box;padding:7px 10px 7px 28px;border:1px solid var(--border);border-radius:7px;background:var(--bg3);color:var(--text);font-size:12px;font-family:inherit;outline:none;">
           <div id="wlDropdown" style="display:none;position:fixed;z-index:99999;background:var(--bg2);border:1px solid var(--border);border-radius:8px;max-height:200px;overflow-y:auto;box-shadow:0 6px 24px rgba(0,0,0,.4);"></div>
         </div>
@@ -3977,18 +4101,18 @@
         </select>
       </div>
     </div>
-    <div id="realizedSummary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px;">
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">총 매도 횟수</div>
-        <div id="rs_count" style="font-size:20px;font-weight:700;">-</div>
+    <div id="realizedSummary" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin-top:8px;">
+      <div style="border-bottom:1px solid var(--sb-border);padding:6px 8px;text-align:right;">
+        <div style="font-size:12px;color:var(--sb-text-2);margin-bottom:4px;text-align:left;">총 매도 횟수</div>
+        <div id="rs_count" style="font-size:15px;font-weight:700;">-</div>
       </div>
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">실현 손익 합계</div>
-        <div id="rs_total" style="font-size:18px;font-weight:700;">-</div>
+      <div style="border-bottom:1px solid var(--sb-border);padding:6px 8px;text-align:right;">
+        <div style="font-size:12px;color:var(--sb-text-2);margin-bottom:4px;text-align:left;">실현 손익 합계</div>
+        <div id="rs_total" style="font-size:15px;font-weight:700;">-</div>
       </div>
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">평균 수익률</div>
-        <div id="rs_avg" style="font-size:18px;font-weight:700;">-</div>
+      <div style="border-bottom:1px solid var(--sb-border);padding:6px 8px;text-align:right;">
+        <div style="font-size:12px;color:var(--sb-text-2);margin-bottom:4px;text-align:left;">평균 수익률</div>
+        <div id="rs_avg" style="font-size:15px;font-weight:700;">-</div>
       </div>
     </div>
   </div>
@@ -4047,6 +4171,12 @@
           </div>
           <span class="ic-updated" id="icUpdated"></span>
           <button type="button" class="sb-btn sb-btn--sm" id="icRefreshBtn" onclick="icRefresh()">↻ 새로고침</button>
+        </div>
+        <div class="sb-news-tools">
+          <label>종목 <input class="sb-input" id="icStockSearch" list="icStockOptions" placeholder="종목명 또는 6자리 코드" onfocus="icStockOptions()" onkeydown="if(event.key==='Enter'){event.preventDefault();icPickStock();}"></label><datalist id="icStockOptions"></datalist>
+          <button type="button" class="sb-btn sb-btn--sm" onclick="icPickStock()">종목 뉴스 보기</button>
+          <label>기사 검색 <input class="sb-input" id="icArticleSearch" placeholder="받은 기사 제목·요약·출처 검색" oninput="_ic.sel=-1;_icRenderList();_icRenderDetail()"></label>
+          <span id="icSearchStatus" role="status"></span>
         </div>
         <div class="ic-chips" id="icChips" style="display:none;"></div>
         <div class="ic-body">
@@ -4349,9 +4479,6 @@
           <div class="sb-detail-price"><strong class="dock-ctx__price" id="dockCtxPrice">--</strong><span class="dock-ctx__chg" id="dockCtxChg">--</span></div>
           <div class="dock-ctx__none" id="dockCtxStatus" role="status"></div>
         </div><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('chart')">기업분석 ↗</button></div>
-        <div class="sb-detail-tabs" aria-label="선택 종목 메뉴">
-          <button type="button" class="active">요약</button><button type="button" onclick="dockCtxAction('hoga')">5호가 · 거래 기록 ↗</button><button type="button" onclick="dockCtxAction('news')">뉴스 · 공시 ↗</button><button type="button" onclick="dockCtxAction('cal')">일정 ↗</button>
-        </div>
         <div class="sb-market-stage">
           <section class="sb-chart-region" aria-label="선택 종목 차트"><div class="sb-region-title"><strong>가격 차트</strong><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('chart')">종목 자료 확인 ↗</button></div><div class="sb-data-empty"><strong>차트 데이터 없음</strong><span>일봉 데이터가 연결되면 여기에 표시됩니다.</span></div><div class="dock-ctx__rows dock-ctx__quote-grid" id="dockCtxQuote"></div></section>
           <section class="sb-order-region" aria-label="선택 종목 5호가"><div class="sb-region-title"><strong>5호가</strong><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" id="sbHogaRefresh" onclick="sbDesktopHoga()">조회</button></div><div id="sbHogaStatus" class="dock-ctx__none" role="status">호가 데이터 없음 · 조회 대기</div><table class="sb-hoga-table"><thead><tr><th>매도잔량</th><th>가격</th><th>매수잔량</th></tr></thead><tbody id="sbHogaRows"></tbody></table></section>
@@ -7215,6 +7342,10 @@ function allStockAddWatch(code, name, market) {
 
 // ─── 전종목 키보드/호가 연결 함수 ───────────────────────────────
 function connectToHoga(code, name) {
+  if (document.getElementById('qo_stock_code')?.value !== code) {
+    for (const id of ['qo_price','qo_qty']) { const input=document.getElementById(id);if(input)input.value=''; }
+    updateQOTotalPreview();
+  }
   const nameEl = document.getElementById('qo_name_input');
   const codeEl = document.getElementById('qo_stock_code');
   if (nameEl) nameEl.value = name;
@@ -7233,8 +7364,7 @@ function connectToHoga(code, name) {
     if (hidden && window._MDI?.open) window._MDI.open('trading');
   }
   // 주문/호가 탭 활성화 (첫 번째 탭)
-  const hogaTab = panel?.querySelector('.mdi-ptab');
-  if (hogaTab) hogaTab.click();
+  window._MDIPanelTab?.('trading','ord');
   // 전종목 패널을 뒤로 보내기
   const allPanel = document.getElementById('mdi-panel-allstock');
   if (allPanel) allPanel.style.zIndex = '100';
@@ -7653,13 +7783,14 @@ function updateHogaDisplay() {
     _renderTargetStopPanel(curPrice);
     if (code && /^\d{6}$/.test(code) && window.electronAPI?.fetchHoga) {
       window.electronAPI.fetchHoga(code).then(hoga => {
+        if (document.getElementById('qo_stock_code')?.value !== code) return;
         if (hoga && hoga.asks?.length && hoga.bids?.length) {
           _renderKisHoga(hoga, curPrice, openPrice);
           _startHogaAutoRefresh(curPrice, code, openPrice);
         } else {
           _renderSimulatedHoga(curPrice, false, openPrice);
         }
-      }).catch(() => _renderSimulatedHoga(curPrice, false, openPrice));
+      }).catch(() => { if (document.getElementById('qo_stock_code')?.value === code) _renderSimulatedHoga(); });
     } else {
       _renderSimulatedHoga(curPrice, false, openPrice);
     }
@@ -7843,25 +7974,11 @@ function _renderKisHoga(hoga, curPrice, openPrice) {
   _renderHogaTable(rows, openPrice);
 }
 
-/* 현재가 기반 가상 호가 5+5 레더 생성 */
-function _renderSimulatedHoga(price, isAutoRefresh = false, openPrice = null) {
-  const tick = _getTickSize(price);
-  const base = Math.round(price / tick) * tick; // 현재가 기준 틱 정렬
-  const rows = [];
-  // 매도 5호가: base+5, base+4, ..., base+1 (높은 순)
-  for (let i = 5; i >= 1; i--) {
-    rows.push({ price: base + tick * i, askVol: Math.round(500 + Math.random() * 4000), bidVol: 0, isCur: false });
-  }
-  // 현재가 구분선 (클릭 시 현재가 입력)
-  rows.push({ price: base, askVol: 0, bidVol: 0, isCur: true });
-  // 매수 5호가: base-1, base-2, ..., base-5 (높은 순)
-  for (let i = 1; i <= 5; i++) {
-    const p = base - tick * i;
-    if (p > 0) rows.push({ price: p, askVol: 0, bidVol: Math.round(500 + Math.random() * 4000), isCur: false });
-  }
-  _renderHogaTable(rows, openPrice);
-  // 최초 렌더 시에만 자동 갱신 타이머 시작
-  if (!isAutoRefresh) _startHogaAutoRefresh(price, _hogaCurrentCode, openPrice);
+// 호가를 받지 못하면 임의 가격·잔량을 만들지 않는다. 호출 이름은 기존 경로와 호환한다.
+function _renderSimulatedHoga() {
+  _stopHogaAutoRefresh();
+  const body=document.getElementById('qo_hoga_body');
+  if(body){body.replaceChildren();const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=3;cell.textContent='호가 미수신 · KIS 연결 또는 재조회 필요';cell.className='sb-data-note';row.appendChild(cell);body.appendChild(row);}
 }
 
 function _renderHogaTable(rows, openPrice = null) {
@@ -8180,39 +8297,23 @@ function renderSummary() {
   const exClick = filterAcct
     ? ((filterAcct.broker === 'kis' && !filterAcct.isManual) ? '' : `onclick="showCashEditForm('${filterAcct.id}')"`)
     : (accounts.length > 0 ? `onclick="showToast('💡 계좌를 선택하면 해당 계좌 예수금을 편집할 수 있습니다')"` : `onclick="openCashModal()"`);
-  // 순자산총액 항상 전체 합산 — 계좌 필터 무관
-  const netLbl = hasEx ? '합산' : '';
-
-  // Row1: 순자산총액(전체고정) | 총평가금액(필터) | 총평가손익(필터)
-  // Row2 (sub): 예수금(필터) | 총매입금액 | 총수익률 | 실현손익 | 투자비중 | 보유
-  // 헤더(4단계)와 동일한 계산 함수·컴포넌트(.sb-stat) 사용
+  // 전체 계좌 요약은 2줄 표로, 계좌 필터 기준의 세부 지표는 접어서 표시한다.
+  const detailsOpen = el.querySelector('.sb-balance-more')?.open;
   const _as = window.calcAssetSummary();
   const _tone = v => v > 0 ? 'sb-up' : v < 0 ? 'sb-down' : 'sb-flat';
   const _sg = v => v >= 0 ? '+' : '-';
-  const _edit = (fn, t) => `<button type="button" class="sb-btn sb-btn--ghost sb-btn--sm pf-stat-edit" onclick="${fn}" title="${t}">수정</button>`;
   el.innerHTML = `
-    <div class="pf-stats">
-      <div class="sb-stat">
-        <span class="sb-stat__label">총자산 ${_edit('openTotalAssetModal()', '총 자산 설정')}</span>
-        <span class="sb-stat__value">₩${fmt(Math.round(_as.total))}</span>
-        <span class="sb-stat__sub">${netLbl ? '계좌 합산' : '&nbsp;'}</span>
-      </div>
-      <div class="sb-stat">
-        <span class="sb-stat__label">예수금 ${_edit('openCashModal()', '예수금 직접 설정')}</span>
-        <span class="sb-stat__value">₩${fmt(Math.round(_as.cash))}</span>
-        <span class="sb-stat__sub">&nbsp;</span>
-      </div>
-      <div class="sb-stat">
-        <span class="sb-stat__label">평가손익</span>
-        <span class="sb-stat__value ${_tone(_as.pnl)}">${_sg(_as.pnl)}${fmt(Math.round(Math.abs(_as.pnl)))}</span>
-        <span class="sb-stat__sub ${_tone(_as.pnl)}">${_sg(_as.rate)}${Math.abs(_as.rate).toFixed(2)}%</span>
-      </div>
-      <div class="sb-stat">
-        <span class="sb-stat__label">당일손익</span>
-        <span class="sb-stat__value ${_tone(_as.dayPnl)}">${_sg(_as.dayPnl)}${fmt(Math.round(Math.abs(_as.dayPnl)))}</span>
-        <span class="sb-stat__sub ${_tone(_as.dayPnl)}">${_sg(_as.dayRate)}${Math.abs(_as.dayRate).toFixed(2)}%</span>
-      </div>
+    <div class="sb-balance-totals" aria-label="전체 계좌 자산 요약">
+      <button type="button" class="sb-balance-metric" onclick="openTotalAssetModal()" title="전체 계좌 총자산 · 클릭하여 설정">
+        <span>총자산</span><b>₩${fmt(Math.round(_as.total))}</b>
+      </button>
+      <button type="button" class="sb-balance-metric" onclick="openCashModal()" title="전체 계좌 예수금 · 클릭하여 설정">
+        <span>예수금</span><b>₩${fmt(Math.round(_as.cash))}</b>
+      </button>
+      <div class="sb-balance-metric"><span>평가손익</span><b class="${_tone(_as.pnl)}">${_sg(_as.pnl)}${fmt(Math.round(Math.abs(_as.pnl)))}</b><small class="${_tone(_as.pnl)}">${_sg(_as.rate)}${Math.abs(_as.rate).toFixed(2)}%</small></div>
+      <div class="sb-balance-metric"><span>당일손익</span><b class="${_tone(_as.dayPnl)}">${_sg(_as.dayPnl)}${fmt(Math.round(Math.abs(_as.dayPnl)))}</b><small class="${_tone(_as.dayPnl)}">${_sg(_as.dayRate)}${Math.abs(_as.dayRate).toFixed(2)}%</small></div>
     </div>
+    <details class="sb-balance-more"${detailsOpen ? ' open' : ''}><summary>평가·매입 상세</summary>
     <div class="hts-s2r-sub">
       <div class="hts-s2r-sub-item${exClick?' clickable':''}" ${exClick}>
         <span class="s2r-sl">예수금</span>
@@ -8242,7 +8343,7 @@ function renderSummary() {
         <span class="s2r-sl">보유</span>
         <span class="s2r-sv">${p.length}종목</span>
       </div>
-    </div>`;
+    </div></details>`;
   try { renderBalanceSummary(); } catch(e) {}
 }
 
@@ -9820,7 +9921,7 @@ document.addEventListener('click', e => {
 });
 
 // ── 정보센터 (시장뉴스 / 종목뉴스 / 공시 / 경제지표) ───────────────────────
-const _ic = { tab:'market', scope:'port', items:[], sel:-1, updated:null, loading:false, err:'', seq:0 };
+const _ic = { selectedCode:'', tab:'market', scope:'port', items:[], sel:-1, updated:null, loading:false, err:'', seq:0 };
 const _icEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 const _icIsKr = t => /^\d{6}$/.test(String(t || '').trim());
 const _icHasApi = () => !!(window.electronAPI && window.electronAPI.fetchNews);
@@ -9843,7 +9944,7 @@ function _icTimeFmt(t, full) {
 function _icScopeCodes() {
   if (_ic.scope === 'sel') {
     const q = getNewsQuery();
-    const code = _newsQCode || (_icIsKr(q) ? q : '');
+    const code = _ic.selectedCode || _newsQCode || (_icIsKr(q) ? q : '');
     return _icIsKr(code) ? [code] : [];
   }
   const src = _ic.scope === 'watch' ? (state.watchlist || []) : (state.portfolio || []);
@@ -9874,7 +9975,10 @@ function _icRenderList() {
   if (_ic.loading) { list.innerHTML = '<div class="ic-state">불러오는 중…</div>'; return; }
   if (_ic.err) { list.innerHTML = `<div class="ic-state err">${_icEsc(_ic.err)}</div>`; return; }
   if (!_ic.items.length) { list.innerHTML = `<div class="ic-state">${_icEsc(_ic.empty || '표시할 항목이 없습니다')}</div>`; return; }
-  list.innerHTML = _ic.items.map((n, i) => {
+  const query=(document.getElementById('icArticleSearch')?.value||'').trim().toLowerCase();
+  const filtered=_ic.items.map((n,i)=>({n,i})).filter(({n})=>!query||[n.title,n.summary,n.source].some(v=>String(v||'').toLowerCase().includes(query)));
+  if (!filtered.length) { list.innerHTML='<div class="ic-state">받은 기사 중 검색 결과가 없습니다.</div>'; return; }
+  list.innerHTML = filtered.map(({n, i}) => {
     const stk = n.code ? `<span class="ic-stk">${_icEsc(_icStockName(n.code))}</span>` : '';
     const left = _ic.tab === 'econ' ? _icEsc((n.date || '').slice(5)) : _icEsc(_icTimeFmt(n.time));
     const src = _ic.tab === 'econ' ? _icEsc(n.country) : _icEsc(n.source);
@@ -10149,7 +10253,12 @@ function initTheme() {
 function openSettings(cat) {
   const modal = document.getElementById('settingsModal');
   if (modal) modal.classList.add('open');
-  settingsGo(typeof cat === 'string' ? cat : (_settingsCat || 'general'));
+  if (modal) {
+    modal.dataset.settingsSection = cat === 'data' ? 'data' : 'preferences';
+    const title=modal.querySelector('.sb-modal__head')?.firstChild;
+    if(title?.nodeType===Node.TEXT_NODE) title.nodeValue=cat==='data'?'데이터 관리':'환경설정';
+  }
+  settingsGo(typeof cat === 'string' ? cat : 'general');
   const auto = document.getElementById('settingsAutoLogin');
   if (auto) auto.checked = !!state.autoLogin;
   updateAcctCountLabel();
@@ -11997,7 +12106,7 @@ function renderWatchlist() {
           onclick="event.stopPropagation();removeWatchlistItem(${i})" title="관심 해제">
         <span style="font-size:13px;color:gold;cursor:pointer;">★</span>
       </td>
-      <td style="font-weight:600;white-space:nowrap;">${w.name||w.ticker}</td>
+      <td style="font-weight:600;white-space:nowrap;">${escHtml(w.name||w.ticker)}<select class="sb-watch-group sb-select" aria-label="${escHtml(w.name||w.ticker)} 테마" onclick="event.stopPropagation()" onchange="wlAssignGroup(${i},this.value)"><option value="">미분류</option>${sbWatchGroups().map(g=>`<option value="${escHtml(g)}" ${w.group===g?'selected':''}>${escHtml(g)}</option>`).join('')}</select></td>
       <td style="font-family:monospace;font-size:11px;color:var(--text3);">${w.ticker||'-'}</td>
       <td style="font-size:11px;color:var(--text3);white-space:nowrap;">${sector}</td>
       <td id="wl-price-${safeCode}" style="text-align:right;font-weight:600;">${priceStr}<div class="dock-ctx__none">${escHtml(dockQuoteLabel(w))}</div></td>
@@ -12075,6 +12184,9 @@ async function sbDesktopHoga() {
     const rows = document.getElementById('sbHogaRows'); rows.replaceChildren();
     for (const [side,levels] of [['ask',data.asks],['bid',data.bids]]) for (const level of levels.slice(0,5)) {
       const tr = document.createElement('tr'); tr.className=side;
+      tr.tabIndex=0;tr.setAttribute('role','button');tr.setAttribute('aria-label',fmt(level.price)+'원으로 거래 기록');
+      const usePrice=()=>{if(ticker!==window._dockSel)return;sbDesktopAction('trade');document.getElementById('qo_price').value=fmt(level.price);updateQOTotalPreview();};
+      tr.onclick=usePrice;tr.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();usePrice();}};
       for (const value of [side==='ask'?fmt(level.qty):'',fmt(level.price),side==='bid'?fmt(level.qty):'']) { const td=document.createElement('td');td.textContent=value;tr.appendChild(td); }
       rows.appendChild(tr);
     }
@@ -12097,7 +12209,76 @@ function sbDesktopCash() {
   }
   document.getElementById('sbDesktopAccountEmpty').hidden = !!(state.accounts || []).length;
 }
+function sbWatchGroups() {
+  return [...new Set([...(state.watchlistGroups||[]),...(state.watchlist||[]).map(w=>w.group)].filter(g=>typeof g==='string'&&g))];
+}
+function sbStockCandidates() {
+  const seen=new Set();
+  return [...(state.watchlist||[]),...(state.portfolio||[]),...Object.values(_allStockRaw||{}).flat()].map(s=>({code:s.ticker||s.code||'',name:s.name||'',market:s.market||''})).filter(s=>s.code&&s.name&&!seen.has(s.code)&&seen.add(s.code));
+}
+function sbWatchAddOpen() {
+  document.getElementById('sbWatchAddDialog')?.remove();
+  const dialog=document.createElement('dialog');dialog.id='sbWatchAddDialog';dialog.className='sb-modal sb-modal--m';
+  dialog.innerHTML='<div class="sb-modal__head">관심종목 추가<button type="button" class="sb-btn" id="sbWatchAddClose">닫기</button></div><div class="sb-modal__body"><label>테마·그룹 <select class="sb-select" id="sbWatchAddGroup"></select></label><label>종목 검색 <input class="sb-input" id="sbWatchAddSearch" placeholder="종목명·코드"></label><label>시장 <select class="sb-select" id="sbWatchMarket"><option>KOSPI</option><option>KOSDAQ</option><option>ETF</option></select></label><button type="button" id="sbWatchCatalog" class="sb-btn sb-btn--sm">선택 시장 종목 불러오기</button><div id="sbWatchAddResults"></div><p class="sb-data-note" id="sbWatchAddStatus" role="status">현재 불러온 종목 목록에서 검색합니다. 목록이 없으면 위 버튼으로 불러오세요.</p><details><summary>목록에 없는 종목 직접 입력</summary><label>6자리 코드 <input class="sb-input" id="sbWatchManualCode" maxlength="6"></label><label>종목명 <input class="sb-input" id="sbWatchManualName"></label><button type="button" class="sb-btn" id="sbWatchManualAdd">관심종목에 추가</button></details></div>';
+  document.body.appendChild(dialog);
+  const group=dialog.querySelector('#sbWatchAddGroup');
+  for(const g of ['',...sbWatchGroups()]){const option=new Option(g||'미분류',g);group.add(option);}
+  group.value=sbWatchGroups().includes(window._wlActiveGroup)?window._wlActiveGroup:'';
+  const add=s=>{
+    if((state.watchlist||[]).some(w=>w.ticker===s.code)){dialog.querySelector('#sbWatchAddStatus').textContent='이미 관심종목에 있습니다.';return;}
+    if(!state.watchlist)state.watchlist=[];
+    state.watchlist.push({ticker:s.code,name:s.name,market:s.market||'',group:group.value,price:null,change:null,addedAt:Date.now()});
+    save();dialog.close();dialog.remove();window._wlActiveGroup=group.value||'전체';
+    document.getElementById('wlSearchInput').value='';renderWatchlist();refreshWatchlist();
+  };
+  const render=()=>{
+    const q=dialog.querySelector('#sbWatchAddSearch').value.trim().toLowerCase(),out=dialog.querySelector('#sbWatchAddResults');out.replaceChildren();
+    const matches=sbStockCandidates().filter(s=>s.name.toLowerCase().includes(q)||s.code.includes(q)).slice(0,30);
+    for(const s of matches){const button=document.createElement('button');button.type='button';button.className='sb-btn sb-watch-candidate';const added=(state.watchlist||[]).some(w=>w.ticker===s.code);button.disabled=added;button.textContent=s.name+' · '+s.code+(added?'　추가됨':'　＋ 추가');button.onclick=()=>add(s);out.appendChild(button);}
+    if(!matches.length)out.textContent='검색 결과가 없습니다. 전종목 목록을 불러오거나 아래에서 코드와 이름을 입력하세요.';
+  };
+  dialog.querySelector('#sbWatchCatalog').onclick=async event=>{
+    const button=event.currentTarget;button.disabled=true;dialog.querySelector('#sbWatchAddStatus').textContent='종목 목록을 불러오는 중…';
+    try{
+      const market=dialog.querySelector('#sbWatchMarket').value;
+      if(!window.electronAPI?.fetchNaverStocks) throw new Error('종목 조회는 데스크톱 앱 연결이 필요합니다.');
+      const result=await window.electronAPI.fetchNaverStocks(market);
+      if(!result?.ok||!Array.isArray(result.data))throw new Error('종목 목록을 받지 못했습니다. 다시 시도하세요.');
+      _allStockRaw[market]=result.data;render();
+      dialog.querySelector('#sbWatchAddStatus').textContent=market+' '+result.data.length+'종목'+(result.stale?' · 오래된 캐시':'')+' · 목록에서 선택하세요.';
+    }catch(error){dialog.querySelector('#sbWatchAddStatus').textContent=error.message;}
+    finally{button.disabled=false;}
+  };
+  dialog.querySelector('#sbWatchAddSearch').oninput=render;
+  dialog.querySelector('#sbWatchAddClose').onclick=()=>{dialog.close();dialog.remove();};
+  dialog.querySelector('#sbWatchManualAdd').onclick=()=>{const code=dialog.querySelector('#sbWatchManualCode').value.trim(),name=dialog.querySelector('#sbWatchManualName').value.trim();if(!/^\d{6}$/.test(code)||!name){dialog.querySelector('#sbWatchAddStatus').textContent='6자리 종목코드와 종목명을 확인하세요.';return;}add({code,name});};
+  render();dialog.showModal();dialog.querySelector('#sbWatchAddSearch').focus();
+}
+function icStockOptions() {
+  const options=document.getElementById('icStockOptions');if(!options)return;options.replaceChildren();
+  for(const s of sbStockCandidates()){const option=document.createElement('option');option.value=s.name+' '+s.code;options.appendChild(option);}
+}
+function icPickStock() {
+  const raw=(document.getElementById('icStockSearch')?.value||'').trim();
+  const candidate=sbStockCandidates().find(s=>raw===s.code||raw===s.name||raw===s.name+' '+s.code);
+  const code=candidate?.code||(/^\d{6}$/.test(raw)?raw:'');
+  const status=document.getElementById('icSearchStatus');
+  if(!/^\d{6}$/.test(code)){if(status)status.textContent='목록에서 국내 종목을 선택하거나 6자리 코드를 입력하세요.';return;}
+  icSelectStock(code);
+}
+function icSelectStock(code) {
+  const name = _icStockName(code);
+  const input = document.getElementById('icStockSearch');
+  const status = document.getElementById('icSearchStatus');
+  if (input) input.value = name === code ? code : name + ' ' + code;
+  if (status) status.textContent = name + ' 종목뉴스';
+  _ic.selectedCode = code; _ic.scope = 'sel';
+  icSetTab('stock');
+}
 function sbDesktopSearch(value) {
+  if (document.getElementById('mdiWorkspace')?.dataset.dockScreen === 'news') {
+    const input = document.getElementById('icStockSearch'); if (input) input.value = value; icStockOptions(); return;
+  }
   if (document.getElementById('mdiWorkspace')?.dataset.dockScreen !== 'watchlist') window._MDI?.show('watchlist');
   const input = document.getElementById('wlSearchInput');
   if (input) { input.value = value; _wlOnInput(); }
@@ -12117,20 +12298,38 @@ function sbDesktopAction(action) {
   if (action === 'holding') setQOMode('buy');
   document.getElementById('qo_qty')?.focus();
 }
+function sbWorkTab(key) {
+  const pid = key === 'journal' ? 'journal' : ['ord','calc'].includes(key) ? 'trading' : 'portfolio';
+  window._MDI.show(pid);
+  if (pid !== 'journal') window._MDIPanelTab(pid,key);
+  if (key === 'ord') {
+    const stock = (state.watchlist || []).find(w=>w.ticker===window._dockSel);
+    if (stock) connectToHoga(stock.ticker,stock.name || stock.ticker);
+  }
+  if (key === 'trd') renderTrades();
+  if (key === 'cash') sbDesktopCash();
+  sbSyncWorkTabs();
+}
+function sbSyncWorkTabs() {
+  const screen = document.getElementById('mdiWorkspace')?.dataset.dockScreen;
+  const pid = ['trading','journal'].includes(screen) ? screen : 'portfolio';
+  const pane = [...(document.getElementById('mdi-body-' + pid)?.querySelectorAll(':scope > .mdi-ptab-pane') || [])].find(p=>p.style.display !== 'none');
+  const key = pid === 'journal' ? 'journal' : pane?.id.replace('mdi-ptc-' + pid + '-', '') || 'pf';
+  document.querySelectorAll('[data-work-tab]').forEach(button=>{
+    const active = button.dataset.workTab === key;
+    button.classList.toggle('active',active);
+    if (active) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current');
+  });
+}
 function sbDesktopMount() {
   const row = document.querySelector('.hdr-row1');
   const indices = document.querySelector('.hdr-group--idx');
   const status = document.getElementById('hdrStatus');
   if (row && indices && status) row.insertBefore(indices, status);
-  const toolbar = document.createElement('div');
-  toolbar.className = 'sb-work-toolbar';
-  toolbar.innerHTML = '<strong>내 포트폴리오</strong><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="sbDesktopAction(\'holding\')">보유종목 추가</button><button type="button" class="sb-btn sb-btn--secondary sb-btn--sm" onclick="sbDesktopAction(\'journal\')">빠른 일지</button><button type="button" class="sb-btn sb-btn--primary sb-btn--sm" onclick="sbDesktopAction(\'trade\')">＋ 거래 등록</button>';
-  const summary = document.getElementById('htsSummary');
-  summary?.before(toolbar);
   const wlBody = document.getElementById('watchlistBody');
   wlBody?.classList.add('sb-compact-quotes');
   const options = document.createElement('div'); options.className = 'sb-table-options';
-  options.innerHTML = '<label><input type="checkbox" id="sbQuoteColumns"> 상세 열 보기</label>';
+  options.innerHTML = '<button type="button" id="sbWatchAdd" class="sb-btn sb-btn--primary sb-btn--sm" onclick="sbWatchAddOpen()">＋ 관심종목 추가</button><label><input type="checkbox" id="sbQuoteColumns"> 상세 열 보기</label>';
   options.querySelector('input').onchange = e => wlBody?.classList.toggle('sb-compact-quotes', !e.target.checked);
   wlBody?.before(options);
   const pfBody = document.getElementById('mdi-body-portfolio');
@@ -12138,20 +12337,29 @@ function sbDesktopMount() {
   const pfOptions = document.createElement('label'); pfOptions.className = 'sb-table-options';
   pfOptions.innerHTML = '<input type="checkbox" id="sbHoldingColumns"> 상세 열';
   pfOptions.querySelector('input').onchange = e => pfBody?.classList.toggle('sb-compact-holdings', !e.target.checked);
-  toolbar.prepend(pfOptions);
+  pfBody?.querySelector('#mdi-ptc-portfolio-pf .section-row')?.appendChild(pfOptions);
   const tabBar = pfBody?.querySelector('.mdi-ptab-bar');
   const cashTab = document.createElement('button'); cashTab.type='button'; cashTab.className='mdi-ptab';
   cashTab.textContent='예수금'; cashTab.setAttribute('onclick', "window._MDIPanelTab('portfolio','cash');sbDesktopCash()"); tabBar?.appendChild(cashTab);
   const cashPane = document.createElement('div'); cashPane.className='mdi-ptab-pane'; cashPane.id='mdi-ptc-portfolio-cash'; cashPane.style.display='none';
-  cashPane.innerHTML='<div class="sb-work-toolbar"><strong>계좌 · 예수금</strong><button type="button" class="sb-btn sb-btn--secondary sb-btn--sm" onclick="openAccountPanel()">계좌 관리</button><button type="button" class="sb-btn sb-btn--primary sb-btn--sm" onclick="openCashManualModal()">예수금 설정</button></div><section class="sb-detail-card"><h3>내 예수금</h3><strong id="sbDesktopCashBalance" style="font-size:24px"></strong></section><div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>계좌명</th><th>증권사</th><th>저장된 예수금</th></tr></thead><tbody id="sbDesktopAccountRows"></tbody></table></div><div id="sbDesktopAccountEmpty" class="empty-state">등록된 계좌가 없습니다. 계좌 관리에서 추가하세요.</div>';
+  cashPane.innerHTML='<div class="sb-work-toolbar"><strong>계좌 · 예수금</strong><button type="button" class="sb-btn sb-btn--secondary sb-btn--sm" onclick="openAccountPanel()">계좌 관리</button><button type="button" class="sb-btn sb-btn--primary sb-btn--sm" onclick="openCashManualModal()">예수금 설정</button></div><table class="sb-cash-summary"><tbody><tr><th scope="row">예수금 합계</th><td><strong id="sbDesktopCashBalance"></strong></td></tr></tbody></table><div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>계좌명</th><th>증권사</th><th>저장된 예수금</th></tr></thead><tbody id="sbDesktopAccountRows"></tbody></table></div><div id="sbDesktopAccountEmpty" class="empty-state">등록된 계좌가 없습니다. 계좌 관리에서 추가하세요.</div>';
   pfBody?.appendChild(cashPane);
-  const journalTab=document.createElement('button');journalTab.type='button';journalTab.className='mdi-ptab';journalTab.textContent='투자일지';journalTab.onclick=()=>window._MDI.show('journal');tabBar?.appendChild(journalTab);
-  const journalTabs=document.createElement('div');journalTabs.className='mdi-ptab-bar';
-  journalTabs.innerHTML='<button type="button" class="mdi-ptab" onclick="window._MDI.show(\'portfolio\');window._MDIPanelTab(\'portfolio\',\'pf\')">잔고</button><button type="button" class="mdi-ptab" onclick="window._MDI.show(\'portfolio\');window._MDIPanelTab(\'portfolio\',\'trd\');renderTrades()">거래내역</button><button type="button" class="mdi-ptab active">투자일지</button>';
-  document.getElementById('mdi-body-journal')?.prepend(journalTabs);
+  // One persistent task strip across the existing panels; keep their forms and ids intact.
+  for (const pid of ['portfolio','trading','journal']) {
+    const body = document.getElementById('mdi-body-' + pid);
+    body?.querySelector(':scope > .mdi-ptab-bar')?.remove();
+    const tabs = document.createElement('div'); tabs.className = 'mdi-ptab-bar sb-task-tabs';
+    tabs.setAttribute('aria-label','종합 작업');
+    for (const [key,label] of [['pf','잔고'],['ord','매매'],['calc','계산기'],['journal','투자일지'],['trd','거래내역'],['rlz','실현손익'],['cash','예수금']]) {
+      const button = document.createElement('button'); button.type='button';button.className='mdi-ptab';
+      button.dataset.workTab=key;button.textContent=label;button.onclick=()=>sbWorkTab(key);tabs.appendChild(button);
+    }
+    body?.prepend(tabs);
+  }
+  sbSyncWorkTabs();
   const pfTab = document.querySelector('#mdi-body-portfolio .mdi-ptab');
   if (pfTab) pfTab.textContent = '잔고';
-  // Existing navigation ids remain intact. Add shortcuts rather than rename data-pid.
+  for(const id of ['qo_price','qo_qty']) document.getElementById(id)?.parentElement.classList.add('sb-trade-number');
   const rail = document.getElementById('mdiSidebar');
   const anchor = document.querySelector('.mdi-sb-section-label');
   const calendar = document.createElement('button'); calendar.type='button'; calendar.className='mdi-sb-btn'; calendar.title='캘린더';
@@ -12226,6 +12434,9 @@ function dockSelectStock(code) {
   dockCtxRender();
   dockQueueSubscription();
   const w = state.watchlist.find(w => w.ticker === code);
+  const screen=document.getElementById('mdiWorkspace')?.dataset.dockScreen;
+  if(screen==='trading') connectToHoga(code,w.name||code);
+  if(screen==='news') icSelectStock(code);
   if (!w.quoteAt || Date.now() - w.quoteAt > 30000) dockLoadQuote(w).then(() => renderWatchlist());
 }
 function dockCtxRender() {
@@ -12836,7 +13047,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     // dock=false 로 바꾸면 기존 떠 있는 MDI 창 동작이 그대로 살아난다(선택형 패널 분리용으로 보존).
     dock: true,
     DOCK_HOME: 'watchlist',
-    DOCK_NAMES: { watchlist: '관심종목 종합', portfolio: '포트폴리오', news: '뉴스·시황', trading: '매매기록 · 호가', journal: '투자일지' },
+    DOCK_NAMES: { watchlist: '종합', portfolio: '포트폴리오', news: '뉴스·시황', trading: '매매기록 · 호가', journal: '투자일지' },
 
     // 중앙 화면 전환: pid 화면만 열고 나머지는 닫는다
     show(pid) {
@@ -12845,7 +13056,7 @@ function _toggleCheck(stockKey, checkKey, val) {
       Object.keys(this.DOCK_NAMES).forEach(p => {
         const el = document.getElementById('mdi-panel-' + p);
         if (!el) return;
-        const home = ['watchlist', 'portfolio', 'journal'].includes(pid);
+        const home = ['watchlist', 'portfolio', 'journal', 'trading', 'news'].includes(pid);
         const on = p === pid || (home && p === 'watchlist') || (pid === 'watchlist' && p === 'portfolio');
         el.style.display = on ? '' : 'none';
         el.dataset.mdiState = on ? 'open' : 'closed';
@@ -12853,12 +13064,13 @@ function _toggleCheck(stockKey, checkKey, val) {
         if (body) body.style.display = '';
         if (!on && p === 'watchlist') try { _stopWatchlistAutoRefresh && _stopWatchlistAutoRefresh(); } catch(e) {}
       });
-      if (ws) { ws.dataset.dockScreen = pid; ws.classList.toggle('sb-desktop-home', ['watchlist','portfolio','journal'].includes(pid)); }
+      if (ws) { ws.dataset.dockScreen = pid; ws.classList.toggle('sb-desktop-home', ['watchlist','portfolio','journal','trading','news'].includes(pid)); }
       const nm = document.getElementById('dockScreenName');
       if (nm) nm.textContent = this.DOCK_NAMES[pid] || '';
       this._syncAllBtns();
+      sbSyncWorkTabs();
       this._render(pid);
-      if (['watchlist','portfolio','journal'].includes(pid)) {
+      if (['watchlist','portfolio','journal','trading','news'].includes(pid)) {
         if (pid === 'watchlist') this._render('portfolio');
         else this._render('watchlist');
         renderSummary();
@@ -13261,7 +13473,7 @@ function _toggleCheck(stockKey, checkKey, val) {
     _syncBtn(pid) {
       const el = document.getElementById('mdi-panel-' + pid);
       const isOpen = this.dock
-        ? document.getElementById('mdiWorkspace')?.dataset.dockScreen === pid
+        ? (document.getElementById('mdiWorkspace')?.dataset.dockScreen === pid || (pid === 'watchlist' && ['portfolio','trading'].includes(document.getElementById('mdiWorkspace')?.dataset.dockScreen)))
         : el && el.dataset.mdiState !== 'closed';
       // 사이드바 버튼 동기화
       document.querySelectorAll('.mdi-sb-btn[data-pid="'+pid+'"]').forEach(btn => {
@@ -13406,6 +13618,7 @@ function _toggleCheck(stockKey, checkKey, val) {
       if (b.getAttribute('onclick') && b.getAttribute('onclick').includes("'" + tabKey + "'"))
         b.classList.add('active');
     });
+    sbSyncWorkTabs();
     // 렌더 트리거
     try {
       if (panelId === 'watchlist') {
@@ -13503,37 +13716,9 @@ window._wlActiveGroup = '전체';
 let _wlItems = [], _wlActive = -1;
 
 function _wlOnInput() {
-  const inp = document.getElementById('wlSearchInput');
-  const dd  = document.getElementById('wlDropdown');
-  if (!inp || !dd) return;
-  const q = inp.value.trim().toLowerCase();
-  // 입력 없으면 필터만 적용
-  if (!q) { dd.style.display='none'; _wlItems=[]; _wlActive=-1; renderWatchlist(); return; }
-  renderWatchlist(); // 실시간 필터
-  // 드롭다운: 전종목에서 가나다 정렬 검색
-  const port = (state.portfolio||[]).map(s=>({name:s.name||'',code:s.ticker||'',market:s.market||''}));
-  const all  = Object.values(_allStockRaw||{}).flat();
-  const seen = new Set();
-  _wlItems = [...port,...all].filter(s=>{
-    const key = s.code||s.name;
-    if (!s.name&&!s.code) return false;
-    if (seen.has(key)) return false; seen.add(key);
-    return (s.name&&s.name.toLowerCase().includes(q))||(s.code&&s.code.toLowerCase().startsWith(q));
-  }).sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko')).slice(0,30);
-  if (!_wlItems.length) { dd.style.display='none'; _wlActive=-1; return; }
-  _wlActive = -1;
-  dd.innerHTML = _wlItems.map((s,i)=>
-    `<div class="qo-dd-item" data-i="${i}" style="padding:6px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:12px;border-bottom:1px solid var(--border);"
-      onmousedown="event.preventDefault();_wlDropSelect(${i})"
-      onmouseenter="this.style.background='var(--bg3)'" onmouseleave="this.style.background=''">
-      <span style="font-weight:600;">${_cleanName(s.name||'')}</span>
-      <span style="color:var(--text3);font-family:monospace;font-size:11px;">${s.code||''}</span>
-    </div>`).join('');
-  const rect = inp.getBoundingClientRect();
-  dd.style.top   = (rect.bottom+2)+'px';
-  dd.style.left  = rect.left+'px';
-  dd.style.width = rect.width+'px';
-  dd.style.display='block';
+  document.getElementById('wlDropdown').style.display = 'none';
+  _wlItems = []; _wlActive = -1;
+  renderWatchlist();
 }
 
 function _wlKeydown(e) {
@@ -13572,17 +13757,22 @@ function wlRenderGroupBar() {
   const bar = document.getElementById('wlGroupBar');
   if (!bar) return;
   if (!state.watchlistGroups) state.watchlistGroups=[];
-  const grps = state.watchlistGroups;
+  const grps = sbWatchGroups();
   const active = window._wlActiveGroup||'전체';
-  const all_groups = ['전체',...grps];
-  const btnStyle = (g) => g===active
-    ? 'font-size:11px;padding:3px 9px;border-radius:12px;cursor:pointer;background:rgba(var(--accent-rgb,59,130,246),.18);color:var(--accent);border:1px solid rgba(var(--accent-rgb,59,130,246),.4);'
-    : 'font-size:11px;padding:3px 9px;border-radius:12px;cursor:pointer;background:var(--bg3);color:var(--text2);border:1px solid var(--border);';
-  bar.innerHTML = all_groups.map(g=>`<button onclick="wlSetGroup('${g}')" style="${btnStyle(g)}">${g}</button>`).join('') +
-    `<button onclick="wlAddGroup()" style="font-size:11px;padding:3px 8px;border-radius:12px;cursor:pointer;background:transparent;color:var(--accent);border:1px dashed var(--border);display:inline-flex;align-items:center;gap:2px;">
-      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 그룹
-    </button>` +
-    (grps.length&&active!=='전체' ? `<button onclick="wlDeleteGroup('${active}')" style="font-size:10px;padding:2px 7px;border-radius:10px;cursor:pointer;background:transparent;color:var(--text3);border:1px solid var(--border);margin-left:auto;" title="이 그룹 삭제">삭제</button>` : '');
+  const allGroups = ['전체', ...grps];
+  if ((state.watchlist || []).some(w => !w.group)) allGroups.push('미분류');
+  bar.replaceChildren();
+  for (const group of allGroups) {
+    const button = document.createElement('button'); button.type='button';
+    button.className='sb-btn sb-btn--sm' + (group===active?' sb-btn--primary':'');
+    button.textContent=group; button.onclick=()=>wlSetGroup(group); bar.appendChild(button);
+  }
+  const add=document.createElement('button'); add.type='button'; add.className='sb-btn sb-btn--ghost sb-btn--sm';
+  add.textContent='＋ 테마·그룹'; add.onclick=wlAddGroup; bar.appendChild(add);
+  if (grps.includes(active)) {
+    const remove=document.createElement('button');remove.type='button';remove.className='sb-btn sb-btn--ghost sb-btn--sm';
+    remove.textContent='그룹 삭제';remove.onclick=()=>wlDeleteGroup(active);bar.appendChild(remove);
+  }
 }
 
 function wlSetGroup(g) { window._wlActiveGroup=g; renderWatchlist(); }
@@ -14170,7 +14360,7 @@ function wlAssignGroup(idx, gName) {
         </label>
         <span id="loginKeyStatus" style="font-size:12px;color:var(--sb-success);"></span>
       </div>
-      <p class="sb-hint">API 키는 이 PC 에서 암호화되어 저장되며 외부로 전송되지 않습니다. 이후 변경은 설정 › 계좌·API 에서 할 수 있습니다.</p>
+      <p class="sb-hint">API 키는 이 PC 에서 암호화되어 저장되며 외부로 전송되지 않습니다. 이후 변경은 설정 › API 연결 에서 할 수 있습니다.</p>
     </div>
     <div class="sb-modal__foot">
       <button type="button" class="sb-btn" onclick="loginClose()">취소</button>
@@ -14286,7 +14476,7 @@ function wlAssignGroup(idx, gName) {
         <button type="button" class="sb-hub__nav-btn active" data-cat="general" onclick="settingsGo('general')">일반</button>
         <button type="button" class="sb-hub__nav-btn" data-cat="display" onclick="settingsGo('display')">화면·테마</button>
         <button type="button" class="sb-hub__nav-btn" data-cat="realtime" onclick="settingsGo('realtime')">시세·실시간</button>
-        <button type="button" class="sb-hub__nav-btn" data-cat="account" onclick="settingsGo('account')">계좌·API</button>
+        <button type="button" class="sb-hub__nav-btn" data-cat="account" onclick="settingsGo('account')">API 연결</button>
         <button type="button" class="sb-hub__nav-btn" data-cat="portfolio" onclick="settingsGo('portfolio')">포트폴리오</button>
         <button type="button" class="sb-hub__nav-btn" data-cat="classify" onclick="settingsGo('classify')">종목 분류</button>
         <button type="button" class="sb-hub__nav-btn" data-cat="news" onclick="settingsGo('news')">뉴스·시황</button>

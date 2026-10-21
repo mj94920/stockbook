@@ -83,7 +83,7 @@ for (const pg of PAGES) {
         check(await click(`.mdi-sb-btn[data-pid="${pid}"]`), `사이드바 버튼 없음: ${pid}`);
         await page.waitForTimeout(250);
         const open = await openPids();
-        const expected = pid === 'watchlist' || pid === 'portfolio' ? ['watchlist', 'portfolio'] : pid === 'journal' ? ['watchlist','journal'] : [pid];
+        const expected = pid === 'watchlist' || pid === 'portfolio' ? ['watchlist', 'portfolio'] : ['journal','trading','news'].includes(pid) ? ['watchlist',pid] : [pid];
         check(open.length === expected.length && expected.every(p => open.includes(p)), `사이드바 '${pid}' 화면 구성 오류: [${open}]`);
         const inside = await page.evaluate(p => {
           const r = document.getElementById('mdi-panel-' + p)?.getBoundingClientRect();
@@ -100,6 +100,87 @@ for (const pg of PAGES) {
       check(await hasClass('#mdiSidebar', 'sb-collapsed') === collapsed0, '사이드바 펼치기 복귀 실패');
     });
 
+    await step('사용성 검토: 분류·추가·호가 기록·뉴스 탐색', async () => {
+      const result = await page.evaluate(async () => {
+        const backup = { wl:state.watchlist, groups:state.watchlistGroups, pf:state.portfolio,
+          raw:_allStockRaw, group:window._wlActiveGroup, sel:window._dockSel, api:window.electronAPI, hogaCode:_hogaCurrentCode, ic:{..._ic} };
+        const checks = {};
+        try {
+          state.watchlist = [{ticker:'005930',name:'삼성전자',group:'반도체',price:100,change:1,quoteAt:Date.now()},
+            {ticker:'000660',name:'SK하이닉스',group:'전력',price:200,change:1,quoteAt:Date.now()}];
+          state.watchlistGroups=[];state.portfolio=[];window._wlActiveGroup='전체';window._dockSel='005930';
+          _allStockRaw={KOSPI:[{code:'000001',name:'추가 검증 종목',market:'KOSPI'}]};
+          window._MDI.show('watchlist');renderWatchlist();
+          checks.themeRecovery=document.getElementById('wlGroupBar').textContent.includes('반도체');
+          checks.assignment=!!document.querySelector('#watchlistBody select[aria-label="삼성전자 테마"]');
+          wlSetGroup('반도체');checks.groupFilter=document.querySelectorAll('#watchlistBody tr[data-watch-ticker]').length===1;
+          window.electronAPI={...backup.api,saveState:async()=>true,fetchNaverStocks:async()=>({ok:true,data:[{code:'000002',name:'목록 조회 검증',market:'KOSDAQ'}]})};
+          document.getElementById('sbWatchAdd').click();
+          document.getElementById('sbWatchMarket').value='KOSDAQ';
+          await document.getElementById('sbWatchCatalog').onclick({currentTarget:document.getElementById('sbWatchCatalog')});
+          checks.catalogWithoutNavigation=_allStockRaw.KOSDAQ[0].code==='000002'&&document.getElementById('sbWatchAddDialog').open;
+          document.getElementById('sbWatchAddSearch').value='추가 검증';
+          document.getElementById('sbWatchAddSearch').dispatchEvent(new Event('input'));
+          document.querySelector('#sbWatchAddResults button').click();
+          checks.explicitAdd=state.watchlist.some(w=>w.ticker==='000001'&&w.group==='반도체');
+          document.getElementById('wlSearchInput').value='이름만 검색';_wlOnInput();
+          checks.filterDoesNotAdd=state.watchlist.length===3;
+          document.getElementById('wlSearchInput').value='';window._wlActiveGroup='전체';renderWatchlist();
+          sbDesktopAction('trade');
+          const visible=id=>document.getElementById(id)?.checkVisibility();
+          checks.compactTrade=visible('mdi-panel-trading')&&visible('mdi-panel-watchlist')&&visible('dockCtx');
+          document.getElementById('qo_price').value='100';document.getElementById('qo_qty').value='2';
+          dockSelectStock('000660');
+          checks.newStockClearsPrice=document.getElementById('qo_stock_code').value==='000660'&&document.getElementById('qo_price').value!=='100';
+          _renderHogaTable([{price:201,askVol:12,bidVol:0,isCur:false},{price:199,askVol:0,bidVol:15,isCur:false}]);
+          document.querySelector('#qo_hoga_body tr').click();
+          checks.quoteToPrice=document.getElementById('qo_price').value==='201';
+          _renderSimulatedHoga(200);checks.noSyntheticHoga=!document.querySelector('#qo_hoga_body tr[onclick]')&&document.getElementById('qo_hoga_body').textContent.includes('호가 미수신');
+          checks.noDuplicateMenu=!document.querySelector('.mdi-sidebar [data-pid="portfolio"]').checkVisibility()&&!document.querySelector('.mdi-sidebar [data-pid="trading"]').checkVisibility();
+          const requests=[];
+          window.electronAPI={...backup.api,saveState:async()=>true,fetchHoga:async()=>({asks:[{price:202,qty:10}],bids:[{price:198,qty:10}]}),fetchNews:async opts=>{requests.push(opts);return {ok:true,items:[
+            {id:'article-a',code:opts.code,title:'다른 기사',source:'검증 출처',summary:'첫 요약',time:'2026-10-21T09:00:00'},
+            {id:'article-b',code:opts.code,title:'찾을 기사',source:'검증 출처',summary:'내용 검색어',time:'2026-10-21T08:00:00'}]};}};
+          await sbDesktopHoga();document.querySelector('#sbHogaRows tr').click();
+          checks.receivedHogaToTrade=document.getElementById('qo_price').value==='202'&&document.getElementById('mdiWorkspace').dataset.dockScreen==='trading';
+          const fetchHoga=window.electronAPI.fetchHoga;let resolveOldHoga;
+          window.electronAPI.fetchHoga=code=>code==='005930'?new Promise(resolve=>{resolveOldHoga=resolve;}):fetchHoga(code);
+          connectToHoga('005930','삼성전자');connectToHoga('000660','SK하이닉스');
+          resolveOldHoga({asks:[{price:999,qty:10}],bids:[{price:998,qty:10}]});await new Promise(resolve=>setTimeout(resolve,0));
+          checks.noStaleHoga=!document.getElementById('qo_hoga_body').textContent.includes('999');
+          window.electronAPI.fetchHoga=fetchHoga;
+          window._MDI.show('news');document.getElementById('icStockSearch').value='005930';icPickStock();await icRefresh();
+          checks.newsLocalSelection=requests.some(r=>r.kind==='stock'&&r.code==='005930')&&document.getElementById('mdiWorkspace').dataset.dockScreen==='news';
+          document.getElementById('icArticleSearch').value='내용 검색어';_icRenderList();
+          checks.articleFilter=document.querySelectorAll('#icList .ic-row').length===1;
+          document.querySelector('#icList .ic-row').click();
+          checks.filteredDetail=document.getElementById('icDetail').textContent.includes('찾을 기사');
+          dockSelectStock('000660');
+          checks.newsContextUpdatesImmediately=document.getElementById('icStockSearch').value==='SK하이닉스 000660'&&document.getElementById('icSearchStatus').textContent==='SK하이닉스 종목뉴스';
+          await icRefresh();
+          checks.newsContextMatchesArticles=_ic.selectedCode==='000660'&&_ic.items.length>0&&_ic.items.every(n=>n.code==='000660')&&document.getElementById('icDetail').textContent.includes('목록에서 항목을 선택하세요');
+          document.getElementById('icStockSearch').value='삼성전자';icPickStock();await icRefresh();
+          checks.newsSearchContextMatches=document.getElementById('icStockSearch').value==='삼성전자 005930'&&document.getElementById('icSearchStatus').textContent==='삼성전자 종목뉴스'&&_ic.items.every(n=>n.code==='005930');
+          checks.newsUsesHeight=document.querySelector('.ic-wrap').getBoundingClientRect().height>450;
+          openSettings('general');
+          checks.noEmptySettings=!document.querySelector('#settingsNav [data-cat="advanced"]').checkVisibility();
+          checks.compactSettings=document.querySelector('#settingsModal .sb-modal').getBoundingClientRect().height<550;
+          const sidebar=document.getElementById('mdiSidebar').getBoundingClientRect();
+          checks.modalCoversSidebar=!document.elementFromPoint(sidebar.x+10,sidebar.y+80)?.closest('#mdiSidebar');
+          closeSettings();
+          return checks;
+        } finally {
+          document.getElementById('sbWatchAddDialog')?.remove();closeSettings();
+          state.watchlist=backup.wl;state.watchlistGroups=backup.groups;state.portfolio=backup.pf;
+          _allStockRaw=backup.raw;window._wlActiveGroup=backup.group;window._dockSel=backup.sel;window.electronAPI=backup.api;
+          _stopHogaAutoRefresh();_hogaCurrentCode=backup.hogaCode;
+          Object.assign(_ic,backup.ic);document.getElementById('icArticleSearch').value='';
+          window._MDI.show('watchlist');
+        }
+      });
+      for (const [name, passed] of Object.entries(result)) check(passed, `사용성 회귀: ${name}`);
+    });
+
     await step('데스크톱 새 셸과 기존 작업 연결', async () => {
       const result = await page.evaluate(() => {
         const bak = { wl: state.watchlist, pf: state.portfolio, sel: window._dockSel, journal: document.getElementById('j_name').value };
@@ -110,7 +191,7 @@ for (const pg of PAGES) {
           window._MDI.show('watchlist');
           const rail = document.getElementById('mdiSidebar').getBoundingClientRect().width <= 64;
           const header = document.querySelector('.header').getBoundingClientRect().height <= 70;
-          const actions = document.querySelector('.sb-work-toolbar .sb-btn--primary')?.textContent.includes('거래 등록');
+          const actions = document.querySelector('#mdi-body-portfolio [data-work-tab="ord"]')?.textContent === '매매' && !document.querySelector('#mdi-ptc-portfolio-pf .sb-work-toolbar');
           const columns = document.getElementById('sbQuoteColumns');
           columns.click(); const full = !document.getElementById('watchlistBody').classList.contains('sb-compact-quotes');
           columns.click(); const compact = document.getElementById('watchlistBody').classList.contains('sb-compact-quotes');
@@ -134,6 +215,34 @@ for (const pg of PAGES) {
         }
       });
       for (const [name, passed] of Object.entries(result)) check(passed, `새 데스크톱 셸 회귀: ${name}`);
+    });
+
+    await step('종합 작업 탭 전환과 입력 보존', async () => {
+      const backup = await page.evaluate(() => ({ price:document.getElementById('qo_price').value,principal:document.getElementById('mc_principal').value,journal:document.getElementById('j_name').value }));
+      try {
+        await page.evaluate(() => {
+          sbWorkTab('ord');document.getElementById('qo_price').value='12345';
+          document.getElementById('j_name').value='탭 전환 중 일지 초안';
+        });
+        for (const key of ['calc','journal','trd','rlz','cash','pf','ord']) {
+          await page.locator(`.sb-task-tabs:visible [data-work-tab="${key}"]`).click();
+          check(await page.locator(`.sb-task-tabs:visible [data-work-tab="${key}"]`).getAttribute('aria-current') === 'page', `종합 작업 탭 활성 표시 실패: ${key}`);
+          check(await page.evaluate(() => ['mdi-panel-watchlist','dockCtx','sbAnalysis'].every(id=>document.getElementById(id).checkVisibility())), `작업 탭에서 종합 문맥 사라짐: ${key}`);
+          if (key === 'calc') {
+            await page.locator('#mc_principal').fill('10000');
+            await page.locator('#mc_rate').fill('1');
+            await page.locator('#mc_months').fill('1');
+            check(await page.locator('#mc_result').isVisible(), '계산기 탭에서 계산 결과가 표시되지 않음');
+          }
+        }
+        check(await page.locator('#qo_price').inputValue() === '12345', '작업 탭 전환 시 거래 단가 유실');
+        check(await page.locator('#j_name').inputValue() === '탭 전환 중 일지 초안', '작업 탭 전환 시 일지 초안 유실');
+      } finally {
+        await page.evaluate(b=>{
+          document.getElementById('qo_price').value=b.price;document.getElementById('mc_principal').value=b.principal;document.getElementById('j_name').value=b.journal;
+          sbWorkTab('pf');
+        },backup);
+      }
     });
 
     await step('동시 분석 영역과 실제 호가 상태', async () => {
@@ -316,6 +425,14 @@ for (const pg of PAGES) {
         check(layout.work.y >= layout.ctx.bottom && Math.abs(layout.work.x-layout.ctx.x) < 2 && layout.analysis.x >= layout.work.right && Math.abs(layout.analysis.right-layout.ctx.right) < 2 && Math.abs(layout.analysis.y-layout.work.y) < 2, `${vp.width}px: 하단 작업 패널이 우측 종합 패널 아래에 정렬되지 않음`);
         check(Math.abs(layout.left.bottom-layout.work.bottom)<2 && layout.left.y >= layout.workspace.y, `${vp.width}px: 좌측 종목창 전체 높이 오류`);
         check(layout.workspace.y >= layout.header-1 && layout.work.bottom <= vp.height+1, `${vp.width}px: 상단 겹침 또는 하단 잘림`);
+        check(layout.ctx.height < layout.workspace.height * .4, `${vp.width}px: 종목·차트 영역이 작업 공간을 과도하게 차지함`);
+        await page.evaluate(() => window._MDI.show('news'));
+        const newsLayout = await page.evaluate(() => {
+          const list=document.getElementById('icList').getBoundingClientRect(),detail=document.getElementById('icDetail').getBoundingClientRect();
+          return {sideBySide:detail.x>=list.right-1,fullHeight:Math.abs(detail.height-list.height)<2};
+        });
+        check(newsLayout.sideBySide && newsLayout.fullHeight, `${vp.width}px: 뉴스 목록·상세가 공간을 나눠 쓰지 못함`);
+        await page.evaluate(() => window._MDI.show('watchlist'));
         for (const mode of ['dark', 'light']) {
           await page.evaluate(m => setTheme(m), mode);
           await page.waitForTimeout(300);
