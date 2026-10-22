@@ -26,12 +26,13 @@ function registerChartWindow({ ipcMain, BrowserWindow, getMainWindow, appDir }) 
       follow=true;current=latest;
       child=new BrowserWindow({width:1200,height:850,minWidth:700,minHeight:500,title:'상세 차트',
         webPreferences:{contextIsolation:true,nodeIntegration:false,preload:path.join(appDir,'src/chart/preload.cjs')}});
+      const opened=child;
       child.setMenuBarVisibility(false);
       child.webContents.setWindowOpenHandler(()=>({action:'deny'}));
       child.webContents.on('will-navigate',event=>event.preventDefault());
-      child.webContents.on('did-finish-load',send);
-      child.on('closed',()=>{child=null;});
-      child.loadFile(path.join(appDir,'chart.html')).catch(()=>{if(child&&!child.isDestroyed())child.close();});
+      child.webContents.on('did-finish-load',()=>{if(child===opened)send();});
+      child.on('closed',()=>{if(child===opened)child=null;});
+      child.loadFile(path.join(appDir,'chart.html')).catch(()=>{if(!opened.isDestroyed())opened.close();});
       return {ok:true};
     }catch{return {ok:false};}
   });

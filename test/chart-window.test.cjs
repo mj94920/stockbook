@@ -29,3 +29,22 @@ test('recorded chart data is identified and never used for another stock',()=>{
   const pkg=require('../package.json');assert.ok(pkg.build.files.includes('src/chart/**'));assert.ok(pkg.build.files.includes('src/desktop/renderer-files.cjs'));
  }finally{fs.rmSync(temp,{recursive:true,force:true});}
 });
+
+
+test('late load failure from a closed window does not close its replacement',async()=>{
+ const handlers=new Map(),main={webContents:{}},windows=[];
+ class Window extends EventEmitter{
+  constructor(){super();this.destroyed=false;this.webContents=new EventEmitter();this.webContents.send=()=>{};this.webContents.setWindowOpenHandler=()=>{};windows.push(this);}
+  isDestroyed(){return this.destroyed;}setMenuBarVisibility(){}show(){}focus(){}
+  loadFile(){return new Promise((_resolve,reject)=>{this.fail=reject;});}
+  close(){this.destroyed=true;this.emit('closed');}
+ }
+ registerChartWindow({ipcMain:{handle:(key,fn)=>handlers.set(key,fn)},BrowserWindow:Window,getMainWindow:()=>main,appDir:'/app'});
+ const open=()=>handlers.get('open-chart-window')({sender:main.webContents},{code:'005930',period:'6m'});
+ assert.equal(open().ok,true);const old=windows[0];old.close();
+ assert.equal(open().ok,true);const replacement=windows[1];
+ old.fail(Error('closed while loading'));await Promise.resolve();
+ assert.equal(replacement.isDestroyed(),false);
+ old.emit('closed');assert.equal(open().ok,true);assert.equal(windows.length,2);
+ replacement.close();replacement.fail(Error('closed'));await Promise.resolve();
+});
