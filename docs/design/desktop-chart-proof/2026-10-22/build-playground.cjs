@@ -1,0 +1,11 @@
+const fs=require('node:fs'),path=require('node:path');
+const root=__dirname;
+const snapshots={'long-candles.json':JSON.parse(fs.readFileSync(path.join(root,'long-candles.json'),'utf8')),'investor-snapshot.json':JSON.parse(fs.readFileSync(path.join(root,'investor-snapshot.json'),'utf8'))};
+let html=fs.readFileSync(path.join(root,'styled-chart.html'),'utf8');
+const data=JSON.stringify(snapshots).replaceAll('<','\\u003c').replaceAll('>','\\u003e');
+const bootstrap=`const playgroundSnapshots=${data};function loadSnapshot(name){return Object.hasOwn(playgroundSnapshots,name)?Promise.resolve({ok:true,json:async()=>playgroundSnapshots[name]}):Promise.reject(new Error('자료 없음'));}`;
+html=html.replace('<h1>삼성전자 · 일봉 가격 이동평균선</h1>','<h1>StockBook 차트 직접 테스트</h1><p class="note">삼성전자 저장 데이터로 조작을 시험합니다. 선을 선택하고 몸체·끝점을 끌어 보세요. Esc로 취소합니다. 실시간 시세와 제품 앱 연결은 포함하지 않습니다.</p>');
+let first=true;
+html=html.replace(/<script src="([a-z-]+\.js)"><\/script>/g,(_,file)=>{let code=fs.readFileSync(path.join(root,file),'utf8').replace(/\bfetch\(/g,'loadSnapshot(');if(first){code=bootstrap+'\n'+code;first=false;}return '<script>\n'+code.replace(/<\/script/gi,'<\\/script')+'\n</script>';});
+if(first||/script src=/.test(html))throw Error('Script embedding failed');
+fs.writeFileSync(path.join(root,'playground.html'),html);console.log('Built single-file playground:',Buffer.byteLength(html),'bytes');

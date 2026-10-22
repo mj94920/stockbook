@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "mode": "single-file-http",
+  "fileNavigationVerified": false,
+  "checks": [
+    "self-contained HTML with embedded data",
+    "no runtime data/script requests",
+    "draw trend",
+    "drag whole drawing",
+    "edit endpoint",
+    "Escape restores drag",
+    "move rectangle",
+    "freehand pen",
+    "save/load local file",
+    "theme/resize"
+  ],
+  "browserErrors": []
+}

@@ -2,6 +2,12 @@
 
 2026-10-22 KST. GitHub 보존 브랜치: `codex/chart-proof-20261022`. 디자인룸 검토와 이후 제품 연결에 참고하기 위한 독립 실험본이다. StockBook 제품 코드나 계좌 인증 연결을 포함하지 않는다. 저장소에서 이 폴더 전체를 받으면 다른 작업 환경에서도 실행할 수 있다.
 
+## 직접 조작해 보기
+
+`playground.html` 하나를 내려받아 Chrome 또는 Edge로 엽니다. 코드와 공개 시세 스냅샷이 내장되어 추가 데이터 다운로드가 없습니다. 도구로 선을 그린 뒤 **선택·십자선**에서 몸체를 끌어 전체 이동, 끝점 손잡이를 끌어 수정합니다. Esc는 진행 중 작업을 취소합니다. 봉중심선은 좌우로 옮겨 기준 봉을 바꿉니다.
+
+클라우드의 관리된 Chromium은 로컬 파일 열기를 차단하므로 여기서는 동일 HTML을 내부 HTTP로 제공해 검증했습니다. 직접 파일 열기 자체를 이 환경에서 검증했다는 뜻은 아닙니다. 사용 환경에서도 파일 열기가 차단되면 아래 화면 실행 방법으로 엽니다.
+
 ## 먼저 볼 자료
 
 **사용 방법·지표 해석·색상·문제 해결: [MANUAL.md](MANUAL.md)**
@@ -30,6 +36,8 @@ npm install --ignore-scripts
 npx playwright install chromium
 npm run verify
 node verify-tools.cjs
+node build-playground.cjs
+node verify-playground.cjs
 ```
 
 이미 시스템 Chromium을 사용하는 환경이면 `CHART_CHROMIUM_PATH=/usr/bin/chromium npm run verify`로 실행할 수 있다. Playwright 브라우저 다운로드에는 해당 CDN 접속 허용이 필요하다. 보존된 결과는 Node 24 / Playwright 1.56.0 / Linux 시스템 Chromium 검증이며 Windows Electron 검증이 아니다.
