@@ -1,6 +1,7 @@
 {
   "passed": true,
   "checks": [
+    "max zoom retains latest candle across buttons, scale and wheel",
     "desktop drag right zooms in",
     "desktop drag left zooms out",
     "scale slider bounds 30..480",
