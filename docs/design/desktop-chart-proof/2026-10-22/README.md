@@ -4,6 +4,8 @@
 
 ## 먼저 볼 자료
 
+**사용 방법·지표 해석·색상·문제 해결: [MANUAL.md](MANUAL.md)**
+
 - joined-chart-dark.png / joined-chart-light.png: 가격 차트와 보조영역
 - investors-dark.png / investors-light.png: 실제 외국인·기관·개인 순매수 누적
 - styled-chart.html: 실행 진입점

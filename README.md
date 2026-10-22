@@ -7,6 +7,10 @@
 - Legacy 모바일(Android TWA·PWA)은 2026-10 폐기했다. 복원하지 않는다.
 - Kotlin 기반 신규 클라이언트 **StockBook Android 2.0** 은 준비 중이다. Android Gate(#29 → #47 → Contract Gate → #48~#50 → JS Fixture PASS) 통과 후에 착수하며, 규칙은 `CLAUDE.md` §8.
 
+## 사용 방법
+
+처음 사용하거나 메뉴가 궁금하면 [StockBook 사용 매뉴얼](docs/USER-MANUAL.md)을 확인하세요. 계좌·잔고·거래·투자일지·뉴스·백업 방법을 안내합니다.
+
 ## 개발 방식 — 이슈만 쓰면 끝
 
 1. **Issues → New issue → ✨ 기능 요청 / 🐛 버그 신고** 템플릿으로 작성
