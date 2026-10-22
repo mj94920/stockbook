@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "environment": "Chromium native touch emulation via CDP; not a physical tablet",
+  "checks": [
+    "touch candle info stays visible",
+    "one-finger drawing",
+    "move line",
+    "drag endpoint",
+    "two-tap divisions",
+    "touch pen",
+    "cancel button",
+    "zoom buttons",
+    "one-finger chart pan mode",
+    "two-finger pinch zoom",
+    "touch scale and timeline sliders",
+    "portrait no horizontal overflow"
+  ],
+  "browserErrors": []
+}

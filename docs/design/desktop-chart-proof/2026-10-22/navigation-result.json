@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "checks": [
+    "desktop drag right zooms in",
+    "desktop drag left zooms out",
+    "scale slider bounds 30..480",
+    "scrollbar mouse click and oldest/latest bounds",
+    "price/MA/volume window alignment",
+    "annotations keep dates/prices through zoom/pan/reload",
+    "explicit pan mode",
+    "wheel zoom",
+    "reset to latest 160"
+  ],
+  "browserErrors": []
+}
