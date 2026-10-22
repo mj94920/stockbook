@@ -1,0 +1,64 @@
+// Drawing anchors use trading dates and prices, never screenshot pixels.
+const toolSvg=document.getElementById('chart');
+const ns='http://www.w3.org/2000/svg';
+const drawingKey='stockbook-chart-proof:005930:drawings:v1';
+const drawingTypes=['trend','horizontal','midpoint','thirds','quarters','rectangle','ellipse','arrow','pen'];
+let drawingMode='view',drawings=[],pendingAnchor=null,selectedDrawing=null,nextDrawingId=1,penStroke=null;
+const toolMessage=document.getElementById('toolMessage');
+const candleTip=document.getElementById('candleTip');
+function svgNode(tag,attrs={},text){const n=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))n.setAttribute(k,String(v));if(text!==undefined)n.textContent=text;return n;}
+function pointInSvg(event){return new DOMPoint(event.clientX,event.clientY).matrixTransform(toolSvg.getScreenCTM().inverse());}
+function toolModel(){return window.chartModel;}
+function anchorX(anchor,m){const i=m.rows.findIndex(r=>r.date===anchor.date);return i<0?null:m.x(i+anchor.offset);}
+function anchorFromPoint(p,m){const i=Math.max(0,Math.min(m.rows.length+24,Math.round((p.x-25)/m.step-.5))),actual=Math.min(i,m.rows.length-1);return {date:m.rows[actual].date,offset:i-actual,price:m.priceForY(p.y)};}
+function setDrawingMode(mode){drawingMode=mode;pendingAnchor=null;for(const b of document.querySelectorAll('[data-chart-tool]'))b.setAttribute('aria-pressed',String(b.dataset.chartTool===mode));toolSvg.style.cursor='crosshair';toolMessage.textContent={view:'봉 위에 마우스를 올리면 당일 정보를 봅니다.',trend:'추세선: 시작점과 끝점을 차례로 누르세요.',horizontal:'수평선: 원하는 가격 위치를 누르세요.',midpoint:'봉중심선: 봉을 누르면 선택한 기준의 중앙 가격에 선을 그립니다.',thirds:'3등분선: 나눌 가격 범위의 두 끝을 누르세요.',quarters:'4등분선: 나눌 가격 범위의 두 끝을 누르세요.',rectangle:'사각형: 두 모서리를 차례로 누르세요.',ellipse:'타원: 범위의 두 모서리를 차례로 누르세요.',arrow:'화살표: 시작점과 끝점을 차례로 누르세요.',pen:'펜: 마우스를 누른 채 그리세요.'}[mode];renderDrawings();}
+function drawOne(layer,d,preview=false){const m=toolModel(),a=d.points[0],b=d.points[1],xa=anchorX(a,m),xb=b?anchorX(b,m):null;if(xa===null||b&&xb===null)return;const light=document.body.classList.contains('light'),color=selectedDrawing===d.id?(light?'#975000':'#ffe275'):(light?'#965023':'#f5b16e');
+ const group=svgNode('g',{'data-drawing-id':d.id,class:preview?'drawing-preview':'drawing'});if(preview)group.setAttribute('pointer-events','none');const levels=[];
+ if(['rectangle','ellipse','pen','arrow'].includes(d.type)){
+ const attrs={fill:'none',stroke:color,'stroke-width':2};let visible;
+ if(d.type==='pen'){const points=d.points.map(p=>[anchorX(p,m),m.y(p.price)]);if(points.some(p=>p[0]===null))return;visible=svgNode('polyline',{...attrs,points:points.map(p=>p.join(',')).join(' ')});}
+ else if(b){const ya=m.y(a.price),yb=m.y(b.price),left=Math.min(xa,xb),top=Math.min(ya,yb),width=Math.max(1,Math.abs(xb-xa)),height=Math.max(1,Math.abs(yb-ya));
+ if(d.type==='rectangle')visible=svgNode('rect',{...attrs,x:left,y:top,width,height});
+ if(d.type==='ellipse')visible=svgNode('ellipse',{...attrs,cx:left+width/2,cy:top+height/2,rx:width/2,ry:height/2});
+ if(d.type==='arrow'){visible=svgNode('line',{...attrs,x1:xa,y1:ya,x2:xb,y2:yb});const angle=Math.atan2(yb-ya,xb-xa),r=11;group.append(svgNode('path',{d:`M${xb-r*Math.cos(angle-.45)},${yb-r*Math.sin(angle-.45)} L${xb},${yb} L${xb-r*Math.cos(angle+.45)},${yb-r*Math.sin(angle+.45)}`,...attrs,'pointer-events':'none'}));}}
+ if(visible){group.append(visible);if(!preview){const hit=visible.cloneNode();hit.setAttribute('stroke','transparent');hit.setAttribute('stroke-width','12');hit.setAttribute('pointer-events','stroke');hit.setAttribute('data-drawing-id',d.id);hit.classList.add('drawing-hit');group.append(hit);}}
+ layer.append(group);return;
+ }
+ if(d.type==='trend'&&b)levels.push([xa,m.y(a.price),xb,m.y(b.price),'']);
+ else if(['horizontal','midpoint'].includes(d.type))levels.push([25,m.y(a.price),1165,m.y(a.price),(d.type==='midpoint'?`${a.date} ${d.centerKind==='body'?'몸통':'고저'} 중심 · `:'')+Math.round(a.price).toLocaleString()]);
+ else if(b){const parts=d.type==='thirds'?3:4;for(let i=0;i<=parts;i++){const price=a.price+(b.price-a.price)*i/parts;levels.push([25,m.y(price),1165,m.y(price),`${i}/${parts} · ${Math.round(price).toLocaleString()}`]);}}
+ for(const [x1,y1,x2,y2,label] of levels){group.append(svgNode('line',{x1,y1,x2,y2,stroke:color,'stroke-width':selectedDrawing===d.id?2.5:1.5,'stroke-dasharray':preview?'4 4':'none','pointer-events':'none'}));if(!preview)group.append(svgNode('line',{x1,y1,x2,y2,stroke:'transparent','stroke-width':12,'pointer-events':'stroke','data-drawing-id':d.id,class:'drawing-hit'}));if(label)group.append(svgNode('text',{x:35,y:y1-5,fill:color,'font-size':11,'pointer-events':'none'},label));}
+ if(selectedDrawing===d.id)for(const p of d.points)group.append(svgNode('circle',{cx:anchorX(p,m),cy:m.y(p.price),r:4,fill:color,'pointer-events':'none'}));
+ layer.append(group);
+}
+function renderDrawings(previewAnchor){if(!toolModel())return;toolSvg.querySelector('.annotation-layer')?.remove();const layer=svgNode('g',{class:'annotation-layer'});for(const d of drawings)drawOne(layer,d);if(penStroke&&penStroke.length>1)drawOne(layer,{id:-2,type:'pen',points:penStroke},true);if(pendingAnchor&&previewAnchor)drawOne(layer,{id:-1,type:drawingMode,points:[pendingAnchor,previewAnchor]},true);toolSvg.append(layer);}
+function hideCrosshair(){for(const svg of [toolSvg,document.getElementById('pressureChart'),document.getElementById('investorChart')])svg.querySelector('.cursor-layer')?.remove();candleTip.hidden=true;}
+function cursorLine(svg,x,bottom,color){const group=svgNode('g',{class:'cursor-layer','pointer-events':'none'});group.append(svgNode('line',{x1:x,x2:x,y1:0,y2:bottom,stroke:color,'stroke-width':1,'stroke-dasharray':'3 4'}));svg.append(group);return group;}
+function showCrosshair(p,event){hideCrosshair();const m=toolModel();if(!m||p.x<25||p.x>1165||p.y<30||p.y>520)return;const index=Math.max(0,Math.min(m.rows.length+24,Math.round((p.x-25)/m.step-.5))),xx=m.x(index),price=m.priceForY(p.y),color=document.body.classList.contains('light')?'#5b6270':'#c3cad6',label=index<m.rows.length?m.rows[index].date:`미래 +${index-m.rows.length+1}봉`;
+ const group=cursorLine(toolSvg,xx,560,color);group.append(svgNode('line',{x1:25,x2:1165,y1:p.y,y2:p.y,stroke:color,'stroke-dasharray':'3 4'}),svgNode('rect',{x:1170,y:p.y-11,width:108,height:22,fill:'var(--text)'}),svgNode('text',{x:1176,y:p.y+4,fill:'var(--bg)','font-size':12},Math.round(price).toLocaleString()),svgNode('rect',{x:Math.min(1050,Math.max(25,xx-50)),y:563,width:112,height:23,fill:'var(--text)'}),svgNode('text',{x:Math.min(1056,Math.max(31,xx-44)),y:579,fill:'var(--bg)','font-size':11},label));
+ cursorLine(document.getElementById('pressureChart'),xx,590,color);
+ if(index>=m.rows.length){candleTip.hidden=true;return;}
+ const row=m.rows[index],global=m.offset+index,previous=m.all[global-1]?.close,change=previous?((row.close/previous-1)*100):null;
+ const lines=[`${row.date} · 삼성전자`,...['open','high','low','close'].map((k,i)=>`${['시가','고가','저가','종가'][i]}  ${row[k].toLocaleString()}원`),`전일 종가 대비  ${change===null?'자료 없음':(change>=0?'+':'')+change.toFixed(2)+'%'}`,`거래량  ${row.volume.toLocaleString()}주`,'거래대금  자료 미수신',...m.averages.map((a,i)=>`${m.periods[i]}일선  ${a[index]===null?'자료 없음':a[index].toLocaleString('ko-KR',{maximumFractionDigits:2})}`)];
+ if(global===m.all.length-1)lines.push('장중 미완성 봉 · 저장된 스냅샷');candleTip.textContent=lines.join('\n');candleTip.hidden=false;
+ candleTip.style.left=Math.max(8,Math.min(window.innerWidth-candleTip.offsetWidth-8,event.clientX+18))+'px';candleTip.style.top=Math.max(8,Math.min(window.innerHeight-candleTip.offsetHeight-8,event.clientY+18))+'px';
+ const dates=window.investorEvidence?.dates||[],di=dates.indexOf(row.date);if(di>=0)cursorLine(document.getElementById('investorChart'),65+(di+1)*1040/(dates.length+1),255,color);
+}
+function restoreChartInteraction(){hideCrosshair();renderDrawings();}
+toolSvg.addEventListener('pointermove',event=>{const m=toolModel();if(!m)return;const p=pointInSvg(event);if(penStroke){if(p.x>=25&&p.x<=1165&&p.y>=30&&p.y<=520&&penStroke.length<500){penStroke.push(anchorFromPoint(p,m));renderDrawings();}return;}showCrosshair(p,event);if(pendingAnchor&&p.x>=25&&p.x<=1165&&p.y>=30&&p.y<=520){renderDrawings(anchorFromPoint(p,m));}});
+toolSvg.addEventListener('pointerleave',()=>{hideCrosshair();renderDrawings();});
+toolSvg.addEventListener('click',event=>{const m=toolModel();if(!m)return;const p=pointInSvg(event);if(p.x<25||p.x>1165||p.y<30||p.y>520)return;if(drawingMode==='view'){selectedDrawing=Number(event.target.closest('[data-drawing-id]')?.dataset.drawingId)||null;renderDrawings();return;}
+ if(drawingMode==='pen')return;let anchor=anchorFromPoint(p,m);if(drawingMode==='midpoint'){if(anchor.offset){toolMessage.textContent='실제 봉을 선택하세요.';return;}const row=m.rows.find(r=>r.date===anchor.date),kind=document.getElementById('centerKind').value;anchor={...anchor,price:kind==='body'?(row.open+row.close)/2:(row.high+row.low)/2};}if(!['horizontal','midpoint'].includes(drawingMode)&&!pendingAnchor){pendingAnchor=anchor;toolMessage.textContent='두 번째 점을 누르세요. 취소하려면 Esc.';return;}
+ if(drawings.length>=200){toolMessage.textContent='선은 200개까지 저장할 수 있습니다.';pendingAnchor=null;return;}
+ const points=['horizontal','midpoint'].includes(drawingMode)?[anchor]:[pendingAnchor,anchor];if(points.length===2&&(drawingMode==='trend'?points[0].date===points[1].date&&points[0].offset===points[1].offset:Math.abs(points[0].price-points[1].price)<.01)){toolMessage.textContent='서로 다른 두 위치를 선택하세요.';return;}
+ drawings.push({id:nextDrawingId++,type:drawingMode,points,...(drawingMode==='midpoint'?{centerKind:document.getElementById('centerKind').value}:{})});selectedDrawing=drawings.at(-1).id;setDrawingMode('view');toolMessage.textContent='선을 추가했습니다. 선택해 삭제하거나 저장할 수 있습니다.';});
+for(const button of document.querySelectorAll('[data-chart-tool]'))button.onclick=()=>setDrawingMode(button.dataset.chartTool);
+document.getElementById('drawingDelete').onclick=()=>{if(selectedDrawing===null){toolMessage.textContent='삭제할 선을 먼저 선택하세요.';return;}drawings=drawings.filter(d=>d.id!==selectedDrawing);selectedDrawing=null;renderDrawings();};
+document.getElementById('drawingClear').onclick=()=>{if(!drawings.length)return;if(!window.confirm('그린 선을 모두 지울까요? 저장된 선은 저장 버튼을 누르기 전까지 유지됩니다.'))return;drawings=[];selectedDrawing=null;pendingAnchor=null;renderDrawings();};
+document.getElementById('drawingSave').onclick=()=>{try{localStorage.setItem(drawingKey,JSON.stringify({version:1,symbol:'005930',drawings}));toolMessage.textContent='이 브라우저에 저장했습니다.';}catch{toolMessage.textContent='저장하지 못했습니다. 브라우저 저장 공간을 확인하세요.';}};
+document.getElementById('drawingLoad').onclick=()=>{try{const raw=localStorage.getItem(drawingKey);if(!raw){toolMessage.textContent='저장된 선이 없습니다.';return;}const saved=JSON.parse(raw);if(saved.version!==1||saved.symbol!=='005930'||!Array.isArray(saved.drawings)||saved.drawings.length>200)throw Error();const candidate=saved.drawings.map((d,i)=>{if(!drawingTypes.includes(d.type)||!Array.isArray(d.points)||(d.type==='pen'?(d.points.length<2||d.points.length>500):d.points.length!==(['horizontal','midpoint'].includes(d.type)?1:2)))throw Error();const points=d.points.map(a=>{if(!a||!toolModel().rows.some(r=>r.date===a.date)||!Number.isInteger(a.offset)||a.offset<0||a.offset>25||typeof a.price!=='number'||!Number.isFinite(a.price)||a.price<=0)throw Error();return {date:a.date,offset:a.offset,price:a.price};});if(d.type==='midpoint'&&!['range','body'].includes(d.centerKind))throw Error();return {id:i+1,type:d.type,points,...(d.type==='midpoint'?{centerKind:d.centerKind}:{})};});drawings=candidate;nextDrawingId=drawings.length+1;selectedDrawing=null;setDrawingMode('view');toolMessage.textContent='저장한 선을 불러왔습니다.';}catch{toolMessage.textContent='저장 자료를 읽지 못했습니다. 현재 선은 유지합니다.';}};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){penStroke=null;setDrawingMode('view');hideCrosshair();}});
+toolSvg.addEventListener('pointerdown',event=>{if(drawingMode!=='pen'||event.button!==0||!toolModel()||drawings.length>=200)return;const p=pointInSvg(event);if(p.x<25||p.x>1165||p.y<30||p.y>520)return;penStroke=[anchorFromPoint(p,toolModel())];hideCrosshair();toolSvg.setPointerCapture(event.pointerId);event.preventDefault();});
+ toolSvg.addEventListener('pointerup',event=>{if(!penStroke)return;const points=penStroke;penStroke=null;if(points.length>1){drawings.push({id:nextDrawingId++,type:'pen',points});selectedDrawing=drawings.at(-1).id;}if(toolSvg.hasPointerCapture(event.pointerId))toolSvg.releasePointerCapture(event.pointerId);setDrawingMode('view');});
+ toolSvg.addEventListener('pointercancel',()=>{penStroke=null;setDrawingMode('view');});
+ window.addEventListener('resize',hideCrosshair);window.addEventListener('scroll',hideCrosshair,{passive:true});setDrawingMode('view');

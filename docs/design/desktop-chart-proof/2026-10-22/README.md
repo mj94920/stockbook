@@ -15,6 +15,12 @@
 
 압축을 푼 폴더(stockbook-chart-proof)에서 `python3 -m http.server 8000 --bind 127.0.0.1`을 실행하고 로컬 브라우저로 styled-chart.html을 연다. HTML을 파일로 직접 여는 방식은 JSON 읽기가 차단될 수 있다. 실행 중 외부 데이터 공급자에 접속하지 않고 동봉된 JSON을 읽는다. 이 주소는 내부 실행용이며 외부 공유 링크가 아니다.
 
+## 십자선·그리기 도구
+
+가격 차트에 마우스를 올리면 십자선과 해당 날짜의 시가·고가·저가·종가·거래량·이동평균값을 봅니다. 실제 금액이 없는 거래대금은 미수신으로 표시합니다. 추세선·수평선·봉중심선·3등분선·4등분선·사각형·타원·화살표·펜을 사용할 수 있습니다. 저장·불러오기는 현재 브라우저의 선만 관리하며, 서버 동기화가 아닙니다. 봉중심선은 고가·저가 중간값이 기본이며 시가·종가 중간값도 선택할 수 있습니다.
+
+추천 검토 중인 RSI(14), ATR(14), OBV, 일반 MACD(12·26·9)는 아직 추가하지 않았습니다. [추가 지표 제안](INDICATOR-PROPOSALS.md)을 먼저 검토합니다.
+
 ## 자동 검증
 
 Node.js가 설치된 환경에서:
@@ -23,6 +29,7 @@ Node.js가 설치된 환경에서:
 npm install --ignore-scripts
 npx playwright install chromium
 npm run verify
+node verify-tools.cjs
 ```
 
 이미 시스템 Chromium을 사용하는 환경이면 `CHART_CHROMIUM_PATH=/usr/bin/chromium npm run verify`로 실행할 수 있다. Playwright 브라우저 다운로드에는 해당 CDN 접속 허용이 필요하다. 보존된 결과는 Node 24 / Playwright 1.56.0 / Linux 시스템 Chromium 검증이며 Windows Electron 검증이 아니다.

@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "verify": "node verify-styled.cjs"
+    "verify": "node verify-styled.cjs",
+    "verify:tools": "node verify-tools.cjs"
   },
   "devDependencies": {
     "playwright": "1.56.0"

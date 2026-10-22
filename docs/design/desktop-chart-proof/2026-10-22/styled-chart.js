@@ -28,6 +28,8 @@ function render(all){
  svg+=`<text x="25" y="585" fill="${text}">${rows[0].date}</text><text x="${x(rows.length-1)-55}" y="585" fill="${text}">${rows.at(-1).date}</text>`;
  document.getElementById('chart').innerHTML=svg;document.getElementById('legend').innerHTML=periods.map((n,i)=>`<span style="color:${colors[i]};border-color:${colors[i]}">${n}일</span>`).join('')+`<span style="color:${mint};border-color:${mint}">BB 40 / 1.9 → +25봉</span>`;document.getElementById('period').textContent=`수신 기간 ${all[0].date} ~ ${all.at(-1).date} · ${all.length}봉 · 모든 이동평균은 종가 단순평균`;
  renderPressure(all,isLight);
+ window.chartModel={all,rows,offset,x,y,step,periods,averages:avgs,priceForY:v=>hi+pad-(v-30)/490*(hi-lo+2*pad)};
+ restoreChartInteraction();
  window.chartEvidence={count:all.length,displayed:rows.length,periods,cloudCount,bbShift:shift,bbPeriod:40,bbMultiplier:1.9,referenceBaseCount:referenceBase.length,references,lastAverages:avgs.map((a,i)=>({period:periods[i],value:a.at(-1)}))};window.renderDone=true;
 }
 fetch('long-candles.json').then(r=>r.json()).then(all=>{render(all);for(const id of ['refs','original'])document.getElementById(id).onchange=()=>render(all);document.getElementById('theme').onclick=()=>{document.body.classList.toggle('light');document.getElementById('theme').textContent=document.body.classList.contains('light')?'다크 모드':'라이트 모드';render(all);};});
