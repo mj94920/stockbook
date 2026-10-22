@@ -1,0 +1,19 @@
+{
+  "tileSizeDp": 48,
+  "compactTileSizeDp": 40,
+  "cornerRadiusRatio": 0.25,
+  "objectOccupancyTargetRatio": 0.65,
+  "light": "upper-left",
+  "backgroundPalette": [
+    "#E5ECF2",
+    "#E7EEEA",
+    "#EBE8F0",
+    "#F0EBE3",
+    "#E4EEED",
+    "#ECECEC"
+  ],
+  "sourceFormat": "opaque square PNG master; UI applies standardized rounded clipping",
+  "status": "proposed_render_tokens; artistic source values need visual review",
+  "fallbackIndustry": "fallback/unknown-industry",
+  "fallbackTheme": "fallback/unknown-theme"
+}

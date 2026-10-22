@@ -1,0 +1,30 @@
+{
+  "source": "https://github.com/mj94920/stockbook/blob/main/index.html",
+  "blobSha": "8854f13b65bf8bb1bbe8135315a1abacc2e371ae",
+  "function": "_getAutoETFTheme",
+  "status": "current_code_labels_not_new_taxonomy",
+  "labels": [
+    "레버리지",
+    "인버스",
+    "2차전지",
+    "반도체",
+    "AI/로봇",
+    "방산/우주",
+    "바이오/헬스",
+    "게임/엔터",
+    "미국주식",
+    "중국주식",
+    "일본주식",
+    "인도주식",
+    "신흥국주식",
+    "글로벌주식",
+    "코스피200",
+    "코스닥150",
+    "채권",
+    "원자재",
+    "리츠",
+    "배당",
+    "단기/현금",
+    "기타ETF"
+  ]
+}
