@@ -14,7 +14,7 @@ function mount(host,dataset,{mode='detail',period='6m',light:lightMode=false}={}
  <svg data-chart-id="pressureChart" viewBox="0 0 1280 210" role="img" aria-label="거래량과 추정 매매 압력"></svg>
  <div class="sb-proof-extended"><details class="sb-proof-money"><summary>거래대금 · 실제 금액 미수신</summary><p>날짜별 실제 거래대금 자료가 없어 막대를 표시하지 않습니다.</p></details>
  <details open data-chart-id="adPanel"><summary>A/D 추정선 · 실제 보유량 아님</summary><svg data-chart-id="adChart" viewBox="0 375 1280 215" role="img" aria-label="누적 매매 압력 추정"></svg></details>
- <details open data-chart-id="investorPanel"><summary>투자자별 순매수 · 별도 5거래일 축</summary><p data-chart-id="investorInfo"></p><svg data-chart-id="investorChart" viewBox="0 0 1280 290" role="img" aria-label="보존 투자자별 누적 순매수"></svg><details><summary>일별 수량</summary><table data-chart-id="investorTable"></table></details></details></div>
+ <details open data-chart-id="investorPanel"><summary>투자자별 순매수 · 별도 5거래일 축</summary><svg data-chart-id="investorChart" viewBox="0 0 1280 290" role="img" aria-label="보존 투자자별 누적 순매수"></svg><details><summary>일별 수량·자료 안내</summary><p data-chart-id="investorInfo"></p><table data-chart-id="investorTable"></table></details></details></div>
  <div data-chart-id="period" class="sb-chart-notice"></div>`;
  if(mode==='compact'){
    document.getElementById('chart').setAttribute('viewBox','15 20 1155 515');
@@ -102,7 +102,24 @@ function renderInvestorPanel(){
 }
 
  const all=dataset.candles;
- function draw(){render(all);renderInvestorPanel();document.getElementById('adChart').innerHTML=document.getElementById('pressureChart').innerHTML;host.chartEvidence={...window.chartEvidence,pressure:window.pressureEvidence,accumulation:window.accumulationEvidence,investors:window.investorEvidence};}
+ // Compress indicator coordinates, keeping label font sizes readable and candles unchanged.
+ function fitIndicator(id,top,bottom,height){
+  const svg=document.getElementById(id),ratio=(height-20)/(bottom-top);
+  svg.setAttribute('viewBox',`0 0 1280 ${height}`);
+  svg.setAttribute('preserveAspectRatio','none');
+  for(const el of svg.querySelectorAll('*')){
+   const ys=['y','y1','y2','cy'].filter(a=>el.hasAttribute(a)).map(a=>Number(el.getAttribute(a)));
+   if(el.hasAttribute('points'))ys.push(...el.getAttribute('points').split(/\s+/).map(p=>Number(p.split(',')[1])));
+   if(ys.length && (Math.max(...ys)<top || Math.min(...ys)>bottom)){el.remove();continue;}
+
+   for(const attr of ['y','y1','y2','cy'])if(el.hasAttribute(attr))el.setAttribute(attr,10+(Number(el.getAttribute(attr))-top)*ratio);
+   if(el.hasAttribute('height'))el.setAttribute('height',Number(el.getAttribute('height'))*ratio);
+   if(el.hasAttribute('points'))el.setAttribute('points',el.getAttribute('points').split(/\s+/).map(point=>{const [x,y]=point.split(',');return `${x},${10+(Number(y)-top)*ratio}`;}).join(' '));
+  }
+ }
+ function draw(){render(all);renderInvestorPanel();document.getElementById('adChart').innerHTML=document.getElementById('pressureChart').innerHTML;
+ if(mode!=='compact'){fitIndicator('pressureChart',0,210,56);fitIndicator('adChart',410,590,60);fitIndicator('investorChart',0,290,84);}
+ host.chartEvidence={...window.chartEvidence,pressure:window.pressureEvidence,accumulation:window.accumulationEvidence,investors:window.investorEvidence};}
  draw();for(const id of ['refs','original'])document.getElementById(id).onchange=draw;
  return {updateTheme:value=>{lightMode=value;draw();}};
 }

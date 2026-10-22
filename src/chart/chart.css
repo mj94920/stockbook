@@ -12,10 +12,18 @@
 .sb-proof-compact .sb-proof-options,.sb-proof-compact .sb-proof-extended,.sb-proof-compact [data-chart-id="period"],.sb-proof-compact .sb-proof-legend { display:none; }
 .sb-proof-compact { display:grid;grid-template-rows:auto minmax(0,3fr) minmax(0,1fr);height:100%; }
 .sb-proof-compact svg { height:100%;min-height:0; }
-.sb-proof-detail { padding:8px 12px; }
+.sb-proof-detail { padding:4px 10px; }
 .sb-proof-detail [data-chart-id="chart"] { max-height:520px; }
-.sb-proof-detail [data-chart-id="pressureChart"] { max-height:190px; }
-.sb-proof-detail [data-chart-id="adChart"] { max-height:190px; }
-.sb-proof-detail [data-chart-id="investorChart"] { max-height:260px; }
+.sb-proof-detail [data-chart-id="pressureChart"] { height:56px; }
+.sb-proof-detail [data-chart-id="adChart"] { height:60px; }
+.sb-proof-detail [data-chart-id="investorChart"] { height:84px; }
 
 .sb-proof-compact svg text { display:none; }
+
+.sb-proof-detail .sb-proof-options,.sb-proof-detail .sb-proof-legend { gap:4px 10px;margin:2px 0; }
+.sb-proof-detail .sb-proof-legend span { padding-bottom:1px; }
+.sb-proof-detail summary { padding:2px 0;line-height:18px; }
+.sb-proof-detail p { margin:2px 0;line-height:1.3; }
+.sb-proof-detail [data-chart-id="period"] { margin-top:2px; }
+
+.sb-proof-detail > .sb-proof-options,.sb-proof-detail > .sb-proof-legend { display:inline-flex;vertical-align:middle;margin-right:12px; }
