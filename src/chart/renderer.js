@@ -16,6 +16,7 @@ function mount(host,dataset,{mode='detail',period='6m',light:lightMode=false}={}
  <details open data-chart-id="adPanel"><summary>A/D 추정선 · 실제 보유량 아님</summary><svg data-chart-id="adChart" viewBox="0 375 1280 215" role="img" aria-label="누적 매매 압력 추정"></svg></details>
  <details open data-chart-id="investorPanel"><summary>투자자별 순매수 · 별도 5거래일 축</summary><svg data-chart-id="investorChart" viewBox="0 0 1280 290" role="img" aria-label="보존 투자자별 누적 순매수"></svg><details><summary>일별 수량·자료 안내</summary><p data-chart-id="investorInfo"></p><table data-chart-id="investorTable"></table></details></details></div>
  <div data-chart-id="period" class="sb-chart-notice"></div>`;
+ document.getElementById('chart').setAttribute('preserveAspectRatio','none');
  if(mode==='compact'){
    document.getElementById('chart').setAttribute('viewBox','15 20 1155 515');
    document.getElementById('chart').setAttribute('preserveAspectRatio','none');

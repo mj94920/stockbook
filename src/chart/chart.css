@@ -13,7 +13,7 @@
 .sb-proof-compact { display:grid;grid-template-rows:auto minmax(0,3fr) minmax(0,1fr);height:100%; }
 .sb-proof-compact svg { height:100%;min-height:0; }
 .sb-proof-detail { padding:4px 10px; }
-.sb-proof-detail [data-chart-id="chart"] { max-height:520px; }
+.sb-proof-detail [data-chart-id="chart"] { max-height:420px; }
 .sb-proof-detail [data-chart-id="pressureChart"] { height:56px; }
 .sb-proof-detail [data-chart-id="adChart"] { height:60px; }
 .sb-proof-detail [data-chart-id="investorChart"] { height:84px; }
