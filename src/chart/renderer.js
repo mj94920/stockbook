@@ -13,7 +13,6 @@ function mount(host,dataset,{mode='detail',period='6m',light:lightMode=false}={}
  <svg data-chart-id="chart" viewBox="0 0 1280 600" role="img" aria-label="보존 일봉 가격 차트"></svg>
  <svg data-chart-id="pressureChart" viewBox="0 0 1280 210" role="img" aria-label="거래량과 추정 매매 압력"></svg>
  <div class="sb-proof-extended"><details class="sb-proof-money"><summary>거래대금 · 실제 금액 미수신</summary><p>날짜별 실제 거래대금 자료가 없어 막대를 표시하지 않습니다.</p></details>
- <details open data-chart-id="adPanel"><summary>A/D 추정선 · 실제 보유량 아님</summary><svg data-chart-id="adChart" viewBox="0 375 1280 215" role="img" aria-label="누적 매매 압력 추정"></svg></details>
  <details open data-chart-id="investorPanel"><summary>투자자별 순매수 · 별도 5거래일 축</summary><svg data-chart-id="investorChart" viewBox="0 0 1280 290" role="img" aria-label="보존 투자자별 누적 순매수"></svg><details><summary>일별 수량·자료 안내</summary><p data-chart-id="investorInfo"></p><table data-chart-id="investorTable"></table></details></details></div>
  <div data-chart-id="period" class="sb-chart-notice"></div>`;
  document.getElementById('chart').setAttribute('preserveAspectRatio','none');
@@ -58,7 +57,6 @@ function render(all){
 }
 // Independent OHLCV estimate, not the encrypted HTS indicator or actual trade-side volume.
 function estimatePressure(all){return all.map((c,i)=>{const prior=all.slice(Math.max(0,i-20),i);const baseline=prior.length===20?prior.reduce((s,r)=>s+r.volume,0)/20:null;const location=c.high===c.low?0:Math.max(-1,Math.min(1,(2*c.close-c.high-c.low)/(c.high-c.low)));return {date:c.date,volume:c.volume,baseline,aboveAverage:baseline===null?null:c.volume>=baseline,location,pressure:location*c.volume};});}
-function cumulativePressure(all){let total=0;return estimatePressure(all).map(r=>({...r,cumulative:total+=r.pressure}));}
 function renderPressure(all,isLight){
  const rows=estimatePressure(all).slice(-visibleCount),step=1140/(rows.length+25),x=i=>25+(i+.5)*step,max=Math.max(1,...rows.map(r=>r.volume));
  const muted=isLight?'#526079':'#b8c2d2',red=isLight?'#c9263c':'#ff3030',cyan=isLight?'#087da0':'#46def5',yellow=isLight?'#9d7900':'#fff34a';
@@ -68,11 +66,6 @@ function renderPressure(all,isLight){
  const moneyColors=isLight?['#174ed6','#467c00','#b15b00','#cf253c','#8055b4','#283447']:['#346dff','#a8ee49','#ff9a34','#ff354f','#d2afff','#ffffff'];
  labels.forEach((t,i)=>{svg+=`<text x="${25+i*130}" y="260" fill="${moneyColors[i]}" font-size="12">${t}</text>`;});
  svg+=`<text x="25" y="305" fill="${muted}" font-size="13">날짜별 실제 거래대금 미수신 · 막대 표시 보류 · 종가×거래량으로 대체하지 않음</text><text x="25" y="360" fill="${muted}" font-size="11">${rows[0].date}</text><text x="${x(rows.length-1)-55}" y="360" fill="${muted}" font-size="11">${rows.at(-1).date}</text>`;
- const accumulated=cumulativePressure(all),visible=accumulated.slice(-visibleCount),vals=visible.map(r=>r.cumulative),low=Math.min(...vals),high=Math.max(...vals),span=high-low||1,yy=v=>415+(high-v)/span*130;
- svg+=`<line x1="0" y1="375" x2="1280" y2="375" stroke="${muted}" opacity=".3"/><text x="25" y="398" fill="${muted}" font-size="13">매집·분산 추정선(A/D) · 실제 세력 보유량 아님</text>`;
- for(let i=0;i<3;i++){const v=low+span*i/2;svg+=`<line x1="25" y1="${yy(v)}" x2="1170" y2="${yy(v)}" stroke="${muted}" opacity=".17"/><text x="1180" y="${yy(v)+4}" fill="${muted}" font-size="10">${(v/1e6).toFixed(1)}M</text>`;}
- svg+=`<polyline class="accumulation-line" points="${visible.map((r,i)=>`${x(i)},${yy(r.cumulative)}`).join(' ')}" fill="none" stroke="${yellow}" stroke-width="1.7"/><text x="25" y="570" fill="${muted}" font-size="11">${visible[0].date}</text><text x="${x(visible.length-1)-55}" y="570" fill="${muted}" font-size="11">${visible.at(-1).date}</text>`;
- window.accumulationEvidence={sourceCount:accumulated.length,displayed:visible.length,start:accumulated[0].date,last:visible.at(-1).cumulative,min:low,max:high};
  document.getElementById('pressureChart').innerHTML=svg;window.pressureEvidence={count:rows.length,buy:rows.filter(r=>r.pressure>0).length,sell:rows.filter(r=>r.pressure<0).length,neutral:rows.filter(r=>r.pressure===0).length};
 }
 // Actual provider-reported net purchases; never infer personal purchases as a residual.
@@ -118,9 +111,9 @@ function renderInvestorPanel(){
    if(el.hasAttribute('points'))el.setAttribute('points',el.getAttribute('points').split(/\s+/).map(point=>{const [x,y]=point.split(',');return `${x},${10+(Number(y)-top)*ratio}`;}).join(' '));
   }
  }
- function draw(){render(all);renderInvestorPanel();document.getElementById('adChart').innerHTML=document.getElementById('pressureChart').innerHTML;
- if(mode!=='compact'){fitIndicator('pressureChart',0,210,56);fitIndicator('adChart',410,590,60);fitIndicator('investorChart',0,290,84);}
- host.chartEvidence={...window.chartEvidence,pressure:window.pressureEvidence,accumulation:window.accumulationEvidence,investors:window.investorEvidence};}
+ function draw(){render(all);renderInvestorPanel();
+ if(mode!=='compact'){fitIndicator('pressureChart',0,210,56);fitIndicator('investorChart',0,290,84);}
+ host.chartEvidence={...window.chartEvidence,pressure:window.pressureEvidence,investors:window.investorEvidence};}
  draw();for(const id of ['refs','original'])document.getElementById(id).onchange=draw;
  return {updateTheme:value=>{lightMode=value;draw();}};
 }
