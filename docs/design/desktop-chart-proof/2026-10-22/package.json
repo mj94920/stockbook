@@ -1,0 +1,11 @@
+{
+  "name": "stockbook-chart-design-proof",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "verify": "node verify-styled.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.56.0"
+  }
+}

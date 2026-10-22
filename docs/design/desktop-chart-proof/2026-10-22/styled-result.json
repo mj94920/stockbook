@@ -1,0 +1,90 @@
+{
+  "passed": true,
+  "count": 1000,
+  "displayed": 160,
+  "periods": [
+    5,
+    10,
+    20,
+    60,
+    120,
+    200,
+    350,
+    480
+  ],
+  "cloudCount": 176,
+  "bbShift": 25,
+  "bbPeriod": 40,
+  "bbMultiplier": 1.9,
+  "referenceBaseCount": 600,
+  "references": [
+    {
+      "n": 60,
+      "candle": {
+        "date": "2026-07-23",
+        "open": 269000,
+        "high": 273000,
+        "low": 263000,
+        "close": 270000,
+        "volume": 16011816
+      }
+    },
+    {
+      "n": 20,
+      "candle": {
+        "date": "2026-09-18",
+        "open": 261000,
+        "high": 262000,
+        "low": 257500,
+        "close": 260000,
+        "volume": 17489615
+      }
+    },
+    {
+      "n": 5,
+      "candle": {
+        "date": "2026-10-15",
+        "open": 216500,
+        "high": 221500,
+        "low": 204500,
+        "close": 207500,
+        "volume": 34330565
+      }
+    }
+  ],
+  "lastAverages": [
+    {
+      "period": 5,
+      "value": 218650
+    },
+    {
+      "period": 10,
+      "value": 228325
+    },
+    {
+      "period": 20,
+      "value": 251462.5
+    },
+    {
+      "period": 60,
+      "value": 252254.16666666666
+    },
+    {
+      "period": 120,
+      "value": 273597.9166666667
+    },
+    {
+      "period": 200,
+      "value": 234367.25
+    },
+    {
+      "period": 350,
+      "value": 167962.14285714287
+    },
+    {
+      "period": 480,
+      "value": 137515.72916666666
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "dates": [
+    "2026-10-15",
+    "2026-10-16",
+    "2026-10-19",
+    "2026-10-20",
+    "2026-10-21"
+  ],
+  "count": 5,
+  "totals": {
+    "foreign": -1275121,
+    "institution": -1546172,
+    "individual": 2316914
+  },
+  "source": "Naver stock integration / 005930",
+  "lines": 3,
+  "points": 15
+}
