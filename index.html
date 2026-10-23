@@ -3493,7 +3493,36 @@
   #mdi-panel-portfolio .sb-cash-summary td { font-family:var(--sb-font-num);font-size:15px;padding:8px;text-align:right; }
   #mdi-ptc-portfolio-rlz > .card { border:0;border-radius:0;box-shadow:none;background:none;padding:8px 0; }
 
+  .ic-detail.sb-news-original { display:flex;flex-direction:column;overflow:hidden;min-height:0; }
+  .sb-news-original > h3 { font-size:14px;flex-shrink:0; }
+  .sb-news-original > .ic-meta,.sb-news-original > .ic-actions { flex-shrink:0; }
+  .sb-news-page-tools { display:flex;flex-wrap:wrap;gap:var(--sb-space-1);flex-shrink:0; }
+  .sb-news-page-status { color:var(--sb-text-2);font-size:12px;padding:var(--sb-space-1) 0;flex-shrink:0;overflow-wrap:anywhere; }
+  .sb-news-page-host { flex:1;min-height:80px;background:var(--sb-panel);color:var(--sb-text-2);overflow:auto; }
+
+  .ic-article-label { font-size:12px;color:var(--sb-text-3);margin:16px 0 8px; }
+  .ic-article-body { white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px;line-height:1.9;color:var(--sb-text-1);max-width:72ch; }
+  .ic-article-status { font-size:12px;color:var(--sb-text-2);line-height:1.7;margin:12px 0; }
+  .ic-detail .ic-actions { margin-top:8px;margin-bottom:16px; }
+
+  .sb-context-tabs { display:flex;border-bottom:1px solid var(--sb-border);padding:0 8px;gap:4px; }
+  .sb-context-tabs button { font:inherit;font-size:12px;padding:7px 12px;background:none;border:0;border-bottom:2px solid transparent;color:var(--sb-text-2);cursor:pointer; }
+  .sb-context-tabs button.active { border-color:var(--sb-accent);color:var(--sb-accent); }
+  .sb-market-stage { display:block; }
+  .sb-context-pane[hidden] { display:none!important; }
+  .sb-context-pane .sb-region-title label { display:flex;align-items:center;gap:6px;white-space:nowrap; }
+  #sbChartPeriod,#sbChartCycle { font:inherit;font-size:12px;padding:3px 6px;height:auto;width:auto;min-width:90px; }
+  #sbChartStatus { color:var(--sb-text-2);font-size:12px; }
+
+  .dock-ctx__body { flex:1;min-height:0; }
+  .sb-market-stage { flex:1;min-height:0;overflow:auto; }
+  .sb-context-pane[data-context-pane="chart"] { display:flex;flex-direction:column;height:100%;min-height:0; }
+  #sbEmbeddedChart { flex:1;min-height:0; }
+  .sb-context-pane .sb-region-title { flex-shrink:0; }
+  .sb-chart-loading { color:var(--sb-text-2);padding:12px; }
+
 </style>
+<link rel="stylesheet" href="src/chart/chart.css">
 </head>
 <body>
 
@@ -4166,6 +4195,7 @@
           <div class="ic-tabs" role="tablist">
             <button type="button" class="ic-tab active" data-ic-tab="market" onclick="icSetTab('market')">시장뉴스</button>
             <button type="button" class="ic-tab" data-ic-tab="stock" onclick="icSetTab('stock')">종목뉴스</button>
+            <button type="button" class="ic-tab" data-ic-tab="bloter" onclick="icSetTab('bloter')">블로터</button>
             <button type="button" class="ic-tab" data-ic-tab="disclosure" onclick="icSetTab('disclosure')">공시</button>
             <button type="button" class="ic-tab" data-ic-tab="econ" onclick="icSetTab('econ')">경제지표</button>
           </div>
@@ -4244,6 +4274,11 @@
           <div class="news-link-item" onclick="openUrl('https://www.mk.co.kr/news/stock/')">
             <div class="nl-icon"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#0070c0"></span></div>
             <div class="nl-info"><h4>매일경제 주식</h4><p>국내외 주식 뉴스</p></div>
+            <span style="margin-left:auto;color:var(--text3);font-size:13px;">&#x2197;</span>
+          </div>
+          <div class="news-link-item" role="link" tabindex="0" onclick="openUrl('https://www.bloter.net/')" onkeydown="if(event.key==='Enter'){event.preventDefault();openUrl('https://www.bloter.net/');}">
+            <div class="nl-icon"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--sb-accent)"></span></div>
+            <div class="nl-info"><h4>블로터</h4><p>기업·산업·IT 뉴스</p></div>
             <span style="margin-left:auto;color:var(--text3);font-size:13px;">&#x2197;</span>
           </div>
           <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:10px 0 6px;border-bottom:1px solid var(--border);margin-bottom:4px;display:flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> 해외 증시</div>
@@ -4479,9 +4514,18 @@
           <div class="sb-detail-price"><strong class="dock-ctx__price" id="dockCtxPrice">--</strong><span class="dock-ctx__chg" id="dockCtxChg">--</span></div>
           <div class="dock-ctx__none" id="dockCtxStatus" role="status"></div>
         </div><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('chart')">기업분석 ↗</button></div>
+        <div class="sb-context-tabs" aria-label="선택 종목 보기">
+          <button type="button" class="active" data-context-tab="chart" onclick="sbContextTab('chart')">차트</button>
+          <button type="button" data-context-tab="hoga" onclick="sbContextTab('hoga')">호가</button>
+          <button type="button" data-context-tab="info" onclick="sbContextTab('info')">기업정보</button>
+        </div>
         <div class="sb-market-stage">
-          <section class="sb-chart-region" aria-label="선택 종목 차트"><div class="sb-region-title"><strong>가격 차트</strong><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('chart')">종목 자료 확인 ↗</button></div><div class="sb-data-empty"><strong>차트 데이터 없음</strong><span>일봉 데이터가 연결되면 여기에 표시됩니다.</span></div><div class="dock-ctx__rows dock-ctx__quote-grid" id="dockCtxQuote"></div></section>
-          <section class="sb-order-region" aria-label="선택 종목 5호가"><div class="sb-region-title"><strong>5호가</strong><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" id="sbHogaRefresh" onclick="sbDesktopHoga()">조회</button></div><div id="sbHogaStatus" class="dock-ctx__none" role="status">호가 데이터 없음 · 조회 대기</div><table class="sb-hoga-table"><thead><tr><th>매도잔량</th><th>가격</th><th>매수잔량</th></tr></thead><tbody id="sbHogaRows"></tbody></table></section>
+          <section class="sb-context-pane" data-context-pane="chart" aria-label="선택 종목 차트">
+            <div class="sb-region-title"><label>봉 주기 <select class="sb-input" id="sbChartCycle" onchange="sbChartSync()"><option value="day">일봉</option><option value="week">주봉</option><option value="month">월봉</option></select></label><label>조회 범위 <select class="sb-input" id="sbChartPeriod" onchange="sbChartSync()"><option value="1m">1개월</option><option value="3m">3개월</option><option value="6m" selected>6개월</option><option value="1y">1년</option><option value="all">전체</option></select></label><button type="button" class="sb-btn sb-btn--sm" id="sbChartDetail" onclick="sbOpenChart()">상세 차트 열기 ↗</button></div>
+            <div id="sbEmbeddedChart" data-chart-host class="sb-data-empty"><strong>차트 데이터 없음</strong><span>차트 원본 연결 후 가격·거래량을 표시합니다.</span></div><div id="sbChartStatus" role="status"></div>
+          </section>
+          <section class="sb-context-pane" data-context-pane="hoga" hidden><section class="sb-order-region" aria-label="선택 종목 5호가"><div class="sb-region-title"><strong>5호가</strong><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" id="sbHogaRefresh" onclick="sbDesktopHoga()">조회</button></div><div id="sbHogaStatus" class="dock-ctx__none" role="status">호가 데이터 없음 · 조회 대기</div><table class="sb-hoga-table"><thead><tr><th>매도잔량</th><th>가격</th><th>매수잔량</th></tr></thead><tbody id="sbHogaRows"></tbody></table></section></section>
+          <section class="sb-context-pane" data-context-pane="info" hidden><div class="dock-ctx__rows dock-ctx__quote-grid" id="dockCtxQuote"></div><button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('chart')">기업분석 열기 ↗</button></section>
         </div>
         <details class="sb-context-details"><summary>보유 · 목표/손절 · 일정</summary><div class="sb-detail-content"><div class="dock-ctx__rows" id="dockCtxHold"></div><div class="dock-ctx__rows" id="sbDesktopTargets"></div><div class="dock-ctx__rows" id="dockCtxEvents"></div></div></details>
       </div>
@@ -9952,6 +9996,7 @@ function _icScopeCodes() {
 }
 
 function icSetTab(tab) {
+  window.StockBookNewsPage?.unmount();
   _ic.tab = tab; _ic.sel = -1; _ic.items = []; _ic.err = '';
   document.querySelectorAll('#mdi-panel-news .ic-tab').forEach(b => b.classList.toggle('active', b.dataset.icTab === tab));
   icRefresh();
@@ -9980,7 +10025,7 @@ function _icRenderList() {
   if (!filtered.length) { list.innerHTML='<div class="ic-state">받은 기사 중 검색 결과가 없습니다.</div>'; return; }
   list.innerHTML = filtered.map(({n, i}) => {
     const stk = n.code ? `<span class="ic-stk">${_icEsc(_icStockName(n.code))}</span>` : '';
-    const left = _ic.tab === 'econ' ? _icEsc((n.date || '').slice(5)) : _icEsc(_icTimeFmt(n.time));
+    const left = _ic.tab === 'econ' ? _icEsc((n.date || '').slice(5)) : _icEsc(n.timeLabel ? n.timeLabel.slice(0,5).replace('.', '-') : _icTimeFmt(n.time));
     const src = _ic.tab === 'econ' ? _icEsc(n.country) : _icEsc(n.source);
     return `<div class="ic-row${i === _ic.sel ? ' sel' : ''}" onclick="icSelect(${i})">
       <span class="ic-time">${left}</span><span class="ic-src">${src}</span>
@@ -9989,14 +10034,22 @@ function _icRenderList() {
 }
 
 function _icLinkBtn(url, label) {
-  if (!/^https:\/\//.test(url || '')) return '';
+  if (!/^https?:\/\//.test(url || '')) return '';
   return `<button type="button" class="sb-btn sb-btn--primary" onclick="openUrl(decodeURIComponent('${encodeURIComponent(url)}'))">${label}</button>`;
 }
 
+let _icPageMode = 'publisher';
+function icSetPageMode(mode) {
+  if (!['publisher','naver','text'].includes(mode)) return;
+  _icPageMode=mode;_icRenderDetail();
+}
 function _icRenderDetail() {
   const el = document.getElementById('icDetail');
   if (!el) return;
   const n = _ic.items[_ic.sel];
+  const original = !!(n?.url && !['econ','disclosure'].includes(_ic.tab) && window.electronAPI?.openNewsPage && window.StockBookNewsPage && _icPageMode !== 'text');
+  el.classList.toggle('sb-news-original',original);
+  if (!original) window.StockBookNewsPage?.unmount();
   if (!n) {
     let msg = '목록에서 항목을 선택하세요';
     if (_ic.tab === 'disclosure') msg = '';
@@ -10016,19 +10069,44 @@ function _icRenderDetail() {
   const codes = n.related && n.related.length ? n.related : (n.code ? [n.code] : []);
   const chips = codes.map(c => `<button type="button" class="ic-chip" onclick="openStockDrawer('${_icEsc(c)}', decodeURIComponent('${encodeURIComponent(_icStockName(c))}'))">${_icEsc(_icStockName(c))}</button>`).join('');
   el.innerHTML = `<h3>${_icEsc(n.title)}</h3>
-    <div class="ic-meta">${_icEsc(n.source)}${n.source && n.time ? ' · ' : ''}${_icEsc(_icTimeFmt(n.time, true))}</div>
-    ${n.summary ? `<div class="ic-sum">${_icEsc(n.summary)}</div>` : ''}
-    ${chips ? `<div class="ic-chips" style="margin-bottom:var(--sb-space-2)">${chips}</div>` : ''}
-    <div class="ic-actions">${_icLinkBtn(n.url, '원문 보기 ↗')}${codes.length ? `<button type="button" class="sb-btn" onclick="openStockDrawer('${_icEsc(codes[0])}', decodeURIComponent('${encodeURIComponent(_icStockName(codes[0]))}'))">기업분석 열기</button>` : ''}</div>`;
+    <div class="ic-meta">${_icEsc(n.source)}${n.source && (n.time || n.timeLabel) ? ' · ' : ''}${_icEsc(_icTimeFmt(n.time, true) || n.timeLabel || '')}</div>
+    <div class="ic-actions">${n.publisherUrl && n.publisherUrl !== n.url ? _icLinkBtn(n.publisherUrl, '언론사 원문 ↗') + _icLinkBtn(n.url, '네이버 기사 ↗') : _icLinkBtn(n.url, '원문 보기 ↗')}${codes.length ? `<button type="button" class="sb-btn" onclick="openStockDrawer('${_icEsc(codes[0])}', decodeURIComponent('${encodeURIComponent(_icStockName(codes[0]))}'))">기업분석 열기</button>` : ''}</div>
+    ${window.electronAPI?.openNewsPage ? `<div class="sb-news-page-tools" role="group" aria-label="기사 보기 방식">${[['publisher','언론사 원문'],...(n.url?.includes('n.news.naver.com')?[['naver','네이버 기사']]:[]),['text','본문만 보기']].map(([mode,label])=>`<button type="button" class="sb-btn sb-btn--sm${_icPageMode===mode?' sb-btn--primary':''}" aria-pressed="${_icPageMode===mode}" onclick="icSetPageMode('${mode}')">${label}</button>`).join('')}</div>` : ''}
+    ${original ? `<div id="icPageStatus" class="sb-news-page-status" role="status">원문 페이지를 불러오는 중…</div><div id="icPageHost" class="sb-news-page-host" aria-label="기사 원문 웹페이지"></div>` : n.articleBody ? `<div class="ic-article-label">기사 본문</div><div class="ic-article-body">${_icEsc(n.articleBody)}</div>` : `${n.articleLoading ? '<p class="ic-article-status" role="status">기사 본문을 불러오는 중…</p>' : `<p class="ic-article-status" role="status">${_icEsc(n.articleError || '본문은 데스크톱 앱에서 조회할 수 있습니다.')}</p>`}${n.summary ? `<div class="ic-article-label">수신 요약</div><div class="ic-sum">${_icEsc(n.summary)}</div>` : ''}`}
+    ${!original && chips ? `<div class="ic-chips" style="margin-bottom:var(--sb-space-2)">${chips}</div>` : ''}`;
+  if (original) window.StockBookNewsPage.mount(document.getElementById('icPageHost'),{url:n.url,source:_icPageMode});
 }
 
-function icSelect(i) {
+let _icArticleRequest = 0;
+async function icSelect(i) {
+  const request = ++_icArticleRequest;
   _ic.sel = i;
+  const item = _ic.items[i];
   _icRenderList();
   _icRenderDetail();
+  const detail = document.getElementById('icDetail');
+  if (detail) detail.scrollTop = 0;
+  if (!item || ['econ','disclosure'].includes(_ic.tab) || item.articleBody || !item.url || !window.electronAPI?.fetchNewsArticle) return;
+  item.articleLoading = true; item.articleError = ''; item.articleRequest = request;
+  _icRenderDetail();
+  try {
+    const result = await window.electronAPI.fetchNewsArticle(item.url);
+    if (request !== _icArticleRequest || _ic.items[_ic.sel] !== item) return;
+    if (!result?.ok || typeof result.body !== 'string' || !result.body.trim()) throw new Error('본문 없음');
+    item.articleBody = result.body;
+    if (typeof result.publisherUrl === 'string') item.publisherUrl = result.publisherUrl;
+    if (typeof result.time === 'string') item.time = result.time;
+  } catch (_) {
+    if (request === _icArticleRequest && _ic.items[_ic.sel] === item) item.articleError = item.summary ? '본문을 불러오지 못했습니다. 수신 요약 또는 원문 링크를 이용해 주세요.' : '본문을 불러오지 못했습니다. 원문 링크를 이용해 주세요.';
+  } finally {
+    if (item.articleRequest === request) item.articleLoading = false;
+    if (request === _icArticleRequest && _ic.items[_ic.sel] === item) _icRenderDetail();
+  }
 }
 
 function _icRenderDisclosure() {
+  window.StockBookNewsPage?.unmount();
+  document.getElementById('icDetail')?.classList.remove('sb-news-original');
   const codes = _icScopeCodes();
   const kind = codes.length ? `<button type="button" class="sb-btn sb-btn--sm" onclick="openDartByCode('${_icEsc(codes[0])}')">KRX KIND 공시 (${_icEsc(_icStockName(codes[0]))}) ↗</button>` : '';
   document.getElementById('icList').innerHTML = '<div class="ic-state">공시 데이터 소스 준비 중입니다.<br>아래 링크에서 공시를 확인할 수 있습니다.</div>';
@@ -10055,7 +10133,9 @@ function _icMarkRelated(items) {
 async function icRefresh() {
   _icRenderChips();
   const seq = ++_ic.seq;
+  ++_icArticleRequest;
   const btn = document.getElementById('icRefreshBtn');
+  if (btn) btn.disabled = false;
   _ic.err = ''; _ic.empty = '';
   if (_ic.tab === 'disclosure') { _ic.items = []; _ic.loading = false; _icRenderDisclosure(); return; }
   if (_ic.tab === 'econ') {
@@ -10072,8 +10152,8 @@ async function icRefresh() {
   _icRenderList(); _icRenderDetail();
   try {
     let items = [];
-    if (_ic.tab === 'market') {
-      const r = await window.electronAPI.fetchNews({ kind: 'market' });
+    if (_ic.tab === 'market' || _ic.tab === 'bloter') {
+      const r = await window.electronAPI.fetchNews({ kind: 'market', provider: _ic.tab === 'bloter' ? 'bloter' : 'naver' });
       if (!r || !r.ok) throw new Error((r && r.error) || '시장뉴스를 불러오지 못했습니다');
       items = r.items;
     } else {
@@ -12158,7 +12238,39 @@ function renderWatchlist() {
 // ── 관심종목 종합: 선택 종목 문맥 패널 ──────────────────────────────────
 let sbHogaSelection = null;
 let sbHogaRequest = 0;
+function sbContextTab(key) {
+  if (!['chart','hoga','info'].includes(key)) return;
+  document.querySelectorAll('[data-context-pane]').forEach(el=>{el.hidden=el.dataset.contextPane!==key;});
+  document.querySelectorAll('[data-context-tab]').forEach(el=>{
+    const active=el.dataset.contextTab===key;el.classList.toggle('active',active);
+    if(active)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');
+  });
+}
+let sbChartContextKey = '';
+function sbChartContext() {
+  const stock=(state.watchlist||[]).find(w=>w.ticker===window._dockSel);
+  const viewRange=document.getElementById('sbChartPeriod')?.value||'6m';
+  const barCycle=document.getElementById('sbChartCycle')?.value||'day';
+  return stock ? {code:stock.ticker,name:stock.name||stock.ticker,period:viewRange,viewRange,barCycle,indicatorCycle:barCycle} : null;
+}
+function sbChartSync() {
+  const value=sbChartContext();const key=JSON.stringify(value);
+  if(!value){sbChartContextKey='';window.StockBookCharts?.clear(document.getElementById('sbEmbeddedChart'));return;}
+  if(key===sbChartContextKey)return;
+  sbChartContextKey=key;
+  window.StockBookCharts?.show(document.getElementById('sbEmbeddedChart'),value,'compact');
+  window.dispatchEvent(new CustomEvent('stockbook:chart-context',{detail:{...value}}));
+  window.electronAPI?.setChartContext?.(value).catch(()=>{});
+}
+async function sbOpenChart() {
+  const status=document.getElementById('sbChartStatus');const value=sbChartContext();
+  if(!value){status.textContent='먼저 종목을 선택하세요.';return;}
+  if(!window.electronAPI?.openChartWindow){status.textContent='상세 차트 창은 데스크톱 앱에서 열 수 있습니다.';return;}
+  try{const result=await window.electronAPI.openChartWindow(value);status.textContent=result?.ok?'상세 차트 창을 열었습니다.':'상세 차트 창을 열지 못했습니다.';}
+  catch{status.textContent='상세 차트 창을 열지 못했습니다.';}
+}
 function sbDesktopSelection(w) {
+  sbChartSync();
   document.querySelectorAll('.sb-analysis-stock').forEach(el => { el.textContent = w ? (w.name || w.ticker) : '종목 선택'; });
   const ticker = w?.ticker || null;
   if (ticker !== sbHogaSelection) {
@@ -12169,6 +12281,7 @@ function sbDesktopSelection(w) {
   }
 }
 async function sbDesktopHoga() {
+  sbContextTab('hoga');
   const ticker = sbHogaSelection;
   const status = document.getElementById('sbHogaStatus');
   if (!ticker) { status.textContent = '종목 선택 후 조회하세요.'; return; }
@@ -14728,5 +14841,10 @@ function wlAssignGroup(idx, gName) {
     </div>
   </div>
 </div>
+<script src="src/news/page-client.js"></script>
+<script src="src/chart/series.js"></script>
+<script src="src/chart/renderer.js"></script>
+<script src="src/chart/client.js"></script>
+<script>sbChartContextKey='';sbChartSync();</script>
 </body>
 </html>

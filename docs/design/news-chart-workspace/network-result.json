@@ -1,0 +1,67 @@
+{
+  "verifiedAt": "2026-10-23T04:37:47.812Z",
+  "scope": "Actual HTTPS through session proxy + production news service + browser mock preload. Windows Electron/NSIS not verified. Article bodies are not stored.",
+  "previousProxyDenial": [
+    {
+      "url": "https://n.news.naver.com/mnews/article/001/0016000000",
+      "result": "Proxy CONNECT 403; no article HTML received"
+    },
+    {
+      "url": "https://www.bloter.net/",
+      "result": "Proxy CONNECT 403; no homepage or article HTML received"
+    }
+  ],
+  "currentNetworkAccessVerified": true,
+  "counts": {
+    "market": 30,
+    "stock": 20,
+    "bloter": 20
+  },
+  "articles": {
+    "naver": {
+      "url": "https://n.news.naver.com/mnews/article/215/0001270214",
+      "publisher": "한국경제TV",
+      "publisherUrl": "http://www.wowtv.co.kr/NewsCenter/News/Read?articleId=A202610230079&t=NN",
+      "bodyLength": 1484
+    },
+    "bloter": {
+      "url": "https://www.bloter.net/news/articleView.html?idxno=676525",
+      "publisher": "블로터",
+      "time": "2026-10-23T11:51:39+09:00",
+      "bodyLength": 1721
+    }
+  },
+  "calls": [
+    {
+      "url": "https://m.stock.naver.com/api/news/list?category=mainnews&pageSize=30&page=1",
+      "status": 200,
+      "bytes": 17203,
+      "sha256": "d467a5109e048a736afcc59fe1070b8b14ab05096fb7594232f7ca3e20e5f914"
+    },
+    {
+      "url": "https://n.news.naver.com/mnews/article/215/0001270214",
+      "status": 200,
+      "bytes": 299463,
+      "sha256": "75953b83441004ca2cbd84885172a742ade9731e423aba10f706da8a3d39fc6e"
+    },
+    {
+      "url": "https://www.bloter.net/news/articleList.html?view_type=sm",
+      "status": 200,
+      "bytes": 105644,
+      "sha256": "727b7bcae1f01d4ac609cb0fed95092acf01465aa8f3fce3f46c4115dfc7daae"
+    },
+    {
+      "url": "https://www.bloter.net/news/articleView.html?idxno=676525",
+      "status": 200,
+      "bytes": 159436,
+      "sha256": "21cfed9e1de90b1254cfce676d545507be2f435ad7326358822f775f588aa0b1"
+    },
+    {
+      "url": "https://m.stock.naver.com/api/news/stock/005930?pageSize=20&page=1",
+      "status": 200,
+      "bytes": 16845,
+      "sha256": "4c04d79eac4d32c278911c595845fb9cc6ebbe14221419eaeacea4ce5ab12059"
+    }
+  ],
+  "note": "Earlier CONNECT 403 was followed by actual HTTP 200 responses after the domain settings were updated. No claim of Windows Electron/NSIS execution or configuration publication is made."
+}
