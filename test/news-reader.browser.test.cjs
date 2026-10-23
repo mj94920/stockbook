@@ -51,6 +51,17 @@ test('reader renders safe text, keeps source link and discards stale article; ch
   }
   await page.evaluate(async()=>{_ic.tab='market';window.electronAPI.fetchNews=async()=>{throw Error('목록 수신 실패');};await icRefresh();});
   assert.match(await page.locator('#icList').innerText(),/목록 수신 실패/);assert.equal(await page.locator('#icRefreshBtn').isDisabled(),false);
+  const bloterList=require('../src/news/bloter.cjs').bloterItems(require('node:fs').readFileSync(path.join(__dirname,'fixtures/news/bloter-list-structure-20261023.html'),'utf8'));
+  await page.evaluate(items=>{
+   window.electronAPI.fetchNews=opts=>opts.provider==='bloter'?Promise.resolve({ok:true,items}):new Promise(resolve=>window.__resolveNaverList=resolve);
+   window.electronAPI.fetchNewsArticle=async()=>({ok:true,body:'합성 블로터 본문',time:'2026-10-23T11:27:16+09:00'});
+   _ic.tab='market';window.__oldNaverList=icRefresh();icSetTab('bloter');
+  },bloterList);
+  await page.waitForFunction(()=>!_ic.loading&&_ic.items[0]?.source==='블로터');
+  assert.equal(await page.locator('#icList .ic-row').count(),2);assert.equal(await page.locator('#icList .ic-time').first().innerText(),'10-23');
+  await page.evaluate(()=>icSelect(0));assert.match(await page.locator('#icDetail').innerText(),/합성 블로터 본문/);assert.match(await page.locator('#icDetail').innerText(),/2026-10-23/);
+  await page.evaluate(async()=>{window.__resolveNaverList({ok:true,items:[{id:'late-naver',title:'늦은 네이버 목록'}]});await window.__oldNaverList;});assert.doesNotMatch(await page.locator('#icList').innerText(),/늦은 네이버 목록/);
+  await page.evaluate(async()=>{window.electronAPI.fetchNewsArticle=async()=>({ok:false});await icSelect(1);});assert.doesNotMatch(await page.locator('#icDetail').innerText(),/수신 요약/);
   const receivedMarket=newsItems(require('./fixtures/news/market-20261023.json'));
   await page.evaluate(async items=>{_ic.tab='market';window.electronAPI.fetchNews=async()=>({ok:true,items});window.electronAPI.fetchNewsArticle=async()=>({ok:false});await icRefresh();await icSelect(0);},receivedMarket);
   assert.equal(await page.locator('#icList .ic-row').count(),3);assert.match(await page.locator('#icDetail').innerText(),/더팩트/);

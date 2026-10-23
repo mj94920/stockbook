@@ -25,6 +25,7 @@
       "main.js",
       "src/news/article.cjs",
       "src/news/list.cjs",
+      "src/news/bloter.cjs",
       "src/news/service.cjs",
       "src/desktop/renderer-files.cjs",
       "chart.html",

@@ -1,9 +1,42 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {articleUrl,articleText}=require('../src/news/article.cjs');
-test('only canonical HTTPS Naver article URLs can be requested',()=>{
+test('only canonical HTTPS article URLs can be requested',()=>{
  assert.equal(articleUrl('https://n.news.naver.com/mnews/article/001/0012345678?sid=101'),'https://n.news.naver.com/mnews/article/001/0012345678');
  for(const url of ['http://n.news.naver.com/mnews/article/001/123456','https://evil.test/','https://n.news.naver.com.evil.test/mnews/article/001/123456','https://user@n.news.naver.com/mnews/article/001/123456','https://n.news.naver.com:444/mnews/article/001/123456','https://n.news.naver.com/'])assert.throws(()=>articleUrl(url));
+});
+
+const fs=require('node:fs'),path=require('node:path');
+const {articleData}=require('../src/news/article.cjs');
+const {bloterItems}=require('../src/news/bloter.cjs');
+const bloterList=fs.readFileSync(path.join(__dirname,'fixtures/news/bloter-list-structure-20261023.html'),'utf8');
+const bloterArticle=fs.readFileSync(path.join(__dirname,'fixtures/news/bloter-article-structure-20261023.html'),'utf8');
+
+test('Bloter URLs are limited to canonical public article paths and a single numeric id',()=>{
+ assert.equal(articleUrl('https://www.bloter.net/news/articleView.html?idxno=676524&utm_source=test'),'https://www.bloter.net/news/articleView.html?idxno=676524');
+ for(const url of ['http://www.bloter.net/news/articleView.html?idxno=1','https://www.bloter.net.evil.test/news/articleView.html?idxno=1','https://user@www.bloter.net/news/articleView.html?idxno=1','https://www.bloter.net:444/news/articleView.html?idxno=1','https://www.bloter.net/news/articleList.html?idxno=1','https://www.bloter.net/news/articleView.html?idxno=../x','https://www.bloter.net/news/articleView.html?idxno=1&idxno=2'])assert.throws(()=>articleUrl(url));
+});
+test('observed Bloter structure keeps date labels without inventing a year and extracts text only',()=>{
+ const items=bloterItems(bloterList);assert.equal(items.length,2);assert.equal(items[0].title,'합성 목록 제목 & 확인');
+ assert.equal(items[0].source,'블로터');assert.equal(items[0].time,'');assert.equal(items[0].timeLabel,'10.23 11:51:39');assert.equal(items[0].summary,'');
+ const data=articleData(bloterArticle,items[1].url);assert.equal(data.time,'2026-10-23T11:27:16+09:00');
+ assert.match(data.body,/합성 첫 문단 "인용" …/);assert.match(data.body,/사진 설명 ·/);assert.doesNotMatch(data.body,/steal|hidden|본문 밖|<p>/);
+ assert.throws(()=>bloterItems('<section id="section-list">잘림'));assert.throws(()=>articleData('<p>본문 없음</p>',items[1].url));
+ const naver=articleData('<script>"<a class="media_end_head_origin_link" href="https://evil.test/">"</script><a class="media_end_head_origin_link" href="https://www.news1.kr/finance/general-stock/6329784?a=1&amp;b=2">원문</a><article id="dic_area">본문</article>','https://n.news.naver.com/mnews/article/421/0009246035');
+ assert.equal(naver.publisherUrl,'https://www.news1.kr/finance/general-stock/6329784?a=1&b=2');
+ const httpOrigin=articleData('<a class="media_end_head_origin_link" href="http://www.wowtv.co.kr/NewsCenter/News/Read?articleId=A202610230079&amp;t=NN">원문</a><article id="dic_area">합성 본문</article>','https://n.news.naver.com/mnews/article/215/0001270214');
+ assert.equal(httpOrigin.publisherUrl,'http://www.wowtv.co.kr/NewsCenter/News/Read?articleId=A202610230079&t=NN');
+});
+test('Bloter IPC uses a fixed list URL, retains article metadata and rejects unsupported stock queries',async()=>{
+ const handlers=new Map(),main={webContents:{}},calls=[];
+ registerNews({ipcMain:{handle:(key,fn)=>handlers.set(key,fn)},getMainWindow:()=>main,headers:{},httpsGet:async url=>{calls.push(url);return url.includes('articleList')?bloterList:bloterArticle;}});
+ const call=(key,value)=>handlers.get(key)({sender:main.webContents},value);
+ assert.equal((await call('fetch-news',{kind:'stock',code:'005930',provider:'bloter'})).ok,false);
+ assert.equal((await call('fetch-news',{kind:'market',provider:'evil'})).ok,false);assert.equal(calls.length,0);
+ const list=await call('fetch-news',{kind:'market',provider:'bloter',url:'https://evil.test/'});assert.equal(list.ok,true);assert.equal(list.items.length,2);
+ assert.deepEqual(calls,['https://www.bloter.net/news/articleList.html?view_type=sm']);
+ const result=await call('fetch-news-article',list.items[1].url);assert.equal(result.ok,true);assert.equal(result.time,'2026-10-23T11:27:16+09:00');assert.match(result.body,/두 번째 문단/);
+ assert.ok(require('../package.json').build.files.includes('src/news/bloter.cjs'));
 });
 test('extracts article text with paragraph boundaries, entities and no executable markup',()=>{
  const html='<header>메뉴</header><article id="dic_area"><p>첫 문단 &amp; 인용 &#xAC00;</p><div>두 문단<br>다음 줄</div><script>steal()</script><!--광고--></article><footer>외부 내용</footer>';

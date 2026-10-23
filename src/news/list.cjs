@@ -32,6 +32,7 @@ function newsItems(json, code = '') {
         ? `https://n.news.naver.com/mnews/article/${office}/${article}`
         : value.mobileNewsUrl);
     } catch { return; }
+    if (new URL(url).hostname !== 'n.news.naver.com') return;
     const [, , , oid, aid] = new URL(url).pathname.split('/');
     result.push({
       id: `${oid}-${aid}`, title,

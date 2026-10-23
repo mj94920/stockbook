@@ -4188,6 +4188,7 @@
           <div class="ic-tabs" role="tablist">
             <button type="button" class="ic-tab active" data-ic-tab="market" onclick="icSetTab('market')">시장뉴스</button>
             <button type="button" class="ic-tab" data-ic-tab="stock" onclick="icSetTab('stock')">종목뉴스</button>
+            <button type="button" class="ic-tab" data-ic-tab="bloter" onclick="icSetTab('bloter')">블로터</button>
             <button type="button" class="ic-tab" data-ic-tab="disclosure" onclick="icSetTab('disclosure')">공시</button>
             <button type="button" class="ic-tab" data-ic-tab="econ" onclick="icSetTab('econ')">경제지표</button>
           </div>
@@ -10016,7 +10017,7 @@ function _icRenderList() {
   if (!filtered.length) { list.innerHTML='<div class="ic-state">받은 기사 중 검색 결과가 없습니다.</div>'; return; }
   list.innerHTML = filtered.map(({n, i}) => {
     const stk = n.code ? `<span class="ic-stk">${_icEsc(_icStockName(n.code))}</span>` : '';
-    const left = _ic.tab === 'econ' ? _icEsc((n.date || '').slice(5)) : _icEsc(_icTimeFmt(n.time));
+    const left = _ic.tab === 'econ' ? _icEsc((n.date || '').slice(5)) : _icEsc(n.timeLabel ? n.timeLabel.slice(0,5).replace('.', '-') : _icTimeFmt(n.time));
     const src = _ic.tab === 'econ' ? _icEsc(n.country) : _icEsc(n.source);
     return `<div class="ic-row${i === _ic.sel ? ' sel' : ''}" onclick="icSelect(${i})">
       <span class="ic-time">${left}</span><span class="ic-src">${src}</span>
@@ -10025,7 +10026,7 @@ function _icRenderList() {
 }
 
 function _icLinkBtn(url, label) {
-  if (!/^https:\/\//.test(url || '')) return '';
+  if (!/^https?:\/\//.test(url || '')) return '';
   return `<button type="button" class="sb-btn sb-btn--primary" onclick="openUrl(decodeURIComponent('${encodeURIComponent(url)}'))">${label}</button>`;
 }
 
@@ -10052,8 +10053,8 @@ function _icRenderDetail() {
   const codes = n.related && n.related.length ? n.related : (n.code ? [n.code] : []);
   const chips = codes.map(c => `<button type="button" class="ic-chip" onclick="openStockDrawer('${_icEsc(c)}', decodeURIComponent('${encodeURIComponent(_icStockName(c))}'))">${_icEsc(_icStockName(c))}</button>`).join('');
   el.innerHTML = `<h3>${_icEsc(n.title)}</h3>
-    <div class="ic-meta">${_icEsc(n.source)}${n.source && n.time ? ' · ' : ''}${_icEsc(_icTimeFmt(n.time, true))}</div>
-    <div class="ic-actions">${_icLinkBtn(n.url, '원문 보기 ↗')}${codes.length ? `<button type="button" class="sb-btn" onclick="openStockDrawer('${_icEsc(codes[0])}', decodeURIComponent('${encodeURIComponent(_icStockName(codes[0]))}'))">기업분석 열기</button>` : ''}</div>
+    <div class="ic-meta">${_icEsc(n.source)}${n.source && (n.time || n.timeLabel) ? ' · ' : ''}${_icEsc(_icTimeFmt(n.time, true) || n.timeLabel || '')}</div>
+    <div class="ic-actions">${n.publisherUrl && n.publisherUrl !== n.url ? _icLinkBtn(n.publisherUrl, '언론사 원문 ↗') + _icLinkBtn(n.url, '네이버 기사 ↗') : _icLinkBtn(n.url, '원문 보기 ↗')}${codes.length ? `<button type="button" class="sb-btn" onclick="openStockDrawer('${_icEsc(codes[0])}', decodeURIComponent('${encodeURIComponent(_icStockName(codes[0]))}'))">기업분석 열기</button>` : ''}</div>
     ${n.articleBody ? `<div class="ic-article-label">기사 본문</div><div class="ic-article-body">${_icEsc(n.articleBody)}</div>` : `${n.articleLoading ? '<p class="ic-article-status" role="status">기사 본문을 불러오는 중…</p>' : `<p class="ic-article-status" role="status">${_icEsc(n.articleError || '본문은 데스크톱 앱에서 조회할 수 있습니다.')}</p>`}${n.summary ? `<div class="ic-article-label">수신 요약</div><div class="ic-sum">${_icEsc(n.summary)}</div>` : ''}`}
     ${chips ? `<div class="ic-chips" style="margin-bottom:var(--sb-space-2)">${chips}</div>` : ''}`;
 }
@@ -10075,8 +10076,10 @@ async function icSelect(i) {
     if (request !== _icArticleRequest || _ic.items[_ic.sel] !== item) return;
     if (!result?.ok || typeof result.body !== 'string' || !result.body.trim()) throw new Error('본문 없음');
     item.articleBody = result.body;
+    if (typeof result.publisherUrl === 'string') item.publisherUrl = result.publisherUrl;
+    if (typeof result.time === 'string') item.time = result.time;
   } catch (_) {
-    if (request === _icArticleRequest && _ic.items[_ic.sel] === item) item.articleError = '본문을 불러오지 못했습니다. 수신 요약 또는 원문 링크를 이용해 주세요.';
+    if (request === _icArticleRequest && _ic.items[_ic.sel] === item) item.articleError = item.summary ? '본문을 불러오지 못했습니다. 수신 요약 또는 원문 링크를 이용해 주세요.' : '본문을 불러오지 못했습니다. 원문 링크를 이용해 주세요.';
   } finally {
     if (item.articleRequest === request) item.articleLoading = false;
     if (request === _icArticleRequest && _ic.items[_ic.sel] === item) _icRenderDetail();
@@ -10129,8 +10132,8 @@ async function icRefresh() {
   _icRenderList(); _icRenderDetail();
   try {
     let items = [];
-    if (_ic.tab === 'market') {
-      const r = await window.electronAPI.fetchNews({ kind: 'market' });
+    if (_ic.tab === 'market' || _ic.tab === 'bloter') {
+      const r = await window.electronAPI.fetchNews({ kind: 'market', provider: _ic.tab === 'bloter' ? 'bloter' : 'naver' });
       if (!r || !r.ok) throw new Error((r && r.error) || '시장뉴스를 불러오지 못했습니다');
       items = r.items;
     } else {

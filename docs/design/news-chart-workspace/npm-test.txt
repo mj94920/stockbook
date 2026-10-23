@@ -8,29 +8,32 @@
 
 ✓ main.js
 ✓ preload.js
-✓ index.html#script1 (line 4906)
-✓ index.html#script2 (line 14821)
+✓ index.html#script1 (line 4907)
+✓ index.html#script2 (line 14824)
 ✓ package.json
 
 모든 정적 검사 통과
-✔ validates stock and supported period (1.574473ms)
-✔ detail window follows selection, pins context, resumes latest and rejects other senders (0.576048ms)
-✔ recorded chart data is identified and never used for another stock (8.288836ms)
-✔ late load failure from a closed window does not close its replacement (0.580495ms)
-✔ only canonical HTTPS Naver article URLs can be requested (1.138385ms)
-✔ extracts article text with paragraph boundaries, entities and no executable markup (0.925334ms)
-✔ legacy nested div body is complete and missing/paywall bodies fail instead of inventing content (0.596499ms)
-✔ received market and stock payloads retain publisher, summary, canonical URL and KST seconds (1.531798ms)
-✔ news IPC checks sender and stock code before network; only fixed provider routes are fetched (5.194933ms)
-✔ reader renders safe text, keeps source link and discards stale article; chart controls keep context (1384.923692ms)
-ℹ tests 10
+✔ validates stock and supported period (2.117309ms)
+✔ detail window follows selection, pins context, resumes latest and rejects other senders (0.771422ms)
+✔ recorded chart data is identified and never used for another stock (8.890211ms)
+✔ late load failure from a closed window does not close its replacement (0.522967ms)
+✔ only canonical HTTPS article URLs can be requested (1.167228ms)
+✔ Bloter URLs are limited to canonical public article paths and a single numeric id (0.347383ms)
+✔ observed Bloter structure keeps date labels without inventing a year and extracts text only (3.000349ms)
+✔ Bloter IPC uses a fixed list URL, retains article metadata and rejects unsupported stock queries (1.436244ms)
+✔ extracts article text with paragraph boundaries, entities and no executable markup (0.269176ms)
+✔ legacy nested div body is complete and missing/paywall bodies fail instead of inventing content (0.481936ms)
+✔ received market and stock payloads retain publisher, summary, canonical URL and KST seconds (0.829219ms)
+✔ news IPC checks sender and stock code before network; only fixed provider routes are fetched (1.559479ms)
+✔ reader renders safe text, keeps source link and discards stale article; chart controls keep context (1537.258855ms)
+ℹ tests 13
 ℹ suites 0
-ℹ pass 10
+ℹ pass 13
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 1658.081016
+ℹ duration_ms 1818.912185
 
 > stockbook@1.11.1 smoke
 > node scripts/smoke.mjs
