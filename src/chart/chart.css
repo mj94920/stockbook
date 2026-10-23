@@ -26,3 +26,5 @@
 .sb-proof-detail [data-chart-id="period"] { margin-top:2px; }
 
 .sb-proof-detail > .sb-proof-options,.sb-proof-detail > .sb-proof-legend { display:inline-flex;vertical-align:middle;margin-right:12px; }
+
+.sb-proof-chart [hidden] { display:none!important; }

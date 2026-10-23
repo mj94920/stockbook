@@ -1,6 +1,6 @@
 
 > stockbook@1.11.1 test
-> npm run check && node --test test/news-article.test.cjs test/news-page.test.cjs test/chart-window.test.cjs test/news-reader.browser.test.cjs && npm run smoke
+> npm run check && node --test test/news-article.test.cjs test/news-page.test.cjs test/chart-window.test.cjs test/chart-series.test.cjs test/news-reader.browser.test.cjs && npm run smoke
 
 
 > stockbook@1.11.1 check
@@ -9,7 +9,7 @@
 ✓ main.js
 ✓ preload.js
 ✓ index.html#script1 (line 4914)
-✓ index.html#script2 (line 14845)
+✓ index.html#script2 (line 14848)
 ✓ package.json
 
 모든 정적 검사 통과
@@ -18,38 +18,44 @@ npm notice New major version of npm available! 11.9.0 -> 12.2.1
 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1
 npm notice To update run: npm install -g npm@12.2.1
 npm notice
-✔ validates stock and supported period (2.195498ms)
-✔ detail window follows selection, pins context, resumes latest and rejects other senders (0.846916ms)
-✔ recorded chart data is identified and never used for another stock (9.800427ms)
-✔ late load failure from a closed window does not close its replacement (0.752604ms)
-✔ only canonical HTTPS article URLs can be requested (1.753662ms)
-✔ Bloter URLs are limited to canonical public article paths and a single numeric id (0.375226ms)
-✔ observed Bloter structure keeps date labels without inventing a year and extracts text only (5.096539ms)
-✔ Bloter IPC uses a fixed list URL, retains article metadata and rejects unsupported stock queries (2.061126ms)
-✔ extracts article text with paragraph boundaries, entities and no executable markup (0.274975ms)
-✔ legacy nested div body is complete and missing/paywall bodies fail instead of inventing content (0.594306ms)
-✔ received market and stock payloads retain publisher, summary, canonical URL and KST seconds (0.632082ms)
-✔ news IPC checks sender and stock code before network; only fixed provider routes are fetched (1.344606ms)
-✔ native news URL and bounds reject local destinations, credentials, protocols and invalid zoomed rectangles (7.560061ms)
-✔ original destination is derived in main from a canonical provider article, even without text body (2.046023ms)
-✔ native article view has no app preload, blocks remote IPC, local resources, popups, permissions and downloads (2.27646ms)
-✔ hide during publisher resolution and loading is retained; stale bounds cannot expose another article (4.974806ms)
-✔ new selection and close cancel late resolution; load failure and renderer crash release native contents (1.244776ms)
-✔ reader renders safe text, keeps source link and discards stale article; chart controls keep context (1602.066443ms)
-✔ original-page controls keep the native view in the reader and hide it for overlays, tabs and failed loads (1191.934975ms)
-ℹ tests 19
+✔ KRX trading dates group by Monday weeks across years and holidays without zero-filled sessions (1.453644ms)
+✔ month aggregation uses calendar months and sums received volume, including leap day (0.167571ms)
+✔ weekly SMA uses weekly closes with full prehistory and excludes the uncertain first aggregated bucket (0.169293ms)
+✔ invalid OHLCV, duplicate or unordered dates and unsupported cycles are rejected (0.249573ms)
+✔ approved cycle settings keep weekly 1/4 clouds separate from MA 4/12 and leave monthly Fibonacci pending (0.17433ms)
+✔ view range, bar cycle and indicator cycle validate separately while legacy period remains compatible (7.858662ms)
+✔ validates stock and supported period (1.379123ms)
+✔ detail window follows selection, pins context, resumes latest and rejects other senders (0.43447ms)
+✔ recorded chart data is identified and never used for another stock (6.100994ms)
+✔ late load failure from a closed window does not close its replacement (0.277345ms)
+✔ only canonical HTTPS article URLs can be requested (0.941217ms)
+✔ Bloter URLs are limited to canonical public article paths and a single numeric id (0.242713ms)
+✔ observed Bloter structure keeps date labels without inventing a year and extracts text only (2.392298ms)
+✔ Bloter IPC uses a fixed list URL, retains article metadata and rejects unsupported stock queries (1.298452ms)
+✔ extracts article text with paragraph boundaries, entities and no executable markup (0.205808ms)
+✔ legacy nested div body is complete and missing/paywall bodies fail instead of inventing content (0.472447ms)
+✔ received market and stock payloads retain publisher, summary, canonical URL and KST seconds (0.539267ms)
+✔ news IPC checks sender and stock code before network; only fixed provider routes are fetched (0.892926ms)
+✔ native news URL and bounds reject local destinations, credentials, protocols and invalid zoomed rectangles (3.956847ms)
+✔ original destination is derived in main from a canonical provider article, even without text body (1.06351ms)
+✔ native article view has no app preload, blocks remote IPC, local resources, popups, permissions and downloads (1.028889ms)
+✔ hide during publisher resolution and loading is retained; stale bounds cannot expose another article (2.564064ms)
+✔ new selection and close cancel late resolution; load failure and renderer crash release native contents (0.654509ms)
+✔ reader renders safe text, keeps source link and discards stale article; chart controls keep context (1189.589155ms)
+✔ original-page controls keep the native view in the reader and hide it for overlays, tabs and failed loads (729.191977ms)
+ℹ tests 25
 ℹ suites 0
-ℹ pass 19
+ℹ pass 25
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 3418.99881
+ℹ duration_ms 2312.366724
 
 > stockbook@1.11.1 smoke
 > node scripts/smoke.mjs
 
-✓ /index.html  (본문 946자, 초기화 오류 없음)
+✓ /index.html  (본문 966자, 초기화 오류 없음)
 
 스모크 테스트 통과
 npm notice

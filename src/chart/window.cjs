@@ -1,9 +1,12 @@
 'use strict';
 const path = require('node:path');
-const PERIODS = new Set(['1m','3m','6m','1y']);
+const series = require('./series.js');
 function chartContext(input) {
-  if (!input || typeof input.code !== 'string' || !/^[a-z0-9.^=_-]{1,32}$/i.test(input.code) || !PERIODS.has(input.period)) throw Error('잘못된 차트 종목/기간');
-  return { code:input.code,name:typeof input.name==='string'?input.name.slice(0,120):input.code,period:input.period };
+  if (!input || typeof input.code !== 'string' || !/^[a-z0-9.^=_-]{1,32}$/i.test(input.code)) throw Error('잘못된 차트 종목');
+  const viewRange=input.viewRange??input.period,barCycle=input.barCycle??'day',indicatorCycle=input.indicatorCycle??barCycle;
+  if(!series.ranges.includes(viewRange) || (input.period!==undefined && input.period!==viewRange) || indicatorCycle!==barCycle)throw Error('잘못된 차트 기간/주기');
+  series.cycleConfig(barCycle);
+  return {code:input.code,name:typeof input.name==='string'?input.name.slice(0,120):input.code,period:viewRange,viewRange,barCycle,indicatorCycle};
 }
 function registerChartWindow({ ipcMain, BrowserWindow, getMainWindow, appDir }) {
   let child=null, latest=null, current=null, follow=true;

@@ -11,14 +11,14 @@
  const states=new WeakMap();
  async function show(host,context,mode){
   if(!host)return;
-  const old=states.get(host),key=JSON.stringify([context.code,context.period,mode]);
+  const old=states.get(host),key=JSON.stringify([context.code,context.viewRange||context.period,context.barCycle||'day',context.indicatorCycle||context.barCycle||'day',mode]);
   if(old?.key===key)return;
   const state={key,controller:null};states.set(host,state);
   host.className='sb-chart-loading';host.textContent='차트 자료를 불러오는 중…';
   let data;try{data=await dataset(context.code);}catch{data={ok:false,error:'차트 자료를 불러오지 못했습니다.'};}
   if(states.get(host)!==state)return;
   if(!data.ok || data.metadata.stockCode!==context.code){host.className='sb-data-empty';host.textContent=data.error||'선택 종목의 차트 자료가 없습니다.';return;}
-  try{state.controller=root.StockBookChartRenderer.mount(host,data,{mode,period:context.period,light:document.body.classList.contains('light-mode')});}
+  try{state.controller=root.StockBookChartRenderer.mount(host,data,{mode,period:context.period,viewRange:context.viewRange||context.period,barCycle:context.barCycle||'day',indicatorCycle:context.indicatorCycle||context.barCycle||'day',light:document.body.classList.contains('light-mode')});}
   catch{host.className='sb-data-empty';host.textContent='차트 자료를 표시하지 못했습니다.';}
  }
  new MutationObserver(()=>{for(const host of document.querySelectorAll('[data-chart-host]'))states.get(host)?.controller?.updateTheme(document.body.classList.contains('light-mode'));}).observe(document.body,{attributes:true,attributeFilter:['class']});

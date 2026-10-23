@@ -3507,7 +3507,7 @@
   .sb-market-stage { display:block; }
   .sb-context-pane[hidden] { display:none!important; }
   .sb-context-pane .sb-region-title label { display:flex;align-items:center;gap:6px;white-space:nowrap; }
-  #sbChartPeriod { font:inherit;font-size:12px;padding:3px 6px;height:auto;width:auto;min-width:90px; }
+  #sbChartPeriod,#sbChartCycle { font:inherit;font-size:12px;padding:3px 6px;height:auto;width:auto;min-width:90px; }
   #sbChartStatus { color:var(--sb-text-2);font-size:12px; }
 
   .dock-ctx__body { flex:1;min-height:0; }
@@ -3546,6 +3546,8 @@
 .sb-proof-detail [data-chart-id="period"] { margin-top:2px; }
 
 .sb-proof-detail > .sb-proof-options,.sb-proof-detail > .sb-proof-legend { display:inline-flex;vertical-align:middle;margin-right:12px; }
+
+.sb-proof-chart [hidden] { display:none!important; }
 </style>
 </head>
 <body>
@@ -4545,7 +4547,7 @@
         </div>
         <div class="sb-market-stage">
           <section class="sb-context-pane" data-context-pane="chart" aria-label="선택 종목 차트">
-            <div class="sb-region-title"><label>기간 <select class="sb-input" id="sbChartPeriod" onchange="sbChartSync()"><option value="1m">1개월</option><option value="3m">3개월</option><option value="6m" selected>6개월</option><option value="1y">1년</option></select></label><button type="button" class="sb-btn sb-btn--sm" id="sbChartDetail" onclick="sbOpenChart()">상세 차트 열기 ↗</button></div>
+            <div class="sb-region-title"><label>봉 주기 <select class="sb-input" id="sbChartCycle" onchange="sbChartSync()"><option value="day">일봉</option><option value="week">주봉</option><option value="month">월봉</option></select></label><label>조회 범위 <select class="sb-input" id="sbChartPeriod" onchange="sbChartSync()"><option value="1m">1개월</option><option value="3m">3개월</option><option value="6m" selected>6개월</option><option value="1y">1년</option><option value="all">전체</option></select></label><button type="button" class="sb-btn sb-btn--sm" id="sbChartDetail" onclick="sbOpenChart()">상세 차트 열기 ↗</button></div>
             <div id="sbEmbeddedChart" data-chart-host class="sb-data-empty"><strong>차트 데이터 없음</strong><span>차트 원본 연결 후 가격·거래량을 표시합니다.</span></div><div id="sbChartStatus" role="status"></div>
           </section>
           <section class="sb-context-pane" data-context-pane="hoga" hidden><section class="sb-order-region" aria-label="선택 종목 5호가"><div class="sb-region-title"><strong>5호가</strong><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" id="sbHogaRefresh" onclick="sbDesktopHoga()">조회</button></div><div id="sbHogaStatus" class="dock-ctx__none" role="status">호가 데이터 없음 · 조회 대기</div><table class="sb-hoga-table"><thead><tr><th>매도잔량</th><th>가격</th><th>매수잔량</th></tr></thead><tbody id="sbHogaRows"></tbody></table></section></section>
@@ -12273,7 +12275,9 @@ function sbContextTab(key) {
 let sbChartContextKey = '';
 function sbChartContext() {
   const stock=(state.watchlist||[]).find(w=>w.ticker===window._dockSel);
-  return stock ? {code:stock.ticker,name:stock.name||stock.ticker,period:document.getElementById('sbChartPeriod')?.value||'6m'} : null;
+  const viewRange=document.getElementById('sbChartPeriod')?.value||'6m';
+  const barCycle=document.getElementById('sbChartCycle')?.value||'day';
+  return stock ? {code:stock.ticker,name:stock.name||stock.ticker,period:viewRange,viewRange,barCycle,indicatorCycle:barCycle} : null;
 }
 function sbChartSync() {
   const value=sbChartContext();const key=JSON.stringify(value);
@@ -14934,19 +14938,87 @@ function wlAssignGroup(idx, gName) {
 
 </script>
 <script>
+(function(root,factory){
+ const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.StockBookChartSeries=api;
+})(typeof window==='object'?window:globalThis,function(){
+ 'use strict';
+ const cycles=Object.freeze({
+  day:{label:'일봉',unit:'일',periods:[5,10,20,60,120,200,350,480],colors:[0,1,2,3,4,5,6,7],cloud:[5,10],bold:[20,200]},
+  week:{label:'주봉',unit:'주',periods:[4,12,24,46,73],colors:[3,1,5,2,7],cloud:[1,4],bold:[46]},
+  month:{label:'월봉',unit:'개월',periods:[1,5,19,6,9],colors:[1,2,7,3,5],cloud:null,bold:[9]},
+ });
+ const ranges=Object.freeze(['1m','3m','6m','1y','all']);
+ function cycleConfig(cycle='day'){
+  if(!Object.hasOwn(cycles,cycle))throw Error('지원하지 않는 봉 주기');
+  const value=cycles[cycle];return {...value,periods:[...value.periods],colors:[...value.colors],cloud:value.cloud?[...value.cloud]:null,bold:[...value.bold]};
+ }
+ function dateValue(value){
+  if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value))throw Error('거래일 형식 오류');
+  const time=Date.parse(value+'T00:00:00Z');if(!Number.isFinite(time)||new Date(time).toISOString().slice(0,10)!==value)throw Error('거래일 오류');return time;
+ }
+ function bucket(date,cycle){
+  const time=dateValue(date);
+  if(cycle==='day')return date;
+  if(cycle==='month')return date.slice(0,7);
+  const weekday=new Date(time).getUTCDay();return new Date(time-((weekday+6)%7)*86400000).toISOString().slice(0,10);
+ }
+ // Dates are the provider's KRX trading dates, not UTC timestamps. Never fill holidays.
+ function aggregate(candles,cycle='day',{lastBarComplete=false}={}){
+  cycleConfig(cycle);
+  if(!Array.isArray(candles)||!candles.length)throw Error('일봉 자료 없음');
+  const result=[];let previous='';
+  for(const candle of candles){
+   dateValue(candle.date);
+   if(candle.date<=previous)throw Error('거래일 중복 또는 정렬 오류');previous=candle.date;
+   if(!['open','high','low','close'].every(k=>Number.isFinite(candle[k])&&candle[k]>0)||!Number.isFinite(candle.volume)||candle.volume<0||candle.high<Math.max(candle.open,candle.close)||candle.low>Math.min(candle.open,candle.close)||candle.high<candle.low)throw Error('OHLCV 자료 오류');
+   const key=bucket(candle.date,cycle);let bar=result.at(-1);
+   if(!bar||bar.bucket!==key){bar={bucket:key,date:candle.date,firstDate:candle.date,open:candle.open,high:candle.high,low:candle.low,close:candle.close,volume:candle.volume,sourceCount:1};result.push(bar);}
+   else{bar.date=candle.date;bar.high=Math.max(bar.high,candle.high);bar.low=Math.min(bar.low,candle.low);bar.close=candle.close;bar.volume+=candle.volume;bar.sourceCount++;}
+  }
+  // There may be unavailable history before the first received day; do not call it a full week/month.
+  if(cycle!=='day')result[0].incompleteStart=true;
+  result.at(-1).incompleteEnd=lastBarComplete!==true || (cycle!=='day');
+  return result;
+ }
+ function average(bars,n){
+  if(!Number.isInteger(n)||n<1)throw Error('이평 기간 오류');
+  return bars.map((_,i)=>{
+   if(i<n-1)return null;const window=bars.slice(i-n+1,i+1);
+   return window.some(c=>c.incompleteStart)?null:window.reduce((sum,c)=>sum+c.close,0)/n;
+  });
+ }
+ function visibleOffset(bars,range='6m',cycle='day'){
+  cycleConfig(cycle);if(!ranges.includes(range))throw Error('조회 범위 오류');
+  if(range==='all')return 0;
+  // Preserve the existing day view. Weekly/monthly windows use calendar dates.
+  if(cycle==='day')return Math.max(0,bars.length-({'1m':22,'3m':66,'6m':132,'1y':260})[range]);
+  const months=({'1m':1,'3m':3,'6m':6,'1y':12})[range],last=bars.at(-1).date;
+  const y=Number(last.slice(0,4)),m=Number(last.slice(5,7))-1,d=Number(last.slice(8));
+  const endOfMonth=new Date(Date.UTC(y,m-months+1,0)).getUTCDate();
+  const cutoff=new Date(Date.UTC(y,m-months,Math.min(d,endOfMonth))).toISOString().slice(0,10);
+  const offset=bars.findIndex(bar=>bar.date>=cutoff);return offset<0?Math.max(0,bars.length-1):offset;
+ }
+ return Object.freeze({cycleConfig,aggregate,average,visibleOffset,ranges});
+});
+
+</script>
+<script>
 /* Adapted from chart-proof commit 6d143e4. Recorded data, not a live price source.
  * The original SMA/BB, pressure and investor calculations are kept in this scoped renderer. */
 (function(root){
 'use strict';
-function mount(host,dataset,{mode='detail',period='6m',light:lightMode=false}={}){
- const visibleCount=({'1m':22,'3m':66,'6m':132,'1y':260})[period]||132;
+function mount(host,dataset,{mode='detail',period='6m',viewRange=period,barCycle='day',indicatorCycle=barCycle,light:lightMode=false}={}){
+ const series=root.StockBookChartSeries,config=series.cycleConfig(barCycle);
+ if(indicatorCycle!==barCycle)throw Error('봉 주기와 지표 주기가 다릅니다.');
+ const all=series.aggregate(dataset.candles,barCycle,dataset.metadata);
+ const offset=series.visibleOffset(all,viewRange,barCycle),visibleCount=all.length-offset,futureCount=barCycle==='day'?25:0;
  const window={};
  const document={getElementById:id=>host.querySelector('[data-chart-id="'+id+'"]'),body:{classList:{contains:()=>lightMode}}};
  host.className='sb-proof-chart '+(mode==='compact'?'sb-proof-compact':'sb-proof-detail');
  host.innerHTML=`<div data-chart-id="notice" class="sb-chart-notice"></div>
  <div class="sb-proof-options"><label><input type="checkbox" data-chart-id="refs">기준선 비교</label><label><input type="checkbox" data-chart-id="original">이동 전 BB 비교</label></div>
  <div data-chart-id="legend" class="sb-proof-legend"></div>
- <svg data-chart-id="chart" viewBox="0 0 1280 600" role="img" aria-label="보존 일봉 가격 차트"></svg>
+ <svg data-chart-id="chart" viewBox="0 0 1280 600" role="img" aria-label="보존 ${config.label} 가격 차트"></svg>
  <svg data-chart-id="pressureChart" viewBox="0 0 1280 210" role="img" aria-label="거래량과 추정 매매 압력"></svg>
  <div class="sb-proof-extended"><details class="sb-proof-money"><summary>거래대금 · 실제 금액 미수신</summary><p>날짜별 실제 거래대금 자료가 없어 막대를 표시하지 않습니다.</p></details>
  <details open data-chart-id="investorPanel"><summary>투자자별 순매수 · 별도 5거래일 축</summary><svg data-chart-id="investorChart" viewBox="0 0 1280 290" role="img" aria-label="보존 투자자별 누적 순매수"></svg><details><summary>일별 수량·자료 안내</summary><p data-chart-id="investorInfo"></p><table data-chart-id="investorTable"></table></details></details></div>
@@ -14958,43 +15030,45 @@ function mount(host,dataset,{mode='detail',period='6m',light:lightMode=false}={}
    document.getElementById('pressureChart').setAttribute('viewBox','15 30 1155 165');
    document.getElementById('pressureChart').setAttribute('preserveAspectRatio','none');
  }
- document.getElementById('notice').textContent=dataset.metadata.name+' · '+dataset.metadata.snapshotDate+' 보존 자료 · 자동 갱신 아님 · 마지막 일봉 미완성';
-const periods=mode==='compact'?[5,10,20,60]:[5,10,20,60,120,200,350,480];
+ document.getElementById('notice').textContent=dataset.metadata.name+' · '+dataset.metadata.snapshotDate+' 보존 자료 · 자동 갱신 아님'+(all.at(-1).incompleteEnd?' · 마지막 '+config.label+' 미완성':'');
+ if(barCycle!=='day')host.querySelector('.sb-proof-options').hidden=true;
+const periods=mode==='compact'&&barCycle==='day'?[5,10,20,60]:config.periods;
 const dark=['#f8b4cf','#87cefa','#ffe34d','#48bc70','#9ca3af','#ff2929','#b98b48','#b48af0'];
 const light=['#b52664','#1177ad','#9b7300','#168542','#666c76','#c91c28','#8d5c1f','#763cb5'];
-function average(all,n){return all.map((_,i)=>i<n-1?null:all.slice(i-n+1,i+1).reduce((s,c)=>s+c.close,0)/n);}
+function average(all,n){return series.average(all,n);}
 function bbUpper(all,n=40,m=1.9){return all.map((_,i)=>{if(i<n-1)return null;const a=all.slice(i-n+1,i+1).map(c=>c.close),mean=a.reduce((s,v)=>s+v,0)/n;return mean+m*Math.sqrt(a.reduce((s,v)=>s+(v-mean)**2,0)/n);});}
 function render(all){
- const isLight=document.body.classList.contains('light'),colors=isLight?light:dark,grid=isLight?'#dfe5ee':'#2b3547',text=isLight?'#526079':'#a4adbd';
- const offset=Math.max(0,all.length-visibleCount),rows=all.slice(offset),avgs=periods.map(n=>average(all,n).slice(offset));
- const upper=bbUpper(all),shift=25,bb=rows.map((_,i)=>upper[offset+i-shift]??null);
- const referenceBase=all.slice(-600),references=[60,20,5].map(n=>({n,candle:referenceBase[600-n-1]}));
- const showRefs=document.getElementById('refs').checked,showOriginal=document.getElementById('original').checked;
- const future=Array.from({length:25},(_,i)=>upper[all.length-25+i]);
- const values=bb.concat(future,showOriginal?upper.slice(offset):[],showRefs?references.map(r=>r.candle.close):[]).filter(v=>v!==null).concat(rows.flatMap(c=>[c.low,c.high]).concat(avgs.flat().filter(v=>v!==null)));const lo=Math.min(...values),hi=Math.max(...values),pad=Math.max((hi-lo)*.04,1);
- const y=v=>30+(hi+pad-v)/(hi-lo+2*pad)*490,step=1140/(rows.length+25),x=i=>25+(i+.5)*step;
+ const isLight=document.body.classList.contains('light'),palette=isLight?light:dark,colors=config.colors.map(i=>palette[i]),grid=isLight?'#dfe5ee':'#2b3547',text=isLight?'#526079':'#a4adbd';
+ const rows=all.slice(offset),avgs=periods.map(n=>average(all,n).slice(offset));
+ const upper=barCycle==='day'?bbUpper(all):[],shift=futureCount,bb=barCycle==='day'?rows.map((_,i)=>upper[offset+i-shift]??null):[];
+ const referenceBase=all.slice(-600),references=barCycle==='day'?[60,20,5].map(n=>({n,candle:referenceBase[600-n-1]})).filter(r=>r.candle):[];
+ const showRefs=barCycle==='day'&&document.getElementById('refs').checked,showOriginal=barCycle==='day'&&document.getElementById('original').checked;
+ const future=Array.from({length:futureCount},(_,i)=>upper[all.length-futureCount+i]??null);
+ const cloudA=config.cloud?average(all,config.cloud[0]).slice(offset):[],cloudB=config.cloud?average(all,config.cloud[1]).slice(offset):[];
+ const values=bb.concat(future,showOriginal?upper.slice(offset):[],showRefs?references.map(r=>r.candle.close):[]).filter(v=>v!==null).concat(rows.flatMap(c=>[c.low,c.high]).concat(avgs.flat().filter(v=>v!==null),cloudA.filter(v=>v!==null),cloudB.filter(v=>v!==null)));const lo=Math.min(...values),hi=Math.max(...values),pad=Math.max((hi-lo)*.04,1);
+ const y=v=>30+(hi+pad-v)/(hi-lo+2*pad)*490,step=1140/(rows.length+futureCount),x=i=>25+(i+.5)*step;
  let svg='';for(let i=0;i<=5;i++){const v=lo+(hi-lo)*i/5;svg+=`<line x1="25" y1="${y(v)}" x2="1170" y2="${y(v)}" stroke="${grid}"/><text x="1180" y="${y(v)+4}" fill="${text}" font-size="12">${Math.round(v).toLocaleString()}</text>`;}
  // Split each cloud segment at its exact crossing so no polygon straddles the two regimes.
- const a=avgs[0],b=avgs[1];let cloudCount=0;
- function cloud(x1,a1,b1,x2,a2,b2,positive){svg+=`<polygon class="ma-cloud" points="${x1},${y(a1)} ${x2},${y(a2)} ${x2},${y(b2)} ${x1},${y(b1)}" fill="${positive?colors[0]:colors[1]}" opacity="${isLight?.30:.65}"/>`;cloudCount++;}
- for(let i=1;i<rows.length;i++){if([a[i-1],a[i],b[i-1],b[i]].some(v=>v===null))continue;const d0=a[i-1]-b[i-1],d1=a[i]-b[i];if(d0*d1<0){const t=d0/(d0-d1),xx=x(i-1)+step*t,mid=a[i-1]+(a[i]-a[i-1])*t;cloud(x(i-1),a[i-1],b[i-1],xx,mid,mid,d0>=0);cloud(xx,mid,mid,x(i),a[i],b[i],d1>=0);}else cloud(x(i-1),a[i-1],b[i-1],x(i),a[i],b[i],d1>=0);}
+ const a=cloudA,b=cloudB;let cloudCount=0;
+ function cloud(x1,a1,b1,x2,a2,b2,positive){svg+=`<polygon class="ma-cloud" points="${x1},${y(a1)} ${x2},${y(a2)} ${x2},${y(b2)} ${x1},${y(b1)}" fill="${positive?palette[0]:palette[1]}" opacity="${isLight?.30:.65}"/>`;cloudCount++;}
+ for(let i=1;config.cloud&&i<rows.length;i++){if([a[i-1],a[i],b[i-1],b[i]].some(v=>v===null))continue;const d0=a[i-1]-b[i-1],d1=a[i]-b[i];if(d0*d1<0){const t=d0/(d0-d1),xx=x(i-1)+step*t,mid=a[i-1]+(a[i]-a[i-1])*t;cloud(x(i-1),a[i-1],b[i-1],xx,mid,mid,d0>=0);cloud(xx,mid,mid,x(i),a[i],b[i],d1>=0);}else cloud(x(i-1),a[i-1],b[i-1],x(i),a[i],b[i],d1>=0);}
  const maxVol=Math.max(...rows.map(c=>c.volume),1);rows.forEach((c,i)=>{const color=c.close>=c.open?(isLight?'#cd2746':'#ed6076'):(isLight?'#2563c4':'#6196ef'),w=step*.65;svg+=`<line x1="${x(i)}" y1="${y(c.high)}" x2="${x(i)}" y2="${y(c.low)}" stroke="${color}"/><rect class="candle" x="${x(i)-w/2}" y="${Math.min(y(c.open),y(c.close))}" width="${w}" height="${Math.max(1,Math.abs(y(c.open)-y(c.close)))}" fill="${color}"/>`;});
- avgs.forEach((arr,j)=>{const points=arr.flatMap((v,i)=>v===null?[]:[`${x(i)},${y(v)}`]);svg+=`<polyline class="ma" data-period="${periods[j]}" points="${points.join(' ')}" fill="none" stroke="${colors[j]}" stroke-width="${periods[j]===200?3:periods[j]===20?2.4:1.3}"/>`;});
+ avgs.forEach((arr,j)=>{const points=arr.flatMap((v,i)=>v===null?[]:[`${x(i)},${y(v)}`]);svg+=`<polyline class="ma" data-period="${periods[j]}" points="${points.join(' ')}" fill="none" stroke="${colors[j]}" stroke-width="${config.bold.includes(periods[j])?(barCycle==='day'&&periods[j]===20?2.4:3):1.3}"/>`;});
  const mint=isLight?'#087d79':'#a8f5e5';
  const shifted=bb.concat(future);const bbpoints=shifted.flatMap((v,i)=>v===null?[]:[`${x(i)},${y(v)}`]);
- svg+=`<polyline class="bb-shift" points="${bbpoints.join(' ')}" fill="none" stroke="${mint}" stroke-width="2.4" stroke-dasharray="1 5" stroke-linecap="round"/>`;
+ if(barCycle==='day')svg+=`<polyline class="bb-shift" points="${bbpoints.join(' ')}" fill="none" stroke="${mint}" stroke-width="2.4" stroke-dasharray="1 5" stroke-linecap="round"/>`;
  if(showOriginal)svg+=`<polyline class="bb-original" points="${upper.slice(offset).flatMap((v,i)=>v===null?[]:[`${x(i)},${y(v)}`]).join(' ')}" fill="none" stroke="${colors[2]}" stroke-width="1" stroke-dasharray="3 4"/>`;
  if(showRefs)references.forEach((r,i)=>{svg+=`<line class="reference" x1="25" y1="${y(r.candle.close)}" x2="1170" y2="${y(r.candle.close)}" stroke="${colors[i]}" stroke-dasharray="5 5"/><text x="30" y="${y(r.candle.close)-5}" fill="${colors[i]}" font-size="11">수식${i+1}: ${r.candle.date} 종가 ${r.candle.close.toLocaleString()}</text>`;});
- svg+=`<line x1="${x(rows.length-1)+step/2}" y1="25" x2="${x(rows.length-1)+step/2}" y2="550" stroke="${grid}" stroke-dasharray="4 5"/><text x="${x(rows.length)+4}" y="550" fill="${text}" font-size="10">미래 25봉 표시 공간</text>`;
+ if(futureCount)svg+=`<line x1="${x(rows.length-1)+step/2}" y1="25" x2="${x(rows.length-1)+step/2}" y2="550" stroke="${grid}" stroke-dasharray="4 5"/><text x="${x(rows.length)+4}" y="550" fill="${text}" font-size="10">미래 25봉 표시 공간</text>`;
  svg+=`<text x="25" y="585" fill="${text}">${rows[0].date}</text><text x="${x(rows.length-1)-55}" y="585" fill="${text}">${rows.at(-1).date}</text>`;
- document.getElementById('chart').innerHTML=svg;document.getElementById('legend').innerHTML=periods.map((n,i)=>`<span style="color:${colors[i]};border-color:${colors[i]}">${n}일</span>`).join('')+`<span style="color:${mint};border-color:${mint}">BB 40 / 1.9 → +25봉</span>`;document.getElementById('period').textContent=`수신 기간 ${all[0].date} ~ ${all.at(-1).date} · ${all.length}봉 · 모든 이동평균은 종가 단순평균`;
+ document.getElementById('chart').innerHTML=svg;document.getElementById('legend').innerHTML=periods.map((n,i)=>`<span style="color:${colors[i]};border-color:${colors[i]}">${n}${config.unit}</span>`).join('')+(config.cloud?`<span>산·우물 구름 ${config.cloud.join('·')}${config.unit}</span>`:'<span>피보나치 구름 · 기준 종가선 수식 확인 대기</span>')+(barCycle==='day'?`<span style="color:${mint};border-color:${mint}">BB 40 / 1.9 → +25봉</span>`:'');document.getElementById('period').textContent=`수신 기간 ${all[0].firstDate} ~ ${all.at(-1).date} · 일봉 ${dataset.candles.length}개 → ${config.label} ${all.length}개 · 모든 이동평균은 ${config.label} 종가 단순평균${barCycle!=='day'?' · 첫 집계봉은 이력 시작 전 자료 미확인으로 이평 계산에서 제외':''}${periods.some((_,i)=>avgs[i].every(v=>v===null))?' · 일부 이평선은 이력 부족':''}`;
  renderPressure(all,isLight);
- window.chartEvidence={count:all.length,displayed:rows.length,periods,cloudCount,bbShift:shift,bbPeriod:40,bbMultiplier:1.9,referenceBaseCount:referenceBase.length,references,lastAverages:avgs.map((a,i)=>({period:periods[i],value:a.at(-1)}))};window.renderDone=true;
+ window.chartEvidence={count:all.length,sourceCount:dataset.candles.length,displayed:rows.length,barCycle,indicatorCycle,viewRange,periods,cloudCount,cloudPeriods:config.cloud,cloudLast:config.cloud?[cloudA.at(-1),cloudB.at(-1)]:null,bbShift:shift,bbPeriod:barCycle==='day'?40:null,bbMultiplier:barCycle==='day'?1.9:null,referenceBaseCount:referenceBase.length,references,lastAverages:avgs.map((a,i)=>({period:periods[i],value:a.at(-1)}))};window.renderDone=true;
 }
 // Independent OHLCV estimate, not the encrypted HTS indicator or actual trade-side volume.
 function estimatePressure(all){return all.map((c,i)=>{const prior=all.slice(Math.max(0,i-20),i);const baseline=prior.length===20?prior.reduce((s,r)=>s+r.volume,0)/20:null;const location=c.high===c.low?0:Math.max(-1,Math.min(1,(2*c.close-c.high-c.low)/(c.high-c.low)));return {date:c.date,volume:c.volume,baseline,aboveAverage:baseline===null?null:c.volume>=baseline,location,pressure:location*c.volume};});}
 function renderPressure(all,isLight){
- const rows=estimatePressure(all).slice(-visibleCount),step=1140/(rows.length+25),x=i=>25+(i+.5)*step,max=Math.max(1,...rows.map(r=>r.volume));
+ const rows=estimatePressure(all).slice(-visibleCount),step=1140/(rows.length+futureCount),x=i=>25+(i+.5)*step,max=Math.max(1,...rows.map(r=>r.volume));
  const muted=isLight?'#526079':'#b8c2d2',red=isLight?'#c9263c':'#ff3030',cyan=isLight?'#087da0':'#46def5',yellow=isLight?'#9d7900':'#fff34a';
  let svg=`<text x="25" y="20" fill="${muted}" font-size="13">거래량·매매세 · 바깥 빨강/하늘색: 거래량 · 안쪽 노랑/검정: 추정 매수/매도 압력</text><line x1="25" y1="185" x2="1170" y2="185" stroke="${muted}" opacity=".4"/><line x1="0" y1="210" x2="1280" y2="210" stroke="${muted}" opacity=".3"/><text x="25" y="235" fill="${muted}" font-size="13">거래대금 구간 · 실제 금액 미수신</text>`;
  rows.forEach((r,i)=>{const w=step*.88,h=r.volume/max*150,p=r.pressure/max*150;svg+=`<rect class="pressure-volume" x="${x(i)-w/2}" y="${185-h}" width="${w}" height="${h}" fill="${r.aboveAverage===null?muted:r.aboveAverage?red:cyan}"/><rect class="pressure-estimate" data-direction="${p>0?'buy':p<0?'sell':'neutral'}" x="${x(i)-w*.30}" y="${185-Math.abs(p)}" width="${w*.60}" height="${Math.abs(p)}" fill="${p>=0?yellow:'#080808'}" stroke="${isLight?'#ffffff':'#b8c2d2'}" stroke-width=".35"/>`;});
@@ -15031,7 +15105,6 @@ function renderInvestorPanel(){
  window.investorEvidence={dates:rows.map(r=>r.date),count:rows.length,totals:rows.at(-1).cumulative,source:investorSnapshot.source};
 }
 
- const all=dataset.candles;
  // Compress indicator coordinates, keeping label font sizes readable and candles unchanged.
  function fitIndicator(id,top,bottom,height){
   const svg=document.getElementById(id),ratio=(height-20)/(bottom-top);
@@ -15071,14 +15144,14 @@ root.StockBookChartRenderer=Object.freeze({mount});
  const states=new WeakMap();
  async function show(host,context,mode){
   if(!host)return;
-  const old=states.get(host),key=JSON.stringify([context.code,context.period,mode]);
+  const old=states.get(host),key=JSON.stringify([context.code,context.viewRange||context.period,context.barCycle||'day',context.indicatorCycle||context.barCycle||'day',mode]);
   if(old?.key===key)return;
   const state={key,controller:null};states.set(host,state);
   host.className='sb-chart-loading';host.textContent='차트 자료를 불러오는 중…';
   let data;try{data=await dataset(context.code);}catch{data={ok:false,error:'차트 자료를 불러오지 못했습니다.'};}
   if(states.get(host)!==state)return;
   if(!data.ok || data.metadata.stockCode!==context.code){host.className='sb-data-empty';host.textContent=data.error||'선택 종목의 차트 자료가 없습니다.';return;}
-  try{state.controller=root.StockBookChartRenderer.mount(host,data,{mode,period:context.period,light:document.body.classList.contains('light-mode')});}
+  try{state.controller=root.StockBookChartRenderer.mount(host,data,{mode,period:context.period,viewRange:context.viewRange||context.period,barCycle:context.barCycle||'day',indicatorCycle:context.indicatorCycle||context.barCycle||'day',light:document.body.classList.contains('light-mode')});}
   catch{host.className='sb-data-empty';host.textContent='차트 자료를 표시하지 못했습니다.';}
  }
  new MutationObserver(()=>{for(const host of document.querySelectorAll('[data-chart-host]'))states.get(host)?.controller?.updateTheme(document.body.classList.contains('light-mode'));}).observe(document.body,{attributes:true,attributeFilter:['class']});
