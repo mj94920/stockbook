@@ -15,7 +15,7 @@ html=html.replace(/<link\b[^>]*href="https:\/\/[^>]*>\s*/g,'');
 const icon='data:image/png;base64,'+fs.readFileSync(path.join(root,'icon-192.png')).toString('base64');
 html=html.replaceAll('./icon-192.png',icon);
 html=html.replace('<link rel="stylesheet" href="src/chart/chart.css">','<style>'+fs.readFileSync(path.join(root,'src/chart/chart.css'),'utf8')+'</style>');
-html=html.replace(/<script src="(src\/chart\/(?:renderer|client)\.js)"><\/script>/g,(_,file)=>'<script>\n'+fs.readFileSync(path.join(root,file),'utf8').replace(/<\/script/gi,'<\\/script')+'\n</script>');
+html=html.replace(/<script src="(src\/(?:chart\/(?:renderer|client)|news\/page-client)\.js)"><\/script>/g,(_,file)=>'<script>\n'+fs.readFileSync(path.join(root,file),'utf8').replace(/<\/script/gi,'<\\/script')+'\n</script>');
 const boot=`document.addEventListener('DOMContentLoaded',async()=>{
  const data=${payload};
  window.electronAPI={
@@ -26,7 +26,7 @@ const boot=`document.addEventListener('DOMContentLoaded',async()=>{
   loadState:async()=>null,saveState:async()=>{},checkApiKey:async()=>false,loadApiKey:async()=>null,
   setChartContext:async()=>({ok:true}),openChartWindow:async()=>({ok:false}),onRealtimePrice:()=>{},onWsStatus:()=>{}
  };
- const note=document.createElement('p');note.textContent='뉴스 미리보기 · 2026-10-23 목록 스냅샷 · 이 파일은 본문 미포함 · 실시간 아님';
+ const note=document.createElement('p');note.textContent='뉴스 미리보기 · 2026-10-23 목록 스냅샷 · 본문 미포함 · 원문 웹페이지는 Electron 앱에서 확인 · 실시간 아님';
  note.style.cssText='position:fixed;bottom:4px;right:8px;z-index:100000;max-width:90vw;font-size:12px;padding:6px;background:var(--sb-panel);color:var(--sb-text-2);border:1px solid var(--sb-border)';document.body.append(note);
  window._MDI.show('news');_ic.tab='market';await icRefresh();await icSelect(0);window.newsPreviewReady=true;
 });`;

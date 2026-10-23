@@ -48,23 +48,27 @@ function attributes(tag) {
   for (const match of tag.matchAll(/([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g)) result[match[1].toLowerCase()] = decode(match[2] ?? match[3] ?? match[4]);
   return result;
 }
-function articleData(html, url) {
-  const provider = new URL(url).hostname === 'www.bloter.net' ? 'bloter' : 'naver';
-  const result = {body:articleText(html,provider)}, clean = cleanHtml(html);
-  // Only expose the observed publisher link as metadata, never fetch it here.
-  if (provider === 'naver') for (const match of clean.matchAll(/<a\b[^>]*>/gi)) {
+function publisherLink(html) {
+  const clean = cleanHtml(html);
+  for (const match of clean.matchAll(/<a\b[^>]*>/gi)) {
     const attr = attributes(match[0]);
     if (!String(attr.class || '').split(/\s+/).includes('media_end_head_origin_link')) continue;
     try {
       const origin = new URL(attr.href);
-      if (['https:','http:'].includes(origin.protocol) && !origin.username && !origin.password && !origin.port) result.publisherUrl = origin.href;
+      if (['https:','http:'].includes(origin.protocol) && !origin.username && !origin.password && !origin.port) return origin.href;
     } catch {}
     break;
   }
+  return '';
+}
+function articleData(html, url) {
+  const provider = new URL(url).hostname === 'www.bloter.net' ? 'bloter' : 'naver';
+  const result = {body:articleText(html,provider)}, clean = cleanHtml(html);
+  if (provider === 'naver') {const link=publisherLink(html);if(link)result.publisherUrl=link;}
   if (provider === 'bloter') for (const match of clean.matchAll(/<meta\b[^>]*>/gi)) {
     const attr = attributes(match[0]);
     if (attr.property === 'article:published_time' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(attr.content || '') && Number.isFinite(Date.parse(attr.content))) result.time = attr.content;
   }
   return result;
 }
-module.exports = { articleUrl, articleText, articleData, decode, htmlContent, attributes };
+module.exports = { articleUrl, articleText, articleData, publisherLink, decode, htmlContent, attributes };

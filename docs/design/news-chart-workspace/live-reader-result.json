@@ -1,52 +1,52 @@
 {
   "passed": true,
-  "verifiedAt": "2026-10-23T04:37:47.812Z",
+  "verifiedAt": "2026-10-23T05:05:17.851Z",
   "scope": "Actual HTTPS through session proxy + production news service + browser mock preload. Windows Electron/NSIS not verified. Article bodies are not stored.",
   "marketCount": 30,
   "stockCount": 20,
   "bloterCount": 20,
   "naver": {
-    "url": "https://n.news.naver.com/mnews/article/215/0001270214",
-    "publisher": "한국경제TV",
-    "publisherUrl": "http://www.wowtv.co.kr/NewsCenter/News/Read?articleId=A202610230079&t=NN",
-    "bodyLength": 1484
+    "url": "https://n.news.naver.com/mnews/article/016/0002713595",
+    "publisher": "헤럴드경제",
+    "publisherUrl": "https://biz.heraldcorp.com/article/10912876?ref=naver",
+    "bodyLength": 2284
   },
   "bloter": {
-    "url": "https://www.bloter.net/news/articleView.html?idxno=676525",
+    "url": "https://www.bloter.net/news/articleView.html?idxno=676538",
     "publisher": "블로터",
-    "time": "2026-10-23T11:51:39+09:00",
-    "bodyLength": 1721
+    "time": "2026-10-23T13:51:10+09:00",
+    "bodyLength": 3186
   },
   "calls": [
     {
       "url": "https://m.stock.naver.com/api/news/list?category=mainnews&pageSize=30&page=1",
       "status": 200,
-      "bytes": 17203,
-      "sha256": "d467a5109e048a736afcc59fe1070b8b14ab05096fb7594232f7ca3e20e5f914"
+      "bytes": 17297,
+      "sha256": "a19fd665ed315123e53dd15ab4efff5f32c296452d710909dc526c60ef34c56f"
     },
     {
-      "url": "https://n.news.naver.com/mnews/article/215/0001270214",
+      "url": "https://n.news.naver.com/mnews/article/016/0002713595",
       "status": 200,
-      "bytes": 299463,
-      "sha256": "75953b83441004ca2cbd84885172a742ade9731e423aba10f706da8a3d39fc6e"
+      "bytes": 266864,
+      "sha256": "92b45cf4bc5c1f0bbe73f8d6bb15bef147218795b75bf00f85f495491bf1f73f"
     },
     {
       "url": "https://www.bloter.net/news/articleList.html?view_type=sm",
       "status": 200,
-      "bytes": 105644,
-      "sha256": "727b7bcae1f01d4ac609cb0fed95092acf01465aa8f3fce3f46c4115dfc7daae"
+      "bytes": 105844,
+      "sha256": "084fd1e138cee1b3fe20a5899366cfcb080b743bb326a1fbd26b6a01ce864556"
     },
     {
-      "url": "https://www.bloter.net/news/articleView.html?idxno=676525",
+      "url": "https://www.bloter.net/news/articleView.html?idxno=676538",
       "status": 200,
-      "bytes": 159436,
-      "sha256": "21cfed9e1de90b1254cfce676d545507be2f435ad7326358822f775f588aa0b1"
+      "bytes": 165366,
+      "sha256": "eb5d86ebca4d8f81d9cb25569f63e88a0eabd79a83510d9a87db6a71a5dbd090"
     },
     {
       "url": "https://m.stock.naver.com/api/news/stock/005930?pageSize=20&page=1",
       "status": 200,
-      "bytes": 16845,
-      "sha256": "4c04d79eac4d32c278911c595845fb9cc6ebbe14221419eaeacea4ce5ab12059"
+      "bytes": 17063,
+      "sha256": "8750d9dd0ecf544c476ab16aba9ded5d061ae0bafe5a97430188cd0ca0c409bb"
     }
   ],
   "checks": [

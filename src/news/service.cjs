@@ -1,13 +1,30 @@
 'use strict';
 
-const { articleUrl, articleData } = require('./article.cjs');
+const { articleUrl, articleData, publisherLink } = require('./article.cjs');
 const { newsItems } = require('./list.cjs');
 const { bloterItems } = require('./bloter.cjs');
 
 function registerNews({ ipcMain, getMainWindow, httpsGet, headers }) {
   const isMain = event => {
     const main = getMainWindow();
-    return !!main && event.sender === main.webContents;
+    return !!main && event.sender === main.webContents &&
+      (!event.senderFrame || event.senderFrame === main.webContents.mainFrame);
+  };
+  const documents = new Map();
+  const readDocument = (url,refresh=false) => {
+    const previous=documents.get(url);
+    if(previous && ((refresh && previous.done) || Date.now()-previous.createdAt>60000))documents.delete(url);
+    if (!documents.has(url)) {
+      const entry={done:false,pending:null,createdAt:Date.now()};
+      entry.pending = Promise.resolve().then(() => httpsGet(url,12000,new URL(url).hostname === 'www.bloter.net' ? {} : headers)).then(html => {
+        if(typeof html!=='string' || html.length>4000000)throw Error('기사 응답 크기 초과');
+        return html;
+      });
+      documents.set(url,entry);
+      entry.pending.then(() => {entry.done=true;},() => {if(documents.get(url)===entry)documents.delete(url);});
+      while(documents.size>8)documents.delete(documents.keys().next().value);
+    }
+    return documents.get(url).pending;
   };
   ipcMain.handle('fetch-news', async (event, opts) => {
     if (!isMain(event)) return { ok:false, items:[], error:'요청한 화면을 확인할 수 없습니다.' };
@@ -34,12 +51,22 @@ function registerNews({ ipcMain, getMainWindow, httpsGet, headers }) {
     if (!isMain(event)) return { ok:false, error:'요청한 화면을 확인할 수 없습니다.' };
     try {
       const url = articleUrl(value);
-      const data = articleData(await httpsGet(url, 12000, new URL(url).hostname === 'www.bloter.net' ? {} : headers),url);
+      const data = articleData(await readDocument(url,true),url);
       return { ok:true, url, ...data };
     } catch {
       return { ok:false, error:'본문을 불러오지 못했습니다. 수신한 요약과 원문 링크를 이용해 주세요.' };
     }
   });
+  return {resolvePage:async(value,source) => {
+    const url=articleUrl(value);
+    if(source==='naver' || new URL(url).hostname==='www.bloter.net')return url;
+    const link=publisherLink(await readDocument(url));
+    if(!link)return url;
+    const original=new URL(link);
+    // Use TLS even when the provider supplies an old HTTP publisher link.
+    original.protocol='https:';
+    return original.href;
+  }};
 }
 
 module.exports = { registerNews };

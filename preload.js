@@ -26,6 +26,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 정보센터 뉴스 — { kind:'market'|'stock', code } → { ok, items, error }
   fetchNews: (opts) => ipcRenderer.invoke('fetch-news', opts),
   fetchNewsArticle: (url) => ipcRenderer.invoke('fetch-news-article', url),
+  openNewsPage: (value) => ipcRenderer.invoke('open-news-page', value),
+  closeNewsPage: () => ipcRenderer.invoke('close-news-page'),
+  setNewsPageBounds: (value) => ipcRenderer.send('news-page-bounds', value),
+  onNewsPageFailed: (callback) => {
+    const listener = (_event,value) => callback(value);
+    ipcRenderer.on('news-page-failed',listener);
+    return () => ipcRenderer.removeListener('news-page-failed',listener);
+  },
   getChartSnapshot: (code) => ipcRenderer.invoke('get-chart-snapshot', code),
   setChartContext: (value) => ipcRenderer.invoke('set-chart-context', value),
   openChartWindow: (value) => ipcRenderer.invoke('open-chart-window', value),

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, safeStorage, net } = require('electron');
+const { app, BrowserWindow, WebContentsView, ipcMain, dialog, shell, safeStorage, net } = require('electron');
 const path  = require('path');
 const fs    = require('fs');
 const https = require('https');
@@ -1219,8 +1219,11 @@ ipcMain.handle('fetch-naver-finance', async (_event, code) => {
 });
 
 // ── IPC: 정보센터 뉴스 (목록 및 본문, 메인 화면 요청만 허용) ────────────────
-require('./src/news/service.cjs').registerNews({
+const newsService = require('./src/news/service.cjs').registerNews({
   ipcMain, getMainWindow: () => win, httpsGet, headers: NAVER_HEADERS,
+});
+const newsPage = require('./src/news/page.cjs').registerNewsPage({
+  ipcMain, WebContentsView, getMainWindow:()=>win, resolvePage:newsService.resolvePage
 });
 
 // ── IPC: API 키 암호화 저장 (safeStorage) ───────────────────────────────────
@@ -1361,7 +1364,8 @@ function createWindow() {
     }
   });
 
-  win.on('closed', () => chartWindows.close());
+  win.on('closed', () => { chartWindows.close(); newsPage.close(); });
+  win.webContents.on('did-start-loading', () => newsPage.close());
   win.loadFile(renderer.htmlPath);
   win.setMenuBarVisibility(false);
   // 스플래시 최소 1.4초 표시 후 메인 창 표시, 스플래시 닫기

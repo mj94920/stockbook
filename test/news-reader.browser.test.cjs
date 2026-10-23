@@ -98,3 +98,49 @@ test('reader renders safe text, keeps source link and discards stale article; ch
   assert.deepEqual(errors,[]);
  }finally{await browser?.close();await new Promise(r=>server.close(r));}
 });
+
+test('original-page controls keep the native view in the reader and hide it for overlays, tabs and failed loads',async()=>{
+ const root=path.resolve(__dirname,'..');const server=createServer(async(req,res)=>{try{const rel=decodeURIComponent(new URL(req.url,'http://x').pathname).replace(/^\/+/, '')||'index.html',target=path.resolve(root,rel);if(!target.startsWith(root+path.sep))throw Error();res.setHeader('Content-Type',target.endsWith('.html')?'text/html; charset=utf-8':target.endsWith('.js')?'text/javascript':target.endsWith('.css')?'text/css':'application/octet-stream');res.end(await fs.readFile(target));}catch{res.writeHead(404);res.end();}});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;let browser;
+ try{
+  browser=await chromium.launch();const page=await browser.newPage({viewport:{width:1500,height:950}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort());await page.goto(base+'/index.html');
+  await page.evaluate(async()=>{
+   window.__opens=[];window.__bounds=[];window.__closes=0;
+   window.electronAPI={
+    openNewsPage:async value=>{window.__opens.push(value);return {ok:true,url:'https://www.publisher.example/article'};},
+    closeNewsPage:async()=>{window.__closes++;return {ok:true};},setNewsPageBounds:value=>window.__bounds.push(value),
+    fetchNewsArticle:async()=>({ok:true,body:'합성 본문 — 실제 원문 페이지와 별도의 텍스트 폴백',publisherUrl:'https://www.publisher.example/article'})
+   };
+   _ic.updated=new Date();_ic.tab='market';window._MDI.show('news');
+   _ic.items=[{id:'original',title:'원문 페이지 영역 검증',source:'합성 언론사',url:'https://n.news.naver.com/mnews/article/469/0001234567'}];await icSelect(0);
+  });
+  await page.waitForFunction(()=>window.__bounds.at(-1)?.bounds?.width>200);
+  assert.equal(await page.locator('#icPageHost').count(),1);assert.equal(await page.locator('.ic-article-body').count(),0);
+  assert.equal(await page.locator('#icPageStatus').innerText(),'www.publisher.example');
+  assert.equal(await page.evaluate(()=>window.__opens.length),1);assert.equal(await page.evaluate(()=>window.__opens[0].source),'publisher');
+  const initial=await page.evaluate(()=>window.__bounds.at(-1).bounds);assert.ok(initial.height>150);
+  await page.evaluate(()=>document.getElementById('sellModal').classList.add('open'));
+  await page.waitForFunction(()=>window.__bounds.at(-1)?.bounds===null);
+  await page.evaluate(()=>document.getElementById('sellModal').classList.remove('open'));
+  await page.waitForFunction(()=>window.__bounds.at(-1)?.bounds?.width>200);
+  await page.setViewportSize({width:1300,height:820});
+  await page.waitForFunction(old=>window.__bounds.at(-1)?.bounds?.width!==old,initial.width);
+  assert.ok((await page.evaluate(()=>window.__bounds.at(-1).bounds)).height>80);
+  await page.evaluate(()=>window._MDI.show('journal'));
+  await page.waitForFunction(()=>window.__bounds.at(-1)?.bounds===null);
+  await page.evaluate(()=>window._MDI.show('news'));
+  await page.waitForFunction(()=>window.__bounds.at(-1)?.bounds?.width>200);
+  await page.getByRole('button',{name:'본문만 보기',exact:true}).click();
+  assert.equal(await page.locator('#icPageHost').count(),0);assert.match(await page.locator('.ic-article-body').innerText(),/합성 본문/);
+  assert.equal(await page.evaluate(()=>window.__closes),1);
+  await page.getByRole('button',{name:'네이버 기사',exact:true}).click();
+  await page.waitForFunction(()=>window.__opens.length===2);
+  assert.equal(await page.evaluate(()=>window.__opens.at(-1).source),'naver');
+  await page.evaluate(()=>{window.electronAPI.openNewsPage=async()=>({ok:false,error:'합성 연결 실패'});});
+  await page.getByRole('button',{name:'언론사 원문',exact:true}).click();
+  await page.waitForFunction(()=>document.getElementById('icPageStatus')?.textContent==='합성 연결 실패');
+  assert.match(await page.locator('#icPageHost').innerText(),/본문만 보기/);
+  await page.getByRole('button',{name:'본문만 보기',exact:true}).click();assert.match(await page.locator('.ic-article-body').innerText(),/합성 본문/);
+  assert.deepEqual(errors,[]);
+ }finally{await browser?.close();await new Promise(r=>server.close(r));}
+});

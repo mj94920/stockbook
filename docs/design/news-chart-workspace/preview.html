@@ -3489,6 +3489,13 @@
   #mdi-panel-portfolio .sb-cash-summary td { font-family:var(--sb-font-num);font-size:15px;padding:8px;text-align:right; }
   #mdi-ptc-portfolio-rlz > .card { border:0;border-radius:0;box-shadow:none;background:none;padding:8px 0; }
 
+  .ic-detail.sb-news-original { display:flex;flex-direction:column;overflow:hidden;min-height:0; }
+  .sb-news-original > h3 { font-size:14px;flex-shrink:0; }
+  .sb-news-original > .ic-meta,.sb-news-original > .ic-actions { flex-shrink:0; }
+  .sb-news-page-tools { display:flex;flex-wrap:wrap;gap:var(--sb-space-1);flex-shrink:0; }
+  .sb-news-page-status { color:var(--sb-text-2);font-size:12px;padding:var(--sb-space-1) 0;flex-shrink:0;overflow-wrap:anywhere; }
+  .sb-news-page-host { flex:1;min-height:80px;background:var(--sb-panel);color:var(--sb-text-2);overflow:auto; }
+
   .ic-article-label { font-size:12px;color:var(--sb-text-3);margin:16px 0 8px; }
   .ic-article-body { white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px;line-height:1.9;color:var(--sb-text-1);max-width:72ch; }
   .ic-article-status { font-size:12px;color:var(--sb-text-2);line-height:1.7;margin:12px 0; }
@@ -10013,6 +10020,7 @@ function _icScopeCodes() {
 }
 
 function icSetTab(tab) {
+  window.StockBookNewsPage?.unmount();
   _ic.tab = tab; _ic.sel = -1; _ic.items = []; _ic.err = '';
   document.querySelectorAll('#mdi-panel-news .ic-tab').forEach(b => b.classList.toggle('active', b.dataset.icTab === tab));
   icRefresh();
@@ -10054,10 +10062,18 @@ function _icLinkBtn(url, label) {
   return `<button type="button" class="sb-btn sb-btn--primary" onclick="openUrl(decodeURIComponent('${encodeURIComponent(url)}'))">${label}</button>`;
 }
 
+let _icPageMode = 'publisher';
+function icSetPageMode(mode) {
+  if (!['publisher','naver','text'].includes(mode)) return;
+  _icPageMode=mode;_icRenderDetail();
+}
 function _icRenderDetail() {
   const el = document.getElementById('icDetail');
   if (!el) return;
   const n = _ic.items[_ic.sel];
+  const original = !!(n?.url && !['econ','disclosure'].includes(_ic.tab) && window.electronAPI?.openNewsPage && window.StockBookNewsPage && _icPageMode !== 'text');
+  el.classList.toggle('sb-news-original',original);
+  if (!original) window.StockBookNewsPage?.unmount();
   if (!n) {
     let msg = '목록에서 항목을 선택하세요';
     if (_ic.tab === 'disclosure') msg = '';
@@ -10079,8 +10095,10 @@ function _icRenderDetail() {
   el.innerHTML = `<h3>${_icEsc(n.title)}</h3>
     <div class="ic-meta">${_icEsc(n.source)}${n.source && (n.time || n.timeLabel) ? ' · ' : ''}${_icEsc(_icTimeFmt(n.time, true) || n.timeLabel || '')}</div>
     <div class="ic-actions">${n.publisherUrl && n.publisherUrl !== n.url ? _icLinkBtn(n.publisherUrl, '언론사 원문 ↗') + _icLinkBtn(n.url, '네이버 기사 ↗') : _icLinkBtn(n.url, '원문 보기 ↗')}${codes.length ? `<button type="button" class="sb-btn" onclick="openStockDrawer('${_icEsc(codes[0])}', decodeURIComponent('${encodeURIComponent(_icStockName(codes[0]))}'))">기업분석 열기</button>` : ''}</div>
-    ${n.articleBody ? `<div class="ic-article-label">기사 본문</div><div class="ic-article-body">${_icEsc(n.articleBody)}</div>` : `${n.articleLoading ? '<p class="ic-article-status" role="status">기사 본문을 불러오는 중…</p>' : `<p class="ic-article-status" role="status">${_icEsc(n.articleError || '본문은 데스크톱 앱에서 조회할 수 있습니다.')}</p>`}${n.summary ? `<div class="ic-article-label">수신 요약</div><div class="ic-sum">${_icEsc(n.summary)}</div>` : ''}`}
-    ${chips ? `<div class="ic-chips" style="margin-bottom:var(--sb-space-2)">${chips}</div>` : ''}`;
+    ${window.electronAPI?.openNewsPage ? `<div class="sb-news-page-tools" role="group" aria-label="기사 보기 방식">${[['publisher','언론사 원문'],...(n.url?.includes('n.news.naver.com')?[['naver','네이버 기사']]:[]),['text','본문만 보기']].map(([mode,label])=>`<button type="button" class="sb-btn sb-btn--sm${_icPageMode===mode?' sb-btn--primary':''}" aria-pressed="${_icPageMode===mode}" onclick="icSetPageMode('${mode}')">${label}</button>`).join('')}</div>` : ''}
+    ${original ? `<div id="icPageStatus" class="sb-news-page-status" role="status">원문 페이지를 불러오는 중…</div><div id="icPageHost" class="sb-news-page-host" aria-label="기사 원문 웹페이지"></div>` : n.articleBody ? `<div class="ic-article-label">기사 본문</div><div class="ic-article-body">${_icEsc(n.articleBody)}</div>` : `${n.articleLoading ? '<p class="ic-article-status" role="status">기사 본문을 불러오는 중…</p>' : `<p class="ic-article-status" role="status">${_icEsc(n.articleError || '본문은 데스크톱 앱에서 조회할 수 있습니다.')}</p>`}${n.summary ? `<div class="ic-article-label">수신 요약</div><div class="ic-sum">${_icEsc(n.summary)}</div>` : ''}`}
+    ${!original && chips ? `<div class="ic-chips" style="margin-bottom:var(--sb-space-2)">${chips}</div>` : ''}`;
+  if (original) window.StockBookNewsPage.mount(document.getElementById('icPageHost'),{url:n.url,source:_icPageMode});
 }
 
 let _icArticleRequest = 0;
@@ -10111,6 +10129,8 @@ async function icSelect(i) {
 }
 
 function _icRenderDisclosure() {
+  window.StockBookNewsPage?.unmount();
+  document.getElementById('icDetail')?.classList.remove('sb-news-original');
   const codes = _icScopeCodes();
   const kind = codes.length ? `<button type="button" class="sb-btn sb-btn--sm" onclick="openDartByCode('${_icEsc(codes[0])}')">KRX KIND 공시 (${_icEsc(_icStockName(codes[0]))}) ↗</button>` : '';
   document.getElementById('icList').innerHTML = '<div class="ic-state">공시 데이터 소스 준비 중입니다.<br>아래 링크에서 공시를 확인할 수 있습니다.</div>';
@@ -14844,6 +14864,76 @@ function wlAssignGroup(idx, gName) {
   </div>
 </div>
 <script>
+(function () {
+  'use strict';
+  let current = null, nextId = 0, frame = 0;
+  function bounds(host) {
+    if (!host?.isConnected || document.hidden || !host.getClientRects().length) return null;
+    const r = host.getBoundingClientRect();
+    if (r.width < 16 || r.height < 16 || r.x < 0 || r.y < 0 || r.right > innerWidth+1 || r.bottom > innerHeight+1) return null;
+    // Native views sit above DOM overlays. Hide before a dialog/drawer can be covered.
+    for (const overlay of document.querySelectorAll('.modal-overlay.open,.analysis-drawer.open,#accountPanelOverlay.open')) {
+      if (overlay.getClientRects().length && getComputedStyle(overlay).visibility !== 'hidden') return null;
+    }
+    for (const [x,y] of [[r.x+2,r.y+2],[r.right-2,r.y+2],[r.x+2,r.bottom-2],[r.right-2,r.bottom-2],[r.x+r.width/2,r.y+r.height/2]]) {
+      const top = document.elementFromPoint(x,y);
+      if (!top || (top !== host && !host.contains(top))) return null;
+    }
+    return {x:r.x,y:r.y,width:r.width,height:r.height};
+  }
+  function sync() {
+    if (!current) return;
+    const rect = bounds(current.host), key = JSON.stringify(rect);
+    if (key !== current.layout) {
+      current.layout = key;
+      window.electronAPI?.setNewsPageBounds?.({id:current.id,bounds:rect});
+    }
+  }
+  function tick() {sync();if(current)frame=requestAnimationFrame(tick);}
+  function unmount() {
+    if (!current) return;
+    current = null;cancelAnimationFrame(frame);
+    window.electronAPI?.closeNewsPage?.().catch(() => {});
+  }
+  function status(entry,text) {
+    if (entry !== current) return;
+    const el = document.getElementById('icPageStatus');
+    if (el) el.textContent = text;
+    if (entry.failed) entry.host.textContent = '원문 페이지를 열지 못했습니다. 위의 네이버 기사 또는 본문만 보기를 선택해 주세요.';
+  }
+  function mount(host,{url,source}) {
+    if (!host || !window.electronAPI?.openNewsPage) {unmount();return;}
+    const key = source+' '+url;
+    if (current?.key === key) {
+      current.host = host;sync();status(current,current.status);return;
+    }
+    unmount();
+    const entry = {host,key,id:'news-'+(++nextId),layout:'',status:'원문 페이지를 불러오는 중…',failed:false};current = entry;
+    status(entry,entry.status);sync();frame=requestAnimationFrame(tick);
+    window.electronAPI.openNewsPage({id:entry.id,url,source,bounds:bounds(host)}).then(result => {
+      if (current !== entry || result?.cancelled) return;
+      entry.failed = !result?.ok;
+      entry.status = result?.ok ? new URL(result.url).hostname : (result?.error || '원문 페이지를 열지 못했습니다.');
+      status(entry,entry.status);
+    }).catch(() => {
+      entry.failed=true;entry.status='원문 페이지를 열지 못했습니다.';status(entry,entry.status);
+    });
+  }
+  // Capture style/class changes in the same rendering turn, including modal opens.
+  const observer = new MutationObserver(sync);
+  observer.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style','hidden','data-mdi-state','data-dock-screen']});
+  addEventListener('resize',sync);addEventListener('scroll',sync,true);
+  document.addEventListener('visibilitychange',sync);
+  addEventListener('beforeunload',unmount);
+  window.electronAPI?.onNewsPageFailed?.(value => {
+    if (current?.id !== value?.id) return;
+    current.failed=true;current.status='원문 페이지를 열지 못했습니다.';status(current,current.status);
+  });
+  window.StockBookNewsPage = {mount,unmount,sync};
+})();
+
+</script>
+<script>
 /* Adapted from chart-proof commit 6d143e4. Recorded data, not a live price source.
  * The original SMA/BB, pressure and investor calculations are kept in this scoped renderer. */
 (function(root){
@@ -15007,7 +15097,7 @@ root.StockBookChartRenderer=Object.freeze({mount});
   loadState:async()=>null,saveState:async()=>{},checkApiKey:async()=>false,loadApiKey:async()=>null,
   setChartContext:async()=>({ok:true}),openChartWindow:async()=>({ok:false}),onRealtimePrice:()=>{},onWsStatus:()=>{}
  };
- const note=document.createElement('p');note.textContent='뉴스 미리보기 · 2026-10-23 목록 스냅샷 · 이 파일은 본문 미포함 · 실시간 아님';
+ const note=document.createElement('p');note.textContent='뉴스 미리보기 · 2026-10-23 목록 스냅샷 · 본문 미포함 · 원문 웹페이지는 Electron 앱에서 확인 · 실시간 아님';
  note.style.cssText='position:fixed;bottom:4px;right:8px;z-index:100000;max-width:90vw;font-size:12px;padding:6px;background:var(--sb-panel);color:var(--sb-text-2);border:1px solid var(--sb-border)';document.body.append(note);
  window._MDI.show('news');_ic.tab='market';await icRefresh();await icSelect(0);window.newsPreviewReady=true;
 });</script></body>
