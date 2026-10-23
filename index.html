@@ -10065,6 +10065,8 @@ async function icSelect(i) {
   const item = _ic.items[i];
   _icRenderList();
   _icRenderDetail();
+  const detail = document.getElementById('icDetail');
+  if (detail) detail.scrollTop = 0;
   if (!item || ['econ','disclosure'].includes(_ic.tab) || item.articleBody || !item.url || !window.electronAPI?.fetchNewsArticle) return;
   item.articleLoading = true; item.articleError = ''; item.articleRequest = request;
   _icRenderDetail();
@@ -10108,7 +10110,9 @@ function _icMarkRelated(items) {
 async function icRefresh() {
   _icRenderChips();
   const seq = ++_ic.seq;
+  ++_icArticleRequest;
   const btn = document.getElementById('icRefreshBtn');
+  if (btn) btn.disabled = false;
   _ic.err = ''; _ic.empty = '';
   if (_ic.tab === 'disclosure') { _ic.items = []; _ic.loading = false; _icRenderDisclosure(); return; }
   if (_ic.tab === 'econ') {

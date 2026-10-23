@@ -1,0 +1,59 @@
+[
+  {
+    "total": 1,
+    "items": [
+      {
+        "id": "4210009246035",
+        "officeId": "421",
+        "articleId": "0009246035",
+        "officeName": "뉴스1",
+        "datetime": "202610231140",
+        "type": 1,
+        "title": "'SK하닉 선방' 코스피, 낙폭 줄여 5400선 등락…외인 7600억 순매도[장...",
+        "body": "코스피가 23일 장중 2%대 하락하며 5400선 부근에서 등락하고 있다. 미국 인공지능(AI) 관련주 급락 여파로 장 초반 4% 넘게 떨어졌다가 기관과 개인의 순매수에 낙폭을 일부 줄였다. 이날 오전 11시 25분 코스피는 전일 대비 131.83포인트... ",
+        "photoType": 1,
+        "imageOriginLink": "https://imgnews.pstatic.net/image/origin/421/2026/10/23/9246035.jpg?type=nf220_150",
+        "titleFull": "'SK하닉 선방' 코스피, 낙폭 줄여 5400선 등락…외인 7600억 순매도[장...",
+        "mobileNewsUrl": "https://n.news.naver.com/mnews/article/421/0009246035"
+      }
+    ]
+  },
+  {
+    "total": 1,
+    "items": [
+      {
+        "id": "0030014273977",
+        "officeId": "003",
+        "articleId": "0014273977",
+        "officeName": "뉴시스",
+        "datetime": "202610231140",
+        "type": 1,
+        "title": "아시안게임 '군면제 논란'에 이공계도 불똥?…배경훈 &quot;병특 상시화 공...",
+        "body": "윤현성 고선영 수습 기자 = 내년부터 14년 만에 재개되는 대기업 인공지능(AI) 분야 전문연구요원 병역특례를 3년 한시가 아닌 상시 제도로 전환해야 한다는 주장에 배경훈 부총리 겸 과학기술정보통신부 장관이 공감을 표했다. 까다로운 대기업 선정... ",
+        "photoType": 1,
+        "imageOriginLink": "https://imgnews.pstatic.net/image/origin/003/2026/10/23/14273977.jpg?type=nf220_150",
+        "titleFull": "아시안게임 '군면제 논란'에 이공계도 불똥?…배경훈 &quot;병특 상시화 공...",
+        "mobileNewsUrl": "https://n.news.naver.com/mnews/article/003/0014273977"
+      }
+    ]
+  },
+  {
+    "total": 1,
+    "items": [
+      {
+        "id": "0160002713530",
+        "officeId": "016",
+        "articleId": "0002713530",
+        "officeName": "헤럴드경제",
+        "datetime": "202610231140",
+        "type": 1,
+        "title": "반도체 초일류 삼성 내다본 이건희 회장의 신경영 DNA",
+        "body": "이재용 삼성전자 회장이 고(故) 이건희 선대회장의 6주기(10월25일)를 이틀 앞둔 23일 오전 유족·경영진과 함께 선영을 찾아 고인을 추도했다. 삼성전자가 올 3분기 영업이익 107조4000억원을 거두며 사상 첫 ‘분기 영업이익 100조원 시대’를 연... ",
+        "photoType": 1,
+        "imageOriginLink": "https://imgnews.pstatic.net/image/origin/016/2026/10/23/2713530.jpg?type=nf220_150",
+        "titleFull": "반도체 초일류 삼성 내다본 이건희 회장의 신경영 DNA",
+        "mobileNewsUrl": "https://n.news.naver.com/mnews/article/016/0002713530"
+      }
+    ]
+  }
+]

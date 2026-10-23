@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "scope": "Self-contained HTML served internally; not a Windows Electron or direct-file launch test",
+  "checks": [
+    "received market list snapshot displays three publishers",
+    "missing body is labelled summary",
+    "article selection changes publisher",
+    "1024px reader visible",
+    "no runtime external requests"
+  ],
+  "errors": []
+}

@@ -1,0 +1,50 @@
+
+> stockbook@1.11.1 test
+> npm run check && node --test test/news-article.test.cjs test/chart-window.test.cjs test/news-reader.browser.test.cjs && npm run smoke
+
+
+> stockbook@1.11.1 check
+> node scripts/check-syntax.mjs
+
+✓ main.js
+✓ preload.js
+✓ index.html#script1 (line 4906)
+✓ index.html#script2 (line 14821)
+✓ package.json
+
+모든 정적 검사 통과
+✔ validates stock and supported period (1.574473ms)
+✔ detail window follows selection, pins context, resumes latest and rejects other senders (0.576048ms)
+✔ recorded chart data is identified and never used for another stock (8.288836ms)
+✔ late load failure from a closed window does not close its replacement (0.580495ms)
+✔ only canonical HTTPS Naver article URLs can be requested (1.138385ms)
+✔ extracts article text with paragraph boundaries, entities and no executable markup (0.925334ms)
+✔ legacy nested div body is complete and missing/paywall bodies fail instead of inventing content (0.596499ms)
+✔ received market and stock payloads retain publisher, summary, canonical URL and KST seconds (1.531798ms)
+✔ news IPC checks sender and stock code before network; only fixed provider routes are fetched (5.194933ms)
+✔ reader renders safe text, keeps source link and discards stale article; chart controls keep context (1384.923692ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1658.081016
+
+> stockbook@1.11.1 smoke
+> node scripts/smoke.mjs
+
+✓ /index.html  (본문 946자, 초기화 오류 없음)
+
+스모크 테스트 통과
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1
+npm notice To update run: npm install -g npm@12.2.1
+npm notice
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1
+npm notice To update run: npm install -g npm@12.2.1
+npm notice

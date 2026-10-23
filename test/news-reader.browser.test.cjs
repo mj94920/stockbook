@@ -1,5 +1,6 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');
 const {createServer}=require('node:http');const fs=require('node:fs/promises');const path=require('node:path');const {chromium}=require('playwright');
+const {newsItems}=require('../src/news/list.cjs');
 test('reader renders safe text, keeps source link and discards stale article; chart controls keep context',async()=>{
  const root=path.resolve(__dirname,'..');const server=createServer(async(req,res)=>{try{const rel=decodeURIComponent(new URL(req.url,'http://x').pathname).replace(/^\/+/, '')||'index.html';const target=path.resolve(root,rel);if(!target.startsWith(root+path.sep))throw Error();res.setHeader('Content-Type',target.endsWith('.html')?'text/html; charset=utf-8':target.endsWith('.js')?'text/javascript':target.endsWith('.css')?'text/css':'application/octet-stream');res.end(await fs.readFile(target));}catch{res.writeHead(404);res.end();}});
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;let browser;
@@ -18,6 +19,43 @@ test('reader renders safe text, keeps source link and discards stale article; ch
   await page.evaluate(async()=>{window.__resolveOld({ok:true,body:'늦게 도착한 이전 본문'});await window.__pendingArticle;});assert.doesNotMatch(await page.locator('#icDetail').innerText(),/늦게 도착/);
   await page.evaluate(async()=>{window.electronAPI.fetchNewsArticle=async()=>({ok:false});_ic.items.push({id:'failed',title:'수신 실패',url:'https://n.news.naver.com/mnews/article/001/333333',summary:'제공된 요약'});await icSelect(2);});
   assert.match(await page.locator('#icDetail').innerText(),/수신 요약/);assert.match(await page.locator('#icDetail').innerText(),/제공된 요약/);
+  await page.evaluate(async()=>{
+   window.electronAPI.fetchNewsArticle=async()=>({ok:true,body:' \n '});await icSelect(2);
+  });
+  assert.equal(await page.locator('.ic-article-body').count(),0);
+  assert.match(await page.locator('#icDetail').innerText(),/수신 요약/);
+  await page.evaluate(async()=>{
+   _ic.items=[{id:'long',title:'긴 기사',source:'검증 언론',time:'2026-10-23T11:40:00+09:00',url:'https://n.news.naver.com/mnews/article/001/444444'},
+    {id:'short',title:'다음 기사',url:'https://n.news.naver.com/mnews/article/001/555555'},
+    {id:'stale-stock',title:'이전 종목 기사',url:'https://n.news.naver.com/mnews/article/001/666666'}];
+   window.electronAPI.fetchNewsArticle=url=>url.endsWith('666666')?new Promise(resolve=>window.__resolveOldStock=resolve):Promise.resolve({ok:true,body:url.endsWith('444444')?Array.from({length:250},(_,i)=>`합성 본문 ${i+1}: 긴 기사의 스크롤 검증 문단입니다.`).join('\n\n'):'다음 기사 본문'});
+   await icSelect(0);
+  });
+  assert.match(await page.locator('#icDetail').innerText(),/검증 언론/);
+  assert.equal(await page.locator('#icDetail').evaluate(el=>{el.scrollTop=el.scrollHeight;return el.clientHeight>100&&el.scrollHeight>el.clientHeight&&el.scrollTop>0;}),true);
+  await page.evaluate(()=>icSelect(1));assert.equal(await page.locator('#icDetail').evaluate(el=>el.scrollTop),0);
+  await page.evaluate(()=>{
+   window.__oldStockArticle=icSelect(2);
+   window.electronAPI.fetchNews=async()=>({ok:true,items:[{id:'new-stock',title:'새 종목 기사',source:'다른 언론',url:'https://n.news.naver.com/mnews/article/001/777777'}]});
+   icSelectStock('000660');
+  });
+  await page.waitForFunction(()=>!_ic.loading&&_ic.items[0]?.id==='new-stock');
+  await page.evaluate(async()=>{window.__resolveOldStock({ok:true,body:'늦은 이전 종목 본문'});await window.__oldStockArticle;});
+  assert.doesNotMatch(await page.locator('#icDetail').innerText(),/늦은 이전 종목 본문/);
+  for(const tab of ['econ','disclosure']){
+   await page.evaluate(()=>{_ic.tab='stock';window.electronAPI.fetchNews=()=>new Promise(resolve=>window.__resolveList=resolve);window.__pendingList=icRefresh();});
+   assert.equal(await page.locator('#icRefreshBtn').isDisabled(),true);
+   await page.evaluate(tab=>icSetTab(tab),tab);assert.equal(await page.locator('#icRefreshBtn').isDisabled(),false);
+   await page.evaluate(async()=>{window.__resolveList({ok:true,items:[{id:'late-list',title:'늦은 이전 목록'}]});await window.__pendingList;});
+   assert.doesNotMatch(await page.locator('#icList').innerText(),/늦은 이전 목록/);
+  }
+  await page.evaluate(async()=>{_ic.tab='market';window.electronAPI.fetchNews=async()=>{throw Error('목록 수신 실패');};await icRefresh();});
+  assert.match(await page.locator('#icList').innerText(),/목록 수신 실패/);assert.equal(await page.locator('#icRefreshBtn').isDisabled(),false);
+  const receivedMarket=newsItems(require('./fixtures/news/market-20261023.json'));
+  await page.evaluate(async items=>{_ic.tab='market';window.electronAPI.fetchNews=async()=>({ok:true,items});window.electronAPI.fetchNewsArticle=async()=>({ok:false});await icRefresh();await icSelect(0);},receivedMarket);
+  assert.equal(await page.locator('#icList .ic-row').count(),3);assert.match(await page.locator('#icDetail').innerText(),/더팩트/);
+  assert.match(await page.locator('#icDetail').innerText(),/수신 요약/);
+  if(process.env.STOCKBOOK_CAPTURE_NEWS==='1')await page.screenshot({path:path.join(root,'docs/design/news-chart-workspace/news.png'),fullPage:true});
   await page.evaluate(()=>window._MDI.show('watchlist'));
   await page.locator('[data-context-tab="hoga"]').click();assert.equal(await page.locator('[data-context-pane="hoga"]').isVisible(),true);assert.equal(await page.locator('[data-context-pane="chart"]').isVisible(),false);
   await page.locator('[data-context-tab="info"]').click();assert.equal(await page.locator('#dockCtxQuote').isVisible(),true);

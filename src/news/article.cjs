@@ -32,4 +32,4 @@ function articleText(html) {
   if (!text) throw new Error('제공된 기사 본문이 비어 있습니다.');
   return text;
 }
-module.exports = { articleUrl, articleText };
+module.exports = { articleUrl, articleText, decode };
