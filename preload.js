@@ -34,6 +34,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('news-page-failed',listener);
     return () => ipcRenderer.removeListener('news-page-failed',listener);
   },
+  getChartData: (code) => ipcRenderer.invoke('get-chart-data', code),
   getChartSnapshot: (code) => ipcRenderer.invoke('get-chart-snapshot', code),
   setChartContext: (value) => ipcRenderer.invoke('set-chart-context', value),
   openChartWindow: (value) => ipcRenderer.invoke('open-chart-window', value),

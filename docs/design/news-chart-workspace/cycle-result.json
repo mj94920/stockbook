@@ -1,8 +1,10 @@
 {
   "passed": true,
-  "verifiedAt": "2026-10-23T07:47:33.118Z",
+  "verifiedAt": "2026-10-26T07:25:32.964Z",
   "scope": "Recorded Samsung daily data grouped locally; browser renderer, UI/IPC mocks. Not a new live provider or a Windows Electron chart verification.",
   "weekly": {
+    "stockCode": "005930",
+    "sourceType": "recorded",
     "count": 215,
     "sourceCount": 1000,
     "displayed": 215,
@@ -76,6 +78,8 @@
     }
   },
   "monthly": {
+    "stockCode": "005930",
+    "sourceType": "recorded",
     "count": 50,
     "sourceCount": 1000,
     "displayed": 50,

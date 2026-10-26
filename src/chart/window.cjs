@@ -8,11 +8,16 @@ function chartContext(input) {
   series.cycleConfig(barCycle);
   return {code:input.code,name:typeof input.name==='string'?input.name.slice(0,120):input.code,period:viewRange,viewRange,barCycle,indicatorCycle};
 }
-function registerChartWindow({ ipcMain, BrowserWindow, getMainWindow, appDir }) {
+function registerChartWindow({ ipcMain, BrowserWindow, getMainWindow, appDir, getChartData }) {
   let child=null, latest=null, current=null, follow=true;
   const fromMain = event => !!getMainWindow() && event.sender === getMainWindow().webContents;
   const send = () => {if(child && !child.isDestroyed())child.webContents.send('chart-context',{...current,follow});};
   const update = input => { latest=chartContext(input);if(follow){current=latest;send();} };
+  ipcMain.handle('get-chart-data',(event,code)=>{
+    if(!fromMain(event) && (!child || event.sender!==child.webContents))return {ok:false,error:'요청한 화면을 확인할 수 없습니다.'};
+    if(event.senderFrame && event.senderFrame!==event.sender.mainFrame)return {ok:false};
+    return getChartData?getChartData(code):{ok:false,error:'일봉 공급자가 연결되지 않았습니다.'};
+  });
   ipcMain.handle('get-chart-snapshot',(event,code)=>{
     if(!fromMain(event) && (!child || event.sender!==child.webContents))return {ok:false,error:'요청한 화면을 확인할 수 없습니다.'};
     return require('./snapshot.cjs').readSnapshot(code,appDir);

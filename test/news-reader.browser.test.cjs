@@ -167,3 +167,40 @@ test('original-page controls keep the native view in the reader and hide it for 
   assert.deepEqual(errors,[]);
  }finally{await browser?.close();await new Promise(r=>server.close(r));}
 });
+
+test('unregistered catalog, header search and holding selections drive chart data without changing watchlist',async()=>{
+ const root=path.resolve(__dirname,'..');const server=createServer(async(req,res)=>{try{const rel=decodeURIComponent(new URL(req.url,'http://x').pathname).replace(/^\/+/, '')||'index.html',target=path.resolve(root,rel);if(!target.startsWith(root+path.sep))throw Error();res.setHeader('Content-Type',target.endsWith('.html')?'text/html; charset=utf-8':target.endsWith('.js')?'text/javascript':target.endsWith('.css')?'text/css':'application/octet-stream');res.end(await fs.readFile(target));}catch{res.writeHead(404);res.end();}});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;let browser;
+ try{
+  browser=await chromium.launch();const page=await browser.newPage({viewport:{width:1440,height:960}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort());await page.goto(base);
+  await page.evaluate(()=>{
+   window.__requests=[];window.__windows=[];
+   window.__syntheticData=code=>{
+    const candles=[];let day=new Date('2024-01-02T00:00:00Z');while(candles.length<520){if(day.getUTCDay()!==0&&day.getUTCDay()!==6){const n=candles.length;candles.push({date:day.toISOString().slice(0,10),open:1000+n,high:1020+n,low:990+n,close:1005+n,volume:100+n});}day.setUTCDate(day.getUTCDate()+1);}
+    return {ok:true,candles,investors:null,metadata:{stockCode:code,name:'합성 '+code,sourceType:'naver-daily',snapshotDate:candles.at(-1).date,fetchedAt:'2026-10-26T03:00:00Z',lastBarComplete:null}};
+   };
+   window.electronAPI={getChartData:async code=>{window.__requests.push(code);return window.__syntheticData(code);},fetchQuote:async()=>({price:1510,prevClose:1500,source:'합성 시세'}),setChartContext:async()=>({ok:true}),openChartWindow:async value=>{window.__windows.push(value);return {ok:true};},fetchHoga:async()=>({ok:false})};
+   state.watchlist=[];state.portfolio=[{ticker:'010130',name:'고려아연',currentPrice:1510,avgPrice:1000,qty:1}];window._dockSel=null;
+   _allStockRaw.KOSPI=[{code:'000660',name:'SK하이닉스',price:1510},{code:'010130',name:'고려아연',price:1510}];_allMkt='KOSPI';
+   window._MDI.show('watchlist');window._MDIPanelTab('watchlist','as');filterAndRenderAll();
+  });
+  await page.locator('#asr-000660 td').nth(1).click();
+  await page.waitForFunction(()=>document.getElementById('sbEmbeddedChart').chartEvidence?.stockCode==='000660');
+  assert.equal(await page.locator('#dockCtxName').innerText(),'SK하이닉스');assert.equal(await page.evaluate(()=>state.watchlist.length),0);
+  await page.evaluate(()=>{dockCtxRender();renderWatchlist();});assert.equal(await page.evaluate(()=>window._dockSel),'000660');
+  await page.locator('#sbChartCycle').selectOption('week');await page.locator('#sbChartPeriod').selectOption('all');
+  await page.waitForFunction(()=>document.getElementById('sbEmbeddedChart').chartEvidence?.barCycle==='week');assert.deepEqual(await page.locator('#sbEmbeddedChart').evaluate(h=>h.chartEvidence.cloudPeriods),[1,4]);
+  await page.locator('#sbChartDetail').click();assert.equal(await page.evaluate(()=>window.__windows.at(-1).code),'000660');
+  await page.locator('#sbDesktopSearch').fill('고려아연');await page.waitForFunction(()=>document.getElementById('sbEmbeddedChart').chartEvidence?.stockCode==='010130');
+  assert.equal(await page.locator('#dockCtxName').innerText(),'고려아연');assert.equal(await page.evaluate(()=>state.watchlist.length),0);
+  await page.locator('#sbChartCycle').selectOption('month');await page.waitForFunction(()=>document.getElementById('sbEmbeddedChart').chartEvidence?.barCycle==='month');assert.equal(await page.locator('#sbEmbeddedChart .ma-cloud').count(),0);
+  await page.evaluate(()=>{connectToHoga('000660','SK하이닉스');connectStockFromPortfolio(0);});await page.waitForFunction(()=>document.getElementById('sbEmbeddedChart').chartEvidence?.stockCode==='010130');
+  await page.evaluate(()=>{handleRealtimePrice({ticker:'010130',price:1550,change:50,changePct:3.33});dockCtxRender();});assert.equal(await page.locator('#dockCtxPrice').innerText(),'1,550');
+  await page.evaluate(()=>{window.electronAPI.getChartData=code=>code==='000660'?new Promise(resolve=>window.__lateChart=resolve):Promise.resolve(window.__syntheticData(code));});
+  await page.locator('#sbDesktopSearch').fill('SK하이닉스');await page.waitForFunction(()=>typeof window.__lateChart==='function');
+  await page.locator('#sbDesktopSearch').fill('고려아연');await page.waitForFunction(()=>document.getElementById('sbEmbeddedChart').chartEvidence?.stockCode==='010130');
+  await page.evaluate(()=>window.__lateChart({ok:false,error:'늦은 이전 종목 실패'}));assert.equal(await page.locator('#sbEmbeddedChart .candle').count()>0,true);assert.doesNotMatch(await page.locator('#sbEmbeddedChart').innerText(),/늦은 이전 종목/);
+  await page.evaluate(()=>{window.electronAPI.getChartData=async()=>({ok:false,error:'합성 수신 실패'});});await page.locator('#sbDesktopSearch').fill('123456');await page.waitForFunction(()=>document.getElementById('sbEmbeddedChart').textContent==='합성 수신 실패');assert.equal(await page.locator('#sbEmbeddedChart .candle').count(),0);
+  assert.equal(await page.evaluate(()=>state.watchlist.length),0);assert.equal(await page.evaluate(()=>window.__requests.includes('005930')),false);assert.deepEqual(errors,[]);
+ }finally{await browser?.close();await new Promise(r=>server.close(r));}
+});

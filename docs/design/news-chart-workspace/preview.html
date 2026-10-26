@@ -4533,7 +4533,7 @@
 
     <!-- ─ 문맥 패널: 관심종목 종합 화면에서만 표시 ─ -->
     <aside class="dock-ctx" id="dockCtx" aria-label="선택 종목 종합">
-      <div class="dock-ctx__empty" id="dockCtxEmpty">관심종목을 선택하면 시세·보유 현황이 여기에 표시됩니다.</div>
+      <div class="dock-ctx__empty" id="dockCtxEmpty">종목을 선택하면 시세·보유 현황이 여기에 표시됩니다.</div>
       <div class="dock-ctx__body" id="dockCtxBody" style="display:none">
         <div class="sb-detail-head"><div>
           <div class="sb-detail-identity"><strong class="dock-ctx__name" id="dockCtxName">--</strong><span class="dock-ctx__code" id="dockCtxCode">--</span></div>
@@ -5263,7 +5263,9 @@ function handleRealtimePrice({ ticker, price, change, changePct }) {
     prevPricesMap[s.name] = s.currentPrice;
     s.currentPrice = price;
   });
-  (state.watchlist || []).filter(w => w.ticker === ticker).forEach(w => {
+  const quoteTargets=(state.watchlist||[]).filter(w=>w.ticker===ticker);
+  const selected=sbSelectedStock();if(selected?.ticker===ticker&&!quoteTargets.includes(selected))quoteTargets.push(selected);
+  quoteTargets.forEach(w => {
     w.price = price;
     w.change = Number.isFinite(changePct) ? changePct : null;
     w.priceChange = Number.isFinite(change) ? change : null;
@@ -7412,6 +7414,7 @@ function allStockAddWatch(code, name, market) {
 
 // ─── 전종목 키보드/호가 연결 함수 ───────────────────────────────
 function connectToHoga(code, name) {
+  if(code && (window._dockSel!==code || !sbSelectedStock()))sbSelectInstrument(code,name);
   if (document.getElementById('qo_stock_code')?.value !== code) {
     for (const id of ['qo_price','qo_qty']) { const input=document.getElementById(id);if(input)input.value=''; }
     updateQOTotalPreview();
@@ -12272,9 +12275,21 @@ function sbContextTab(key) {
     if(active)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');
   });
 }
+function sbSelectedStock(code=window._dockSel,name) {
+  const lists={watchlist:state.watchlist||[],portfolio:state.portfolio||[],catalog:Object.values(_allStockRaw||{}).flat()};
+  if(!window.StockBookSelection)return lists.watchlist.find(w=>w.ticker===code)||null;
+  const selection=window._sbStockSelection ||= window.StockBookSelection.create();
+  return name===undefined?selection.resolve(code,lists):selection.select(code,name,lists);
+}
+function sbSelectInstrument(code,name) {
+  const stock=sbSelectedStock(code,name||code);if(!stock)return null;
+  window._dockSel=stock.ticker;dockCtxRender();dockQueueSubscription();
+  if(!stock.quoteAt||Date.now()-stock.quoteAt>30000)dockLoadQuote(stock).then(()=>renderWatchlist());
+  return stock;
+}
 let sbChartContextKey = '';
 function sbChartContext() {
-  const stock=(state.watchlist||[]).find(w=>w.ticker===window._dockSel);
+  const stock=sbSelectedStock();
   const viewRange=document.getElementById('sbChartPeriod')?.value||'6m';
   const barCycle=document.getElementById('sbChartCycle')?.value||'day';
   return stock ? {code:stock.ticker,name:stock.name||stock.ticker,period:viewRange,viewRange,barCycle,indicatorCycle:barCycle} : null;
@@ -12415,15 +12430,20 @@ function icSelectStock(code) {
   icSetTab('stock');
 }
 function sbDesktopSearch(value) {
-  if (document.getElementById('mdiWorkspace')?.dataset.dockScreen === 'news') {
-    const input = document.getElementById('icStockSearch'); if (input) input.value = value; icStockOptions(); return;
+  if(document.getElementById('mdiWorkspace')?.dataset.dockScreen==='news'){
+    const input=document.getElementById('icStockSearch');if(input)input.value=value;icStockOptions();return;
   }
-  if (document.getElementById('mdiWorkspace')?.dataset.dockScreen !== 'watchlist') window._MDI?.show('watchlist');
-  const input = document.getElementById('wlSearchInput');
-  if (input) { input.value = value; _wlOnInput(); }
+  if(document.getElementById('mdiWorkspace')?.dataset.dockScreen!=='watchlist')window._MDI?.show('watchlist');
+  window._MDIPanelTab?.('watchlist','as');
+  const input=document.getElementById('allStockSearch');if(input)input.value=value;
+  filterAndRenderAll();
+  const raw=value.trim(),candidate=sbStockCandidates().find(s=>s.code===raw||s.name===raw);
+  if(candidate)sbSelectInstrument(candidate.code,candidate.name);
+  else if(/^\d{6}$/.test(raw))sbSelectInstrument(raw,raw);
 }
+
 function sbDesktopAction(action) {
-  const w = (state.watchlist || []).find(x => x.ticker === window._dockSel);
+  const w = sbSelectedStock();
   if (action === 'journal') {
     window._MDI?.show('journal');
     document.getElementById('j_name')?.focus();
@@ -12442,7 +12462,7 @@ function sbWorkTab(key) {
   window._MDI.show(pid);
   if (pid !== 'journal') window._MDIPanelTab(pid,key);
   if (key === 'ord') {
-    const stock = (state.watchlist || []).find(w=>w.ticker===window._dockSel);
+    const stock = sbSelectedStock();
     if (stock) connectToHoga(stock.ticker,stock.name || stock.ticker);
   }
   if (key === 'trd') renderTrades();
@@ -12566,26 +12586,22 @@ document.getElementById('watchlistBody')?.addEventListener('keydown', event => {
   rows[next].scrollIntoView({ block: 'nearest' });
 });
 function dockSelectStock(code) {
-  if (!(state.watchlist || []).some(w => w.ticker === code)) return;
-  window._dockSel = code;
-  document.querySelectorAll('#watchlistBody tr.dock-sel').forEach(r => r.classList.remove('dock-sel'));
-  document.getElementById('wl-row-' + code)?.classList.add('dock-sel');
-  dockCtxRender();
-  dockQueueSubscription();
-  const w = state.watchlist.find(w => w.ticker === code);
+  const w=sbSelectInstrument(code);if(!w)return;
+  document.querySelectorAll('#watchlistBody tr.dock-sel').forEach(r=>r.classList.remove('dock-sel'));
+  document.getElementById('wl-row-'+code)?.classList.add('dock-sel');
   const screen=document.getElementById('mdiWorkspace')?.dataset.dockScreen;
-  if(screen==='trading') connectToHoga(code,w.name||code);
-  if(screen==='news') icSelectStock(code);
-  if (!w.quoteAt || Date.now() - w.quoteAt > 30000) dockLoadQuote(w).then(() => renderWatchlist());
+  if(screen==='trading')connectToHoga(code,w.name||code);
+  if(screen==='news')icSelectStock(code);
 }
+
 function dockCtxRender() {
   if (document.getElementById('mdi-ptc-portfolio-cash')?.style.display !== 'none') sbDesktopCash();
   const empty = document.getElementById('dockCtxEmpty');
   const box   = document.getElementById('dockCtxBody');
   if (!empty || !box) return;
   const list = state.watchlist || [];
-  if (!list.some(w => w.ticker === window._dockSel)) window._dockSel = list[0]?.ticker || null;
-  const w = list.find(x => x.ticker === window._dockSel) || null;
+  if (!window._dockSel) window._dockSel = list[0]?.ticker || null;
+  const w = sbSelectedStock();
   empty.style.display = w ? 'none' : '';
   box.style.display = '';
   sbDesktopSelection(w);
@@ -12643,7 +12659,7 @@ function dockCtxRender() {
     }).join('')}</details>`;
 }
 function dockCtxAction(kind) {
-  const w = (state.watchlist || []).find(x => x.ticker === window._dockSel);
+  const w = sbSelectedStock();
   if (!w) return;
   if (kind === 'chart') { allStockOpenChart(w.ticker, w.name || w.ticker); return; }
   if (kind === 'cal')   { openCalendarPanel(); return; }
@@ -12677,7 +12693,7 @@ async function dockLoadQuote(w) {
   const task = (async () => {
     try {
       const r = await window.electronAPI.fetchQuote(w.ticker);
-      if (!(state.watchlist || []).includes(w)) return;
+      if (!(state.watchlist || []).includes(w) && sbSelectedStock()!==w) return;
       if (!(r?.price > 0)) throw new Error('시세 없음');
       // REST 응답 대기 중 도착한 WebSocket 현재가를 과거 응답으로 덮지 않는다.
       const freshTick = (window._dockQuoteTicks || {})[w.ticker] !== tickBefore;
@@ -12698,7 +12714,7 @@ async function dockLoadQuote(w) {
       if (!w.roe && window.electronAPI.fetchStockDetail && /^\d{6}$/.test(w.ticker)) {
         try {
           const det = await window.electronAPI.fetchStockDetail(w.ticker);
-          if (det?.ok && det.data && (state.watchlist || []).includes(w)) {
+          if (det?.ok && det.data && ((state.watchlist || []).includes(w) || sbSelectedStock()===w)) {
             for (const key of ['roe', 'eps', 'dividendYield']) {
               const n = parseFloat(String(det.data[key] ?? '').replace(/,/g, ''));
               if (w[key] == null && Number.isFinite(n)) w[key] = n;
@@ -12707,7 +12723,7 @@ async function dockLoadQuote(w) {
         } catch (_) {}
       }
     } catch (_) {
-      if ((state.watchlist || []).includes(w) && (window._dockQuoteTicks || {})[w.ticker] === tickBefore) w.quoteStatus = '시세 조회 실패 · 다시 갱신해 주세요';
+      if (((state.watchlist || []).includes(w) || sbSelectedStock()===w) && (window._dockQuoteTicks || {})[w.ticker] === tickBefore) w.quoteStatus = '시세 조회 실패 · 다시 갱신해 주세요';
     } finally {
       pending.delete(w.ticker);
       dockCtxRender();
@@ -14868,6 +14884,34 @@ function wlAssignGroup(idx, gName) {
   </div>
 </div>
 <script>
+(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.StockBookSelection=api;})(typeof window==='object'?window:globalThis,function(){
+ 'use strict';
+ function create(){
+  const transient=new Map();
+  function resolve(code,{watchlist=[],portfolio=[],catalog=[]}={}){
+   if(!code)return null;
+   const watch=watchlist.find(s=>s.ticker===code);if(watch)return watch;
+   if(transient.has(code))return transient.get(code);
+   const quote=catalog.find(s=>(s.code||s.ticker)===code),holding=portfolio.find(s=>s.ticker===code),source=quote||holding;
+   if(!source)return null;
+   const stock={ticker:code,name:source.name||code,market:source.market||'',price:quote?.price??holding?.currentPrice??null,change:quote?.changePct??holding?.changeRatio??null,quoteSource:quote?'전종목 목록':'',quoteAt:null};
+   transient.set(code,stock);while(transient.size>40)transient.delete(transient.keys().next().value);return stock;
+  }
+  function select(code,name,lists){
+   if(typeof code!=='string'||!/^[a-z0-9.^=_-]{1,32}$/i.test(code))return null;
+   let stock=resolve(code,lists);
+   if(!stock){stock={ticker:code,name:name||code,price:null,change:null};transient.set(code,stock);while(transient.size>40)transient.delete(transient.keys().next().value);}
+   transient.set(code,stock);while(transient.size>40)transient.delete(transient.keys().next().value);
+   if(name && (!stock.name||stock.name===code))stock.name=name;
+   return stock;
+  }
+  return {resolve,select};
+ }
+ return Object.freeze({create});
+});
+
+</script>
+<script>
 (function () {
   'use strict';
   let current = null, nextId = 0, frame = 0;
@@ -15018,10 +15062,10 @@ function mount(host,dataset,{mode='detail',period='6m',viewRange=period,barCycle
  host.innerHTML=`<div data-chart-id="notice" class="sb-chart-notice"></div>
  <div class="sb-proof-options"><label><input type="checkbox" data-chart-id="refs">기준선 비교</label><label><input type="checkbox" data-chart-id="original">이동 전 BB 비교</label></div>
  <div data-chart-id="legend" class="sb-proof-legend"></div>
- <svg data-chart-id="chart" viewBox="0 0 1280 600" role="img" aria-label="보존 ${config.label} 가격 차트"></svg>
+ <svg data-chart-id="chart" viewBox="0 0 1280 600" role="img" aria-label="${dataset.metadata.sourceType==='naver-daily'?'조회':'보존'} ${config.label} 가격 차트"></svg>
  <svg data-chart-id="pressureChart" viewBox="0 0 1280 210" role="img" aria-label="거래량과 추정 매매 압력"></svg>
  <div class="sb-proof-extended"><details class="sb-proof-money"><summary>거래대금 · 실제 금액 미수신</summary><p>날짜별 실제 거래대금 자료가 없어 막대를 표시하지 않습니다.</p></details>
- <details open data-chart-id="investorPanel"><summary>투자자별 순매수 · 별도 5거래일 축</summary><svg data-chart-id="investorChart" viewBox="0 0 1280 290" role="img" aria-label="보존 투자자별 누적 순매수"></svg><details><summary>일별 수량·자료 안내</summary><p data-chart-id="investorInfo"></p><table data-chart-id="investorTable"></table></details></details></div>
+ <details open data-chart-id="investorPanel"><summary>${dataset.investors?'투자자별 순매수 · 별도 5거래일 축':'투자자별 순매수 · 자료 없음'}</summary><svg data-chart-id="investorChart" viewBox="0 0 1280 290" role="img" aria-label="보존 투자자별 누적 순매수"></svg><details><summary>일별 수량·자료 안내</summary><p data-chart-id="investorInfo"></p><table data-chart-id="investorTable"></table></details></details></div>
  <div data-chart-id="period" class="sb-chart-notice"></div>`;
  document.getElementById('chart').setAttribute('preserveAspectRatio','none');
  if(mode==='compact'){
@@ -15030,7 +15074,8 @@ function mount(host,dataset,{mode='detail',period='6m',viewRange=period,barCycle
    document.getElementById('pressureChart').setAttribute('viewBox','15 30 1155 165');
    document.getElementById('pressureChart').setAttribute('preserveAspectRatio','none');
  }
- document.getElementById('notice').textContent=dataset.metadata.name+' · '+dataset.metadata.snapshotDate+' 보존 자료 · 자동 갱신 아님'+(all.at(-1).incompleteEnd?' · 마지막 '+config.label+' 미완성':'');
+ const live=dataset.metadata.sourceType==='naver-daily';
+ document.getElementById('notice').textContent=live?dataset.metadata.name+' · 네이버 일봉 · 기준일 '+dataset.metadata.snapshotDate+' · 조회 '+new Date(dataset.metadata.fetchedAt).toLocaleString('ko-KR')+' · 자동 갱신 아님 · 마지막 봉 완성 여부 미확인':dataset.metadata.name+' · '+dataset.metadata.snapshotDate+' 보존 자료 · 자동 갱신 아님'+(all.at(-1).incompleteEnd?' · 마지막 '+config.label+' 미완성':'');
  if(barCycle!=='day')host.querySelector('.sb-proof-options').hidden=true;
 const periods=mode==='compact'&&barCycle==='day'?[5,10,20,60]:config.periods;
 const dark=['#f8b4cf','#87cefa','#ffe34d','#48bc70','#9ca3af','#ff2929','#b98b48','#b48af0'];
@@ -15061,9 +15106,9 @@ function render(all){
  if(showRefs)references.forEach((r,i)=>{svg+=`<line class="reference" x1="25" y1="${y(r.candle.close)}" x2="1170" y2="${y(r.candle.close)}" stroke="${colors[i]}" stroke-dasharray="5 5"/><text x="30" y="${y(r.candle.close)-5}" fill="${colors[i]}" font-size="11">수식${i+1}: ${r.candle.date} 종가 ${r.candle.close.toLocaleString()}</text>`;});
  if(futureCount)svg+=`<line x1="${x(rows.length-1)+step/2}" y1="25" x2="${x(rows.length-1)+step/2}" y2="550" stroke="${grid}" stroke-dasharray="4 5"/><text x="${x(rows.length)+4}" y="550" fill="${text}" font-size="10">미래 25봉 표시 공간</text>`;
  svg+=`<text x="25" y="585" fill="${text}">${rows[0].date}</text><text x="${x(rows.length-1)-55}" y="585" fill="${text}">${rows.at(-1).date}</text>`;
- document.getElementById('chart').innerHTML=svg;document.getElementById('legend').innerHTML=periods.map((n,i)=>`<span style="color:${colors[i]};border-color:${colors[i]}">${n}${config.unit}</span>`).join('')+(config.cloud?`<span>산·우물 구름 ${config.cloud.join('·')}${config.unit}</span>`:'<span>피보나치 구름 · 기준 종가선 수식 확인 대기</span>')+(barCycle==='day'?`<span style="color:${mint};border-color:${mint}">BB 40 / 1.9 → +25봉</span>`:'');document.getElementById('period').textContent=`수신 기간 ${all[0].firstDate} ~ ${all.at(-1).date} · 일봉 ${dataset.candles.length}개 → ${config.label} ${all.length}개 · 모든 이동평균은 ${config.label} 종가 단순평균${barCycle!=='day'?' · 첫 집계봉은 이력 시작 전 자료 미확인으로 이평 계산에서 제외':''}${periods.some((_,i)=>avgs[i].every(v=>v===null))?' · 일부 이평선은 이력 부족':''}`;
+ document.getElementById('chart').innerHTML=svg;document.getElementById('legend').innerHTML=periods.map((n,i)=>`<span style="color:${colors[i]};border-color:${colors[i]}">${n}${config.unit}</span>`).join('')+(config.cloud?`<span>산·우물 구름 ${config.cloud.join('·')}${config.unit}</span>`:'<span>피보나치 구름 · 기준 종가선 수식 확인 대기</span>')+(barCycle==='day'?`<span style="color:${mint};border-color:${mint}">BB 40 / 1.9 → +25봉</span>`:'');document.getElementById('period').textContent=`수신 기간 ${all[0].firstDate} ~ ${all.at(-1).date} · 일봉 ${dataset.candles.length}개 → ${config.label} ${all.length}개 · 모든 이동평균은 ${config.label} 종가 단순평균${barCycle!=='day'?' · 첫 집계봉은 이력 시작 전 자료 미확인으로 이평 계산에서 제외':''}${live?' · 가격 조정 기준 미확인'+(dataset.metadata.omittedRows?' · OHLC 미제공 '+dataset.metadata.omittedRows+'행 제외':''):''}${periods.some((_,i)=>avgs[i].every(v=>v===null))?' · 일부 이평선은 이력 부족':''}`;
  renderPressure(all,isLight);
- window.chartEvidence={count:all.length,sourceCount:dataset.candles.length,displayed:rows.length,barCycle,indicatorCycle,viewRange,periods,cloudCount,cloudPeriods:config.cloud,cloudLast:config.cloud?[cloudA.at(-1),cloudB.at(-1)]:null,bbShift:shift,bbPeriod:barCycle==='day'?40:null,bbMultiplier:barCycle==='day'?1.9:null,referenceBaseCount:referenceBase.length,references,lastAverages:avgs.map((a,i)=>({period:periods[i],value:a.at(-1)}))};window.renderDone=true;
+ window.chartEvidence={stockCode:dataset.metadata.stockCode,sourceType:dataset.metadata.sourceType||'recorded',count:all.length,sourceCount:dataset.candles.length,displayed:rows.length,barCycle,indicatorCycle,viewRange,periods,cloudCount,cloudPeriods:config.cloud,cloudLast:config.cloud?[cloudA.at(-1),cloudB.at(-1)]:null,bbShift:shift,bbPeriod:barCycle==='day'?40:null,bbMultiplier:barCycle==='day'?1.9:null,referenceBaseCount:referenceBase.length,references,lastAverages:avgs.map((a,i)=>({period:periods[i],value:a.at(-1)}))};window.renderDone=true;
 }
 // Independent OHLCV estimate, not the encrypted HTS indicator or actual trade-side volume.
 function estimatePressure(all){return all.map((c,i)=>{const prior=all.slice(Math.max(0,i-20),i);const baseline=prior.length===20?prior.reduce((s,r)=>s+r.volume,0)/20:null;const location=c.high===c.low?0:Math.max(-1,Math.min(1,(2*c.close-c.high-c.low)/(c.high-c.low)));return {date:c.date,volume:c.volume,baseline,aboveAverage:baseline===null?null:c.volume>=baseline,location,pressure:location*c.volume};});}
@@ -15093,7 +15138,7 @@ function cumulativeInvestors(rows){const sums={foreign:0,institution:0,individua
 let investorSnapshot=dataset.investors,investorFailure='';
 function renderInvestorPanel(){
  const chart=document.getElementById('investorChart'),info=document.getElementById('investorInfo'),table=document.getElementById('investorTable');
- if(!investorSnapshot){chart.replaceChildren();info.textContent=investorFailure||'수급 스냅샷을 불러오는 중…';table.replaceChildren();return;}
+ if(!investorSnapshot){chart.replaceChildren();info.textContent=investorFailure||'이 종목의 투자자별 순매수 자료는 연결되지 않았습니다.';table.replaceChildren();return;}
  const isLight=document.body.classList.contains('light'),text=isLight?'#334155':'#c6cfdd',grid=isLight?'#ccd5e1':'#344053',colors=isLight?['#b52964','#957100','#243e89']:['#ff94c4','#fff16c','#3e5eb8'];
  const rows=cumulativeInvestors(normalizeInvestorRows(investorSnapshot.rows));const values=[0,...rows.flatMap(r=>investorGroups.map(([k])=>r.cumulative[k]))],lo=Math.min(...values),hi=Math.max(...values),span=hi-lo||1,scale=v=>65+(hi-v)/span*180;const x=i=>65+(i+1)*(1040/(rows.length+1));
  let svg='';for(let i=0;i<=4;i++){const v=lo+span*i/4;svg+=`<line x1="65" y1="${scale(v)}" x2="1130" y2="${scale(v)}" stroke="${grid}"/><text x="1140" y="${scale(v)+4}" fill="${text}" font-size="12">${(v/10000).toFixed(1)}만 주</text>`;}
@@ -15135,6 +15180,8 @@ root.StockBookChartRenderer=Object.freeze({mount});
  'use strict';
  let cached=null;
  async function dataset(code){
+  if(root.electronAPI?.getChartData)return root.electronAPI.getChartData(code);
+  if(root.stockBookChart?.getData)return root.stockBookChart.getData(code);
   if(code!=='005930')return {ok:false,error:'이 종목의 일봉 공급자가 아직 연결되지 않았습니다.'};
   if(root.electronAPI?.getChartSnapshot)return root.electronAPI.getChartSnapshot(code);
   if(root.stockBookChart?.getSnapshot)return root.stockBookChart.getSnapshot(code);
@@ -15147,6 +15194,7 @@ root.StockBookChartRenderer=Object.freeze({mount});
   const old=states.get(host),key=JSON.stringify([context.code,context.viewRange||context.period,context.barCycle||'day',context.indicatorCycle||context.barCycle||'day',mode]);
   if(old?.key===key)return;
   const state={key,controller:null};states.set(host,state);
+  delete host.chartEvidence;
   host.className='sb-chart-loading';host.textContent='차트 자료를 불러오는 중…';
   let data;try{data=await dataset(context.code);}catch{data={ok:false,error:'차트 자료를 불러오지 못했습니다.'};}
   if(states.get(host)!==state)return;
@@ -15155,7 +15203,7 @@ root.StockBookChartRenderer=Object.freeze({mount});
   catch{host.className='sb-data-empty';host.textContent='차트 자료를 표시하지 못했습니다.';}
  }
  new MutationObserver(()=>{for(const host of document.querySelectorAll('[data-chart-host]'))states.get(host)?.controller?.updateTheme(document.body.classList.contains('light-mode'));}).observe(document.body,{attributes:true,attributeFilter:['class']});
- root.StockBookCharts=Object.freeze({show,clear:host=>{if(!host)return;states.delete(host);host.className='sb-data-empty';host.textContent='종목을 선택하면 차트를 표시합니다.';}});
+ root.StockBookCharts=Object.freeze({show,clear:host=>{if(!host)return;states.delete(host);delete host.chartEvidence;host.className='sb-data-empty';host.textContent='종목을 선택하면 차트를 표시합니다.';}});
 })(window);
 
 </script>

@@ -15,7 +15,7 @@ html=html.replace(/<link\b[^>]*href="https:\/\/[^>]*>\s*/g,'');
 const icon='data:image/png;base64,'+fs.readFileSync(path.join(root,'icon-192.png')).toString('base64');
 html=html.replaceAll('./icon-192.png',icon);
 html=html.replace('<link rel="stylesheet" href="src/chart/chart.css">','<style>'+fs.readFileSync(path.join(root,'src/chart/chart.css'),'utf8')+'</style>');
-html=html.replace(/<script src="(src\/(?:chart\/(?:renderer|client|series)|news\/page-client)\.js)"><\/script>/g,(_,file)=>'<script>\n'+fs.readFileSync(path.join(root,file),'utf8').replace(/<\/script/gi,'<\\/script')+'\n</script>');
+html=html.replace(/<script src="(src\/(?:chart\/(?:renderer|client|series)|news\/page-client|desktop\/stock-selection)\.js)"><\/script>/g,(_,file)=>'<script>\n'+fs.readFileSync(path.join(root,file),'utf8').replace(/<\/script/gi,'<\\/script')+'\n</script>');
 const boot=`document.addEventListener('DOMContentLoaded',async()=>{
  const data=${payload};
  window.electronAPI={
