@@ -15270,7 +15270,7 @@ root.StockBookChartRenderer=Object.freeze({mount});
   const textInput=doc.createElement('input');textInput.className='sb-input';textInput.placeholder='차트 메모';textInput.maxLength=160;textInput.setAttribute('aria-label','차트 메모');
   const center=doc.createElement('select');center.className='sb-input';center.setAttribute('aria-label','봉중심선 기준');center.add(new Option('고저 중심','range'));center.add(new Option('몸통 중심','body'));
   function button(label,action,parent=toolbar,attrs={}){const el=doc.createElement('button');el.type='button';el.className='sb-btn';el.textContent=label;Object.assign(el.dataset,attrs);el.addEventListener('click',action,{signal});parent.append(el);return el;}
-  const setMode=value=>{if(compact)toolPanel.open=false;mode=value;pending=null;stroke=null;preview=null;for(const b of toolbar.querySelectorAll('[data-tool]'))b.setAttribute('aria-pressed',String(b.dataset.tool===mode));status.textContent=({zoom:'빈 곳을 왼쪽으로 끌면 축소, 오른쪽으로 끌면 확대합니다.',pan:'차트를 좌우로 끌어 이동합니다.',midpoint:'봉을 누르면 선택 기준의 중심선을 그립니다.',pen:'누른 채 자유롭게 그립니다.',text:'메모를 입력한 뒤 표시할 곳을 누르세요.'})[value]||'시작점과 끝점을 누르거나 끌어 그립니다. Esc로 취소합니다.';};
+  const setMode=value=>{if(compact)toolPanel.open=false;mode=value;pending=null;stroke=null;preview=null;for(const b of toolbar.querySelectorAll('[data-tool]'))b.setAttribute('aria-pressed',String(b.dataset.tool===mode));status.textContent=({zoom:'왼쪽 드래그는 축소, 오른쪽은 확대합니다. 드래그 유지 중 Space를 누를 때마다 한 단계 축소합니다.',pan:'좌우 드래그로 이동합니다. 드래그 유지 중 Space를 누르면 한 단계 축소합니다.',midpoint:'봉을 누르면 선택 기준의 중심선을 그립니다.',pen:'누른 채 자유롭게 그립니다.',text:'메모를 입력한 뒤 표시할 곳을 누르세요.'})[value]||'시작점과 끝점을 누르거나 끌어 그립니다. Esc로 취소합니다.';};
   if(tools){
    for(const [value,label]of [['zoom','확대 조절'],['pan','이동'],['trend','추세선'],['horizontal','수평선'],['vertical','수직선'],['thirds','3등분'],['quarters','4등분'],['midpoint','봉중심선'],['rectangle','사각형'],['ellipse','원·타원'],['triangle','삼각형'],['arrow','화살표'],['pen','펜'],['text','텍스트']])button(label,()=>setMode(value),toolbar,{tool:value});
    toolbar.append(center,textInput);button('선택 삭제',()=>{if(selected===null)return;remember();drawings=drawings.filter(d=>d.id!==selected);selected=null;draw();});button('실행 취소',()=>{if(history.length){drawings=history.pop();selected=null;draw();}});button('모두 지우기',()=>{remember();drawings=[];selected=null;draw();});
@@ -15351,6 +15351,7 @@ root.StockBookChartRenderer=Object.freeze({mount});
    svg.setPointerCapture(e.pointerId);e.preventDefault();e.stopPropagation();show(e);
   }
   function move(e){
+   if(gesture?.id===e.pointerId){gesture.lastX=e.clientX;gesture.lastY=e.clientY;}
    if(touches.has(e.pointerId))touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pinch){if(touches.size===2){const[a,b]=[...touches.values()];controller.setView(pinch.count*pinch.distance/Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),pinch.end);}e.preventDefault();return;}
    const m=model(),p=point(e);if(!gesture||gesture.id!==e.pointerId){show(e);if(pending){preview={id:-1,type:mode,points:[pending,anchor(p,m)]};draw();}return;}
    if(gesture.kind==='zoom')controller.setView(gesture.count*Math.exp(-(e.clientX-gesture.x)/220),gesture.end);
@@ -15378,7 +15379,15 @@ root.StockBookChartRenderer=Object.freeze({mount});
   svg.addEventListener('wheel',e=>{if(e.ctrlKey)return;e.preventDefault();zoom(e.deltaY<0?1/1.25:1.25);},{passive:false,signal});
   pressure?.addEventListener('pointermove',e=>show(e,pressure),{signal});pressure?.addEventListener('pointerleave',hide,{signal});
   if(compact)doc.addEventListener('pointerdown',event=>{if(!controls.contains(event.target))toolPanel.open=false;},{signal,capture:true});
-  doc.addEventListener('keydown',e=>{if(e.target.closest('input,textarea,select'))return;if(e.key==='Escape'){pending=null;gesture=null;stroke=null;preview=null;hide();draw();}if(e.key==='Delete'&&selected!==null){remember();drawings=drawings.filter(d=>d.id!==selected);selected=null;draw();}},{signal});
+  doc.addEventListener('keydown',e=>{
+   if((e.code==='Space'||e.key===' ')&&gesture&&['zoom','pan'].includes(gesture.kind)){
+    e.preventDefault();if(e.repeat)return;
+    const before=model();zoom(1.4);const after=model();
+    gesture.count=after.count;gesture.end=after.end;gesture.x=gesture.lastX??gesture.x;gesture.y=gesture.lastY??gesture.y;gesture.step=after.step*Math.abs(svg.getScreenCTM().a);
+    status.textContent=after.count===before.count?'수신한 전체 이력이 표시되어 더 축소할 수 없습니다.':'Space 축소 · '+after.count+'봉 표시 · 드래그를 유지한 채 다시 Space를 누를 수 있습니다.';
+    return;
+   }
+   if(e.target.closest('input,textarea,select'))return;if(e.key==='Escape'){pending=null;gesture=null;stroke=null;preview=null;hide();draw();}if(e.key==='Delete'&&selected!==null){remember();drawings=drawings.filter(d=>d.id!==selected);selected=null;draw();}},{signal});
   host.addEventListener('stockbook:chart-render',()=>{hide();draw();},{signal});
   let size='';const observer=new ResizeObserver(()=>{const next=svg.clientWidth+':'+svg.clientHeight;if(next!==size){size=next;controller.refresh();}});observer.observe(svg);
   setMode('zoom');draw();

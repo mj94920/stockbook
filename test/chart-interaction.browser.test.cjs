@@ -120,3 +120,19 @@ test('embedded chart exposes crosshair labels, persistent bar data and foldable 
   assert.deepEqual(h.errors,[]);
  }finally{await h.close();}
 });
+
+test('Space repeatedly zooms out during a held drag, retains the drag baseline and ignores typing',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  const count=()=>page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().count);
+  const start=await count(),p=await point(page,2,260);
+  await page.mouse.move(p.x,p.y);await page.mouse.down();await page.mouse.move(p.x+15,p.y);
+  const dragged=await count();await page.keyboard.press('Space');const first=await count();assert.ok(first>dragged);
+  await page.keyboard.press('Space');const second=await count();assert.ok(second>first);
+  await page.mouse.move(p.x+16,p.y);assert.equal(await count(),second);await page.mouse.up();
+  await page.getByRole('textbox',{name:'차트 메모'}).fill('차트');await page.getByRole('textbox',{name:'차트 메모'}).press('Space');assert.equal(await count(),second);assert.equal(await page.getByRole('textbox',{name:'차트 메모'}).inputValue(),'차트 ');
+  await page.getByRole('button',{name:'처음 보기',exact:true}).click();assert.equal(await count(),start);
+  await page.getByRole('button',{name:'이동',exact:true}).click();const q=await point(page,2,260);await page.mouse.move(q.x,q.y);await page.mouse.down();await page.keyboard.press('Space');assert.ok(await count()>start);await page.mouse.up();
+  assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});

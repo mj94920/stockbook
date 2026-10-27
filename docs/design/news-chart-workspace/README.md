@@ -83,3 +83,7 @@ node docs/design/news-chart-workspace/verify-live-news.cjs
 ## 2026-10-27 종합 차트 직접 조작
 
 축소 모드에서 빠졌던 도구·봉 정보와 십자선 축 표시를 종합 화면에도 연결했다. 도구는 접이식이며 하단 작업 공간을 늘리지 않는다. [종합 직접 조작 검토](EMBEDDED-INTERACTION-REVIEW.md)에 사용법·화면·43개 검사와 Windows 미실행 범위를 기록했다.
+
+## 2026-10-27 Space 드래그 축소
+
+기존 상세 조작의 반영을 사용자가 확인한 뒤, 드래그 유지 중 Space를 누를 때마다 축소하는 동작만 추가했다. [상세 조작 검토](DETAIL-INTERACTION-REVIEW.md)의 후속 기록을 참조한다. 정적·44개 검사·스모크 통과, 새 Space 동작의 Windows 실기는 미실행이다.
