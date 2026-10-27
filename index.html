@@ -3432,7 +3432,13 @@
 
   /* Compact quote stage, shared task strip and space for the working forms. */
   @media (min-width: 901px) {
-    .mdi-dock.sb-desktop-home { grid-template-rows:0 minmax(240px, .65fr) minmax(360px, 1.35fr); }
+    /* Reserve content-sized work space; the chart receives the remaining height. */
+    .mdi-dock.sb-desktop-home { grid-template-rows:0 minmax(260px,1fr) fit-content(min(44vh,480px)); }
+    .mdi-dock.sb-desktop-home > :is(#mdi-panel-portfolio,#mdi-panel-trading,.sb-analysis) { max-height:min(44vh,480px); }
+    .mdi-dock.sb-desktop-home > .sb-analysis { grid-template-rows:auto auto;align-content:start;contain:size; }
+    .mdi-dock.sb-desktop-home > .sb-analysis .sb-analysis-section { max-height:240px; }
+    /* Journal writing keeps a larger workspace; its body and analysis scroll independently. */
+    .mdi-dock.sb-desktop-home[data-dock-screen="journal"] { grid-template-rows:0 minmax(240px,.8fr) minmax(0,1.2fr); }
     .mdi-dock[data-dock-screen="news"] { grid-template-columns:minmax(240px,1fr) minmax(0,2fr) minmax(0,1fr); }
   }
   .sb-detail-head { padding:8px 12px;gap:8px; }
