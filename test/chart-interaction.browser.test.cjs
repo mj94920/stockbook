@@ -102,16 +102,16 @@ test('embedded chart exposes crosshair labels, persistent bar data and foldable 
   assert.equal(await host.locator('.sb-chart-axis-label:visible').count(),2);
   assert.equal(await host.locator('.sb-chart-axis-label').evaluateAll(es=>es.every(e=>getComputedStyle(e).fontSize==='12px'&&e.getBoundingClientRect().height>=18)),true);
   assert.equal(await host.locator('.sb-chart-tool-panel').getAttribute('open'),null);
-  await host.locator('.sb-chart-tool-panel summary').click();
+  await host.locator('.sb-chart-tool-panel > summary').click();
   await page.waitForFunction(()=>{const host=document.getElementById('sbEmbeddedChart'),panel=host.querySelector('.sb-chart-tool-panel-body').getBoundingClientRect();return panel.height>0&&panel.bottom<=host.getBoundingClientRect().bottom;});
   await host.locator('[data-tool="horizontal"]').click();
   assert.equal(await host.locator('.sb-chart-tool-panel').getAttribute('open'),null);
   p=await at(3,260);await page.mouse.click(p.x,p.y);assert.equal(await host.locator('.sb-chart-drawings > g').count(),1);await page.keyboard.press('Delete');assert.equal(await host.locator('.sb-chart-drawings > g').count(),0);
   const before=await host.evaluate(h=>StockBookCharts.controller(h).getModel().count);
-  await host.locator('.sb-chart-tool-panel summary').click();await host.locator('.sb-chart-navigation').getByRole('button',{name:'+',exact:true}).click();
+  await host.locator('.sb-chart-tool-panel > summary').click();await host.locator('.sb-chart-navigation').getByRole('button',{name:'+',exact:true}).click();
   assert.ok(await host.evaluate(h=>StockBookCharts.controller(h).getModel().count)<before);
   await page.keyboard.press('Escape');assert.equal(await host.locator('.sb-chart-tool-panel').getAttribute('open'),null);assert.equal(await page.locator('#mdiWorkspace').getAttribute('data-dock-screen'),'watchlist');
-  await host.locator('.sb-chart-tool-panel summary').click();await host.locator('.sb-chart-indicator-controls [data-chart-indicator="ma:20"]').click();await page.keyboard.press('Delete');assert.equal(await host.locator('.ma[data-period="20"]').count(),0);await host.getByRole('button',{name:'지표 복원',exact:true}).click();assert.equal(await host.locator('.ma[data-period="20"]').count(),1);
+  await host.locator('.sb-chart-tool-panel > summary').click();await host.locator('.sb-chart-indicator-controls [data-chart-indicator="ma:20"]').click();await page.keyboard.press('Delete');assert.equal(await host.locator('.ma[data-period="20"]').count(),0);await host.getByRole('button',{name:'지표 복원',exact:true}).click();assert.equal(await host.locator('.ma[data-period="20"]').count(),1);
   await host.getByRole('textbox',{name:'차트 메모'}).fill('종합 차트 메모');await host.locator('[data-tool="text"]').click();
   p=await at(4,220);await page.mouse.click(p.x,p.y);
   assert.equal(await host.locator('.sb-chart-drawings text').evaluateAll(es=>es.some(e=>e.textContent==='종합 차트 메모'&&getComputedStyle(e).display!=='none')),true);
@@ -171,5 +171,36 @@ test('Escape closes the top native/custom modal or drawer once, including focuse
   await page.evaluate(()=>{openCalendarPanel();openSettings();document.getElementById('settingsModal').style.zIndex='1000000';});await page.keyboard.press('Escape');assert.equal(await page.locator('#settingsModal').evaluate(el=>el.classList.contains('open')),false);assert.equal(await page.locator('#calPanel').evaluate(el=>el.classList.contains('open')),true);assert.equal(await page.locator('#mdiWorkspace').getAttribute('data-dock-screen'),'news');
   await page.keyboard.press('Escape');assert.equal(await page.locator('#calPanel').evaluate(el=>el.classList.contains('open')),false);assert.equal(await page.locator('#mdiWorkspace').getAttribute('data-dock-screen'),'news');
   await page.locator('body').click({position:{x:5,y:5}});await page.keyboard.press('Escape');assert.equal(await page.locator('#mdiWorkspace').getAttribute('data-dock-screen'),'watchlist');assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
+
+test('individual indicator switches remain available after Delete and reopening; object cursors show grab and grabbing',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  const panel=page.locator('.sb-chart-indicator-panel'),toggle=id=>panel.locator('[data-indicator-toggle="'+id+'"]');
+  await panel.locator('summary').click();await toggle('ma:19').uncheck();assert.equal(await page.locator('.ma[data-period="19"]').count(),0);assert.equal(await toggle('ma:19').isVisible(),true);
+  await page.locator('.sb-proof-legend [data-chart-indicator="ma:5"]').click();await page.keyboard.press('Delete');assert.equal(await toggle('ma:5').isChecked(),false);await toggle('ma:5').check();assert.equal(await page.locator('.ma[data-period="5"]').count(),1);assert.equal(await page.locator('.ma[data-period="19"]').count(),0);
+  assert.equal(await page.locator('.sb-chart-indicator-hit[data-chart-indicator="ma:5"]').evaluate(el=>getComputedStyle(el).cursor),'grab');
+  await toggle('pressure').uncheck();assert.equal(await page.locator('[data-chart-id="pressureChart"]').isVisible(),false);await toggle('pressure').check();assert.equal(await toggle('investors').isDisabled(),true);
+  await page.reload();await page.evaluate(()=>window.__context({code:'000001',name:'표시 복원 검증',barCycle:'month',period:'6m',follow:false}));await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='month');assert.equal(await page.locator('.ma[data-period="19"]').count(),0);
+  await panel.locator('summary').click();await toggle('ma:19').check();assert.equal(await page.locator('.ma[data-period="19"]').count(),1);
+  await page.locator('[data-tool="horizontal"]').click();await clickPoint(page,2,300);const handle=page.locator('.sb-chart-drawing circle').first();assert.equal(await handle.evaluate(el=>getComputedStyle(el).cursor),'grab');const box=await handle.boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();assert.equal(await handle.evaluate(el=>getComputedStyle(el).cursor),'grabbing');await page.mouse.up();assert.equal(await handle.evaluate(el=>getComputedStyle(el).cursor),'grab');assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
+
+test('four chart types preserve OHLC and data anchors, use volume widths and label the estimated daily price profile',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  const type=page.getByRole('combobox',{name:'차트 유형',exact:true});const original=await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().rows.map(r=>[r.date,r.open,r.high,r.low,r.close,r.volume]));
+  await type.selectOption('hollow');const hollow=await page.locator('#chartViewport').evaluate(h=>{const m=StockBookCharts.controller(h).getModel();return [...h.querySelectorAll('.candle')].map((el,i)=>({fill:el.getAttribute('fill'),up:m.rows[i].close>=m.rows[i].open}));});assert.ok(hollow.some(r=>r.fill==='none'));assert.ok(hollow.every(r=>r.up?r.fill==='none':r.fill!=='none'));
+  await type.selectOption('volume');const widths=await page.locator('.candle').evaluateAll(es=>es.map(el=>Number(el.getAttribute('width'))));assert.ok(Math.max(...widths)>Math.min(...widths));
+  for(const index of [0,2,5]){const p=await point(page,index,300);await page.mouse.move(p.x,p.y);const date=await page.locator('#chartViewport').evaluate((h,i)=>StockBookCharts.controller(h).getModel().rows[i].date,index);assert.match(await page.locator('.sb-chart-tooltip').innerText(),new RegExp(date));}
+  const geometry=await page.locator('#chartViewport').evaluate(h=>{const a=[...h.querySelectorAll('.candle')],b=[...h.querySelectorAll('.pressure-volume')];return a.map((el,i)=>{const x=el.getBoundingClientRect(),v=b[i].getBoundingClientRect();return Math.abs(x.x+x.width/2-v.x-v.width/2);});});assert.ok(geometry.every(value=>value<1));
+  await page.locator('[data-tool="vertical"]').click();await clickPoint(page,2,300);await type.selectOption('candle');assert.equal(await page.locator('.sb-chart-drawing line').first().getAttribute('x1'),String(await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().x(2))));
+  await type.selectOption('profile');const profile=await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.profile),total=await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().rows.reduce((sum,r)=>sum+r.volume,0));assert.equal(profile.method,'uniform-daily-range');assert.equal(profile.totalVolume,total);assert.ok(Math.abs(profile.bins.reduce((sum,b)=>sum+b.volume,0)-total)<total*1e-12);assert.ok(await page.locator('.sb-chart-profile-bin').count()>0);assert.match(await page.locator('[data-chart-id="notice"]').innerText(),/매물대 추정/);
+  await page.locator('.sb-chart-indicator-panel > summary').click();await page.locator('[data-indicator-toggle="profile"]').uncheck();assert.equal(await page.locator('.sb-chart-profile-bin').count(),0);await page.locator('[data-indicator-toggle="profile"]').check();assert.ok(await page.locator('.sb-chart-profile-bin').count()>0);
+  assert.deepEqual(await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().rows.map(r=>[r.date,r.open,r.high,r.low,r.close,r.volume])),original);
+  await page.locator('#chartCycle').selectOption('day');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='day');await type.selectOption('volume');const count=await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().count),future=await point(page,count+3,300);await page.mouse.move(future.x,future.y);assert.match(await page.locator('.sb-chart-tooltip').innerText(),/가격 자료 없음/);
+  await page.reload();await page.evaluate(()=>window.__context({code:'000001',name:'유형 복원 검증',barCycle:'day',period:'6m',follow:false}));await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.chartType==='volume');assert.equal(await type.inputValue(),'volume');assert.deepEqual(h.errors,[]);
  }finally{await h.close();}
 });

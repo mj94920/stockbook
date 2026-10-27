@@ -2,6 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {aggregate,average,cycleConfig,visibleOffset,indicatorSettings}=require('../src/chart/series.js');
 const {chartContext}=require('../src/chart/window.cjs');
+const {barLayout,volumeProfile}=require('../src/chart/series.js');
 const bar=(date,open,high,low,close,volume)=>({date,open,high,low,close,volume});
 test('KRX trading dates group by Monday weeks across years and holidays without zero-filled sessions',()=>{
  const input=[bar('2023-12-28',10,14,8,12,100),bar('2023-12-29',12,15,11,14,200),bar('2024-01-02',20,30,18,25,300),bar('2024-01-05',25,28,17,19,400),bar('2024-01-08',19,21,16,20,500)];
@@ -44,4 +45,19 @@ test('year bars use calendar years and native close SMA 1/5/10 with insufficient
  assert.deepEqual([annual.at(-1).open,annual.at(-1).high,annual.at(-1).low,annual.at(-1).close,annual.at(-1).volume],[2026,2046,2006,2031,300]);
  assert.equal(average(annual,1,{includePartialStart:true})[0],2017);assert.equal(average(annual,5,{includePartialStart:true})[4],2019);assert.equal(average(annual,10,{includePartialStart:true})[9],2021.5);assert.equal(average(annual.slice(0,4),5).at(-1),null);
  assert.deepEqual(indicatorSettings('year').periods,[1,5,10]);assert.throws(()=>indicatorSettings('week',{periods:[0]}));assert.throws(()=>indicatorSettings('day',{bb:{shift:-1}}));
+});
+
+test('volume candle layout changes widths without losing bar/date hit mapping or reserved future slots',()=>{
+ const rows=[{volume:10},{volume:20},{volume:40}],layout=barLayout(rows,2,true);
+ assert.ok(Math.abs(layout.width(1)/layout.width(0)-2)<1e-12);assert.ok(Math.abs(layout.width(2)/layout.width(0)-4)<1e-12);
+ for(let i=0;i<5;i++){assert.equal(layout.indexForX(layout.x(i)),i);if(i)assert.ok(layout.x(i)>layout.x(i-1));}
+ assert.ok(Math.abs(Array.from({length:5},(_,i)=>layout.width(i)).reduce((a,b)=>a+b)-1140)<1e-9);
+ assert.equal(barLayout(rows,0).width(0),380);assert.ok(barLayout([{volume:0},{volume:100}],0,true).width(0)>0);assert.deepEqual(rows,[{volume:10},{volume:20},{volume:40}]);
+});
+
+test('estimated price profile distributes daily volume by range overlap and conserves volume including flat-price days',()=>{
+ const rows=[{low:0,high:10,close:9,volume:100},{low:10,high:20,close:18,volume:100},{low:5,high:5,close:5,volume:20}];
+ const result=volumeProfile(rows,4);assert.deepEqual(result.bins.map(b=>b.volume),[50,70,50,50]);assert.equal(result.total,220);assert.equal(result.bins.reduce((sum,b)=>sum+b.volume,0),220);
+ assert.deepEqual(volumeProfile([{low:10,high:10,close:10,volume:15}],12),{bins:[{low:10,high:10,volume:15}],total:15});assert.deepEqual(volumeProfile([],12),{bins:[],total:0});
+ assert.throws(()=>volumeProfile(rows,0));assert.throws(()=>volumeProfile([{low:10,high:5,close:7,volume:1}]));assert.equal(rows[0].volume,100);
 });

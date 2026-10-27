@@ -62,3 +62,13 @@
 .sb-proof-no-pressure.sb-proof-compact { grid-template-rows:auto auto minmax(0,1fr); }
 
 .sb-chart-indicator-controls { display:flex;flex-wrap:wrap;gap:8px;margin-block:4px; }
+.sb-proof-chart [data-chart-indicator],.sb-chart-drawing { cursor:grab; }
+.sb-chart-object-dragging [data-drawing-id] { cursor:grabbing; }
+.sb-chart-indicator-panel { border:1px solid var(--sb-border);padding:2px 8px;margin-block:4px; }
+.sb-chart-indicator-panel > summary { cursor:pointer; }
+.sb-chart-indicator-list { display:flex;flex-wrap:wrap;gap:8px 16px;padding:6px 0; }
+.sb-chart-indicator-list label { cursor:pointer; }
+.sb-proof-compact .sb-chart-indicator-panel { margin:4px 0; }
+.sb-chart-type { max-width:120px; }
+.sb-proof-compact .sb-chart-compact-controls > label { flex-shrink:0;font-size:11px; }
+.sb-proof-compact .sb-chart-type { padding:2px;max-width:94px; }

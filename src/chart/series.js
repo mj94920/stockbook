@@ -67,5 +67,30 @@
   if(!Number.isInteger(bb.period)||bb.period<2||bb.period>500||!Number.isFinite(bb.multiplier)||bb.multiplier<0||bb.multiplier>10||!Number.isInteger(bb.shift)||bb.shift<0||bb.shift>120)throw Error('BB 기간·배수·이동값을 확인하세요.');
   return {periods:[...periods],cloud:cloud?[...cloud]:null,bb};
  }
- return Object.freeze({cycleConfig,aggregate,average,visibleOffset,ranges,indicatorSettings});
+ const chartTypes=Object.freeze(['candle','hollow','volume','profile']);
+ function barLayout(rows,futureCount=0,weighted=false){
+  if(!rows.length||!Number.isInteger(futureCount)||futureCount<0||futureCount>120)throw Error('봉 배치 범위 오류');
+  const floor=Math.max(1,...rows.map(r=>r.volume))*.01,weights=rows.map(r=>weighted?Math.max(r.volume,floor):1),mean=weights.reduce((a,b)=>a+b,0)/weights.length;
+  weights.push(...Array(futureCount).fill(mean));const total=weights.reduce((a,b)=>a+b,0),step=1140/weights.length,edges=[25],widths=weights.map(weight=>1140*weight/total);
+  for(const width of widths)edges.push(edges.at(-1)+width);
+  const x=i=>i<0?25+(i+.5)*step:i>=weights.length?1165+(i-weights.length+.5)*step:edges[i]+widths[i]/2;
+  const indexForX=value=>{if(value<25)return Math.floor((value-25)/step);if(value>=1165)return weights.length+Math.floor((value-1165)/step);let lo=0,hi=weights.length;while(lo<hi){const mid=(lo+hi)>>1;if(edges[mid+1]<=value)lo=mid+1;else hi=mid;}return lo;};
+  return {x,indexForX,step,width:i=>widths[i]??step};
+ }
+ // OHLCV does not contain executions by price. Allocate each received day's volume
+ // uniformly across its low/high range; this is an estimate, never actual holdings.
+ function volumeProfile(candles,count=12){
+  if(!Number.isInteger(count)||count<2||count>50)throw Error('매물대 구간 수 오류');
+  if(!candles.length)return {bins:[],total:0};
+  if(candles.some(c=>![c.low,c.high,c.close,c.volume].every(Number.isFinite)||c.high<c.low||c.close<c.low||c.close>c.high||c.volume<0))throw Error('매물대 자료 오류');
+  const low=Math.min(...candles.map(c=>c.low)),high=Math.max(...candles.map(c=>c.high)),total=candles.reduce((sum,c)=>sum+c.volume,0);
+  if(low===high)return {bins:[{low,high,volume:total}],total};
+  const step=(high-low)/count,bins=Array.from({length:count},(_,i)=>({low:low+i*step,high:i===count-1?high:low+(i+1)*step,volume:0}));
+  for(const c of candles){
+   if(c.high===c.low){bins[Math.min(count-1,Math.floor((c.close-low)/step))].volume+=c.volume;continue;}
+   for(const bin of bins){const overlap=Math.max(0,Math.min(c.high,bin.high)-Math.max(c.low,bin.low));bin.volume+=c.volume*overlap/(c.high-c.low);}
+  }
+  return {bins,total};
+ }
+ return Object.freeze({cycleConfig,aggregate,average,visibleOffset,ranges,indicatorSettings,chartTypes,barLayout,volumeProfile});
 });

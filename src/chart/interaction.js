@@ -4,13 +4,20 @@
  function mount(host,controller,{tools=true,compact=false}={}){
   const doc=host.ownerDocument,svg=host.querySelector('[data-chart-id="chart"]'),pressure=host.querySelector('[data-chart-id="pressureChart"]'),abort=new AbortController(),signal=abort.signal;
   const key=controller.getModel().stockCode+':'+controller.getModel().config.label,storageKey='stockbook:chart:drawings:v1:'+key;
-  if(tools)controller.setHiddenIndicators(indicatorMemory.get(key)||[]);svg.setAttribute('tabindex','0');
+  const visibilityKey='stockbook:chart:visibility:v1:'+key;let hidden=indicatorMemory.get(key)||[],lastVisibility='';
+  try{const saved=JSON.parse(root.localStorage.getItem(visibilityKey));if(Array.isArray(saved)&&saved.length<=32&&saved.every(id=>typeof id==='string'&&/^(ma:\d+|bb|cloud|pressure|investors|profile)$/.test(id)))hidden=saved;const type=root.localStorage.getItem('stockbook:chart:type:v1');if(root.StockBookChartSeries.chartTypes.includes(type))controller.setType(type);}catch{}
+  if(tools)controller.setHiddenIndicators(hidden);svg.setAttribute('tabindex','0');
   let drawings=memory.get(key)||[],mode='zoom',selected=null,selectedIndicator=null,pending=null,gesture=null,stroke=null,nextId=Math.max(0,...drawings.map(d=>d.id))+1,history=[],preview=null,touches=new Map(),pinch=null;
   const ns='http://www.w3.org/2000/svg',node=(tag,attrs={},text)=>{const el=doc.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,String(v));if(text!==undefined)el.textContent=text;return el;};
   const tip=doc.createElement('div');tip.className='sb-chart-tooltip';tip.hidden=true;tip.setAttribute('role','status');host.append(tip);
   const status=doc.createElement('div');status.className='sb-chart-tool-status';status.textContent='봉 위에 마우스를 올리거나 터치하면 정보를 봅니다.';
   const toolbar=doc.createElement('div');toolbar.className='sb-chart-tools';toolbar.setAttribute('role','toolbar');toolbar.setAttribute('aria-label','차트 그리기 도구');
   const nav=doc.createElement('div');nav.className='sb-chart-navigation';const indicatorControls=doc.createElement('div');indicatorControls.className='sb-chart-indicator-controls';indicatorControls.setAttribute('aria-label','차트 지표 선택');
+  const typeChoice=doc.createElement('select'),typeLabel=doc.createElement('label');typeChoice.className='sb-input sb-chart-type';typeChoice.setAttribute('aria-label','차트 유형');
+  for(const [value,label]of [['candle','기본 캔들'],['hollow','빈 캔들'],['volume','볼륨캔들'],['profile','매물대']])typeChoice.add(new Option(label,value));typeChoice.value=controller.getType();typeLabel.append('유형 ',typeChoice);
+  typeChoice.addEventListener('change',()=>{controller.setType(typeChoice.value);try{root.localStorage.setItem('stockbook:chart:type:v1',typeChoice.value);}catch{}},{signal});
+  const indicatorPanel=doc.createElement('details'),indicatorList=doc.createElement('div'),indicatorSummary=doc.createElement('summary');indicatorPanel.className='sb-chart-indicator-panel';indicatorSummary.textContent='지표 표시';indicatorList.className='sb-chart-indicator-list';indicatorPanel.append(indicatorSummary,indicatorList);let catalogKey='';
+  indicatorList.addEventListener('change',event=>{const id=event.target.dataset.indicatorToggle;if(!id)return;remember();if(!event.target.checked&&selectedIndicator===id)selectedIndicator=null;const hidden=controller.getHiddenIndicators().filter(value=>value!==id);if(!event.target.checked)hidden.push(id);controller.setHiddenIndicators(hidden);},{signal});
   const barInfo=doc.createElement('div');barInfo.className='sb-chart-bar-info';barInfo.setAttribute('aria-label','선택 봉 정보');
   const controls=doc.createElement('div');controls.className='sb-chart-compact-controls';
   const toolPanel=doc.createElement('details');toolPanel.className='sb-chart-tool-panel';
@@ -28,10 +35,10 @@
    button('−',()=>zoom(1.4),nav);button('+',()=>zoom(1/1.4),nav);button('처음 보기',()=>controller.resetView(),nav);button('최신',()=>{const m=controller.getModel();controller.setView(m.count,m.all.length);},nav);
    if(compact){
     const summary=doc.createElement('summary');summary.textContent='차트 도구';
-    const body=doc.createElement('div');body.className='sb-chart-tool-panel-body';body.append(toolbar,indicatorControls,nav,status);
-    toolPanel.append(summary,body);controls.append(toolPanel,barInfo);svg.before(controls);
+    const body=doc.createElement('div');body.className='sb-chart-tool-panel-body';body.append(toolbar,indicatorPanel,indicatorControls,nav,status);
+    toolPanel.append(summary,body);controls.append(typeLabel,toolPanel,barInfo);svg.before(controls);
     toolPanel.addEventListener('toggle',()=>{if(toolPanel.open)body.style.maxHeight=Math.max(60,Math.min(260,host.clientHeight-controls.offsetTop-controls.offsetHeight-8))+'px';},{signal});
-   }else{host.prepend(toolbar);svg.after(nav);nav.after(status);}
+   }else{toolbar.prepend(typeLabel);host.prepend(toolbar);toolbar.after(indicatorPanel);svg.after(nav);nav.after(status);}
   }
   // Inputs are separate from chart SVG coordinates; vertical bar height remains fixed.
   const scroll=doc.createElement('input'),scale=doc.createElement('input'),readout=doc.createElement('span');
@@ -48,7 +55,7 @@
   function point(event,target=svg){return new DOMPoint(event.clientX,event.clientY).matrixTransform(target.getScreenCTM().inverse());}
   function index(a,m){const i=m.all.findIndex(r=>r.bucket===a.key);return i<0?null:i+a.extra;}
   function xy(a,m){const i=index(a,m);return i===null?null:{x:m.x(i-m.offset),y:m.y(a.price)};}
-  function anchor(p,m){const i=Math.max(0,Math.min(m.all.length-1+m.futureCount,m.offset+Math.round((p.x-25)/m.step-.5))),actual=Math.min(i,m.all.length-1);return {key:m.all[actual].bucket,extra:i-actual,price:Math.max(.01,m.priceForY(Math.max(30,Math.min(520,p.y))))};}
+  function anchor(p,m){const i=Math.max(0,Math.min(m.all.length-1+m.futureCount,m.offset+m.indexForX(p.x))),actual=Math.min(i,m.all.length-1);return {key:m.all[actual].bucket,extra:i-actual,price:Math.max(.01,m.priceForY(Math.max(30,Math.min(520,p.y))))};}
   function shape(d,layer){
    const m=model(),points=d.points.map(a=>xy(a,m));if(points.some(p=>!p))return;const [a,b]=points,color=selected===d.id?'var(--sb-warn,var(--sb-accent))':'var(--sb-accent)',group=node('g',{'data-drawing-id':d.id,class:'sb-chart-drawing'}),attrs={stroke:color,'stroke-width':2,fill:'none','vector-effect':'non-scaling-stroke'};
    const line=(x1,y1,x2,y2)=>group.append(node('line',{...attrs,x1,y1,x2,y2}));
@@ -76,13 +83,19 @@
    svg.querySelector('.sb-chart-indicator-hits')?.remove();
    if(tools){const hits=node('g',{class:'sb-chart-indicator-hits'});for(const line of svg.querySelectorAll('.ma,.ma-point,.bb-shift')){const hit=line.cloneNode(true);hit.setAttribute('class','sb-chart-indicator-hit');hit.setAttribute('stroke','transparent');hit.setAttribute('stroke-width','14');hit.setAttribute('fill','none');hit.setAttribute('pointer-events','stroke');hit.setAttribute('vector-effect','non-scaling-stroke');hits.append(hit);}svg.append(hits);}
    svg.querySelector('.sb-chart-drawings')?.remove();const layer=node('g',{class:'sb-chart-drawings'});for(const d of drawings)shape(d,layer);if(stroke?.length>1)shape({id:-1,type:'pen',points:stroke},layer);if(preview)shape(preview,layer);svg.append(layer);memory.set(key,drawings);
+   if(tools){
+    const catalog=controller.getIndicators(),next=JSON.stringify(catalog);if(catalogKey!==next){catalogKey=next;indicatorList.replaceChildren();for(const item of catalog){const label=doc.createElement('label'),input=doc.createElement('input');input.type='checkbox';input.dataset.indicatorToggle=item.id;input.disabled=!item.available;label.append(input,doc.createTextNode(item.label));indicatorList.append(label);}}
+    const hidden=controller.getHiddenIndicators();for(const input of indicatorList.querySelectorAll('input'))input.checked=!input.disabled&&!hidden.includes(input.dataset.indicatorToggle);
+    const encoded=JSON.stringify(hidden);if(encoded!==lastVisibility){lastVisibility=encoded;try{root.localStorage.setItem(visibilityKey,encoded);}catch{}}
+    typeChoice.value=controller.getType();
+   }
    if(compact){indicatorControls.replaceChildren(...[...host.querySelectorAll('[data-chart-id="legend"] .sb-chart-indicator')].map(item=>item.cloneNode(true)));}
    if(tools){indicatorMemory.set(key,controller.getHiddenIndicators());for(const item of host.querySelectorAll('.sb-chart-indicator'))item.setAttribute('aria-pressed',String(item.dataset.chartIndicator===selectedIndicator));}
    const m=model();if(compact){barInfo.textContent=describeBar(m.rows.at(-1),m);barInfo.title=barInfo.textContent;}scroll.max=String(Math.max(0,m.all.length-m.count));scroll.value=String(m.offset);scale.max=String(Math.max(0,m.all.length-1));scale.value=String(m.all.length-m.count);readout.textContent=m.count+'봉';
   }
   function hide(){svg.querySelector('.sb-chart-crosshair')?.remove();pressure?.querySelector('.sb-chart-crosshair')?.remove();tip.hidden=true;priceLabel.hidden=true;dateLabel.hidden=true;}
   function show(event,target=svg){
-   const m=model(),p=point(event,target);if(p.x<25||p.x>1170)return;hide();const i=Math.max(0,Math.min(m.count-1+m.futureCount,Math.round((p.x-25)/m.step-.5))),xx=m.x(i),row=m.rows[i],yy=target===svg?Math.max(30,Math.min(520,p.y)):(row?m.y(row.close):30);
+   const m=model(),p=point(event,target);if(p.x<25||p.x>1170)return;hide();const i=Math.max(0,Math.min(m.count-1+m.futureCount,m.indexForX(p.x))),xx=m.x(i),row=m.rows[i],yy=target===svg?Math.max(30,Math.min(520,p.y)):(row?m.y(row.close):30);
    const layer=node('g',{class:'sb-chart-crosshair','pointer-events':'none'}),color='var(--sb-text-2)';layer.append(node('line',{x1:xx,x2:xx,y1:30,y2:560,stroke:color,'stroke-dasharray':'4 4'}),node('line',{x1:25,x2:1170,y1:yy,y2:yy,stroke:color,'stroke-dasharray':'4 4'}));svg.append(layer);
    if(pressure&&!pressure.hasAttribute('hidden')){const l=node('g',{class:'sb-chart-crosshair','pointer-events':'none'});l.append(node('line',{x1:xx,x2:xx,y1:0,y2:80,stroke:color,'stroke-dasharray':'4 4'}));pressure.append(l);}
    if(tools&&!compact){const label=row?row.date:'표시 공간',xLabel=Math.max(25,Math.min(1050,xx-52));layer.append(node('rect',{x:1170,y:yy-11,width:108,height:22,fill:'var(--sb-surface)'}),node('text',{x:1175,y:yy+4,fill:'var(--sb-text-1)','font-size':12},Math.round(m.priceForY(yy)).toLocaleString()),node('rect',{x:xLabel,y:563,width:112,height:23,fill:'var(--sb-surface)'}),node('text',{x:xLabel+5,y:579,fill:'var(--sb-text-1)','font-size':11},label));}
@@ -104,7 +117,7 @@
    if(e.pointerType==='touch'){touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(touches.size===2){const [a,b]=[...touches.values()],m=model();pinch={distance:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),count:m.count,end:m.end};gesture=null;stroke=null;pending=null;preview=null;svg.setPointerCapture(e.pointerId);e.preventDefault();return;}}
    if(e.button!==0||pinch)return;svg.focus({preventScroll:true});const indicator=e.target.closest('[data-chart-indicator]');if(tools&&indicator&&mode==='zoom'){selectIndicator(indicator.dataset.chartIndicator);e.preventDefault();return;}const p=point(e),m=model();if(p.x<25||p.x>1170||p.y<30||p.y>520)return;
    const hit=e.target.closest('[data-drawing-id]'),d=drawings.find(d=>d.id===Number(hit?.dataset.drawingId));
-   if(d&&(mode==='zoom'||mode==='pan')){selected=d.id;selectedIndicator=null;remember();gesture={kind:'drawing',id:e.pointerId,start:p,original:JSON.parse(JSON.stringify(d.points)),handle:hit.hasAttribute('data-handle')?Number(hit.dataset.handle):null,drawing:d.id};draw();}
+   if(d&&(mode==='zoom'||mode==='pan')){selected=d.id;selectedIndicator=null;remember();svg.classList.add('sb-chart-object-dragging');gesture={kind:'drawing',id:e.pointerId,start:p,original:JSON.parse(JSON.stringify(d.points)),handle:hit.hasAttribute('data-handle')?Number(hit.dataset.handle):null,drawing:d.id};draw();}
    else if(mode==='zoom'||mode==='pan'){selected=null;selectedIndicator=null;gesture={kind:mode==='pan'||e.pointerType==='touch'?'pan':'zoom',id:e.pointerId,x:e.clientX,y:e.clientY,count:m.count,end:m.end,step:m.step*Math.abs(svg.getScreenCTM().a)};}
    else{gesture={kind:'draw',id:e.pointerId,start:p,anchor:anchor(p,m),moved:false};if(mode==='pen')stroke=[gesture.anchor];}
    svg.setPointerCapture(e.pointerId);e.preventDefault();e.stopPropagation();show(e);
@@ -118,12 +131,12 @@
    else if(gesture.kind==='drawing'){
     const d=drawings.find(d=>d.id===gesture.drawing);if(!d)return;
     if(gesture.handle!==null){d.points=JSON.parse(JSON.stringify(gesture.original));d.points[gesture.handle]=anchor(p,m);}
-    else{const ids=gesture.original.map(a=>index(a,m));let delta=Math.round((p.x-gesture.start.x)/m.step);delta=Math.max(-Math.min(...ids),Math.min(m.all.length-1+m.futureCount-Math.max(...ids),delta));const priceDiff=m.priceForY(p.y)-m.priceForY(gesture.start.y);d.points=gesture.original.map((a,i)=>{const n=ids[i]+delta,real=Math.min(n,m.all.length-1);return {key:m.all[real].bucket,extra:n-real,price:Math.max(.01,a.price+priceDiff)};});}draw();
+    else{const ids=gesture.original.map(a=>index(a,m));let delta=m.indexForX(p.x)-m.indexForX(gesture.start.x);delta=Math.max(-Math.min(...ids),Math.min(m.all.length-1+m.futureCount-Math.max(...ids),delta));const priceDiff=m.priceForY(p.y)-m.priceForY(gesture.start.y);d.points=gesture.original.map((a,i)=>{const n=ids[i]+delta,real=Math.min(n,m.all.length-1);return {key:m.all[real].bucket,extra:n-real,price:Math.max(.01,a.price+priceDiff)};});}draw();
    }else{gesture.moved||=Math.hypot(p.x-gesture.start.x,p.y-gesture.start.y)>4;if(stroke&&stroke.length<500){stroke.push(anchor(p,m));draw();}else if(!['horizontal','vertical','midpoint','text'].includes(mode)){preview={id:-1,type:mode,points:[pending||gesture.anchor,anchor(p,m)]};draw();}}
    e.preventDefault();
   }
   function up(e){
-   touches.delete(e.pointerId);if(svg.hasPointerCapture(e.pointerId))svg.releasePointerCapture(e.pointerId);
+   svg.classList.remove('sb-chart-object-dragging');touches.delete(e.pointerId);if(svg.hasPointerCapture(e.pointerId))svg.releasePointerCapture(e.pointerId);
    if(pinch){if(!touches.size)pinch=null;gesture=null;return;}if(!gesture||gesture.id!==e.pointerId)return;
    const g=gesture;gesture=null;const m=model(),p=point(e);if(g.kind!=='draw'){show(e);return;}
    if(mode==='pen'){if(stroke?.length>1)add('pen',stroke);stroke=null;return;}
@@ -134,8 +147,10 @@
    }else if(g.moved||pending)add(mode,[pending||g.anchor,a]);else{pending=g.anchor;status.textContent='끝점을 누르세요. Esc로 취소합니다.';}
   }
   svg.addEventListener('pointerdown',down,{signal});svg.addEventListener('pointermove',move,{signal});svg.addEventListener('pointerup',up,{signal});
-  svg.addEventListener('pointercancel',()=>{gesture=null;stroke=null;pending=null;preview=null;touches.clear();pinch=null;draw();},{signal});svg.addEventListener('pointerleave',()=>{if(!gesture)hide();},{signal});
+  svg.addEventListener('pointercancel',()=>{svg.classList.remove('sb-chart-object-dragging');gesture=null;stroke=null;pending=null;preview=null;touches.clear();pinch=null;draw();},{signal});svg.addEventListener('pointerleave',()=>{if(!gesture)hide();},{signal});
   svg.addEventListener('wheel',e=>{if(e.ctrlKey)return;e.preventDefault();zoom(e.deltaY<0?1/1.25:1.25);},{passive:false,signal});
+  host.querySelector('[data-chart-id="investorChart"]')?.addEventListener('pointerdown',()=>{if(tools&&controller.getIndicators().some(item=>item.id==='investors'&&item.available))selectIndicator('investors');},{signal});
+  pressure?.setAttribute('data-chart-indicator','pressure');pressure?.addEventListener('pointerdown',()=>{if(tools)selectIndicator('pressure');},{signal});
   pressure?.addEventListener('pointermove',e=>show(e,pressure),{signal});pressure?.addEventListener('pointerleave',hide,{signal});
   if(compact)doc.addEventListener('pointerdown',event=>{if(!controls.contains(event.target))toolPanel.open=false;},{signal,capture:true});
   doc.addEventListener('keydown',e=>{
@@ -150,7 +165,7 @@
    if(!host.contains(doc.activeElement)&&!host.contains(e.target)&&!(tools&&!compact&&e.key==='Escape'))return;
    if(e.key==='Escape'){
     const drawing=pending||gesture||stroke||!['zoom','pan'].includes(mode),panel=doc.activeElement?.closest('details[open]')||[...host.querySelectorAll('details[open]')].at(-1);
-    if(drawing){if(gesture&&svg.hasPointerCapture(gesture.id))svg.releasePointerCapture(gesture.id);pending=null;gesture=null;stroke=null;preview=null;touches.clear();pinch=null;setMode('zoom');}
+    if(drawing){svg.classList.remove('sb-chart-object-dragging');if(gesture&&svg.hasPointerCapture(gesture.id))svg.releasePointerCapture(gesture.id);pending=null;gesture=null;stroke=null;preview=null;touches.clear();pinch=null;setMode('zoom');}
     else if(panel)panel.open=false;else{selected=null;selectedIndicator=null;}
     hide();draw();e.preventDefault();e.stopPropagation();
    }else if(e.key==='Delete'&&tools&&!e.target.closest('input,textarea,select,[contenteditable]:not([contenteditable="false"]),[role="textbox"]')&&(selected!==null||selectedIndicator)){
@@ -160,7 +175,7 @@
   host.addEventListener('stockbook:chart-render',()=>{hide();draw();},{signal});
   let size='';const observer=new ResizeObserver(()=>{const next=svg.clientWidth+':'+svg.clientHeight;if(next!==size){size=next;controller.refresh();}});observer.observe(svg);
   setMode('zoom');draw();
-  return {destroy(){memory.set(key,drawings);abort.abort();observer.disconnect();tip.remove();priceLabel.remove();dateLabel.remove();controls.remove();toolbar.remove();nav.remove();status.remove();}};
+  return {destroy(){memory.set(key,drawings);abort.abort();observer.disconnect();tip.remove();priceLabel.remove();dateLabel.remove();controls.remove();indicatorPanel.remove();toolbar.remove();nav.remove();status.remove();}};
  }
  root.StockBookChartInteraction=Object.freeze({mount});
 })(window);

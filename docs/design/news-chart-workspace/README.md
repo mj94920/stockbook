@@ -26,7 +26,7 @@
 | 로컬 기사 검사 | 합성 HTML의 텍스트 추출·빈 본문·잘린 본문·허용 URL·송신자 검사 |
 | 브라우저 검사 | 긴 본문 스크롤·기사/종목 전환·늦은 응답·탭 전환·수신 요약 표시 |
 | 원문 영역 로컬 검사 | 모의 Electron으로 송신자·격리 설정·주소·권한·다운로드·늦은 응답·정리 검사. 모의 preload 브라우저로 보기 전환·크기 변경·모달·탭 전환·실패 안내 검사 |
-| 전체 검사 | `npm test`: 46건과 기존 정적·스모크 검사 통과 |
+| 전체 검사 | `npm test`: 50건과 기존 정적·스모크 검사 통과 |
 | 실제 Electron·Windows·NSIS | 사용자 제공 Windows 화면에서 서울경제 원문·사진 표시 확인. Linux Electron은 SUID 샌드박스 설정 오류로 미실행. 사용자 Windows 화면으로 SK스퀘어 일·주·월 6개월 표시와 수정 전 상세 창을 확인했다. 이번 상세 조작·연봉·월봉 막대 수정과 NSIS는 실제 Windows 추가 확인 대기 |
 
 실제 수신 기록은 [network-result.json](network-result.json)과 [본문 연결 검증](live-reader-result.json), 목록 회귀 자료는 [test/fixtures/news](../../../test/fixtures/news/README.md)에 있다. HTTPS 검증은 세션 프록시를 이용한 Node 서비스 검사이며 Windows Electron의 네트워크 동작을 검증한 것이 아니다.
@@ -91,3 +91,5 @@ node docs/design/news-chart-workspace/verify-live-news.cjs
 ## 차트 단축키
 
 지표 이름/선을 선택하고 **Del**로 지운다. **지표 복원** 또는 **실행 취소**로 되돌린다. **Esc**는 가장 위의 모달·패널 하나를 닫으며, 그리기 중에는 먼저 작업을 취소한다. 입력칸에서는 Del로 글자를 지운다. [범위와 검증](DETAIL-INTERACTION-REVIEW.md).
+
+차트의 **유형**에서 기본·빈·볼륨캔들·매물대를 선택한다. **지표 표시**에서 지운 지표도 개별적으로 다시 켠다. 지표·도구 위에서는 손바닥 커서를 표시한다. 매물대는 표시 날짜 범위의 일봉 OHLCV에서 계산한 **추정 분포**다. [유형과 검증](DETAIL-INTERACTION-REVIEW.md), [조작 미리보기](detail-preview.html).
