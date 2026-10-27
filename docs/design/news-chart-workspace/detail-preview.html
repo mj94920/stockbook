@@ -316,6 +316,7 @@ function renderInvestorPanel(){
  draw();for(const id of ['refs','original'])document.getElementById(id).onchange=draw;
  return {getModel:()=>model,getIndicators,getType:()=>chartType,setType:value=>{if(!series.chartTypes.includes(value))throw Error('차트 유형 오류');if(chartType!==value){chartType=value;draw();}},getHiddenIndicators:()=>[...hiddenIndicators],setHiddenIndicators:ids=>{hiddenIndicators=new Set(ids.filter(id=>/^(ma:\d+|bb|cloud|pressure|investors|profile)$/.test(id)).slice(0,32));draw();},refresh:draw,updateTheme:value=>{lightMode=value;draw();},
  setView:(count,end=view.end)=>{view.count=Math.max(1,Math.min(all.length,Math.round(count)));view.end=Math.max(view.count,Math.min(all.length,Math.round(end)));draw();},resetView:()=>{view.count=all.length-initialOffset;view.end=all.length;draw();},
+ resetSettings:()=>{const defaults=series.cycleConfig(barCycle);periods=mode==='compact'&&barCycle==='day'?[5,10,20,60]:defaults.periods;config.cloud=defaults.cloud;bbSettings={period:40,multiplier:1.9,shift:25};hiddenIndicators.clear();chartType='candle';view.count=all.length-initialOffset;view.end=all.length;for(const id of ['refs','original'])document.getElementById(id).checked=false;draw();},
  setSettings:values=>{const next=series.indicatorSettings(barCycle,values);periods=next.periods;config.cloud=next.cloud;bbSettings=next.bb;futureCount=barCycle==='day'?bbSettings.shift:0;draw();}};
 }
 root.StockBookChartRenderer=Object.freeze({mount});
@@ -351,7 +352,7 @@ root.StockBookChartRenderer=Object.freeze({mount});
   const setMode=value=>{if(compact)toolPanel.open=false;mode=value;pending=null;stroke=null;preview=null;for(const b of toolbar.querySelectorAll('[data-tool]'))b.setAttribute('aria-pressed',String(b.dataset.tool===mode));status.textContent=({zoom:'왼쪽 드래그는 축소, 오른쪽은 확대합니다. 드래그 유지 중 Space를 누를 때마다 한 단계 축소합니다.',pan:'좌우 드래그로 이동합니다. 드래그 유지 중 Space를 누르면 한 단계 축소합니다.',midpoint:'봉을 누르면 선택 기준의 중심선을 그립니다.',pen:'누른 채 자유롭게 그립니다.',text:'메모를 입력한 뒤 표시할 곳을 누르세요.'})[value]||'시작점과 끝점을 누르거나 끌어 그립니다. Esc로 취소합니다.';};
   if(tools){
    for(const [value,label]of [['zoom','확대 조절'],['pan','이동'],['trend','추세선'],['horizontal','수평선'],['vertical','수직선'],['thirds','3등분'],['quarters','4등분'],['midpoint','봉중심선'],['rectangle','사각형'],['ellipse','원·타원'],['triangle','삼각형'],['arrow','화살표'],['pen','펜'],['text','텍스트']])button(label,()=>setMode(value),toolbar,{tool:value});
-   toolbar.append(center,textInput);button('선택 삭제',deleteSelection);button('실행 취소',()=>{if(history.length){const previous=history.pop();drawings=previous.drawings;selected=null;selectedIndicator=null;controller.setHiddenIndicators(previous.hidden);draw();}});button('지표 복원',()=>{remember();selectedIndicator=null;controller.setHiddenIndicators([]);status.textContent='지운 지표를 복원했습니다.';});button('모두 지우기',()=>{remember();drawings=[];selected=null;draw();});
+   toolbar.append(center,textInput);button('선택 삭제',deleteSelection);button('실행 취소',()=>{if(history.length){const previous=history.pop();drawings=previous.drawings;selected=null;selectedIndicator=null;controller.setHiddenIndicators(previous.hidden);draw();}});button('지표 복원',()=>{remember();selectedIndicator=null;controller.setHiddenIndicators([]);status.textContent='지운 지표를 복원했습니다.';});button('차트 설정 초기화',resetSettings).title='현재 봉 주기의 지표·표시·유형·확대·이동을 기본값으로 돌립니다. 그린 선과 메모는 유지합니다.';button('모두 지우기',()=>{remember();drawings=[];selected=null;draw();});
    button('저장',()=>{try{root.localStorage.setItem(storageKey,JSON.stringify({version:1,key,drawings}));status.textContent='이 종목·봉 주기의 그림을 저장했습니다.';}catch{status.textContent='그림을 저장하지 못했습니다.';}});
    button('불러오기',()=>{try{const saved=JSON.parse(root.localStorage.getItem(storageKey));if(saved?.version!==1||saved.key!==key||!Array.isArray(saved.drawings)||saved.drawings.length>200)throw Error();for(const d of saved.drawings)if(!Number.isSafeInteger(d.id)||d.id<1||!types.includes(d.type)||!Array.isArray(d.points)||d.points.length<1||d.points.length>500||d.points.some(a=>typeof a.key!=='string'||a.key.length>32||!Number.isInteger(a.extra)||Math.abs(a.extra)>120||!Number.isFinite(a.price)||a.price<=0)||typeof(d.text||'')!=='string')throw Error();remember();drawings=saved.drawings;nextId=Math.max(0,...drawings.map(d=>d.id))+1;draw();status.textContent='저장한 그림을 불러왔습니다.';}catch{status.textContent='저장 자료를 읽지 못했습니다. 현재 그림은 유지합니다.';}});
    button('−',()=>zoom(1.4),nav);button('+',()=>zoom(1/1.4),nav);button('처음 보기',()=>controller.resetView(),nav);button('최신',()=>{const m=controller.getModel();controller.setView(m.count,m.all.length);},nav);
@@ -367,6 +368,10 @@ root.StockBookChartRenderer=Object.freeze({mount});
   scroll.type=scale.type='range';scroll.min=scale.min='0';scroll.setAttribute('aria-label','차트 가로 스크롤');scale.setAttribute('aria-label','차트 축척');readout.className='sb-chart-count';
   if(tools){const moveLabel=doc.createElement('label'),scaleLabel=doc.createElement('label');moveLabel.append('이동 ',scroll);scaleLabel.append('축척 ',scale);nav.append(moveLabel,scaleLabel,readout);scroll.addEventListener('input',()=>{const m=controller.getModel();controller.setView(m.count,Number(scroll.value)+m.count);},{signal});scale.addEventListener('input',()=>{const m=controller.getModel();controller.setView(m.all.length-Number(scale.value),m.end);},{signal});}
   function remember(){history.push({drawings:JSON.parse(JSON.stringify(drawings)),hidden:controller.getHiddenIndicators()});if(history.length>30)history.shift();}
+  function resetSettings(){
+   if(gesture&&svg.hasPointerCapture(gesture.id))svg.releasePointerCapture(gesture.id);gesture=null;pending=null;stroke=null;preview=null;pinch=null;touches.clear();svg.classList.remove('sb-chart-object-dragging');selected=null;selectedIndicator=null;center.value='range';history=history.map(item=>({...item,hidden:[]}));setMode('zoom');hide();
+   host.dispatchEvent(new CustomEvent('stockbook:chart-settings-reset'));controller.resetSettings();try{root.localStorage.setItem('stockbook:chart:type:v1','candle');}catch{}status.textContent='차트 설정을 기본값으로 초기화했습니다. 그린 선·메모는 유지합니다.';
+  }
   function deleteSelection(){
    if(selectedIndicator){remember();const id=selectedIndicator;selectedIndicator=null;controller.setHiddenIndicators([...controller.getHiddenIndicators(),id]);status.textContent='선택 지표를 지웠습니다. 지표 복원 또는 실행 취소로 되돌립니다.';}
    else if(selected!==null){remember();drawings=drawings.filter(d=>d.id!==selected);selected=null;draw();}
@@ -561,6 +566,7 @@ root.StockBookChartRenderer=Object.freeze({mount});
   window.dispatchEvent(new CustomEvent('stockbook:chart-context',{detail:{...current}}));
  }
  api?.onContext(context);host.addEventListener('stockbook:chart-retry',event=>{event.preventDefault();if(current)context(current);});
+ host.addEventListener('stockbook:chart-settings-reset',()=>{if(!current)return;delete settings[current.barCycle];try{localStorage.setItem('stockbook:chart:settings:v1',JSON.stringify(settings));}catch{}});
  async function changeView(){
   if(!current)return;const view={barCycle:cycle.value,viewRange:range.value};
   const result=await api?.setView?.(view);

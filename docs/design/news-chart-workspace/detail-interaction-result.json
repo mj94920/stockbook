@@ -1,6 +1,6 @@
 {
   "passed": true,
-  "verifiedAt": "2026-10-27T03:50:37.499Z",
+  "verifiedAt": "2026-10-27T04:18:56.552Z",
   "scope": "Self-contained production detail HTML, recorded Samsung data only, served internally over HTTP.",
   "years": [],
   "calls": [],
@@ -28,7 +28,8 @@
     "monthly indicator periods",
     "monthly fixed-height volume panel",
     "hollow, volume and estimated profile types",
-    "individual indicator removal and re-enable"
+    "individual indicator removal and re-enable",
+    "chart settings reset"
   ],
   "browserErrors": []
 }

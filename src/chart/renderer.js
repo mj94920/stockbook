@@ -143,6 +143,7 @@ function renderInvestorPanel(){
  draw();for(const id of ['refs','original'])document.getElementById(id).onchange=draw;
  return {getModel:()=>model,getIndicators,getType:()=>chartType,setType:value=>{if(!series.chartTypes.includes(value))throw Error('차트 유형 오류');if(chartType!==value){chartType=value;draw();}},getHiddenIndicators:()=>[...hiddenIndicators],setHiddenIndicators:ids=>{hiddenIndicators=new Set(ids.filter(id=>/^(ma:\d+|bb|cloud|pressure|investors|profile)$/.test(id)).slice(0,32));draw();},refresh:draw,updateTheme:value=>{lightMode=value;draw();},
  setView:(count,end=view.end)=>{view.count=Math.max(1,Math.min(all.length,Math.round(count)));view.end=Math.max(view.count,Math.min(all.length,Math.round(end)));draw();},resetView:()=>{view.count=all.length-initialOffset;view.end=all.length;draw();},
+ resetSettings:()=>{const defaults=series.cycleConfig(barCycle);periods=mode==='compact'&&barCycle==='day'?[5,10,20,60]:defaults.periods;config.cloud=defaults.cloud;bbSettings={period:40,multiplier:1.9,shift:25};hiddenIndicators.clear();chartType='candle';view.count=all.length-initialOffset;view.end=all.length;for(const id of ['refs','original'])document.getElementById(id).checked=false;draw();},
  setSettings:values=>{const next=series.indicatorSettings(barCycle,values);periods=next.periods;config.cloud=next.cloud;bbSettings=next.bb;futureCount=barCycle==='day'?bbSettings.shift:0;draw();}};
 }
 root.StockBookChartRenderer=Object.freeze({mount});

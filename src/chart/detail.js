@@ -12,6 +12,7 @@
   window.dispatchEvent(new CustomEvent('stockbook:chart-context',{detail:{...current}}));
  }
  api?.onContext(context);host.addEventListener('stockbook:chart-retry',event=>{event.preventDefault();if(current)context(current);});
+ host.addEventListener('stockbook:chart-settings-reset',()=>{if(!current)return;delete settings[current.barCycle];try{localStorage.setItem('stockbook:chart:settings:v1',JSON.stringify(settings));}catch{}});
  async function changeView(){
   if(!current)return;const view={barCycle:cycle.value,viewRange:range.value};
   const result=await api?.setView?.(view);
