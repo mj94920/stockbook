@@ -35,7 +35,7 @@
    if(!data?.ok || data.metadata?.stockCode!==context.code){failed(data?.error||'선택 종목의 차트 자료가 없습니다.');return null;}
    try{
     state.controller=root.StockBookChartRenderer.mount(host,data,{mode,period:context.period,viewRange:context.viewRange||context.period,barCycle:context.barCycle||'day',indicatorCycle:context.indicatorCycle||context.barCycle||'day',light:document.body.classList.contains('light-mode')});
-    if(root.StockBookChartInteraction)state.interaction=root.StockBookChartInteraction.mount(host,state.controller,{tools:mode==='detail'});
+    if(root.StockBookChartInteraction)state.interaction=root.StockBookChartInteraction.mount(host,state.controller,{tools:true,compact:mode==='compact'});
     return state.controller;
    }catch{state.interaction?.destroy();failed('차트 자료를 표시하지 못했습니다.');return null;}
   })();return state.task;

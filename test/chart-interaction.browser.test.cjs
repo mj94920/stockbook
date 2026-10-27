@@ -86,3 +86,37 @@ test('renderer stops waiting for stuck IPC, retries without restart and ignores 
   await page.evaluate(()=>Promise.resolve());assert.equal(await page.evaluate(()=>window.__themeUpdates),0);assert.equal(await page.locator('#chartViewport .candle').count()>0,true);assert.doesNotMatch(await page.locator('#chartViewport').innerText(),/늦은 실패/);assert.deepEqual(h.errors,[]);
  }finally{await h.close();}
 });
+
+test('embedded chart exposes crosshair labels, persistent bar data and foldable drawing tools',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  await page.setViewportSize({width:1600,height:900});
+  await page.goto(page.url().replace('/chart.html','/index.html'));
+  await page.evaluate(()=>{state.watchlist=[{ticker:'000001',name:'합성 검증 종목',price:1000,quoteAt:Date.now()}];window._dockSel='000001';window._MDI.show('watchlist');});
+  await page.waitForFunction(()=>document.getElementById('sbEmbeddedChart').chartEvidence?.stockCode==='000001');
+  const host=page.locator('#sbEmbeddedChart');assert.match(await host.locator('.sb-chart-bar-info').innerText(),/시가.*고가.*저가.*종가.*거래량/);
+  async function at(index,y){return host.evaluate((host,{index,y})=>{const m=StockBookCharts.controller(host).getModel(),svg=host.querySelector('[data-chart-id="chart"]'),p=new DOMPoint(m.x(index),y).matrixTransform(svg.getScreenCTM());return {x:p.x,y:p.y,date:m.rows[index].date};},{index,y});}
+  let p=await at(3,260);await page.mouse.move(p.x,p.y);
+  assert.equal(await host.locator('.sb-chart-crosshair').count(),2);
+  assert.match(await host.locator('.sb-chart-bar-info').innerText(),new RegExp(p.date));
+  assert.equal(await host.locator('.sb-chart-axis-label:visible').count(),2);
+  assert.equal(await host.locator('.sb-chart-axis-label').evaluateAll(es=>es.every(e=>getComputedStyle(e).fontSize==='12px'&&e.getBoundingClientRect().height>=18)),true);
+  assert.equal(await host.locator('.sb-chart-tool-panel').getAttribute('open'),null);
+  await host.locator('.sb-chart-tool-panel summary').click();
+  await page.waitForFunction(()=>{const host=document.getElementById('sbEmbeddedChart'),panel=host.querySelector('.sb-chart-tool-panel-body').getBoundingClientRect();return panel.height>0&&panel.bottom<=host.getBoundingClientRect().bottom;});
+  await host.locator('[data-tool="horizontal"]').click();
+  assert.equal(await host.locator('.sb-chart-tool-panel').getAttribute('open'),null);
+  p=await at(3,260);await page.mouse.click(p.x,p.y);assert.equal(await host.locator('.sb-chart-drawings > g').count(),1);
+  const before=await host.evaluate(h=>StockBookCharts.controller(h).getModel().count);
+  await host.locator('.sb-chart-tool-panel summary').click();await host.locator('.sb-chart-navigation').getByRole('button',{name:'+',exact:true}).click();
+  assert.ok(await host.evaluate(h=>StockBookCharts.controller(h).getModel().count)<before);
+  await host.locator('.sb-chart-tool-panel summary').click();
+  await host.locator('.sb-chart-tool-panel summary').click();await host.getByRole('textbox',{name:'차트 메모'}).fill('종합 차트 메모');await host.locator('[data-tool="text"]').click();
+  p=await at(4,220);await page.mouse.click(p.x,p.y);
+  assert.equal(await host.locator('.sb-chart-drawings text').evaluateAll(es=>es.some(e=>e.textContent==='종합 차트 메모'&&getComputedStyle(e).display!=='none')),true);
+  await page.locator('#sbChartCycle').selectOption('month');await page.waitForFunction(()=>document.getElementById('sbEmbeddedChart').chartEvidence?.barCycle==='month');
+  assert.equal(await host.locator('.sb-chart-compact-controls').count(),1);assert.match(await host.locator('.sb-chart-bar-info').innerText(),/월봉/);
+  p=await at(1,260);await page.mouse.move(p.x,p.y);assert.match(await host.locator('.sb-chart-tooltip').innerText(),new RegExp(p.date));
+  assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});

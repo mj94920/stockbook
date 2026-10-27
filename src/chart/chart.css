@@ -10,7 +10,7 @@
 .sb-proof-chart summary { padding:8px 0;cursor:pointer; }
 .sb-chart-notice,.sb-proof-chart p { color:var(--sb-text-2);font-size:11px;line-height:1.5; }
 .sb-proof-compact .sb-proof-options,.sb-proof-compact .sb-proof-extended,.sb-proof-compact [data-chart-id="period"],.sb-proof-compact .sb-proof-legend { display:none; }
-.sb-proof-compact { display:grid;grid-template-rows:auto minmax(0,1fr) 64px;height:100%; }
+.sb-proof-compact { display:grid;grid-template-rows:auto auto minmax(0,1fr) 64px;height:100%; }
 .sb-proof-compact svg { height:100%;min-height:0; }
 .sb-proof-detail { padding:4px 10px; }
 .sb-proof-detail [data-chart-id="chart"] { max-height:420px; }
@@ -30,7 +30,7 @@
 .sb-proof-chart [hidden] { display:none!important; }
 
 .sb-proof-compact [data-chart-id="pressureChart"] { height:64px; }
-.sb-proof-year.sb-proof-compact { grid-template-rows:auto minmax(0,1fr); }
+.sb-proof-year.sb-proof-compact { grid-template-rows:auto auto minmax(0,1fr); }
 .sb-proof-chart { position:relative; }
 .sb-proof-chart [data-chart-id="chart"] { touch-action:none;user-select:none; }
 .sb-chart-tools,.sb-chart-navigation { display:flex;align-items:center;flex-wrap:wrap;gap:var(--sb-space-1,4px);padding:var(--sb-space-2,8px) 0; }
@@ -46,3 +46,14 @@
 .sb-chart-window [hidden] { display:none!important; }
 
 .sb-chart-navigation label { display:flex;align-items:center;gap:4px;flex:1;min-width:140px; }
+
+/* Embedded controls stay in one row; drawing tools open above the plot. */
+.sb-proof-compact .sb-chart-compact-controls { display:flex;align-items:center;gap:8px;min-width:0;position:relative; }
+.sb-chart-bar-info { min-width:0;flex:1;overflow-x:auto;white-space:nowrap;font-size:11px;line-height:24px;color:var(--sb-text-1); }
+.sb-chart-tool-panel { flex-shrink:0; }
+.sb-proof-compact .sb-chart-tool-panel > summary { padding:3px 6px;border:1px solid var(--sb-border);border-radius:var(--sb-radius-1);font-size:11px;cursor:pointer; }
+.sb-chart-tool-panel-body { position:absolute;inset:100% 0 auto 0;z-index:30;max-height:min(260px,60vh);overflow:auto;padding:8px;background:var(--sb-panel);border:1px solid var(--sb-border);box-shadow:var(--sb-shadow-2); }
+.sb-proof-compact svg .sb-chart-crosshair text,.sb-proof-compact svg .sb-chart-drawings text { display:block; }
+.sb-proof-compact .sb-chart-tools .sb-btn,.sb-proof-compact .sb-chart-navigation .sb-btn { padding:4px 6px;font-size:11px; }
+
+.sb-chart-axis-label { position:fixed;z-index:9999;pointer-events:none;font:12px/18px system-ui,sans-serif;padding:1px 4px;white-space:nowrap;color:var(--sb-text-1);background:var(--sb-surface);border:1px solid var(--sb-border); }
