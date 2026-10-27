@@ -101,7 +101,7 @@
   function show(event,target=svg){
    const m=model(),p=point(event,target);if(p.x<25||p.x>1170)return;hide();const i=Math.max(0,Math.min(m.count-1+m.futureCount,m.indexForX(p.x))),xx=m.x(i),row=m.rows[i],yy=target===svg?Math.max(30,Math.min(520,p.y)):(row?m.y(row.close):30);
    const layer=node('g',{class:'sb-chart-crosshair','pointer-events':'none'}),color='var(--sb-text-2)';layer.append(node('line',{x1:xx,x2:xx,y1:30,y2:560,stroke:color,'stroke-dasharray':'4 4'}),node('line',{x1:25,x2:1170,y1:yy,y2:yy,stroke:color,'stroke-dasharray':'4 4'}));svg.append(layer);
-   if(pressure&&!pressure.hasAttribute('hidden')){const l=node('g',{class:'sb-chart-crosshair','pointer-events':'none'});l.append(node('line',{x1:xx,x2:xx,y1:0,y2:80,stroke:color,'stroke-dasharray':'4 4'}));pressure.append(l);}
+   if(pressure&&!pressure.hasAttribute('hidden')){const l=node('g',{class:'sb-chart-crosshair','pointer-events':'none'});l.append(node('line',{x1:xx,x2:xx,y1:0,y2:pressure.viewBox.baseVal.height,stroke:color,'stroke-dasharray':'4 4'}));pressure.append(l);}
    if(tools&&!compact){const label=row?row.date:'표시 공간',xLabel=Math.max(25,Math.min(1050,xx-52));layer.append(node('rect',{x:1170,y:yy-11,width:108,height:22,fill:'var(--sb-surface)'}),node('text',{x:1175,y:yy+4,fill:'var(--sb-text-1)','font-size':12},Math.round(m.priceForY(yy)).toLocaleString()),node('rect',{x:xLabel,y:563,width:112,height:23,fill:'var(--sb-surface)'}),node('text',{x:xLabel+5,y:579,fill:'var(--sb-text-1)','font-size':11},label));}
    if(compact){
     barInfo.textContent=describeBar(row,m);barInfo.title=barInfo.textContent;
@@ -181,7 +181,7 @@
    }
   },{signal});
   host.addEventListener('stockbook:chart-render',()=>{hide();draw();},{signal});
-  let size='';const observer=new ResizeObserver(()=>{const next=svg.clientWidth+':'+svg.clientHeight;if(next!==size){size=next;controller.refresh();}});observer.observe(svg);
+  let size='';const observer=new ResizeObserver(()=>{const next=[svg.clientWidth,svg.clientHeight,pressure?.clientWidth||0,pressure?.clientHeight||0].join(':');if(next!==size){size=next;controller.refresh();}});observer.observe(svg);if(pressure)observer.observe(pressure);
   setMode('zoom');draw();
   return {destroy(){memory.set(key,drawings);abort.abort();observer.disconnect();tip.remove();priceLabel.remove();dateLabel.remove();controls.remove();indicatorPanel.remove();toolbar.remove();nav.remove();status.remove();}};
  }

@@ -22,20 +22,21 @@
   const layer=host.ownerDocument.createElement('div');layer.className='sb-chart-resizers';host.append(layer);
   const price=host.querySelector('[data-chart-id="chart"]'),volume=host.querySelector('[data-chart-id="pressureChart"]'),investors=host.querySelector('[data-chart-id="investorChart"]');
   const height=()=>Math.max(1,host.clientHeight),visible=element=>!!element?.getClientRects().length&&element.getBoundingClientRect().height>0;
-  const volumeLimits=()=>[24,Math.max(24,price.getBoundingClientRect().height+volume.getBoundingClientRect().height-48)];
+  const available=()=>Math.max(1,host.getBoundingClientRect().top+host.clientTop+host.clientHeight-parseFloat(getComputedStyle(host).paddingBottom||0)-price.getBoundingClientRect().top);
+  const volumeLimits=()=>{const total=available(),min=Math.min(24,total*.4);return [min,Math.max(min,total-Math.min(48,total*.6))];};
   const items=[];let frame=0;
   function apply(){
-   if(compact){if(prefs.volume){const [min,max]=volumeLimits();host.style.setProperty('--sb-volume-height',clamp(prefs.volume*(price.getBoundingClientRect().height+volume.getBoundingClientRect().height),min,max)+'px');}}
-   else for(const [field,element,min,max]of [['price',price,120,height()*2],['volume',volume,24,height()*.7],['investors',investors,36,height()*.8]])if(element&&prefs[field]){element.style.height=clamp(prefs[field]*height(),min,Math.max(min,max))+'px';element.style.maxHeight='none';}
+   if(compact){if(visible(volume)){const [min,max]=volumeLimits();host.style.setProperty('--sb-volume-height',clamp((prefs.volume??.3)*available(),min,max)+'px');}}
+   else{const total=clamp(height()*.6,240,600);for(const [field,element,min,max]of [['price',price,120,height()*2],['volume',volume,24,height()*.7],['investors',investors,36,height()*.8]])if(element){const size=prefs[field]?prefs[field]*height():field==='price'?total*.7:field==='volume'?total*.3:null;if(size!==null){element.style.height=clamp(size,min,Math.max(min,max))+'px';element.style.maxHeight='none';}}}
    position();
   }
   function position(){const box=host.getBoundingClientRect();for(const item of items){item.handle.hidden=!visible(item.target)||(compact&&!visible(volume));if(!item.handle.hidden){const rect=item.target.getBoundingClientRect();item.handle.style.top=rect.bottom-box.top+host.scrollTop-5+'px';item.update();}}}
   function schedule(){if(!frame)frame=root.requestAnimationFrame(()=>{frame=0;apply();});}
   function add(field,target,label,min,max){if(!target)return;
-   const item=separator(layer,label,{value:()=>target.getBoundingClientRect().height,limits:()=>[min,Math.max(min,max())],change:value=>{if(compact){prefs.volume=clamp(volume.getBoundingClientRect().height+price.getBoundingClientRect().height-value,...volumeLimits())/(price.getBoundingClientRect().height+volume.getBoundingClientRect().height);}else prefs[field]=value/height();apply();},commit:()=>save(key,prefs),reset:()=>{delete prefs[compact?'volume':field];if(compact)host.style.removeProperty('--sb-volume-height');else{target.style.removeProperty('height');target.style.removeProperty('max-height');}save(key,prefs);schedule();}},signal);
+   const item=separator(layer,label,{value:()=>target.getBoundingClientRect().height,limits:()=>{const lower=typeof min==='function'?min():min;return [lower,Math.max(lower,max())];},change:value=>{if(compact){prefs.volume=clamp(available()-value,...volumeLimits())/available();}else prefs[field]=value/height();apply();},commit:()=>save(key,prefs),reset:()=>{delete prefs[compact?'volume':field];if(compact)host.style.removeProperty('--sb-volume-height');else{target.style.removeProperty('height');target.style.removeProperty('max-height');}save(key,prefs);schedule();}},signal);
    items.push({...item,target});
   }
-  if(compact)add('price',price,'가격·거래량 구간 높이',48,()=>Math.max(48,price.getBoundingClientRect().height+volume.getBoundingClientRect().height-24));
+  if(compact)add('price',price,'가격·거래량 구간 높이',()=>Math.min(48,available()*.6),()=>available()-volumeLimits()[0]);
   else{add('price',price,'가격 차트 높이',120,()=>height()*2);add('volume',volume,'거래량 구간 높이',24,()=>height()*.7);add('investors',investors,'수급 구간 높이',36,()=>height()*.8);}
   const observer=new ResizeObserver(schedule);for(const element of [host,price,volume,investors])if(element)observer.observe(element);
   host.addEventListener('stockbook:chart-render',schedule,{signal});host.addEventListener('toggle',schedule,{signal,capture:true});

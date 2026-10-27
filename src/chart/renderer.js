@@ -87,8 +87,8 @@ function render(all){
 function estimatePressure(all){return all.map((c,i)=>{const prior=all.slice(Math.max(0,i-20),i);const baseline=prior.length===20?prior.reduce((s,r)=>s+r.volume,0)/20:null;const location=c.high===c.low?0:Math.max(-1,Math.min(1,(2*c.close-c.high-c.low)/(c.high-c.low)));return {date:c.date,volume:c.volume,baseline,aboveAverage:baseline===null?null:c.volume>=baseline,location,pressure:location*c.volume};});}
 function renderPressure(all,isLight){
  const rows=(pressureCache??=estimatePressure(all)).slice(offset,view.end),x=horizontal.x,max=Math.max(1,...rows.map(r=>r.volume));
- const svgEl=document.getElementById('pressureChart'),scale=Math.max(.1,svgEl.clientWidth/1280),baseline=72,top=mode==='compact'?6:24,available=baseline-top;
- svgEl.setAttribute('viewBox','0 0 1280 80');svgEl.setAttribute('preserveAspectRatio','none');
+ const svgEl=document.getElementById('pressureChart'),scale=Math.max(.1,svgEl.clientWidth/1280),height=svgEl.getBoundingClientRect().height||(mode==='compact'?64:80),baseline=Math.max(0,height-8),top=mode==='compact'?6:24,available=Math.max(0,baseline-top);
+ svgEl.setAttribute('viewBox','0 0 1280 '+height);svgEl.setAttribute('preserveAspectRatio','none');
  const muted=isLight?'#526079':'#b8c2d2',red=isLight?'#c9263c':'#ff3030',cyan=isLight?'#087da0':'#46def5',yellow=isLight?'#9d7900':'#fff34a';
  let svg=mode==='compact'?'':`<text x="25" y="16" fill="${muted}" font-size="12">거래량·매매세 · 빨강/하늘: 거래량 · 노랑/검정: 추정 매수/매도 압력</text>`;
  svg+=`<line x1="25" y1="${baseline}" x2="1170" y2="${baseline}" stroke="${muted}" opacity=".4"/>`;

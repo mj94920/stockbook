@@ -15257,8 +15257,8 @@ function render(all){
 function estimatePressure(all){return all.map((c,i)=>{const prior=all.slice(Math.max(0,i-20),i);const baseline=prior.length===20?prior.reduce((s,r)=>s+r.volume,0)/20:null;const location=c.high===c.low?0:Math.max(-1,Math.min(1,(2*c.close-c.high-c.low)/(c.high-c.low)));return {date:c.date,volume:c.volume,baseline,aboveAverage:baseline===null?null:c.volume>=baseline,location,pressure:location*c.volume};});}
 function renderPressure(all,isLight){
  const rows=(pressureCache??=estimatePressure(all)).slice(offset,view.end),x=horizontal.x,max=Math.max(1,...rows.map(r=>r.volume));
- const svgEl=document.getElementById('pressureChart'),scale=Math.max(.1,svgEl.clientWidth/1280),baseline=72,top=mode==='compact'?6:24,available=baseline-top;
- svgEl.setAttribute('viewBox','0 0 1280 80');svgEl.setAttribute('preserveAspectRatio','none');
+ const svgEl=document.getElementById('pressureChart'),scale=Math.max(.1,svgEl.clientWidth/1280),height=svgEl.getBoundingClientRect().height||(mode==='compact'?64:80),baseline=Math.max(0,height-8),top=mode==='compact'?6:24,available=Math.max(0,baseline-top);
+ svgEl.setAttribute('viewBox','0 0 1280 '+height);svgEl.setAttribute('preserveAspectRatio','none');
  const muted=isLight?'#526079':'#b8c2d2',red=isLight?'#c9263c':'#ff3030',cyan=isLight?'#087da0':'#46def5',yellow=isLight?'#9d7900':'#fff34a';
  let svg=mode==='compact'?'':`<text x="25" y="16" fill="${muted}" font-size="12">거래량·매매세 · 빨강/하늘: 거래량 · 노랑/검정: 추정 매수/매도 압력</text>`;
  svg+=`<line x1="25" y1="${baseline}" x2="1170" y2="${baseline}" stroke="${muted}" opacity=".4"/>`;
@@ -15433,7 +15433,7 @@ root.StockBookChartRenderer=Object.freeze({mount});
   function show(event,target=svg){
    const m=model(),p=point(event,target);if(p.x<25||p.x>1170)return;hide();const i=Math.max(0,Math.min(m.count-1+m.futureCount,m.indexForX(p.x))),xx=m.x(i),row=m.rows[i],yy=target===svg?Math.max(30,Math.min(520,p.y)):(row?m.y(row.close):30);
    const layer=node('g',{class:'sb-chart-crosshair','pointer-events':'none'}),color='var(--sb-text-2)';layer.append(node('line',{x1:xx,x2:xx,y1:30,y2:560,stroke:color,'stroke-dasharray':'4 4'}),node('line',{x1:25,x2:1170,y1:yy,y2:yy,stroke:color,'stroke-dasharray':'4 4'}));svg.append(layer);
-   if(pressure&&!pressure.hasAttribute('hidden')){const l=node('g',{class:'sb-chart-crosshair','pointer-events':'none'});l.append(node('line',{x1:xx,x2:xx,y1:0,y2:80,stroke:color,'stroke-dasharray':'4 4'}));pressure.append(l);}
+   if(pressure&&!pressure.hasAttribute('hidden')){const l=node('g',{class:'sb-chart-crosshair','pointer-events':'none'});l.append(node('line',{x1:xx,x2:xx,y1:0,y2:pressure.viewBox.baseVal.height,stroke:color,'stroke-dasharray':'4 4'}));pressure.append(l);}
    if(tools&&!compact){const label=row?row.date:'표시 공간',xLabel=Math.max(25,Math.min(1050,xx-52));layer.append(node('rect',{x:1170,y:yy-11,width:108,height:22,fill:'var(--sb-surface)'}),node('text',{x:1175,y:yy+4,fill:'var(--sb-text-1)','font-size':12},Math.round(m.priceForY(yy)).toLocaleString()),node('rect',{x:xLabel,y:563,width:112,height:23,fill:'var(--sb-surface)'}),node('text',{x:xLabel+5,y:579,fill:'var(--sb-text-1)','font-size':11},label));}
    if(compact){
     barInfo.textContent=describeBar(row,m);barInfo.title=barInfo.textContent;
@@ -15513,7 +15513,7 @@ root.StockBookChartRenderer=Object.freeze({mount});
    }
   },{signal});
   host.addEventListener('stockbook:chart-render',()=>{hide();draw();},{signal});
-  let size='';const observer=new ResizeObserver(()=>{const next=svg.clientWidth+':'+svg.clientHeight;if(next!==size){size=next;controller.refresh();}});observer.observe(svg);
+  let size='';const observer=new ResizeObserver(()=>{const next=[svg.clientWidth,svg.clientHeight,pressure?.clientWidth||0,pressure?.clientHeight||0].join(':');if(next!==size){size=next;controller.refresh();}});observer.observe(svg);if(pressure)observer.observe(pressure);
   setMode('zoom');draw();
   return {destroy(){memory.set(key,drawings);abort.abort();observer.disconnect();tip.remove();priceLabel.remove();dateLabel.remove();controls.remove();indicatorPanel.remove();toolbar.remove();nav.remove();status.remove();}};
  }
@@ -15546,20 +15546,21 @@ root.StockBookChartRenderer=Object.freeze({mount});
   const layer=host.ownerDocument.createElement('div');layer.className='sb-chart-resizers';host.append(layer);
   const price=host.querySelector('[data-chart-id="chart"]'),volume=host.querySelector('[data-chart-id="pressureChart"]'),investors=host.querySelector('[data-chart-id="investorChart"]');
   const height=()=>Math.max(1,host.clientHeight),visible=element=>!!element?.getClientRects().length&&element.getBoundingClientRect().height>0;
-  const volumeLimits=()=>[24,Math.max(24,price.getBoundingClientRect().height+volume.getBoundingClientRect().height-48)];
+  const available=()=>Math.max(1,host.getBoundingClientRect().top+host.clientTop+host.clientHeight-parseFloat(getComputedStyle(host).paddingBottom||0)-price.getBoundingClientRect().top);
+  const volumeLimits=()=>{const total=available(),min=Math.min(24,total*.4);return [min,Math.max(min,total-Math.min(48,total*.6))];};
   const items=[];let frame=0;
   function apply(){
-   if(compact){if(prefs.volume){const [min,max]=volumeLimits();host.style.setProperty('--sb-volume-height',clamp(prefs.volume*(price.getBoundingClientRect().height+volume.getBoundingClientRect().height),min,max)+'px');}}
-   else for(const [field,element,min,max]of [['price',price,120,height()*2],['volume',volume,24,height()*.7],['investors',investors,36,height()*.8]])if(element&&prefs[field]){element.style.height=clamp(prefs[field]*height(),min,Math.max(min,max))+'px';element.style.maxHeight='none';}
+   if(compact){if(visible(volume)){const [min,max]=volumeLimits();host.style.setProperty('--sb-volume-height',clamp((prefs.volume??.3)*available(),min,max)+'px');}}
+   else{const total=clamp(height()*.6,240,600);for(const [field,element,min,max]of [['price',price,120,height()*2],['volume',volume,24,height()*.7],['investors',investors,36,height()*.8]])if(element){const size=prefs[field]?prefs[field]*height():field==='price'?total*.7:field==='volume'?total*.3:null;if(size!==null){element.style.height=clamp(size,min,Math.max(min,max))+'px';element.style.maxHeight='none';}}}
    position();
   }
   function position(){const box=host.getBoundingClientRect();for(const item of items){item.handle.hidden=!visible(item.target)||(compact&&!visible(volume));if(!item.handle.hidden){const rect=item.target.getBoundingClientRect();item.handle.style.top=rect.bottom-box.top+host.scrollTop-5+'px';item.update();}}}
   function schedule(){if(!frame)frame=root.requestAnimationFrame(()=>{frame=0;apply();});}
   function add(field,target,label,min,max){if(!target)return;
-   const item=separator(layer,label,{value:()=>target.getBoundingClientRect().height,limits:()=>[min,Math.max(min,max())],change:value=>{if(compact){prefs.volume=clamp(volume.getBoundingClientRect().height+price.getBoundingClientRect().height-value,...volumeLimits())/(price.getBoundingClientRect().height+volume.getBoundingClientRect().height);}else prefs[field]=value/height();apply();},commit:()=>save(key,prefs),reset:()=>{delete prefs[compact?'volume':field];if(compact)host.style.removeProperty('--sb-volume-height');else{target.style.removeProperty('height');target.style.removeProperty('max-height');}save(key,prefs);schedule();}},signal);
+   const item=separator(layer,label,{value:()=>target.getBoundingClientRect().height,limits:()=>{const lower=typeof min==='function'?min():min;return [lower,Math.max(lower,max())];},change:value=>{if(compact){prefs.volume=clamp(available()-value,...volumeLimits())/available();}else prefs[field]=value/height();apply();},commit:()=>save(key,prefs),reset:()=>{delete prefs[compact?'volume':field];if(compact)host.style.removeProperty('--sb-volume-height');else{target.style.removeProperty('height');target.style.removeProperty('max-height');}save(key,prefs);schedule();}},signal);
    items.push({...item,target});
   }
-  if(compact)add('price',price,'가격·거래량 구간 높이',48,()=>Math.max(48,price.getBoundingClientRect().height+volume.getBoundingClientRect().height-24));
+  if(compact)add('price',price,'가격·거래량 구간 높이',()=>Math.min(48,available()*.6),()=>available()-volumeLimits()[0]);
   else{add('price',price,'가격 차트 높이',120,()=>height()*2);add('volume',volume,'거래량 구간 높이',24,()=>height()*.7);add('investors',investors,'수급 구간 높이',36,()=>height()*.8);}
   const observer=new ResizeObserver(schedule);for(const element of [host,price,volume,investors])if(element)observer.observe(element);
   host.addEventListener('stockbook:chart-render',schedule,{signal});host.addEventListener('toggle',schedule,{signal,capture:true});
