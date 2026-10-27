@@ -57,3 +57,8 @@
 .sb-proof-compact .sb-chart-tools .sb-btn,.sb-proof-compact .sb-chart-navigation .sb-btn { padding:4px 6px;font-size:11px; }
 
 .sb-chart-axis-label { position:fixed;z-index:9999;pointer-events:none;font:12px/18px system-ui,sans-serif;padding:1px 4px;white-space:nowrap;color:var(--sb-text-1);background:var(--sb-surface);border:1px solid var(--sb-border); }
+.sb-proof-legend .sb-chart-indicator,.sb-chart-indicator-controls .sb-chart-indicator { background:transparent;border:0;border-bottom:2px solid;padding:0 2px 1px;font:inherit;cursor:pointer; }
+.sb-chart-indicator[aria-pressed="true"] { outline:2px solid var(--sb-warn,var(--sb-accent));outline-offset:2px; }
+.sb-proof-no-pressure.sb-proof-compact { grid-template-rows:auto auto minmax(0,1fr); }
+
+.sb-chart-indicator-controls { display:flex;flex-wrap:wrap;gap:8px;margin-block:4px; }

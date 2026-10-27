@@ -219,6 +219,7 @@
   .sb-input:focus, .sb-select:focus { border-color: var(--sb-accent); }
   .sb-input::placeholder { color: var(--sb-text-3); }
 
+  dialog.sb-modal:not([open]) { display:none; }
   .sb-modal {
     display: flex; flex-direction: column;
     width: 480px; max-width: calc(100vw - var(--sb-space-5)); max-height: calc(100vh - var(--sb-space-5));
@@ -10535,9 +10536,6 @@ function sbCloseTopModal() {
   }
   return false;
 }
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && sbCloseTopModal()) e.stopImmediatePropagation();
-}, true);
 // 바깥(오버레이) 클릭: 눌렀을 때와 뗐을 때 모두 오버레이일 때만 (텍스트 드래그 오작동 방지)
 let _sbMouseDownTarget = null;
 document.addEventListener('mousedown', e => { _sbMouseDownTarget = e.target; }, true);
@@ -12040,31 +12038,6 @@ function renderCashList() {
       </td>
     </tr>`).join('');
 }
-
-// ESC 키로 모달 닫기
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    // 1) 설정 모달 우선
-    const sm = document.getElementById('settingsModal');
-    if (sm && sm.classList.contains('open')) { closeSettings(); return; }
-    // 2) 입력 필드 포커스 시 무시
-    const tag = document.activeElement?.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-    // 3) 포트폴리오 계좌 드롭다운 닫기
-    const dl = document.getElementById('acctDropList');
-    if (dl && dl.style.display !== 'none') { dl.style.display = 'none'; return; }
-    // 4) 최상위 z-index 열린 MDI 패널 닫기
-    if (window._MDI) {
-      let topPid = null, topZ = -1;
-      document.querySelectorAll('.mdi-panel').forEach(el => {
-        if (el.dataset.mdiState === 'closed') return;
-        const z = parseInt(el.style.zIndex || 0, 10);
-        if (z > topZ) { topZ = z; topPid = el.dataset.pid; }
-      });
-      if (topPid) { window._MDI.close(topPid); return; }
-    }
-  }
-});
 
 // 시작 인트로 (Electron 데스크톱 앱 전용 — standalone 표시 모드일 때만)
 (function() {
@@ -14215,11 +14188,6 @@ function wlAssignGroup(idx, gName) {
     if (sbBtn) sbBtn.classList.remove('mdi-sb-btn-active');
   };
 
-  // ESC 로 닫기 (입력 중이어도 패널이 열려 있으면 닫는다)
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && _open) closeCalendarPanel();
-  });
-
   /* ── 탭 전환 ─────────────────────────────────────────── */
   window.switchCalTab = function (tab) {
     _tab = tab;
@@ -14888,6 +14856,8 @@ function wlAssignGroup(idx, gName) {
 </div>
 <script src="src/desktop/stock-selection.js"></script>
 <script src="src/news/page-client.js"></script>
+<script src="src/desktop/shortcuts.js"></script>
+<script>StockBookShortcuts.mount(SB_MODAL_CLOSERS);</script>
 <script src="src/chart/series.js"></script>
 <script src="src/chart/renderer.js"></script>
 <script src="src/chart/interaction.js"></script>

@@ -215,6 +215,7 @@
   .sb-input:focus, .sb-select:focus { border-color: var(--sb-accent); }
   .sb-input::placeholder { color: var(--sb-text-3); }
 
+  dialog.sb-modal:not([open]) { display:none; }
   .sb-modal {
     display: flex; flex-direction: column;
     width: 480px; max-width: calc(100vw - var(--sb-space-5)); max-height: calc(100vh - var(--sb-space-5));
@@ -3583,6 +3584,11 @@
 .sb-proof-compact .sb-chart-tools .sb-btn,.sb-proof-compact .sb-chart-navigation .sb-btn { padding:4px 6px;font-size:11px; }
 
 .sb-chart-axis-label { position:fixed;z-index:9999;pointer-events:none;font:12px/18px system-ui,sans-serif;padding:1px 4px;white-space:nowrap;color:var(--sb-text-1);background:var(--sb-surface);border:1px solid var(--sb-border); }
+.sb-proof-legend .sb-chart-indicator,.sb-chart-indicator-controls .sb-chart-indicator { background:transparent;border:0;border-bottom:2px solid;padding:0 2px 1px;font:inherit;cursor:pointer; }
+.sb-chart-indicator[aria-pressed="true"] { outline:2px solid var(--sb-warn,var(--sb-accent));outline-offset:2px; }
+.sb-proof-no-pressure.sb-proof-compact { grid-template-rows:auto auto minmax(0,1fr); }
+
+.sb-chart-indicator-controls { display:flex;flex-wrap:wrap;gap:8px;margin-block:4px; }
 </style>
 </head>
 <body>
@@ -10590,9 +10596,6 @@ function sbCloseTopModal() {
   }
   return false;
 }
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && sbCloseTopModal()) e.stopImmediatePropagation();
-}, true);
 // 바깥(오버레이) 클릭: 눌렀을 때와 뗐을 때 모두 오버레이일 때만 (텍스트 드래그 오작동 방지)
 let _sbMouseDownTarget = null;
 document.addEventListener('mousedown', e => { _sbMouseDownTarget = e.target; }, true);
@@ -12095,31 +12098,6 @@ function renderCashList() {
       </td>
     </tr>`).join('');
 }
-
-// ESC 키로 모달 닫기
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    // 1) 설정 모달 우선
-    const sm = document.getElementById('settingsModal');
-    if (sm && sm.classList.contains('open')) { closeSettings(); return; }
-    // 2) 입력 필드 포커스 시 무시
-    const tag = document.activeElement?.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-    // 3) 포트폴리오 계좌 드롭다운 닫기
-    const dl = document.getElementById('acctDropList');
-    if (dl && dl.style.display !== 'none') { dl.style.display = 'none'; return; }
-    // 4) 최상위 z-index 열린 MDI 패널 닫기
-    if (window._MDI) {
-      let topPid = null, topZ = -1;
-      document.querySelectorAll('.mdi-panel').forEach(el => {
-        if (el.dataset.mdiState === 'closed') return;
-        const z = parseInt(el.style.zIndex || 0, 10);
-        if (z > topZ) { topZ = z; topPid = el.dataset.pid; }
-      });
-      if (topPid) { window._MDI.close(topPid); return; }
-    }
-  }
-});
 
 // 시작 인트로 (Electron 데스크톱 앱 전용 — standalone 표시 모드일 때만)
 (function() {
@@ -14270,11 +14248,6 @@ function wlAssignGroup(idx, gName) {
     if (sbBtn) sbBtn.classList.remove('mdi-sb-btn-active');
   };
 
-  // ESC 로 닫기 (입력 중이어도 패널이 열려 있으면 닫는다)
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && _open) closeCalendarPanel();
-  });
-
   /* ── 탭 전환 ─────────────────────────────────────────── */
   window.switchCalTab = function (tab) {
     _tab = tab;
@@ -15040,6 +15013,39 @@ function wlAssignGroup(idx, gName) {
 
 </script>
 <script>
+(function(root){
+ 'use strict';
+ const doc=root.document;let registry=[];
+ const visible=el=>!!el&&!el.hidden&&el.getClientRects().length>0&&getComputedStyle(el).visibility!=='hidden';
+ function overlays(){
+  return registry.map(([id,close])=>({el:doc.getElementById(id),close})).filter(({el})=>visible(el)&&(el.classList.contains('open')||el.style.display==='flex')).sort((a,b)=>(parseInt(getComputedStyle(a.el).zIndex)||0)-(parseInt(getComputedStyle(b.el).zIndex)||0)||(a.el.compareDocumentPosition(b.el)&Node.DOCUMENT_POSITION_FOLLOWING?-1:1));
+ }
+ function topDialog(){return doc.activeElement?.closest('dialog[open]')||[...doc.querySelectorAll('dialog[open]')].at(-1);}
+ function closeTop(){
+  const dialog=topDialog();if(dialog){if(dialog.dispatchEvent(new Event('cancel',{cancelable:true})))dialog.close();return true;}
+  const top=overlays().at(-1);if(!top)return false;top.close();return true;
+ }
+ const escape=e=>e.key==='Escape'&&!e.defaultPrevented&&!e.repeat&&!e.isComposing&&!e.ctrlKey&&!e.altKey&&!e.metaKey;
+ function mount(modals){
+  registry=[...modals,...[['accountPanel','closeAccountPanel'],['apiPanel','closeApiPanel'],['analysisDrawer','closeAnalysisDrawer'],['calPanel','closeCalendarPanel']].map(([id,fn])=>[id,()=>root[fn]?.()]),...['transferModal','_wlGroupModal','_wlDelModal'].map(id=>[id,()=>doc.getElementById(id)?.remove()])];
+  doc.addEventListener('keydown',e=>{
+   if(!escape(e))return;
+   let closed=closeTop();
+   if(!closed){const menu=['acctDropList','hdrIdxMenu','wlDropdown','qoDropdown'].map(id=>doc.getElementById(id)).find(visible);if(menu){menu.style.display='none';closed=true;}}
+   if(closed){e.preventDefault();e.stopImmediatePropagation();}
+  },true);
+  root.addEventListener('keydown',e=>{
+   if(!escape(e)||e.target.closest('input,textarea,select,[contenteditable]:not([contenteditable="false"]),[role="textbox"]')||!root._MDI)return;
+   if(root._MDI.dock){const pid=doc.getElementById('mdiWorkspace')?.dataset.dockScreen;if(pid&&pid!==root._MDI.DOCK_HOME){root._MDI.close(pid);e.preventDefault();}}
+   else{const panel=[...doc.querySelectorAll('.mdi-panel')].filter(el=>el.dataset.mdiState!=='closed'&&visible(el)).sort((a,b)=>(parseInt(a.style.zIndex)||0)-(parseInt(b.style.zIndex)||0)).at(-1);if(panel){root._MDI.close(panel.dataset.pid);e.preventDefault();}}
+  });
+ }
+ root.StockBookShortcuts=Object.freeze({mount,hasOverlay:()=>!!topDialog()||overlays().length>0});
+})(window);
+
+</script>
+<script>StockBookShortcuts.mount(SB_MODAL_CLOSERS);</script>
+<script>
 (function(root,factory){
  const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.StockBookChartSeries=api;
 })(typeof window==='object'?window:globalThis,function(){
@@ -15150,38 +15156,39 @@ function mount(host,dataset,{mode='detail',period='6m',viewRange=period,barCycle
 let periods=mode==='compact'&&barCycle==='day'?[5,10,20,60]:config.periods;
 const dark=['#f8b4cf','#87cefa','#ffe34d','#48bc70','#9ca3af','#ff2929','#b98b48','#b48af0'];
 const light=['#b52664','#1177ad','#9b7300','#168542','#666c76','#c91c28','#8d5c1f','#763cb5'];
-const averageCache=new Map(),bbCache=new Map();let pressureCache=null;
+const averageCache=new Map(),bbCache=new Map();let pressureCache=null;let hiddenIndicators=new Set();
 function average(all,n){if(!averageCache.has(n)){averageCache.set(n,series.average(all,n,{includePartialStart:barCycle==='year'}));while(averageCache.size>32)averageCache.delete(averageCache.keys().next().value);}return averageCache.get(n);}
 function bbUpper(all,n=40,m=1.9){const key=n+':'+m;if(bbCache.has(key))return bbCache.get(key);const result=all.map((_,i)=>{if(i<n-1)return null;const a=all.slice(i-n+1,i+1).map(c=>c.close),mean=a.reduce((s,v)=>s+v,0)/n;return mean+m*Math.sqrt(a.reduce((s,v)=>s+(v-mean)**2,0)/n);});bbCache.set(key,result);while(bbCache.size>8)bbCache.delete(bbCache.keys().next().value);return result;}
 function render(all){
  const isLight=document.body.classList.contains('light'),palette=isLight?light:dark,colors=config.colors.map(i=>palette[i]),grid=isLight?'#dfe5ee':'#2b3547',text=isLight?'#526079':'#a4adbd';
+ futureCount=barCycle==='day'&&!hiddenIndicators.has('bb')?bbSettings.shift:0;
  offset=Math.max(0,view.end-view.count);visibleCount=view.end-offset;
  const rows=all.slice(offset,view.end),avgs=periods.map(n=>average(all,n).slice(offset,view.end));
- const upper=barCycle==='day'?bbUpper(all,bbSettings.period,bbSettings.multiplier):[],shift=futureCount,bb=barCycle==='day'?rows.map((_,i)=>upper[offset+i-shift]??null):[];
+ const upper=barCycle==='day'&&!hiddenIndicators.has('bb')?bbUpper(all,bbSettings.period,bbSettings.multiplier):[],shift=futureCount,bb=barCycle==='day'&&!hiddenIndicators.has('bb')?rows.map((_,i)=>upper[offset+i-shift]??null):[];
  const referenceBase=all.slice(-600),references=barCycle==='day'?[60,20,5].map(n=>({n,candle:referenceBase[600-n-1]})).filter(r=>r.candle):[];
- const showRefs=barCycle==='day'&&document.getElementById('refs').checked,showOriginal=barCycle==='day'&&document.getElementById('original').checked;
+ const showRefs=barCycle==='day'&&document.getElementById('refs').checked,showOriginal=barCycle==='day'&&!hiddenIndicators.has('bb')&&document.getElementById('original').checked;
  const future=Array.from({length:futureCount},(_,i)=>upper[view.end-futureCount+i]??null);
- const cloudA=config.cloud?average(all,config.cloud[0]).slice(offset,view.end):[],cloudB=config.cloud?average(all,config.cloud[1]).slice(offset,view.end):[];
- const values=bb.concat(future,showOriginal?upper.slice(offset,view.end):[],showRefs?references.map(r=>r.candle.close):[]).filter(v=>v!==null).concat(rows.flatMap(c=>[c.low,c.high]).concat(avgs.flat().filter(v=>v!==null),cloudA.filter(v=>v!==null),cloudB.filter(v=>v!==null)));const lo=Math.min(...values),hi=Math.max(...values),pad=Math.max((hi-lo)*.04,1);
+ const cloudA=config.cloud&&!hiddenIndicators.has('cloud')?average(all,config.cloud[0]).slice(offset,view.end):[],cloudB=config.cloud&&!hiddenIndicators.has('cloud')?average(all,config.cloud[1]).slice(offset,view.end):[];
+ const values=bb.concat(future,showOriginal?upper.slice(offset,view.end):[],showRefs?references.map(r=>r.candle.close):[]).filter(v=>v!==null).concat(rows.flatMap(c=>[c.low,c.high]).concat(avgs.filter((_,i)=>!hiddenIndicators.has('ma:'+periods[i])).flat().filter(v=>v!==null),cloudA.filter(v=>v!==null),cloudB.filter(v=>v!==null)));const lo=Math.min(...values),hi=Math.max(...values),pad=Math.max((hi-lo)*.04,1);
  const y=v=>30+(hi+pad-v)/(hi-lo+2*pad)*490,step=1140/(rows.length+futureCount),x=i=>25+(i+.5)*step;
  let svg='';for(let i=0;i<=5;i++){const v=lo+(hi-lo)*i/5;svg+=`<line x1="25" y1="${y(v)}" x2="1170" y2="${y(v)}" stroke="${grid}"/><text x="1180" y="${y(v)+4}" fill="${text}" font-size="12">${Math.round(v).toLocaleString()}</text>`;}
  // Split each cloud segment at its exact crossing so no polygon straddles the two regimes.
  const a=cloudA,b=cloudB;let cloudCount=0;
- function cloud(x1,a1,b1,x2,a2,b2,positive){svg+=`<polygon class="ma-cloud" points="${x1},${y(a1)} ${x2},${y(a2)} ${x2},${y(b2)} ${x1},${y(b1)}" fill="${positive?palette[0]:palette[1]}" opacity="${isLight?.30:.65}"/>`;cloudCount++;}
- for(let i=1;config.cloud&&i<rows.length;i++){if([a[i-1],a[i],b[i-1],b[i]].some(v=>v===null))continue;const d0=a[i-1]-b[i-1],d1=a[i]-b[i];if(d0*d1<0){const t=d0/(d0-d1),xx=x(i-1)+step*t,mid=a[i-1]+(a[i]-a[i-1])*t;cloud(x(i-1),a[i-1],b[i-1],xx,mid,mid,d0>=0);cloud(xx,mid,mid,x(i),a[i],b[i],d1>=0);}else cloud(x(i-1),a[i-1],b[i-1],x(i),a[i],b[i],d1>=0);}
+ function cloud(x1,a1,b1,x2,a2,b2,positive){svg+=`<polygon class="ma-cloud" data-chart-indicator="cloud" points="${x1},${y(a1)} ${x2},${y(a2)} ${x2},${y(b2)} ${x1},${y(b1)}" fill="${positive?palette[0]:palette[1]}" opacity="${isLight?.30:.65}"/>`;cloudCount++;}
+ for(let i=1;config.cloud&&!hiddenIndicators.has('cloud')&&i<rows.length;i++){if([a[i-1],a[i],b[i-1],b[i]].some(v=>v===null))continue;const d0=a[i-1]-b[i-1],d1=a[i]-b[i];if(d0*d1<0){const t=d0/(d0-d1),xx=x(i-1)+step*t,mid=a[i-1]+(a[i]-a[i-1])*t;cloud(x(i-1),a[i-1],b[i-1],xx,mid,mid,d0>=0);cloud(xx,mid,mid,x(i),a[i],b[i],d1>=0);}else cloud(x(i-1),a[i-1],b[i-1],x(i),a[i],b[i],d1>=0);}
  const maxVol=Math.max(...rows.map(c=>c.volume),1);rows.forEach((c,i)=>{const color=c.close>=c.open?(isLight?'#cd2746':'#ed6076'):(isLight?'#2563c4':'#6196ef'),w=step*.65;svg+=`<line x1="${x(i)}" y1="${y(c.high)}" x2="${x(i)}" y2="${y(c.low)}" stroke="${color}"/><rect class="candle" x="${x(i)-w/2}" y="${Math.min(y(c.open),y(c.close))}" width="${w}" height="${Math.max(1,Math.abs(y(c.open)-y(c.close)))}" fill="${color}"/>`;});
- avgs.forEach((arr,j)=>{const points=arr.flatMap((v,i)=>v===null?[]:[`${x(i)},${y(v)}`]);if(points.length===1){const [cx,cy]=points[0].split(',');svg+=`<circle class="ma-point" data-period="${periods[j]}" cx="${cx}" cy="${cy}" r="3" fill="${colors[j%colors.length]}"/>`;}svg+=`<polyline class="ma" data-period="${periods[j]}" points="${points.join(' ')}" fill="none" stroke="${colors[j%colors.length]}" stroke-width="${config.bold.includes(periods[j])?(barCycle==='day'&&periods[j]===20?2.4:3):1.3}"/>`;});
+ avgs.forEach((arr,j)=>{if(hiddenIndicators.has('ma:'+periods[j]))return;const points=arr.flatMap((v,i)=>v===null?[]:[`${x(i)},${y(v)}`]);if(points.length===1){const [cx,cy]=points[0].split(',');svg+=`<circle class="ma-point" data-period="${periods[j]}" data-chart-indicator="ma:${periods[j]}" cx="${cx}" cy="${cy}" r="3" fill="${colors[j%colors.length]}"/>`;}svg+=`<polyline class="ma" data-period="${periods[j]}" data-chart-indicator="ma:${periods[j]}" points="${points.join(' ')}" fill="none" stroke="${colors[j%colors.length]}" stroke-width="${config.bold.includes(periods[j])?(barCycle==='day'&&periods[j]===20?2.4:3):1.3}"/>`;});
  const mint=isLight?'#087d79':'#a8f5e5';
  const shifted=bb.concat(future);const bbpoints=shifted.flatMap((v,i)=>v===null?[]:[`${x(i)},${y(v)}`]);
- if(barCycle==='day')svg+=`<polyline class="bb-shift" points="${bbpoints.join(' ')}" fill="none" stroke="${mint}" stroke-width="2.4" stroke-dasharray="1 5" stroke-linecap="round"/>`;
+ if(barCycle==='day'&&!hiddenIndicators.has('bb'))svg+=`<polyline class="bb-shift" data-chart-indicator="bb" points="${bbpoints.join(' ')}" fill="none" stroke="${mint}" stroke-width="2.4" stroke-dasharray="1 5" stroke-linecap="round"/>`;
  if(showOriginal)svg+=`<polyline class="bb-original" points="${upper.slice(offset,view.end).flatMap((v,i)=>v===null?[]:[`${x(i)},${y(v)}`]).join(' ')}" fill="none" stroke="${colors[2]}" stroke-width="1" stroke-dasharray="3 4"/>`;
  if(showRefs)references.forEach((r,i)=>{svg+=`<line class="reference" x1="25" y1="${y(r.candle.close)}" x2="1170" y2="${y(r.candle.close)}" stroke="${colors[i]}" stroke-dasharray="5 5"/><text x="30" y="${y(r.candle.close)-5}" fill="${colors[i]}" font-size="11">수식${i+1}: ${r.candle.date} 종가 ${r.candle.close.toLocaleString()}</text>`;});
  if(futureCount)svg+=`<line x1="${x(rows.length-1)+step/2}" y1="25" x2="${x(rows.length-1)+step/2}" y2="550" stroke="${grid}" stroke-dasharray="4 5"/><text x="${x(rows.length)+4}" y="550" fill="${text}" font-size="10">${futureCount}봉 이동 표시 공간</text>`;
  svg+=`<text x="25" y="585" fill="${text}">${rows[0].date}</text><text x="${x(rows.length-1)-55}" y="585" fill="${text}">${rows.at(-1).date}</text>`;
- document.getElementById('chart').innerHTML=svg;document.getElementById('legend').innerHTML=periods.map((n,i)=>`<span style="color:${colors[i%colors.length]};border-color:${colors[i%colors.length]}">${n}${config.unit}${avgs[i].every(v=>v===null)?' (이력 부족)':''}</span>`).join('')+(config.cloud?`<span>산·우물 구름 ${config.cloud.join('·')}${config.unit}</span>`:barCycle==='month'?'<span>피보나치 구름 · 기준 종가선 수식 확인 대기</span>':'')+(barCycle==='day'?`<span style="color:${mint};border-color:${mint}">BB ${bbSettings.period} / ${bbSettings.multiplier} → +${bbSettings.shift}봉</span>`:'');document.getElementById('period').textContent=`수신 기간 ${all[0].firstDate} ~ ${all.at(-1).date} · 일봉 ${dataset.candles.length}개 → ${config.label} ${all.length}개 · 모든 이동평균은 ${config.label} 종가 단순평균${barCycle==='year'?' · 첫 연봉은 수신 시작 이전 OHLC 미확인':barCycle!=='day'?' · 첫 집계봉은 이력 시작 전 자료 미확인으로 이평 계산에서 제외':''}${live?' · 가격 조정 기준 미확인'+(dataset.metadata.omittedRows?' · OHLC 미제공 '+dataset.metadata.omittedRows+'행 제외':'')+(dataset.metadata.normalizedBounds?' · OHLC 1원 이내 상하한 정규화 '+dataset.metadata.normalizedBounds+'행':''):''}${periods.some((_,i)=>avgs[i].every(v=>v===null))?' · 일부 이평선은 이력 부족':''}`;
+ document.getElementById('chart').innerHTML=svg;document.getElementById('legend').innerHTML=periods.map((n,i)=>indicatorLabel('ma:'+n,n+config.unit+(avgs[i].every(v=>v===null)?' (이력 부족)':''),colors[i%colors.length])).join('')+(config.cloud?indicatorLabel('cloud','산·우물 구름 '+config.cloud.join('·')+config.unit):barCycle==='month'?'<span>피보나치 구름 · 기준 종가선 수식 확인 대기</span>':'')+(barCycle==='day'?indicatorLabel('bb','BB '+bbSettings.period+' / '+bbSettings.multiplier+' → +'+bbSettings.shift+'봉',mint):'')+(barCycle!=='year'?indicatorLabel('pressure','거래량·매매세')+(dataset.investors?indicatorLabel('investors','투자자별 순매수'):''):'');document.getElementById('period').textContent=`수신 기간 ${all[0].firstDate} ~ ${all.at(-1).date} · 일봉 ${dataset.candles.length}개 → ${config.label} ${all.length}개 · 모든 이동평균은 ${config.label} 종가 단순평균${barCycle==='year'?' · 첫 연봉은 수신 시작 이전 OHLC 미확인':barCycle!=='day'?' · 첫 집계봉은 이력 시작 전 자료 미확인으로 이평 계산에서 제외':''}${live?' · 가격 조정 기준 미확인'+(dataset.metadata.omittedRows?' · OHLC 미제공 '+dataset.metadata.omittedRows+'행 제외':'')+(dataset.metadata.normalizedBounds?' · OHLC 1원 이내 상하한 정규화 '+dataset.metadata.normalizedBounds+'행':''):''}${periods.some((_,i)=>avgs[i].every(v=>v===null))?' · 일부 이평선은 이력 부족':''}`;
  if(barCycle!=='year')renderPressure(all,isLight);else window.pressureEvidence=null;
- window.chartEvidence={stockCode:dataset.metadata.stockCode,sourceType:dataset.metadata.sourceType||'recorded',count:all.length,sourceCount:dataset.candles.length,displayed:rows.length,barCycle,indicatorCycle,viewRange,periods,cloudCount,cloudPeriods:config.cloud,cloudLast:config.cloud?[cloudA.at(-1),cloudB.at(-1)]:null,bbShift:shift,bbPeriod:barCycle==='day'?bbSettings.period:null,bbMultiplier:barCycle==='day'?bbSettings.multiplier:null,referenceBaseCount:referenceBase.length,references,lastAverages:avgs.map((a,i)=>({period:periods[i],value:a.at(-1)}))};window.renderDone=true;
- model={all,rows,offset,end:view.end,count:rows.length,x,y,step,futureCount,periods:[...periods],averages:avgs,config,stockCode:dataset.metadata.stockCode,name:dataset.metadata.name,priceForY:v=>hi+pad-(v-30)*(hi-lo+2*pad)/490};
+ window.chartEvidence={stockCode:dataset.metadata.stockCode,sourceType:dataset.metadata.sourceType||'recorded',count:all.length,sourceCount:dataset.candles.length,displayed:rows.length,barCycle,indicatorCycle,viewRange,periods,cloudCount,cloudPeriods:config.cloud,cloudLast:config.cloud?[cloudA.at(-1),cloudB.at(-1)]:null,bbShift:shift,bbPeriod:barCycle==='day'?bbSettings.period:null,bbMultiplier:barCycle==='day'?bbSettings.multiplier:null,referenceBaseCount:referenceBase.length,references,hiddenIndicators:[...hiddenIndicators],lastAverages:avgs.map((a,i)=>({period:periods[i],value:a.at(-1)}))};window.renderDone=true;
+ model={all,rows,offset,end:view.end,count:rows.length,x,y,step,futureCount,periods:periods.filter(n=>!hiddenIndicators.has('ma:'+n)),averages:avgs.filter((_,i)=>!hiddenIndicators.has('ma:'+periods[i])),config,stockCode:dataset.metadata.stockCode,name:dataset.metadata.name,priceForY:v=>hi+pad-(v-30)*(hi-lo+2*pad)/490};
 }
 // Independent OHLCV estimate, not the encrypted HTS indicator or actual trade-side volume.
 function estimatePressure(all){return all.map((c,i)=>{const prior=all.slice(Math.max(0,i-20),i);const baseline=prior.length===20?prior.reduce((s,r)=>s+r.volume,0)/20:null;const location=c.high===c.low?0:Math.max(-1,Math.min(1,(2*c.close-c.high-c.low)/(c.high-c.low)));return {date:c.date,volume:c.volume,baseline,aboveAverage:baseline===null?null:c.volume>=baseline,location,pressure:location*c.volume};});}
@@ -15237,11 +15244,13 @@ function renderInvestorPanel(){
    if(el.hasAttribute('points'))el.setAttribute('points',el.getAttribute('points').split(/\s+/).map(point=>{const [x,y]=point.split(',');return `${x},${10+(Number(y)-top)*ratio}`;}).join(' '));
   }
  }
+ function indicatorLabel(id,label,color='var(--sb-text-2)'){return hiddenIndicators.has(id)?'':`<button type="button" class="sb-btn sb-chart-indicator" data-chart-indicator="${id}" aria-pressed="false" style="color:${color};border-color:${color}">${label}</button>`;}
  function draw(){render(all);if(barCycle!=='year')renderInvestorPanel();
+ const noPressure=barCycle==='year'||hiddenIndicators.has('pressure');document.getElementById('pressureChart').toggleAttribute('hidden',noPressure);host.classList.toggle('sb-proof-no-pressure',noPressure);document.getElementById('investorPanel').hidden=hiddenIndicators.has('investors');
  if(mode!=='compact'&&barCycle!=='year')fitIndicator('investorChart',0,290,84);
  host.chartEvidence={...window.chartEvidence,pressure:window.pressureEvidence,investors:window.investorEvidence};host.dispatchEvent(new root.CustomEvent('stockbook:chart-render'));}
  draw();for(const id of ['refs','original'])document.getElementById(id).onchange=draw;
- return {getModel:()=>model,refresh:draw,updateTheme:value=>{lightMode=value;draw();},
+ return {getModel:()=>model,getHiddenIndicators:()=>[...hiddenIndicators],setHiddenIndicators:ids=>{hiddenIndicators=new Set(ids.filter(id=>/^(ma:\d+|bb|cloud|pressure|investors)$/.test(id)).slice(0,32));draw();},refresh:draw,updateTheme:value=>{lightMode=value;draw();},
  setView:(count,end=view.end)=>{view.count=Math.max(1,Math.min(all.length,Math.round(count)));view.end=Math.max(view.count,Math.min(all.length,Math.round(end)));draw();},resetView:()=>{view.count=all.length-initialOffset;view.end=all.length;draw();},
  setSettings:values=>{const next=series.indicatorSettings(barCycle,values);periods=next.periods;config.cloud=next.cloud;bbSettings=next.bb;futureCount=barCycle==='day'?bbSettings.shift:0;draw();}};
 }
@@ -15252,16 +15261,17 @@ root.StockBookChartRenderer=Object.freeze({mount});
 <script>
 (function(root){
  'use strict';
- const memory=new Map(),types=['trend','horizontal','vertical','thirds','quarters','midpoint','rectangle','ellipse','triangle','arrow','pen','text'];
+ const memory=new Map(),indicatorMemory=new Map(),types=['trend','horizontal','vertical','thirds','quarters','midpoint','rectangle','ellipse','triangle','arrow','pen','text'];
  function mount(host,controller,{tools=true,compact=false}={}){
   const doc=host.ownerDocument,svg=host.querySelector('[data-chart-id="chart"]'),pressure=host.querySelector('[data-chart-id="pressureChart"]'),abort=new AbortController(),signal=abort.signal;
   const key=controller.getModel().stockCode+':'+controller.getModel().config.label,storageKey='stockbook:chart:drawings:v1:'+key;
-  let drawings=memory.get(key)||[],mode='zoom',selected=null,pending=null,gesture=null,stroke=null,nextId=Math.max(0,...drawings.map(d=>d.id))+1,history=[],preview=null,touches=new Map(),pinch=null;
+  if(tools)controller.setHiddenIndicators(indicatorMemory.get(key)||[]);svg.setAttribute('tabindex','0');
+  let drawings=memory.get(key)||[],mode='zoom',selected=null,selectedIndicator=null,pending=null,gesture=null,stroke=null,nextId=Math.max(0,...drawings.map(d=>d.id))+1,history=[],preview=null,touches=new Map(),pinch=null;
   const ns='http://www.w3.org/2000/svg',node=(tag,attrs={},text)=>{const el=doc.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,String(v));if(text!==undefined)el.textContent=text;return el;};
   const tip=doc.createElement('div');tip.className='sb-chart-tooltip';tip.hidden=true;tip.setAttribute('role','status');host.append(tip);
   const status=doc.createElement('div');status.className='sb-chart-tool-status';status.textContent='봉 위에 마우스를 올리거나 터치하면 정보를 봅니다.';
   const toolbar=doc.createElement('div');toolbar.className='sb-chart-tools';toolbar.setAttribute('role','toolbar');toolbar.setAttribute('aria-label','차트 그리기 도구');
-  const nav=doc.createElement('div');nav.className='sb-chart-navigation';
+  const nav=doc.createElement('div');nav.className='sb-chart-navigation';const indicatorControls=doc.createElement('div');indicatorControls.className='sb-chart-indicator-controls';indicatorControls.setAttribute('aria-label','차트 지표 선택');
   const barInfo=doc.createElement('div');barInfo.className='sb-chart-bar-info';barInfo.setAttribute('aria-label','선택 봉 정보');
   const controls=doc.createElement('div');controls.className='sb-chart-compact-controls';
   const toolPanel=doc.createElement('details');toolPanel.className='sb-chart-tool-panel';
@@ -15273,13 +15283,13 @@ root.StockBookChartRenderer=Object.freeze({mount});
   const setMode=value=>{if(compact)toolPanel.open=false;mode=value;pending=null;stroke=null;preview=null;for(const b of toolbar.querySelectorAll('[data-tool]'))b.setAttribute('aria-pressed',String(b.dataset.tool===mode));status.textContent=({zoom:'왼쪽 드래그는 축소, 오른쪽은 확대합니다. 드래그 유지 중 Space를 누를 때마다 한 단계 축소합니다.',pan:'좌우 드래그로 이동합니다. 드래그 유지 중 Space를 누르면 한 단계 축소합니다.',midpoint:'봉을 누르면 선택 기준의 중심선을 그립니다.',pen:'누른 채 자유롭게 그립니다.',text:'메모를 입력한 뒤 표시할 곳을 누르세요.'})[value]||'시작점과 끝점을 누르거나 끌어 그립니다. Esc로 취소합니다.';};
   if(tools){
    for(const [value,label]of [['zoom','확대 조절'],['pan','이동'],['trend','추세선'],['horizontal','수평선'],['vertical','수직선'],['thirds','3등분'],['quarters','4등분'],['midpoint','봉중심선'],['rectangle','사각형'],['ellipse','원·타원'],['triangle','삼각형'],['arrow','화살표'],['pen','펜'],['text','텍스트']])button(label,()=>setMode(value),toolbar,{tool:value});
-   toolbar.append(center,textInput);button('선택 삭제',()=>{if(selected===null)return;remember();drawings=drawings.filter(d=>d.id!==selected);selected=null;draw();});button('실행 취소',()=>{if(history.length){drawings=history.pop();selected=null;draw();}});button('모두 지우기',()=>{remember();drawings=[];selected=null;draw();});
+   toolbar.append(center,textInput);button('선택 삭제',deleteSelection);button('실행 취소',()=>{if(history.length){const previous=history.pop();drawings=previous.drawings;selected=null;selectedIndicator=null;controller.setHiddenIndicators(previous.hidden);draw();}});button('지표 복원',()=>{remember();selectedIndicator=null;controller.setHiddenIndicators([]);status.textContent='지운 지표를 복원했습니다.';});button('모두 지우기',()=>{remember();drawings=[];selected=null;draw();});
    button('저장',()=>{try{root.localStorage.setItem(storageKey,JSON.stringify({version:1,key,drawings}));status.textContent='이 종목·봉 주기의 그림을 저장했습니다.';}catch{status.textContent='그림을 저장하지 못했습니다.';}});
    button('불러오기',()=>{try{const saved=JSON.parse(root.localStorage.getItem(storageKey));if(saved?.version!==1||saved.key!==key||!Array.isArray(saved.drawings)||saved.drawings.length>200)throw Error();for(const d of saved.drawings)if(!Number.isSafeInteger(d.id)||d.id<1||!types.includes(d.type)||!Array.isArray(d.points)||d.points.length<1||d.points.length>500||d.points.some(a=>typeof a.key!=='string'||a.key.length>32||!Number.isInteger(a.extra)||Math.abs(a.extra)>120||!Number.isFinite(a.price)||a.price<=0)||typeof(d.text||'')!=='string')throw Error();remember();drawings=saved.drawings;nextId=Math.max(0,...drawings.map(d=>d.id))+1;draw();status.textContent='저장한 그림을 불러왔습니다.';}catch{status.textContent='저장 자료를 읽지 못했습니다. 현재 그림은 유지합니다.';}});
    button('−',()=>zoom(1.4),nav);button('+',()=>zoom(1/1.4),nav);button('처음 보기',()=>controller.resetView(),nav);button('최신',()=>{const m=controller.getModel();controller.setView(m.count,m.all.length);},nav);
    if(compact){
     const summary=doc.createElement('summary');summary.textContent='차트 도구';
-    const body=doc.createElement('div');body.className='sb-chart-tool-panel-body';body.append(toolbar,nav,status);
+    const body=doc.createElement('div');body.className='sb-chart-tool-panel-body';body.append(toolbar,indicatorControls,nav,status);
     toolPanel.append(summary,body);controls.append(toolPanel,barInfo);svg.before(controls);
     toolPanel.addEventListener('toggle',()=>{if(toolPanel.open)body.style.maxHeight=Math.max(60,Math.min(260,host.clientHeight-controls.offsetTop-controls.offsetHeight-8))+'px';},{signal});
    }else{host.prepend(toolbar);svg.after(nav);nav.after(status);}
@@ -15288,7 +15298,13 @@ root.StockBookChartRenderer=Object.freeze({mount});
   const scroll=doc.createElement('input'),scale=doc.createElement('input'),readout=doc.createElement('span');
   scroll.type=scale.type='range';scroll.min=scale.min='0';scroll.setAttribute('aria-label','차트 가로 스크롤');scale.setAttribute('aria-label','차트 축척');readout.className='sb-chart-count';
   if(tools){const moveLabel=doc.createElement('label'),scaleLabel=doc.createElement('label');moveLabel.append('이동 ',scroll);scaleLabel.append('축척 ',scale);nav.append(moveLabel,scaleLabel,readout);scroll.addEventListener('input',()=>{const m=controller.getModel();controller.setView(m.count,Number(scroll.value)+m.count);},{signal});scale.addEventListener('input',()=>{const m=controller.getModel();controller.setView(m.all.length-Number(scale.value),m.end);},{signal});}
-  function remember(){history.push(JSON.parse(JSON.stringify(drawings)));if(history.length>30)history.shift();}
+  function remember(){history.push({drawings:JSON.parse(JSON.stringify(drawings)),hidden:controller.getHiddenIndicators()});if(history.length>30)history.shift();}
+  function deleteSelection(){
+   if(selectedIndicator){remember();const id=selectedIndicator;selectedIndicator=null;controller.setHiddenIndicators([...controller.getHiddenIndicators(),id]);status.textContent='선택 지표를 지웠습니다. 지표 복원 또는 실행 취소로 되돌립니다.';}
+   else if(selected!==null){remember();drawings=drawings.filter(d=>d.id!==selected);selected=null;draw();}
+  }
+  function selectIndicator(id){selected=null;selectedIndicator=id;draw();svg.focus({preventScroll:true});const label=host.querySelector('.sb-chart-indicator[aria-pressed="true"]')?.textContent||'지표';status.textContent=label+' 선택 · Del로 지웁니다.';}
+  host.addEventListener('click',e=>{const item=e.target.closest('.sb-chart-indicator');if(tools&&item)selectIndicator(item.dataset.chartIndicator);},{signal});
   function model(){return controller.getModel();}
   function point(event,target=svg){return new DOMPoint(event.clientX,event.clientY).matrixTransform(target.getScreenCTM().inverse());}
   function index(a,m){const i=m.all.findIndex(r=>r.bucket===a.key);return i<0?null:i+a.extra;}
@@ -15318,8 +15334,12 @@ root.StockBookChartRenderer=Object.freeze({mount});
    return [m.config.label+' '+row.date,...['open','high','low','close'].map((k,i)=>['시가','고가','저가','종가'][i]+' '+row[k].toLocaleString()),'거래량 '+row.volume.toLocaleString()].join(' · ');
   }
   function draw(){
+   svg.querySelector('.sb-chart-indicator-hits')?.remove();
+   if(tools){const hits=node('g',{class:'sb-chart-indicator-hits'});for(const line of svg.querySelectorAll('.ma,.ma-point,.bb-shift')){const hit=line.cloneNode(true);hit.setAttribute('class','sb-chart-indicator-hit');hit.setAttribute('stroke','transparent');hit.setAttribute('stroke-width','14');hit.setAttribute('fill','none');hit.setAttribute('pointer-events','stroke');hit.setAttribute('vector-effect','non-scaling-stroke');hits.append(hit);}svg.append(hits);}
    svg.querySelector('.sb-chart-drawings')?.remove();const layer=node('g',{class:'sb-chart-drawings'});for(const d of drawings)shape(d,layer);if(stroke?.length>1)shape({id:-1,type:'pen',points:stroke},layer);if(preview)shape(preview,layer);svg.append(layer);memory.set(key,drawings);
-   const m=model();scroll.max=String(Math.max(0,m.all.length-m.count));scroll.value=String(m.offset);scale.max=String(Math.max(0,m.all.length-1));scale.value=String(m.all.length-m.count);readout.textContent=m.count+'봉';if(compact){barInfo.textContent=describeBar(m.rows.at(-1),m);barInfo.title=barInfo.textContent;}
+   if(compact){indicatorControls.replaceChildren(...[...host.querySelectorAll('[data-chart-id="legend"] .sb-chart-indicator')].map(item=>item.cloneNode(true)));}
+   if(tools){indicatorMemory.set(key,controller.getHiddenIndicators());for(const item of host.querySelectorAll('.sb-chart-indicator'))item.setAttribute('aria-pressed',String(item.dataset.chartIndicator===selectedIndicator));}
+   const m=model();if(compact){barInfo.textContent=describeBar(m.rows.at(-1),m);barInfo.title=barInfo.textContent;}scroll.max=String(Math.max(0,m.all.length-m.count));scroll.value=String(m.offset);scale.max=String(Math.max(0,m.all.length-1));scale.value=String(m.all.length-m.count);readout.textContent=m.count+'봉';
   }
   function hide(){svg.querySelector('.sb-chart-crosshair')?.remove();pressure?.querySelector('.sb-chart-crosshair')?.remove();tip.hidden=true;priceLabel.hidden=true;dateLabel.hidden=true;}
   function show(event,target=svg){
@@ -15340,13 +15360,13 @@ root.StockBookChartRenderer=Object.freeze({mount});
    tip.hidden=false;tip.style.left=Math.max(6,Math.min(root.innerWidth-tip.offsetWidth-8,event.clientX+14))+'px';tip.style.top=Math.max(6,Math.min(root.innerHeight-tip.offsetHeight-8,event.clientY+14))+'px';
   }
   function zoom(factor){const m=model();controller.setView(m.count*factor,m.end);}
-  function add(type,points){if(drawings.length>=200){status.textContent='그림은 200개까지 추가할 수 있습니다.';return;}remember();const d={id:nextId++,type,points};if(type==='text')d.text=textInput.value.trim()||'메모';drawings.push(d);selected=d.id;pending=null;setMode('zoom');draw();}
+  function add(type,points){if(drawings.length>=200){status.textContent='그림은 200개까지 추가할 수 있습니다.';return;}remember();const d={id:nextId++,type,points};if(type==='text')d.text=textInput.value.trim()||'메모';drawings.push(d);selected=d.id;selectedIndicator=null;pending=null;setMode('zoom');draw();}
   function down(e){
    if(e.pointerType==='touch'){touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(touches.size===2){const [a,b]=[...touches.values()],m=model();pinch={distance:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),count:m.count,end:m.end};gesture=null;stroke=null;pending=null;preview=null;svg.setPointerCapture(e.pointerId);e.preventDefault();return;}}
-   if(e.button!==0||pinch)return;const p=point(e),m=model();if(p.x<25||p.x>1170||p.y<30||p.y>520)return;
+   if(e.button!==0||pinch)return;svg.focus({preventScroll:true});const indicator=e.target.closest('[data-chart-indicator]');if(tools&&indicator&&mode==='zoom'){selectIndicator(indicator.dataset.chartIndicator);e.preventDefault();return;}const p=point(e),m=model();if(p.x<25||p.x>1170||p.y<30||p.y>520)return;
    const hit=e.target.closest('[data-drawing-id]'),d=drawings.find(d=>d.id===Number(hit?.dataset.drawingId));
-   if(d&&(mode==='zoom'||mode==='pan')){selected=d.id;remember();gesture={kind:'drawing',id:e.pointerId,start:p,original:JSON.parse(JSON.stringify(d.points)),handle:hit.hasAttribute('data-handle')?Number(hit.dataset.handle):null,drawing:d.id};draw();}
-   else if(mode==='zoom'||mode==='pan'){selected=null;gesture={kind:mode==='pan'||e.pointerType==='touch'?'pan':'zoom',id:e.pointerId,x:e.clientX,y:e.clientY,count:m.count,end:m.end,step:m.step*Math.abs(svg.getScreenCTM().a)};}
+   if(d&&(mode==='zoom'||mode==='pan')){selected=d.id;selectedIndicator=null;remember();gesture={kind:'drawing',id:e.pointerId,start:p,original:JSON.parse(JSON.stringify(d.points)),handle:hit.hasAttribute('data-handle')?Number(hit.dataset.handle):null,drawing:d.id};draw();}
+   else if(mode==='zoom'||mode==='pan'){selected=null;selectedIndicator=null;gesture={kind:mode==='pan'||e.pointerType==='touch'?'pan':'zoom',id:e.pointerId,x:e.clientX,y:e.clientY,count:m.count,end:m.end,step:m.step*Math.abs(svg.getScreenCTM().a)};}
    else{gesture={kind:'draw',id:e.pointerId,start:p,anchor:anchor(p,m),moved:false};if(mode==='pen')stroke=[gesture.anchor];}
    svg.setPointerCapture(e.pointerId);e.preventDefault();e.stopPropagation();show(e);
   }
@@ -15380,6 +15400,7 @@ root.StockBookChartRenderer=Object.freeze({mount});
   pressure?.addEventListener('pointermove',e=>show(e,pressure),{signal});pressure?.addEventListener('pointerleave',hide,{signal});
   if(compact)doc.addEventListener('pointerdown',event=>{if(!controls.contains(event.target))toolPanel.open=false;},{signal,capture:true});
   doc.addEventListener('keydown',e=>{
+   if(e.defaultPrevented||e.isComposing||e.repeat||e.ctrlKey||e.altKey||e.metaKey||e.shiftKey||doc.querySelector('dialog[open]')||root.StockBookShortcuts?.hasOverlay())return;
    if((e.code==='Space'||e.key===' ')&&gesture&&['zoom','pan'].includes(gesture.kind)){
     e.preventDefault();if(e.repeat)return;
     const before=model();zoom(1.4);const after=model();
@@ -15387,7 +15408,16 @@ root.StockBookChartRenderer=Object.freeze({mount});
     status.textContent=after.count===before.count?'수신한 전체 이력이 표시되어 더 축소할 수 없습니다.':'Space 축소 · '+after.count+'봉 표시 · 드래그를 유지한 채 다시 Space를 누를 수 있습니다.';
     return;
    }
-   if(e.target.closest('input,textarea,select'))return;if(e.key==='Escape'){pending=null;gesture=null;stroke=null;preview=null;hide();draw();}if(e.key==='Delete'&&selected!==null){remember();drawings=drawings.filter(d=>d.id!==selected);selected=null;draw();}},{signal});
+   if(!host.contains(doc.activeElement)&&!host.contains(e.target)&&!(tools&&!compact&&e.key==='Escape'))return;
+   if(e.key==='Escape'){
+    const drawing=pending||gesture||stroke||!['zoom','pan'].includes(mode),panel=doc.activeElement?.closest('details[open]')||[...host.querySelectorAll('details[open]')].at(-1);
+    if(drawing){if(gesture&&svg.hasPointerCapture(gesture.id))svg.releasePointerCapture(gesture.id);pending=null;gesture=null;stroke=null;preview=null;touches.clear();pinch=null;setMode('zoom');}
+    else if(panel)panel.open=false;else{selected=null;selectedIndicator=null;}
+    hide();draw();e.preventDefault();e.stopPropagation();
+   }else if(e.key==='Delete'&&tools&&!e.target.closest('input,textarea,select,[contenteditable]:not([contenteditable="false"]),[role="textbox"]')&&(selected!==null||selectedIndicator)){
+    deleteSelection();e.preventDefault();e.stopPropagation();
+   }
+  },{signal});
   host.addEventListener('stockbook:chart-render',()=>{hide();draw();},{signal});
   let size='';const observer=new ResizeObserver(()=>{const next=svg.clientWidth+':'+svg.clientHeight;if(next!==size){size=next;controller.refresh();}});observer.observe(svg);
   setMode('zoom');draw();

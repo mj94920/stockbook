@@ -10,7 +10,7 @@ async function setup(touch=false){
   window.__chartFetches=[];window.stockBookChart={onContext:fn=>window.__context=fn,getData:async(code,cycle)=>{window.__chartFetches.push({code,cycle});return {ok:true,candles:cycle==='year'?candles:candles.slice(-1000),investors:null,metadata:{stockCode:code,name:'합성 검증 종목',sourceType:'naver-daily',snapshotDate:candles.at(-1).date,fetchedAt:'2026-10-27T01:00:00Z',lastBarComplete:null}};},setFollow:async value=>{window.__follow=value;return {ok:true};},setView:async value=>{window.__view=value;return {ok:true};}};
  });
  await page.goto(base+'/chart.html');await page.evaluate(()=>window.__context({code:'000001',name:'합성 검증 종목',period:'6m',barCycle:'month',follow:true}));await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='month');
- return {page,browser,errors,close:async()=>{await browser.close();await new Promise(r=>server.close(r));}};
+ return {page,browser,errors,base,close:async()=>{await browser.close();await new Promise(r=>server.close(r));}};
 }
 async function point(page,index,y){return page.evaluate(({index,y})=>{const host=document.getElementById('chartViewport'),m=StockBookCharts.controller(host).getModel(),svg=host.querySelector('[data-chart-id="chart"]'),p=new DOMPoint(m.x(index),y).matrixTransform(svg.getScreenCTM());return {x:p.x,y:p.y};},{index,y});}
 async function clickPoint(page,index,y){const p=await point(page,index,y);await page.mouse.click(p.x,p.y);return p;}
@@ -106,12 +106,13 @@ test('embedded chart exposes crosshair labels, persistent bar data and foldable 
   await page.waitForFunction(()=>{const host=document.getElementById('sbEmbeddedChart'),panel=host.querySelector('.sb-chart-tool-panel-body').getBoundingClientRect();return panel.height>0&&panel.bottom<=host.getBoundingClientRect().bottom;});
   await host.locator('[data-tool="horizontal"]').click();
   assert.equal(await host.locator('.sb-chart-tool-panel').getAttribute('open'),null);
-  p=await at(3,260);await page.mouse.click(p.x,p.y);assert.equal(await host.locator('.sb-chart-drawings > g').count(),1);
+  p=await at(3,260);await page.mouse.click(p.x,p.y);assert.equal(await host.locator('.sb-chart-drawings > g').count(),1);await page.keyboard.press('Delete');assert.equal(await host.locator('.sb-chart-drawings > g').count(),0);
   const before=await host.evaluate(h=>StockBookCharts.controller(h).getModel().count);
   await host.locator('.sb-chart-tool-panel summary').click();await host.locator('.sb-chart-navigation').getByRole('button',{name:'+',exact:true}).click();
   assert.ok(await host.evaluate(h=>StockBookCharts.controller(h).getModel().count)<before);
-  await host.locator('.sb-chart-tool-panel summary').click();
-  await host.locator('.sb-chart-tool-panel summary').click();await host.getByRole('textbox',{name:'차트 메모'}).fill('종합 차트 메모');await host.locator('[data-tool="text"]').click();
+  await page.keyboard.press('Escape');assert.equal(await host.locator('.sb-chart-tool-panel').getAttribute('open'),null);assert.equal(await page.locator('#mdiWorkspace').getAttribute('data-dock-screen'),'watchlist');
+  await host.locator('.sb-chart-tool-panel summary').click();await host.locator('.sb-chart-indicator-controls [data-chart-indicator="ma:20"]').click();await page.keyboard.press('Delete');assert.equal(await host.locator('.ma[data-period="20"]').count(),0);await host.getByRole('button',{name:'지표 복원',exact:true}).click();assert.equal(await host.locator('.ma[data-period="20"]').count(),1);
+  await host.getByRole('textbox',{name:'차트 메모'}).fill('종합 차트 메모');await host.locator('[data-tool="text"]').click();
   p=await at(4,220);await page.mouse.click(p.x,p.y);
   assert.equal(await host.locator('.sb-chart-drawings text').evaluateAll(es=>es.some(e=>e.textContent==='종합 차트 메모'&&getComputedStyle(e).display!=='none')),true);
   await page.locator('#sbChartCycle').selectOption('month');await page.waitForFunction(()=>document.getElementById('sbEmbeddedChart').chartEvidence?.barCycle==='month');
@@ -134,5 +135,41 @@ test('Space repeatedly zooms out during a held drag, retains the drag baseline a
   await page.getByRole('button',{name:'처음 보기',exact:true}).click();assert.equal(await count(),start);
   await page.getByRole('button',{name:'이동',exact:true}).click();const q=await point(page,2,260);await page.mouse.move(q.x,q.y);await page.mouse.down();await page.keyboard.press('Space');assert.ok(await count()>start);await page.mouse.up();
   assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
+
+test('Delete removes the selected indicator or drawing, protects editing and restores indicators; Escape closes one detail panel',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  const indicator=id=>page.locator('.sb-chart-indicator[data-chart-indicator="'+id+'"]');
+  await indicator('ma:5').click();await page.keyboard.press('Delete');assert.equal(await page.locator('.ma[data-period="5"]').count(),0);assert.ok(await page.locator('.candle').count()>0);
+  await page.getByRole('button',{name:'+',exact:true}).click();assert.equal(await page.locator('.ma[data-period="5"]').count(),0);
+  await page.getByRole('button',{name:'실행 취소',exact:true}).click();assert.equal(await page.locator('.ma[data-period="5"]').count(),1);
+  for(const period of [1,5,19,6,9]){await indicator('ma:'+period).click();await page.keyboard.press('Delete');}assert.equal(await page.locator('.ma').count(),0);assert.ok(await page.locator('.candle').count()>0);
+  await page.getByRole('button',{name:'지표 복원',exact:true}).click();assert.equal(await page.locator('.ma').count(),5);
+  const linePoint=await page.locator('.ma[data-period="19"]').evaluate(line=>{const [x,y]=line.getAttribute('points').split(' ').at(-2).split(',').map(Number),p=new DOMPoint(x,y).matrixTransform(line.ownerSVGElement.getScreenCTM());return {x:p.x,y:p.y};});await page.mouse.click(linePoint.x,linePoint.y);assert.equal(await indicator('ma:19').getAttribute('aria-pressed'),'true');await page.keyboard.press('Delete');assert.equal(await page.locator('.ma[data-period="19"]').count(),0);
+  await page.locator('#chartPeriod').selectOption('3m');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.viewRange==='3m');assert.equal(await page.locator('.ma[data-period="19"]').count(),0);await page.getByRole('button',{name:'지표 복원',exact:true}).click();
+  await indicator('pressure').click();await page.keyboard.press('Delete');assert.equal(await page.locator('[data-chart-id="pressureChart"]').isVisible(),false);await page.getByRole('button',{name:'지표 복원',exact:true}).click();assert.equal(await page.locator('[data-chart-id="pressureChart"]').isVisible(),true);
+  await page.locator('[data-tool="horizontal"]').click();await clickPoint(page,1,300);await page.keyboard.press('Delete');assert.equal(await page.locator('.sb-chart-drawing').count(),0);
+  await page.locator('[data-tool="horizontal"]').click();await clickPoint(page,1,300);const memo=page.getByRole('textbox',{name:'차트 메모',exact:true});await memo.fill('memo');await memo.press('Home');await memo.press('Delete');assert.equal(await memo.inputValue(),'emo');assert.equal(await page.locator('.sb-chart-drawing').count(),1);
+  await indicator('ma:5').click();await page.locator('#chartIndicatorSettings').click();await page.locator('#chartSettingsClose').focus();await page.keyboard.press('Delete');assert.equal(await page.locator('.ma[data-period="5"]').count(),1);
+  await page.evaluate(()=>{for(const el of document.querySelectorAll('#chartViewport details'))el.open=true;});await page.keyboard.press('Escape');assert.equal(await page.locator('#chartSettings').isVisible(),false);assert.ok(await page.locator('#chartViewport details[open]').count()>0);
+  const before=await page.locator('#chartViewport details[open]').count();await page.keyboard.press('Escape');assert.equal(await page.locator('#chartViewport details[open]').count(),before-1);
+  await page.locator('#chartCycle').selectOption('day');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='day');await indicator('bb').click();await page.keyboard.press('Delete');assert.equal(await page.locator('.bb-shift').count(),0);assert.equal(await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().futureCount),0);
+  await indicator('cloud').click();await page.keyboard.press('Delete');assert.equal(await page.locator('.ma-cloud').count(),0);assert.equal(await page.locator('.ma').count(),8);
+  await page.getByRole('button',{name:'지표 복원',exact:true}).click();assert.equal(await page.locator('.bb-shift').count(),1);assert.ok(await page.locator('.ma-cloud').count()>0);assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
+
+test('Escape closes the top native/custom modal or drawer once, including focused inputs, before the main panel',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  await page.goto(h.base+'/index.html');await page.evaluate(()=>{window._MDI.show('news');openAccountPanel();});await page.waitForFunction(()=>document.getElementById('accountPanel').classList.contains('open'));
+  await page.evaluate(()=>sbWatchAddOpen());await page.locator('#sbWatchAddSearch').focus();await page.keyboard.press('Escape');assert.equal(await page.locator('#sbWatchAddDialog').isVisible(),false);assert.equal(await page.locator('#accountPanel').evaluate(el=>el.classList.contains('open')),true);
+  await page.evaluate(()=>wlAddGroup());await page.locator('#_wlGroupInput').fill('취소 검증');await page.keyboard.press('Escape');assert.equal(await page.locator('#_wlGroupModal').count(),0);assert.equal(await page.locator('#accountPanel').evaluate(el=>el.classList.contains('open')),true);
+  await page.locator('#accountPanel .acct-panel-close-btn').focus();await page.keyboard.press('Escape');assert.equal(await page.locator('#accountPanel').evaluate(el=>el.classList.contains('open')),false);assert.equal(await page.locator('#mdiWorkspace').getAttribute('data-dock-screen'),'news');
+  await page.evaluate(()=>{openCalendarPanel();openSettings();document.getElementById('settingsModal').style.zIndex='1000000';});await page.keyboard.press('Escape');assert.equal(await page.locator('#settingsModal').evaluate(el=>el.classList.contains('open')),false);assert.equal(await page.locator('#calPanel').evaluate(el=>el.classList.contains('open')),true);assert.equal(await page.locator('#mdiWorkspace').getAttribute('data-dock-screen'),'news');
+  await page.keyboard.press('Escape');assert.equal(await page.locator('#calPanel').evaluate(el=>el.classList.contains('open')),false);assert.equal(await page.locator('#mdiWorkspace').getAttribute('data-dock-screen'),'news');
+  await page.locator('body').click({position:{x:5,y:5}});await page.keyboard.press('Escape');assert.equal(await page.locator('#mdiWorkspace').getAttribute('data-dock-screen'),'watchlist');assert.deepEqual(h.errors,[]);
  }finally{await h.close();}
 });
