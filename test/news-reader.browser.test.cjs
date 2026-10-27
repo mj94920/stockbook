@@ -204,3 +204,38 @@ test('unregistered catalog, header search and holding selections drive chart dat
   assert.equal(await page.evaluate(()=>state.watchlist.length),0);assert.equal(await page.evaluate(()=>window.__requests.includes('005930')),false);assert.deepEqual(errors,[]);
  }finally{await browser?.close();await new Promise(r=>server.close(r));}
 });
+
+test('stock news prioritizes current and searched instruments over holdings, retains explicit scope and rejects stale results',async()=>{
+ const root=path.resolve(__dirname,'..');const server=createServer(async(req,res)=>{try{const target=path.resolve(root,'.'+new URL(req.url,'http://x').pathname);if(!target.startsWith(root+path.sep))throw Error();res.setHeader('Content-Type',target.endsWith('.html')?'text/html; charset=utf-8':target.endsWith('.js')?'text/javascript':target.endsWith('.css')?'text/css':'application/octet-stream');res.end(await fs.readFile(target));}catch{res.writeHead(404);res.end();}});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;let browser;
+ try{
+  browser=await chromium.launch();const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort());await page.goto(base+'/index.html');
+  await page.evaluate(()=>{
+   state.portfolio=[{ticker:'005930',name:'삼성전자',qty:1,avgPrice:100}];state.watchlist=[{ticker:'000660',name:'SK하이닉스'}];
+   _allStockRaw={KOSPI:[{code:'229640',name:'LS에코에너지'},{code:'010130',name:'고려아연'}]};window._dockSel='229640';window.__newsRequests=[];
+   window.electronAPI={fetchNews:async opts=>{window.__newsRequests.push(opts);return {ok:true,items:opts.code?[{id:opts.code,title:opts.code+' 기사',code:opts.code,source:'검증 매체',time:'2026-10-27T09:00:00+09:00'}]:[]};}};
+   window._MDI.show('news');icSetTab('stock');
+  });
+  await page.waitForFunction(()=>!_ic.loading&&_ic.items[0]?.code==='229640');
+  assert.match(await page.locator('#icStockSearch').inputValue(),/LS에코에너지 229640/);
+  assert.equal(await page.evaluate(()=>_ic.scope),'sel');
+  assert.deepEqual(await page.evaluate(()=>window.__newsRequests.filter(r=>r.kind==='stock').map(r=>r.code)),['229640']);
+  await page.locator('#icStockSearch').fill('SK하이닉스');await page.locator('#icStockSearch').press('Enter');
+  await page.waitForFunction(()=>!_ic.loading&&_ic.items[0]?.code==='000660');
+  await page.evaluate(()=>icRefresh());assert.equal(await page.evaluate(()=>_ic.items[0].code),'000660');
+  await page.evaluate(()=>icSetScope('port'));await page.waitForFunction(()=>!_ic.loading&&_ic.items[0]?.code==='005930');
+  await page.evaluate(()=>{icSetTab('market');icSetTab('stock');});await page.waitForFunction(()=>!_ic.loading&&_ic.items[0]?.code==='000660');
+  await page.locator('#sbDesktopSearch').fill('고려아연');await page.waitForFunction(()=>!_ic.loading&&_ic.items[0]?.code==='010130');
+  assert.match(await page.locator('#icSearchStatus').innerText(),/고려아연 종목뉴스/);
+  await page.evaluate(()=>{window._MDI.show('watchlist');dockSelectStock('229640');window._MDI.show('news');});
+  await page.waitForFunction(()=>!_ic.loading&&_ic.items[0]?.code==='229640');
+  await page.evaluate(()=>icSetScope('port'));await page.waitForFunction(()=>!_ic.loading&&_ic.items[0]?.code==='005930');
+  await page.evaluate(()=>{window._MDI.show('watchlist');dockSelectStock('229640');window._MDI.show('news');});
+  await page.waitForFunction(()=>!_ic.loading&&_ic.scope==='sel'&&_ic.items[0]?.code==='229640');
+  await page.evaluate(()=>{const fetch=window.electronAPI.fetchNews;window.electronAPI.fetchNews=opts=>opts.code==='000660'?new Promise(resolve=>window.__lateNews=resolve):fetch(opts);icSelectStock('000660');icSelectStock('010130');});
+  await page.waitForFunction(()=>!_ic.loading&&_ic.items[0]?.code==='010130');
+  await page.evaluate(()=>window.__lateNews({ok:true,items:[{id:'late',title:'이전 종목 지연 기사',code:'000660'}]}));
+  assert.equal(await page.evaluate(()=>_ic.items[0].code),'010130');assert.doesNotMatch(await page.locator('#icList').innerText(),/지연 기사/);
+  assert.equal(await page.evaluate(()=>state.portfolio[0].ticker),'005930');assert.deepEqual(errors,[]);
+ }finally{await browser?.close();await new Promise(r=>server.close(r));}
+});

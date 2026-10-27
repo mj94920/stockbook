@@ -10018,7 +10018,7 @@ document.addEventListener('click', e => {
 });
 
 // ── 정보센터 (시장뉴스 / 종목뉴스 / 공시 / 경제지표) ───────────────────────
-const _ic = { selectedCode:'', tab:'market', scope:'port', items:[], sel:-1, updated:null, loading:false, err:'', seq:0 };
+const _ic = { selectedCode:'', contextCode:null, tab:'market', scope:'sel', items:[], sel:-1, updated:null, loading:false, err:'', seq:0 };
 const _icEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 const _icIsKr = t => /^\d{6}$/.test(String(t || '').trim());
 const _icHasApi = () => !!(window.electronAPI && window.electronAPI.fetchNews);
@@ -10038,30 +10038,51 @@ function _icTimeFmt(t, full) {
   if (full) return `${d.getFullYear()}-${md} ${hm}`;
   return d.toDateString() === new Date().toDateString() ? hm : md;
 }
-function _icScopeCodes() {
-  if (_ic.scope === 'sel') {
-    const q = getNewsQuery();
-    const code = _ic.selectedCode || _newsQCode || (_icIsKr(q) ? q : '');
-    return _icIsKr(code) ? [code] : [];
+function _icSyncStockSelection(code) {
+  const context=String(window._dockSel||'').trim();
+  const before=_ic.selectedCode;
+  if (code !== undefined) _ic.selectedCode=_icIsKr(code)?code:'';
+  else if (_ic.contextCode!==context || !_ic.selectedCode) {
+    _ic.selectedCode=_icIsKr(context)?context:(!context && _icIsKr(_newsQCode)?_newsQCode:'');
   }
+  _ic.contextCode=context;
+  const selected=_ic.selectedCode,name=selected?_icStockName(selected):'';
+  const input=document.getElementById('icStockSearch'),status=document.getElementById('icSearchStatus');
+  if(input)input.value=selected?(name===selected?selected:name+' '+selected):'';
+  if(status)status.textContent=selected?name+' 종목뉴스':'국내 종목을 선택하거나 검색하세요.';
+  return before!==selected;
+}
+function icOnInstrumentSelected(code) {
+  const changed=_ic.selectedCode!==(_icIsKr(code)?code:'') || _ic.scope!=='sel';
+  _icSyncStockSelection(code);
+  if(!changed)return;
+  _ic.scope='sel';
+  if(_ic.tab==='stock'){
+    ++_ic.seq;++_icArticleRequest;_ic.updated=null;_ic.loading=false;_ic.items=[];_ic.sel=-1;
+    if(document.getElementById('mdiWorkspace')?.dataset.dockScreen==='news')icRefresh();
+  }
+}
+function _icScopeCodes() {
+  if (_ic.scope === 'sel') return _icIsKr(_ic.selectedCode)?[_ic.selectedCode]:[];
   const src = _ic.scope === 'watch' ? (state.watchlist || []) : (state.portfolio || []);
   return [...new Set(src.map(s => String(s.ticker || '').trim()).filter(_icIsKr))].slice(0, 6);
 }
 
 function icSetTab(tab) {
+  if(tab==='stock'){_ic.scope='sel';_icSyncStockSelection();}
   window.StockBookNewsPage?.unmount();
   _ic.tab = tab; _ic.sel = -1; _ic.items = []; _ic.err = '';
   document.querySelectorAll('#mdi-panel-news .ic-tab').forEach(b => b.classList.toggle('active', b.dataset.icTab === tab));
   icRefresh();
 }
 function icSetScope(scope) { _ic.scope = scope; _ic.sel = -1; icRefresh(); }
-function icOnStockPicked() { if (_ic.tab === 'stock' && _ic.scope === 'sel') icSetScope('sel'); }
+function icOnStockPicked() { if (_icIsKr(_newsQCode)) icSelectStock(_newsQCode); }
 
 function _icRenderChips() {
   const el = document.getElementById('icChips');
   if (!el) return;
   if (_ic.tab !== 'stock' && _ic.tab !== 'disclosure') { el.style.display = 'none'; return; }
-  const chips = [['port', '보유종목'], ['watch', '관심종목'], ['sel', '선택 종목']];
+  const chips = [['sel', '선택 종목'], ['port', '보유종목'], ['watch', '관심종목']];
   el.style.display = 'flex';
   el.innerHTML = chips.map(([k, l]) =>
     `<button type="button" class="ic-chip${_ic.scope === k ? ' active' : ''}" onclick="icSetScope('${k}')">${l}</button>`).join('');
@@ -10184,6 +10205,7 @@ function _icMarkRelated(items) {
 }
 
 async function icRefresh() {
+  if(_ic.scope==='sel' && ['stock','disclosure'].includes(_ic.tab))_icSyncStockSelection();
   _icRenderChips();
   const seq = ++_ic.seq;
   ++_icArticleRequest;
@@ -10240,6 +10262,7 @@ function _icUpdatedLabel() {
 
 // MDI 패널 열릴 때: 아직 데이터 없으면 현재 탭 로드
 function icOnOpen() {
+  if(_ic.tab==='stock' && _icSyncStockSelection()){_ic.scope='sel';icRefresh();return;}
   if (_ic.updated || _ic.loading) { _icRenderList(); _icRenderDetail(); return; }
   icRefresh();
 }
@@ -12307,7 +12330,8 @@ function sbSelectedStock(code=window._dockSel,name) {
 }
 function sbSelectInstrument(code,name) {
   const stock=sbSelectedStock(code,name||code);if(!stock)return null;
-  window._dockSel=stock.ticker;dockCtxRender();dockQueueSubscription();
+  window._dockSel=stock.ticker;
+  icOnInstrumentSelected(stock.ticker);dockCtxRender();dockQueueSubscription();
   if(!stock.quoteAt||Date.now()-stock.quoteAt>30000)dockLoadQuote(stock).then(()=>renderWatchlist());
   return stock;
 }
@@ -12445,17 +12469,17 @@ function icPickStock() {
   icSelectStock(code);
 }
 function icSelectStock(code) {
-  const name = _icStockName(code);
-  const input = document.getElementById('icStockSearch');
-  const status = document.getElementById('icSearchStatus');
-  if (input) input.value = name === code ? code : name + ' ' + code;
-  if (status) status.textContent = name + ' 종목뉴스';
-  _ic.selectedCode = code; _ic.scope = 'sel';
+  if(!_icIsKr(code))return;
+  _icSyncStockSelection(code); _ic.scope='sel';
   icSetTab('stock');
 }
 function sbDesktopSearch(value) {
   if(document.getElementById('mdiWorkspace')?.dataset.dockScreen==='news'){
-    const input=document.getElementById('icStockSearch');if(input)input.value=value;icStockOptions();return;
+    const input=document.getElementById('icStockSearch');if(input)input.value=value;icStockOptions();
+    const raw=value.trim(),candidate=sbStockCandidates().find(s=>s.code===raw||s.name===raw||s.name+' '+s.code===raw);
+    const code=candidate?.code||(/^\d{6}$/.test(raw)?raw:'');
+    if(code && (code!==_ic.selectedCode||_ic.scope!=='sel'||_ic.tab!=='stock'))icSelectStock(code);
+    return;
   }
   if(document.getElementById('mdiWorkspace')?.dataset.dockScreen!=='watchlist')window._MDI?.show('watchlist');
   window._MDIPanelTab?.('watchlist','as');
@@ -12692,8 +12716,7 @@ function dockCtxAction(kind) {
     const query = document.getElementById('sn_newsQuery');
     if (query) query.value = w.name || w.ticker;
     if (typeof _newsQCode !== 'undefined') _newsQCode = w.ticker;
-    icSetTab('stock');
-    icSetScope('sel');
+    icSelectStock(w.ticker);
     return;
   }
   if (kind === 'hoga') {
