@@ -249,3 +249,61 @@ test('hollow bodies are empty for both directions and scrolling stays separate f
   assert.deepEqual(h.errors,[]);
  }finally{await h.close();}
 });
+
+test('indicator heights drag independently, resize proportionally, persist and reset without changing data',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  const host=page.locator('#chartViewport'),price=host.locator('[data-chart-id="chart"]'),volume=host.locator('[data-chart-id="pressureChart"]');
+  async function height(el){return (await el.boundingBox()).height;}
+  async function drag(handle,dy){await handle.scrollIntoViewIfNeeded();const b=await handle.boundingBox();await page.mouse.move(b.x+b.width/2,b.y+b.height/2);await page.mouse.down();await page.mouse.move(b.x+b.width/2,b.y+b.height/2+dy,{steps:6});await page.mouse.up();}
+  const before=await height(price),volBefore=await height(volume),evidence=await host.evaluate(h=>({stock:h.chartEvidence.stockCode,count:h.chartEvidence.displayed}));
+  await drag(host.getByRole('separator',{name:'가격 차트 높이',exact:true}),90);
+  assert.ok(await height(price)>before+70);assert.equal(await height(volume),volBefore);
+  await drag(host.getByRole('separator',{name:'거래량 구간 높이',exact:true}),35);assert.ok(await height(volume)>volBefore+25);
+  const ratio=await host.evaluate(h=>h.querySelector('[data-chart-id="chart"]').clientHeight/h.clientHeight);
+  await page.setViewportSize({width:1280,height:900});await page.waitForTimeout(120);
+  const resized=await host.evaluate(h=>h.querySelector('[data-chart-id="chart"]').clientHeight/h.clientHeight);assert.ok(Math.abs(resized-ratio)<.02);
+  assert.deepEqual(await host.evaluate(h=>({stock:h.chartEvidence.stockCode,count:h.chartEvidence.displayed})),evidence);
+  await page.reload();await page.evaluate(()=>window.__context({code:'000001',name:'합성 검증 종목',period:'6m',barCycle:'month',follow:true}));await page.waitForFunction(()=>document.getElementById('chartViewport').querySelector('.sb-chart-resizers'));
+  const restored=await host.evaluate(h=>h.querySelector('[data-chart-id="chart"]').clientHeight/h.clientHeight);assert.ok(Math.abs(restored-ratio)<.02);
+  const handle=host.getByRole('separator',{name:'가격 차트 높이',exact:true});const current=await height(price);await handle.focus();await handle.press('ArrowUp');assert.ok(await height(price)<current-10);
+  await handle.dblclick();assert.equal(await price.evaluate(e=>e.style.height),'');
+  await page.locator('#chartCycle').selectOption('day');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='day');assert.equal(await host.locator('.sb-chart-resizers').count(),1);
+  assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
+
+test('workspace split keeps per-tab proportions, clamps small windows and compact indicator split preserves candle alignment',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  await page.setViewportSize({width:1600,height:1000});await page.goto(page.url().replace('/chart.html','/index.html'));
+  await page.evaluate(()=>{state.watchlist=[{ticker:'000001',name:'합성 검증 종목',price:1000,quoteAt:Date.now()}];window._dockSel='000001';window._MDI.show('watchlist');sbWorkTab('ord');});await page.waitForFunction(()=>document.getElementById('sbEmbeddedChart').chartEvidence?.stockCode==='000001');
+  const split=page.getByRole('separator',{name:'차트와 하단 작업 패널 높이',exact:true}),ctx=page.locator('#dockCtx'),work=page.locator('#mdi-panel-trading');
+  const before=(await ctx.boundingBox()).height,b=await split.boundingBox();await page.mouse.move(b.x+b.width/2,b.y+5);await page.mouse.down();await page.mouse.move(b.x+b.width/2,b.y+75,{steps:6});await page.mouse.up();await page.waitForTimeout(100);
+  const after=(await ctx.boundingBox()).height;assert.ok(after>before+50);assert.ok((await work.boundingBox()).height>=178);
+  const fraction=await page.locator('#mdiWorkspace').evaluate(e=>Number(JSON.parse(localStorage.getItem('stockbook:workspace:heights:v1')).ord));assert.ok(fraction>0&&fraction<1);
+  await page.evaluate(()=>sbWorkTab('cash'));assert.equal(await page.locator('#mdiWorkspace').evaluate(e=>e.classList.contains('sb-user-split')),false);
+  await page.evaluate(()=>sbWorkTab('ord'));await page.waitForTimeout(80);assert.ok(Math.abs((await ctx.boundingBox()).height-after)<2);
+  const host=page.locator('#sbEmbeddedChart'),volume=host.locator('[data-chart-id="pressureChart"]'),price=host.locator('[data-chart-id="chart"]'),vol=(await volume.boundingBox()).height;
+  const divider=host.getByRole('separator',{name:'가격·거래량 구간 높이',exact:true}),d=await divider.boundingBox();await page.mouse.move(d.x+d.width/2,d.y+5);await page.mouse.down();await page.mouse.move(d.x+d.width/2,d.y-15,{steps:4});await page.mouse.up();assert.ok((await volume.boundingBox()).height>vol+10);assert.ok((await price.boundingBox()).height>=45);
+  const aligned=await host.evaluate(h=>{const a=h.querySelector('.candle').getBoundingClientRect(),b=h.querySelector('.pressure-volume').getBoundingClientRect();return Math.abs(a.x+a.width/2-b.x-b.width/2)<1.5;});assert.equal(aligned,true);
+  const proportions=await host.evaluate(h=>{const ctx=document.getElementById('dockCtx').clientHeight,work=document.getElementById('mdi-panel-trading').clientHeight,p=h.querySelector('[data-chart-id="chart"]').clientHeight,v=h.querySelector('[data-chart-id="pressureChart"]').clientHeight;return {workspace:ctx/(ctx+work),volume:v/(v+p)};});
+  await page.setViewportSize({width:1600,height:1200});await page.waitForTimeout(120);
+  const grown=await host.evaluate(h=>{const ctx=document.getElementById('dockCtx').clientHeight,work=document.getElementById('mdi-panel-trading').clientHeight,p=h.querySelector('[data-chart-id="chart"]').clientHeight,v=h.querySelector('[data-chart-id="pressureChart"]').clientHeight;return {workspace:ctx/(ctx+work),volume:v/(v+p)};});
+  assert.ok(Math.abs(proportions.workspace-grown.workspace)<.02);assert.ok(Math.abs(proportions.volume-grown.volume)<.02);
+  await page.setViewportSize({width:1024,height:768});await page.waitForTimeout(120);assert.ok((await work.boundingBox()).height>=175);assert.ok((await ctx.boundingBox()).height>=215);
+  await split.dblclick();assert.equal(await page.locator('#mdiWorkspace').evaluate(e=>e.classList.contains('sb-user-split')),false);
+  await page.evaluate(()=>window._MDI.show('news'));await page.waitForTimeout(50);assert.equal(await split.isVisible(),false);assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
+
+test('touch drags the price-height separator without zooming or panning candles',async()=>{
+ const h=await setup(true),{page}=h;
+ try{
+  const handle=page.getByRole('separator',{name:'가격 차트 높이',exact:true});await handle.scrollIntoViewIfNeeded();const box=await handle.boundingBox();
+  const before=await page.locator('[data-chart-id="chart"]').boundingBox(),count=await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.displayed),session=await page.context().newCDPSession(page);
+  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.x+box.width/2,y:box.y+5,id:1}]});
+  await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:box.x+box.width/2,y:box.y+65,id:1}]});await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  assert.ok((await page.locator('[data-chart-id="chart"]').boundingBox()).height>before.height+40);assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.displayed),count);assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});

@@ -23,7 +23,7 @@
   if(!host)return Promise.resolve(null);
   const old=states.get(host),key=JSON.stringify([context.code,context.viewRange||context.period,context.barCycle||'day',context.indicatorCycle||context.barCycle||'day',mode]);
   if(old?.key===key&&!old.failed)return old.task;
-  old?.interaction?.destroy();const state={key,controller:null,interaction:null,task:null};states.set(host,state);
+  old?.interaction?.destroy();old?.resize?.destroy();const state={key,controller:null,interaction:null,resize:null,task:null};states.set(host,state);
   delete host.chartEvidence;host.className='sb-chart-loading';host.textContent='차트 자료를 불러오는 중…';
   function failed(message){
    state.failed=true;host.className='sb-data-empty';host.replaceChildren();
@@ -36,11 +36,12 @@
    try{
     state.controller=root.StockBookChartRenderer.mount(host,data,{mode,period:context.period,viewRange:context.viewRange||context.period,barCycle:context.barCycle||'day',indicatorCycle:context.indicatorCycle||context.barCycle||'day',light:document.body.classList.contains('light-mode')});
     if(root.StockBookChartInteraction)state.interaction=root.StockBookChartInteraction.mount(host,state.controller,{tools:true,compact:mode==='compact'});
+    if(root.StockBookChartResize)state.resize=root.StockBookChartResize.mount(host,state.controller,mode);
     return state.controller;
-   }catch{state.interaction?.destroy();failed('차트 자료를 표시하지 못했습니다.');return null;}
+   }catch{state.interaction?.destroy();state.resize?.destroy();failed('차트 자료를 표시하지 못했습니다.');return null;}
   })();return state.task;
  }
 
  let light=document.body.classList.contains('light-mode');new MutationObserver(()=>{const next=document.body.classList.contains('light-mode');if(next===light)return;light=next;for(const host of document.querySelectorAll('[data-chart-host]'))states.get(host)?.controller?.updateTheme(light);}).observe(document.body,{attributes:true,attributeFilter:['class']});
- root.StockBookCharts=Object.freeze({show,controller:host=>states.get(host)?.controller,clear:host=>{if(!host)return;states.get(host)?.interaction?.destroy();states.delete(host);delete host.chartEvidence;host.className='sb-data-empty';host.textContent='종목을 선택하면 차트를 표시합니다.';}});
+ root.StockBookCharts=Object.freeze({show,controller:host=>states.get(host)?.controller,clear:host=>{if(!host)return;states.get(host)?.interaction?.destroy();states.get(host)?.resize?.destroy();states.delete(host);delete host.chartEvidence;host.className='sb-data-empty';host.textContent='종목을 선택하면 차트를 표시합니다.';}});
 })(window);

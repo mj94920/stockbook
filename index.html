@@ -12451,6 +12451,7 @@ function sbSyncWorkTabs() {
   const pid = ['trading','journal'].includes(screen) ? screen : 'portfolio';
   const pane = [...(document.getElementById('mdi-body-' + pid)?.querySelectorAll(':scope > .mdi-ptab-pane') || [])].find(p=>p.style.display !== 'none');
   const key = pid === 'journal' ? 'journal' : pane?.id.replace('mdi-ptc-' + pid + '-', '') || 'pf';
+  const workspace=document.getElementById('mdiWorkspace');if(workspace)workspace.dataset.workTab=key;
   document.querySelectorAll('[data-work-tab]').forEach(button=>{
     const active = button.dataset.workTab === key;
     button.classList.toggle('active',active);
@@ -14861,6 +14862,7 @@ function wlAssignGroup(idx, gName) {
 <script src="src/chart/series.js"></script>
 <script src="src/chart/renderer.js"></script>
 <script src="src/chart/interaction.js"></script>
+<script src="src/chart/resize.js"></script>
 <script src="src/chart/client.js"></script>
 <script>sbChartContextKey='';sbChartSync();</script>
 </body>

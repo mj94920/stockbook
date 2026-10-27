@@ -3537,7 +3537,7 @@
 .sb-proof-chart summary { padding:8px 0;cursor:pointer; }
 .sb-chart-notice,.sb-proof-chart p { color:var(--sb-text-2);font-size:11px;line-height:1.5; }
 .sb-proof-compact .sb-proof-options,.sb-proof-compact .sb-proof-extended,.sb-proof-compact [data-chart-id="period"],.sb-proof-compact .sb-proof-legend { display:none; }
-.sb-proof-compact { display:grid;grid-template-rows:auto auto minmax(0,1fr) 64px;height:100%; }
+.sb-proof-compact { display:grid;grid-template-rows:auto auto minmax(0,1fr) var(--sb-volume-height,64px);height:100%; }
 .sb-proof-compact svg { height:100%;min-height:0; }
 .sb-proof-detail { padding:4px 10px; }
 .sb-proof-detail [data-chart-id="chart"] { max-height:420px; }
@@ -3556,7 +3556,7 @@
 
 .sb-proof-chart [hidden] { display:none!important; }
 
-.sb-proof-compact [data-chart-id="pressureChart"] { height:64px; }
+.sb-proof-compact [data-chart-id="pressureChart"] { height:var(--sb-volume-height,64px); }
 .sb-proof-year.sb-proof-compact { grid-template-rows:auto auto minmax(0,1fr); }
 .sb-proof-chart { position:relative; }
 .sb-proof-chart [data-chart-id="chart"] { touch-action:none;user-select:none; }
@@ -3599,6 +3599,18 @@
 .sb-chart-type { max-width:120px; }
 .sb-proof-compact .sb-chart-compact-controls > label { flex-shrink:0;font-size:11px; }
 .sb-proof-compact .sb-chart-type { padding:2px;max-width:94px; }
+
+/* Horizontal separators change vertical proportions without taking a grid row. */
+.sb-chart-resizers { position:absolute;inset:0 0 auto;height:0;pointer-events:none;z-index:25; }
+.sb-resize-handle { position:absolute;left:0;width:100%;height:10px;cursor:row-resize;touch-action:none;user-select:none;pointer-events:auto;z-index:25; }
+.sb-resize-handle::after { content:'';position:absolute;left:0;right:0;top:4px;height:2px;background:var(--sb-border); }
+.sb-resize-handle:hover::after,.sb-resize-handle:focus-visible::after,.sb-resize-active::after { background:var(--sb-accent);height:3px; }
+.sb-resize-handle:focus-visible { outline:2px solid var(--sb-accent);outline-offset:-2px; }
+.sb-resize-handle[hidden] { display:none!important; }
+@media(min-width:901px) {
+ .mdi-dock.sb-desktop-home.sb-user-split { grid-template-rows:0 minmax(0,1fr) minmax(0,var(--sb-work-height)); }
+ .mdi-dock.sb-desktop-home.sb-user-split > :is(#mdi-panel-portfolio,#mdi-panel-trading,.sb-analysis) { max-height:none; }
+}
 </style>
 </head>
 <body>
@@ -12521,6 +12533,7 @@ function sbSyncWorkTabs() {
   const pid = ['trading','journal'].includes(screen) ? screen : 'portfolio';
   const pane = [...(document.getElementById('mdi-body-' + pid)?.querySelectorAll(':scope > .mdi-ptab-pane') || [])].find(p=>p.style.display !== 'none');
   const key = pid === 'journal' ? 'journal' : pane?.id.replace('mdi-ptc-' + pid + '-', '') || 'pf';
+  const workspace=document.getElementById('mdiWorkspace');if(workspace)workspace.dataset.workTab=key;
   document.querySelectorAll('[data-work-tab]').forEach(button=>{
     const active = button.dataset.workTab === key;
     button.classList.toggle('active',active);
@@ -15511,6 +15524,76 @@ root.StockBookChartRenderer=Object.freeze({mount});
 <script>
 (function(root){
  'use strict';
+ const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+ const read=key=>{try{const value=JSON.parse(root.localStorage.getItem(key));return value&&typeof value==='object'&&!Array.isArray(value)?value:{};}catch{return {};}};
+ const save=(key,value)=>{try{root.localStorage.setItem(key,JSON.stringify(value));}catch{}};
+ function separator(parent,label,{value,limits,change,commit,reset},signal){
+  const handle=parent.ownerDocument.createElement('div');handle.className='sb-resize-handle';handle.tabIndex=0;handle.setAttribute('role','separator');handle.setAttribute('aria-orientation','horizontal');handle.setAttribute('aria-label',label);handle.title=label+' · 위아래로 끌기 · ↑↓ 조절 · 더블클릭/Enter 기본값';parent.append(handle);
+  let drag=null;
+  function update(){const [min,max]=limits();handle.setAttribute('aria-valuemin',Math.round(min));handle.setAttribute('aria-valuemax',Math.round(max));handle.setAttribute('aria-valuenow',Math.round(value()));}
+  function apply(next){const [min,max]=limits();change(clamp(next,min,max));update();}
+  handle.addEventListener('pointerdown',event=>{if(event.button!==0)return;event.preventDefault();event.stopPropagation();handle.focus({preventScroll:true});drag={id:event.pointerId,y:event.clientY,value:value()};handle.setPointerCapture(event.pointerId);handle.classList.add('sb-resize-active');},{signal});
+  handle.addEventListener('pointermove',event=>{if(!drag||drag.id!==event.pointerId)return;event.preventDefault();apply(drag.value+event.clientY-drag.y);},{signal});
+  const finish=event=>{if(!drag||drag.id!==event.pointerId)return;drag=null;handle.classList.remove('sb-resize-active');if(handle.hasPointerCapture(event.pointerId))handle.releasePointerCapture(event.pointerId);commit();};
+  handle.addEventListener('pointerup',finish,{signal});handle.addEventListener('pointercancel',finish,{signal});handle.addEventListener('lostpointercapture',finish,{signal});
+  handle.addEventListener('dblclick',()=>{reset();update();},{signal});
+  handle.addEventListener('keydown',event=>{const [min,max]=limits();const next={ArrowUp:value()-16,ArrowDown:value()+16,Home:min,End:max}[event.key];if(next!==undefined){event.preventDefault();apply(next);commit();}else if(event.key==='Enter'){event.preventDefault();reset();update();}},{signal});
+  update();return {handle,update};
+ }
+ function mountChart(host,controller,mode){
+  const abort=new AbortController(),signal=abort.signal,key='stockbook:chart:heights:v1:'+mode+':'+controller.getModel().config.label,prefs=read(key),compact=mode==='compact';
+  for(const field of Object.keys(prefs))if(!Number.isFinite(prefs[field])||prefs[field]<=0||prefs[field]>3)delete prefs[field];
+  const layer=host.ownerDocument.createElement('div');layer.className='sb-chart-resizers';host.append(layer);
+  const price=host.querySelector('[data-chart-id="chart"]'),volume=host.querySelector('[data-chart-id="pressureChart"]'),investors=host.querySelector('[data-chart-id="investorChart"]');
+  const height=()=>Math.max(1,host.clientHeight),visible=element=>!!element?.getClientRects().length&&element.getBoundingClientRect().height>0;
+  const volumeLimits=()=>[24,Math.max(24,price.getBoundingClientRect().height+volume.getBoundingClientRect().height-48)];
+  const items=[];let frame=0;
+  function apply(){
+   if(compact){if(prefs.volume){const [min,max]=volumeLimits();host.style.setProperty('--sb-volume-height',clamp(prefs.volume*(price.getBoundingClientRect().height+volume.getBoundingClientRect().height),min,max)+'px');}}
+   else for(const [field,element,min,max]of [['price',price,120,height()*2],['volume',volume,24,height()*.7],['investors',investors,36,height()*.8]])if(element&&prefs[field]){element.style.height=clamp(prefs[field]*height(),min,Math.max(min,max))+'px';element.style.maxHeight='none';}
+   position();
+  }
+  function position(){const box=host.getBoundingClientRect();for(const item of items){item.handle.hidden=!visible(item.target)||(compact&&!visible(volume));if(!item.handle.hidden){const rect=item.target.getBoundingClientRect();item.handle.style.top=rect.bottom-box.top+host.scrollTop-5+'px';item.update();}}}
+  function schedule(){if(!frame)frame=root.requestAnimationFrame(()=>{frame=0;apply();});}
+  function add(field,target,label,min,max){if(!target)return;
+   const item=separator(layer,label,{value:()=>target.getBoundingClientRect().height,limits:()=>[min,Math.max(min,max())],change:value=>{if(compact){prefs.volume=clamp(volume.getBoundingClientRect().height+price.getBoundingClientRect().height-value,...volumeLimits())/(price.getBoundingClientRect().height+volume.getBoundingClientRect().height);}else prefs[field]=value/height();apply();},commit:()=>save(key,prefs),reset:()=>{delete prefs[compact?'volume':field];if(compact)host.style.removeProperty('--sb-volume-height');else{target.style.removeProperty('height');target.style.removeProperty('max-height');}save(key,prefs);schedule();}},signal);
+   items.push({...item,target});
+  }
+  if(compact)add('price',price,'가격·거래량 구간 높이',48,()=>Math.max(48,price.getBoundingClientRect().height+volume.getBoundingClientRect().height-24));
+  else{add('price',price,'가격 차트 높이',120,()=>height()*2);add('volume',volume,'거래량 구간 높이',24,()=>height()*.7);add('investors',investors,'수급 구간 높이',36,()=>height()*.8);}
+  const observer=new ResizeObserver(schedule);for(const element of [host,price,volume,investors])if(element)observer.observe(element);
+  host.addEventListener('stockbook:chart-render',schedule,{signal});host.addEventListener('toggle',schedule,{signal,capture:true});
+  host.addEventListener('stockbook:chart-settings-reset',()=>{for(const field of Object.keys(prefs))delete prefs[field];host.style.removeProperty('--sb-volume-height');for(const element of [price,volume,investors]){element?.style.removeProperty('height');element?.style.removeProperty('max-height');}save(key,prefs);schedule();},{signal});
+  apply();return {destroy(){abort.abort();observer.disconnect();if(frame)root.cancelAnimationFrame(frame);layer.remove();host.style.removeProperty('--sb-volume-height');}};
+ }
+ function mountWorkspace(){
+  const workspace=document.getElementById('mdiWorkspace');if(!workspace)return;
+  const key='stockbook:workspace:heights:v1',prefs=read(key),abort=new AbortController(),signal=abort.signal;
+  for(const field of Object.keys(prefs))if(!Number.isFinite(prefs[field])||prefs[field]<=0||prefs[field]>=1)delete prefs[field];
+  const context=document.getElementById('dockCtx');let frame=0;
+  const tab=()=>workspace.dataset.workTab||'pf';
+  const available=()=>{const css=getComputedStyle(workspace);return Math.max(1,workspace.clientHeight-parseFloat(css.paddingTop)-parseFloat(css.paddingBottom)-2*parseFloat(css.rowGap||0));};
+  const limits=()=>{const size=available(),min=Math.min(220,size*.45);return [min,Math.max(min,size-Math.min(tab()==='journal'?240:180,size*.4))];};
+  function apply(){const enabled=root.innerWidth>900&&context.getBoundingClientRect().width>0;
+   split.handle.hidden=!enabled;
+   if(enabled&&prefs[tab()]){const [min,max]=limits(),chart=clamp(prefs[tab()]*available(),min,max);workspace.style.setProperty('--sb-work-height',available()-chart+'px');workspace.classList.add('sb-user-split');}
+   else{workspace.classList.remove('sb-user-split');workspace.style.removeProperty('--sb-work-height');}
+   if(enabled){const outer=workspace.getBoundingClientRect(),box=context.getBoundingClientRect();split.handle.style.left=box.left-outer.left+workspace.scrollLeft+'px';split.handle.style.width=box.width+'px';split.handle.style.top=box.bottom-outer.top+workspace.scrollTop+'px';split.update();}
+  }
+  function schedule(){if(!frame)frame=root.requestAnimationFrame(()=>{frame=0;apply();});}
+  const split=separator(workspace,'차트와 하단 작업 패널 높이',{value:()=>context.getBoundingClientRect().height,limits,change:value=>{prefs[tab()]=value/available();apply();},commit:()=>save(key,prefs),reset:()=>{delete prefs[tab()];save(key,prefs);apply();}},signal);
+  split.handle.classList.add('sb-workspace-resizer');
+  const observer=new ResizeObserver(schedule);observer.observe(workspace);observer.observe(context);
+  new MutationObserver(schedule).observe(workspace,{attributes:true,attributeFilter:['data-dock-screen','data-work-tab']});root.addEventListener('resize',schedule,{signal});apply();
+ }
+ root.StockBookChartResize=Object.freeze({mount:mountChart});
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountWorkspace,{once:true});else mountWorkspace();
+})(window);
+
+</script>
+<script>
+(function(root){
+ 'use strict';
  let cached=null;const dataCache=new Map();
  async function readDataset(code,cycle){
   if(root.electronAPI?.getChartData)return root.electronAPI.getChartData(code,cycle);
@@ -15534,7 +15617,7 @@ root.StockBookChartRenderer=Object.freeze({mount});
   if(!host)return Promise.resolve(null);
   const old=states.get(host),key=JSON.stringify([context.code,context.viewRange||context.period,context.barCycle||'day',context.indicatorCycle||context.barCycle||'day',mode]);
   if(old?.key===key&&!old.failed)return old.task;
-  old?.interaction?.destroy();const state={key,controller:null,interaction:null,task:null};states.set(host,state);
+  old?.interaction?.destroy();old?.resize?.destroy();const state={key,controller:null,interaction:null,resize:null,task:null};states.set(host,state);
   delete host.chartEvidence;host.className='sb-chart-loading';host.textContent='차트 자료를 불러오는 중…';
   function failed(message){
    state.failed=true;host.className='sb-data-empty';host.replaceChildren();
@@ -15547,13 +15630,14 @@ root.StockBookChartRenderer=Object.freeze({mount});
    try{
     state.controller=root.StockBookChartRenderer.mount(host,data,{mode,period:context.period,viewRange:context.viewRange||context.period,barCycle:context.barCycle||'day',indicatorCycle:context.indicatorCycle||context.barCycle||'day',light:document.body.classList.contains('light-mode')});
     if(root.StockBookChartInteraction)state.interaction=root.StockBookChartInteraction.mount(host,state.controller,{tools:true,compact:mode==='compact'});
+    if(root.StockBookChartResize)state.resize=root.StockBookChartResize.mount(host,state.controller,mode);
     return state.controller;
-   }catch{state.interaction?.destroy();failed('차트 자료를 표시하지 못했습니다.');return null;}
+   }catch{state.interaction?.destroy();state.resize?.destroy();failed('차트 자료를 표시하지 못했습니다.');return null;}
   })();return state.task;
  }
 
  let light=document.body.classList.contains('light-mode');new MutationObserver(()=>{const next=document.body.classList.contains('light-mode');if(next===light)return;light=next;for(const host of document.querySelectorAll('[data-chart-host]'))states.get(host)?.controller?.updateTheme(light);}).observe(document.body,{attributes:true,attributeFilter:['class']});
- root.StockBookCharts=Object.freeze({show,controller:host=>states.get(host)?.controller,clear:host=>{if(!host)return;states.get(host)?.interaction?.destroy();states.delete(host);delete host.chartEvidence;host.className='sb-data-empty';host.textContent='종목을 선택하면 차트를 표시합니다.';}});
+ root.StockBookCharts=Object.freeze({show,controller:host=>states.get(host)?.controller,clear:host=>{if(!host)return;states.get(host)?.interaction?.destroy();states.get(host)?.resize?.destroy();states.delete(host);delete host.chartEvidence;host.className='sb-data-empty';host.textContent='종목을 선택하면 차트를 표시합니다.';}});
 })(window);
 
 </script>
