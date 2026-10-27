@@ -35,7 +35,7 @@ test('crosshair OHLC, pan/zoom/scroll and drawing tools work with data anchors a
   const p=await point(page,2,260);await page.mouse.move(p.x,p.y);assert.equal(await page.locator('.sb-chart-crosshair').count(),2);const expected=await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().rows[2]);assert.match(await page.locator('.sb-chart-tooltip').innerText(),new RegExp(expected.date));assert.match(await page.locator('.sb-chart-tooltip').innerText(),/시가|종가|거래량/);
   const before=await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().count);
   await page.mouse.down();await page.mouse.move(p.x+100,p.y,{steps:8});await page.mouse.up();let m=await page.locator('#chartViewport').evaluate(h=>{const m=StockBookCharts.controller(h).getModel();return {count:m.count,end:m.end,total:m.all.length};});assert.ok(m.count<before);assert.equal(m.end,m.total);
-  await page.getByRole('button',{name:'처음 보기',exact:true}).click();await page.getByRole('button',{name:'이동',exact:true}).click();const pan=await point(page,3,260);await page.mouse.move(pan.x,pan.y);await page.mouse.down();await page.mouse.move(pan.x+100,pan.y,{steps:6});await page.mouse.up();assert.ok(await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().end<StockBookCharts.controller(h).getModel().all.length));
+  await page.getByRole('button',{name:'처음 보기',exact:true}).click();const pan=await point(page,3,40);await page.mouse.move(pan.x,pan.y);await page.mouse.wheel(0,-120);assert.ok(await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().end<StockBookCharts.controller(h).getModel().all.length));assert.equal(await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().count),before);
   await page.getByRole('slider',{name:'차트 가로 스크롤',exact:true}).press('Home');assert.equal(await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().offset),0);
   await page.getByRole('slider',{name:'차트 축척',exact:true}).press('End');assert.equal(await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().count),1);
   await page.getByRole('button',{name:'최신',exact:true}).click();await page.getByRole('button',{name:'처음 보기',exact:true}).click();
@@ -55,6 +55,7 @@ test('tablet touch can draw a horizontal line and pinch zoom without losing the 
  try{
   await page.locator('[data-tool="horizontal"]').tap();const p=await point(page,2,260);await page.touchscreen.tap(p.x,p.y);assert.equal(await page.locator('.sb-chart-drawing').count(),1);
   const session=await page.context().newCDPSession(page),center=await point(page,3,300);const input=(type,d)=>session.send('Input.dispatchTouchEvent',{type,touchPoints:d});
+  const drag=await point(page,2,40);await input('touchStart',[{x:drag.x,y:drag.y,id:1}]);await input('touchMove',[{x:drag.x+80,y:drag.y,id:1}]);await input('touchEnd',[]);assert.ok(await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().count)<7);await page.getByRole('button',{name:'처음 보기',exact:true}).click();
   await input('touchStart',[{x:center.x-35,y:center.y,id:1},{x:center.x+35,y:center.y,id:2}]);await input('touchMove',[{x:center.x-90,y:center.y,id:1},{x:center.x+90,y:center.y,id:2}]);await input('touchEnd',[]);
   const m=await page.locator('#chartViewport').evaluate(h=>{const m=StockBookCharts.controller(h).getModel();return {count:m.count,end:m.end,total:m.all.length};});assert.ok(m.count<7);assert.equal(m.end,m.total);assert.deepEqual(h.errors,[]);
  }finally{await h.close();}
@@ -119,6 +120,7 @@ test('embedded chart exposes crosshair labels, persistent bar data and foldable 
   assert.equal(await host.locator('.sb-chart-compact-controls').count(),1);assert.match(await host.locator('.sb-chart-bar-info').innerText(),/월봉/);
   p=await at(1,260);await page.mouse.move(p.x,p.y);assert.match(await host.locator('.sb-chart-tooltip').innerText(),new RegExp(p.date));
   await page.locator('#sbChartCycle').selectOption('day');await page.waitForFunction(()=>document.getElementById('sbEmbeddedChart').chartEvidence?.barCycle==='day');await host.getByRole('combobox',{name:'차트 유형',exact:true}).selectOption('volume');await host.locator('.sb-chart-tool-panel > summary').click();await host.getByRole('button',{name:'차트 설정 초기화',exact:true}).click();assert.equal(await host.getByRole('combobox',{name:'차트 유형',exact:true}).inputValue(),'candle');assert.deepEqual(await host.evaluate(h=>h.chartEvidence.periods),[5,10,20,60]);
+  const countBeforeWheel=await host.evaluate(h=>StockBookCharts.controller(h).getModel().count),wheelPoint=await at(2,40);await page.mouse.move(wheelPoint.x,wheelPoint.y);await page.mouse.wheel(0,-120);await page.waitForFunction(()=>StockBookCharts.controller(document.getElementById('sbEmbeddedChart')).getModel().offset<StockBookCharts.controller(document.getElementById('sbEmbeddedChart')).getModel().all.length-StockBookCharts.controller(document.getElementById('sbEmbeddedChart')).getModel().count);assert.equal(await host.evaluate(h=>StockBookCharts.controller(h).getModel().count),countBeforeWheel);
   assert.deepEqual(h.errors,[]);
  }finally{await h.close();}
 });
@@ -134,7 +136,7 @@ test('Space repeatedly zooms out during a held drag, retains the drag baseline a
   await page.mouse.move(p.x+16,p.y);assert.equal(await count(),second);await page.mouse.up();
   await page.getByRole('textbox',{name:'차트 메모'}).fill('차트');await page.getByRole('textbox',{name:'차트 메모'}).press('Space');assert.equal(await count(),second);assert.equal(await page.getByRole('textbox',{name:'차트 메모'}).inputValue(),'차트 ');
   await page.getByRole('button',{name:'처음 보기',exact:true}).click();assert.equal(await count(),start);
-  await page.getByRole('button',{name:'이동',exact:true}).click();const q=await point(page,2,260);await page.mouse.move(q.x,q.y);await page.mouse.down();await page.keyboard.press('Space');assert.ok(await count()>start);await page.mouse.up();
+  await page.getByRole('slider',{name:'차트 가로 스크롤',exact:true}).focus();await page.keyboard.press('Space');assert.equal(await count(),start);
   assert.deepEqual(h.errors,[]);
  }finally{await h.close();}
 });
@@ -193,7 +195,7 @@ test('four chart types preserve OHLC and data anchors, use volume widths and lab
  const h=await setup(),{page}=h;
  try{
   const type=page.getByRole('combobox',{name:'차트 유형',exact:true});const original=await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().rows.map(r=>[r.date,r.open,r.high,r.low,r.close,r.volume]));
-  await type.selectOption('hollow');const hollow=await page.locator('#chartViewport').evaluate(h=>{const m=StockBookCharts.controller(h).getModel();return [...h.querySelectorAll('.candle')].map((el,i)=>({fill:el.getAttribute('fill'),up:m.rows[i].close>=m.rows[i].open}));});assert.ok(hollow.some(r=>r.fill==='none'));assert.ok(hollow.every(r=>r.up?r.fill==='none':r.fill!=='none'));
+  await type.selectOption('hollow');const hollow=await page.locator('#chartViewport').evaluate(h=>{const m=StockBookCharts.controller(h).getModel();return [...h.querySelectorAll('.candle')].map((el,i)=>({fill:el.getAttribute('fill'),up:m.rows[i].close>=m.rows[i].open}));});assert.ok(hollow.some(r=>r.fill==='none'));assert.ok(hollow.every(r=>r.fill==='none'));
   await type.selectOption('volume');const widths=await page.locator('.candle').evaluateAll(es=>es.map(el=>Number(el.getAttribute('width'))));assert.ok(Math.max(...widths)>Math.min(...widths));
   for(const index of [0,2,5]){const p=await point(page,index,300);await page.mouse.move(p.x,p.y);const date=await page.locator('#chartViewport').evaluate((h,i)=>StockBookCharts.controller(h).getModel().rows[i].date,index);assert.match(await page.locator('.sb-chart-tooltip').innerText(),new RegExp(date));}
   const geometry=await page.locator('#chartViewport').evaluate(h=>{const a=[...h.querySelectorAll('.candle')],b=[...h.querySelectorAll('.pressure-volume')];return a.map((el,i)=>{const x=el.getBoundingClientRect(),v=b[i].getBoundingClientRect();return Math.abs(x.x+x.width/2-v.x-v.width/2);});});assert.ok(geometry.every(value=>value<1));
@@ -223,5 +225,27 @@ test('chart reset restores current-cycle defaults and saved display preferences 
   await page.locator('#chartCycle').selectOption('day');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='day'&&document.getElementById('chartViewport').chartEvidence?.periods.length===2);assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.bbPeriod),20);
   await page.getByRole('button',{name:'차트 설정 초기화',exact:true}).click();const daily=await page.locator('#chartViewport').evaluate(h=>h.chartEvidence);assert.deepEqual(daily.periods,[5,10,20,60,120,200,350,480]);assert.equal(daily.bbPeriod,40);assert.equal(daily.bbMultiplier,1.9);assert.equal(daily.bbShift,25);assert.deepEqual(daily.cloudPeriods,[5,10]);
   await page.reload();await page.evaluate(()=>window.__context({code:'000001',name:'초기화 복원 검증',barCycle:'month',period:'6m',follow:false}));await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='month');assert.equal(await page.getByRole('combobox',{name:'차트 유형',exact:true}).inputValue(),'candle');assert.deepEqual(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.periods),[1,5,19,6,9]);await page.getByRole('button',{name:'불러오기',exact:true}).click();assert.equal(await page.locator('.sb-chart-drawing').count(),2);assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
+
+test('hollow bodies are empty for both directions and scrolling stays separate from drag/scale zoom in every chart type',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  await page.locator('#chartCycle').selectOption('day');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='day');
+  const scroll=page.getByRole('slider',{name:'차트 가로 스크롤',exact:true}),scale=page.getByRole('slider',{name:'차트 축척',exact:true}),type=page.getByRole('combobox',{name:'차트 유형',exact:true});
+  const state=()=>page.locator('#chartViewport').evaluate(h=>{const m=StockBookCharts.controller(h).getModel();return {count:m.count,offset:m.offset,end:m.end,total:m.all.length,position:m.scrollPosition,scroll:h.querySelector('[aria-label="차트 가로 스크롤"]').value,scale:h.querySelector('[aria-label="차트 축척"]').value};});
+  for(const kind of ['candle','hollow','volume','profile']){
+   await type.selectOption(kind);await page.getByRole('button',{name:'처음 보기',exact:true}).click();const initial=await state();
+   if(kind==='hollow'){const bars=await page.locator('#chartViewport').evaluate(h=>{const rows=StockBookCharts.controller(h).getModel().rows;return [...h.querySelectorAll('.candle')].map((el,i)=>({empty:el.getAttribute('fill')==='none',up:rows[i].close>=rows[i].open}));});assert.ok(bars.some(b=>b.up));assert.ok(bars.some(b=>!b.up));assert.ok(bars.every(b=>b.empty));}
+   await scroll.scrollIntoViewIfNeeded();const box=await scroll.boundingBox();await scroll.click({position:{x:box.width/2,y:box.height/2}});const middle=await state();assert.equal(middle.count,initial.count);assert.equal(middle.scale,initial.scale);assert.ok(middle.position>.4&&middle.position<.6);
+   await scale.press('ArrowRight');let zoomed=await state();assert.ok(zoomed.count<middle.count);assert.equal(zoomed.scroll,middle.scroll);assert.equal(zoomed.position,middle.position);
+   const p=await point(page,2,40);await page.mouse.move(p.x,p.y);await page.mouse.down();await page.mouse.move(p.x+100,p.y,{steps:5});const dragged=await state();assert.ok(dragged.count<zoomed.count);assert.equal(dragged.scroll,middle.scroll);await page.mouse.wheel(0,-120);await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));assert.deepEqual(await state(),dragged);await page.mouse.up();
+   await page.mouse.wheel(0,-120);await page.waitForFunction(offset=>StockBookCharts.controller(document.getElementById('chartViewport')).getModel().offset<offset,dragged.offset);let moved=await state();assert.equal(moved.count,dragged.count);assert.equal(moved.scale,dragged.scale);
+   const prior=moved;await page.mouse.wheel(120,0);await page.waitForFunction(offset=>StockBookCharts.controller(document.getElementById('chartViewport')).getModel().offset>offset,prior.offset);moved=await state();assert.equal(moved.scale,prior.scale);assert.equal(moved.count,prior.count);
+   await scale.hover();await page.mouse.wheel(0,-120);await page.waitForFunction(offset=>StockBookCharts.controller(document.getElementById('chartViewport')).getModel().offset<offset,moved.offset);const overScale=await state();assert.equal(overScale.count,moved.count);assert.equal(overScale.scale,moved.scale);
+   await scroll.hover();await page.mouse.wheel(0,120);await page.waitForFunction(offset=>StockBookCharts.controller(document.getElementById('chartViewport')).getModel().offset>offset,overScale.offset);const beforeFull=await state();assert.equal(beforeFull.count,overScale.count);assert.equal(beforeFull.scale,overScale.scale);
+   await scale.press('Home');assert.equal(await scroll.isDisabled(),true);assert.equal((await state()).scroll,beforeFull.scroll);await scale.press('End');assert.equal((await state()).count,1);assert.equal((await state()).scroll,beforeFull.scroll);await page.getByRole('button',{name:'최신',exact:true}).click();assert.equal((await state()).end,initial.total);
+  }
+  assert.deepEqual(h.errors,[]);
  }finally{await h.close();}
 });

@@ -1,6 +1,6 @@
 {
   "passed": true,
-  "verifiedAt": "2026-10-27T04:18:56.552Z",
+  "verifiedAt": "2026-10-27T04:58:22.960Z",
   "scope": "Self-contained production detail HTML, recorded Samsung data only, served internally over HTTP.",
   "years": [],
   "calls": [],
@@ -21,6 +21,26 @@
       "profileTotal": 3487491619
     }
   ],
+  "navigation": {
+    "beforeZoom": {
+      "count": 132,
+      "offset": 434,
+      "scroll": "500",
+      "scale": "868"
+    },
+    "afterZoom": {
+      "count": 131,
+      "offset": 435,
+      "scroll": "500",
+      "scale": "869"
+    },
+    "afterScroll": {
+      "count": 131,
+      "offset": 432,
+      "scroll": "497",
+      "scale": "869"
+    }
+  },
   "checks": [
     "annual 1/5/10 and missing history handling",
     "independent cycle/range selectors",
@@ -29,7 +49,8 @@
     "monthly fixed-height volume panel",
     "hollow, volume and estimated profile types",
     "individual indicator removal and re-enable",
-    "chart settings reset"
+    "chart settings reset",
+    "hollow up/down bodies empty and scroll/zoom controls independent"
   ],
   "browserErrors": []
 }

@@ -7,7 +7,7 @@
   const visibilityKey='stockbook:chart:visibility:v1:'+key;let hidden=indicatorMemory.get(key)||[],lastVisibility='';
   try{const saved=JSON.parse(root.localStorage.getItem(visibilityKey));if(Array.isArray(saved)&&saved.length<=32&&saved.every(id=>typeof id==='string'&&/^(ma:\d+|bb|cloud|pressure|investors|profile)$/.test(id)))hidden=saved;const type=root.localStorage.getItem('stockbook:chart:type:v1');if(root.StockBookChartSeries.chartTypes.includes(type))controller.setType(type);}catch{}
   if(tools)controller.setHiddenIndicators(hidden);svg.setAttribute('tabindex','0');
-  let drawings=memory.get(key)||[],mode='zoom',selected=null,selectedIndicator=null,pending=null,gesture=null,stroke=null,nextId=Math.max(0,...drawings.map(d=>d.id))+1,history=[],preview=null,touches=new Map(),pinch=null;
+  let drawings=memory.get(key)||[],mode='zoom',selected=null,selectedIndicator=null,pending=null,gesture=null,stroke=null,nextId=Math.max(0,...drawings.map(d=>d.id))+1,history=[],preview=null,touches=new Map(),pinch=null,wheelRemainder=0;
   const ns='http://www.w3.org/2000/svg',node=(tag,attrs={},text)=>{const el=doc.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,String(v));if(text!==undefined)el.textContent=text;return el;};
   const tip=doc.createElement('div');tip.className='sb-chart-tooltip';tip.hidden=true;tip.setAttribute('role','status');host.append(tip);
   const status=doc.createElement('div');status.className='sb-chart-tool-status';status.textContent='봉 위에 마우스를 올리거나 터치하면 정보를 봅니다.';
@@ -26,13 +26,13 @@
   const textInput=doc.createElement('input');textInput.className='sb-input';textInput.placeholder='차트 메모';textInput.maxLength=160;textInput.setAttribute('aria-label','차트 메모');
   const center=doc.createElement('select');center.className='sb-input';center.setAttribute('aria-label','봉중심선 기준');center.add(new Option('고저 중심','range'));center.add(new Option('몸통 중심','body'));
   function button(label,action,parent=toolbar,attrs={}){const el=doc.createElement('button');el.type='button';el.className='sb-btn';el.textContent=label;Object.assign(el.dataset,attrs);el.addEventListener('click',action,{signal});parent.append(el);return el;}
-  const setMode=value=>{if(compact)toolPanel.open=false;mode=value;pending=null;stroke=null;preview=null;for(const b of toolbar.querySelectorAll('[data-tool]'))b.setAttribute('aria-pressed',String(b.dataset.tool===mode));status.textContent=({zoom:'왼쪽 드래그는 축소, 오른쪽은 확대합니다. 드래그 유지 중 Space를 누를 때마다 한 단계 축소합니다.',pan:'좌우 드래그로 이동합니다. 드래그 유지 중 Space를 누르면 한 단계 축소합니다.',midpoint:'봉을 누르면 선택 기준의 중심선을 그립니다.',pen:'누른 채 자유롭게 그립니다.',text:'메모를 입력한 뒤 표시할 곳을 누르세요.'})[value]||'시작점과 끝점을 누르거나 끌어 그립니다. Esc로 취소합니다.';};
+  const setMode=value=>{if(compact)toolPanel.open=false;mode=value;pending=null;stroke=null;preview=null;for(const b of toolbar.querySelectorAll('[data-tool]'))b.setAttribute('aria-pressed',String(b.dataset.tool===mode));status.textContent=({zoom:'왼쪽 드래그는 축소, 오른쪽은 확대합니다. 휠·이동 막대는 가로 이동만 합니다. 드래그 중 Space는 한 단계 축소합니다.',midpoint:'봉을 누르면 선택 기준의 중심선을 그립니다.',pen:'누른 채 자유롭게 그립니다.',text:'메모를 입력한 뒤 표시할 곳을 누르세요.'})[value]||'시작점과 끝점을 누르거나 끌어 그립니다. Esc로 취소합니다.';};
   if(tools){
-   for(const [value,label]of [['zoom','확대 조절'],['pan','이동'],['trend','추세선'],['horizontal','수평선'],['vertical','수직선'],['thirds','3등분'],['quarters','4등분'],['midpoint','봉중심선'],['rectangle','사각형'],['ellipse','원·타원'],['triangle','삼각형'],['arrow','화살표'],['pen','펜'],['text','텍스트']])button(label,()=>setMode(value),toolbar,{tool:value});
+   for(const [value,label]of [['zoom','확대 조절'],['trend','추세선'],['horizontal','수평선'],['vertical','수직선'],['thirds','3등분'],['quarters','4등분'],['midpoint','봉중심선'],['rectangle','사각형'],['ellipse','원·타원'],['triangle','삼각형'],['arrow','화살표'],['pen','펜'],['text','텍스트']])button(label,()=>setMode(value),toolbar,{tool:value});
    toolbar.append(center,textInput);button('선택 삭제',deleteSelection);button('실행 취소',()=>{if(history.length){const previous=history.pop();drawings=previous.drawings;selected=null;selectedIndicator=null;controller.setHiddenIndicators(previous.hidden);draw();}});button('지표 복원',()=>{remember();selectedIndicator=null;controller.setHiddenIndicators([]);status.textContent='지운 지표를 복원했습니다.';});button('차트 설정 초기화',resetSettings).title='현재 봉 주기의 지표·표시·유형·확대·이동을 기본값으로 돌립니다. 그린 선과 메모는 유지합니다.';button('모두 지우기',()=>{remember();drawings=[];selected=null;draw();});
    button('저장',()=>{try{root.localStorage.setItem(storageKey,JSON.stringify({version:1,key,drawings}));status.textContent='이 종목·봉 주기의 그림을 저장했습니다.';}catch{status.textContent='그림을 저장하지 못했습니다.';}});
    button('불러오기',()=>{try{const saved=JSON.parse(root.localStorage.getItem(storageKey));if(saved?.version!==1||saved.key!==key||!Array.isArray(saved.drawings)||saved.drawings.length>200)throw Error();for(const d of saved.drawings)if(!Number.isSafeInteger(d.id)||d.id<1||!types.includes(d.type)||!Array.isArray(d.points)||d.points.length<1||d.points.length>500||d.points.some(a=>typeof a.key!=='string'||a.key.length>32||!Number.isInteger(a.extra)||Math.abs(a.extra)>120||!Number.isFinite(a.price)||a.price<=0)||typeof(d.text||'')!=='string')throw Error();remember();drawings=saved.drawings;nextId=Math.max(0,...drawings.map(d=>d.id))+1;draw();status.textContent='저장한 그림을 불러왔습니다.';}catch{status.textContent='저장 자료를 읽지 못했습니다. 현재 그림은 유지합니다.';}});
-   button('−',()=>zoom(1.4),nav);button('+',()=>zoom(1/1.4),nav);button('처음 보기',()=>controller.resetView(),nav);button('최신',()=>{const m=controller.getModel();controller.setView(m.count,m.all.length);},nav);
+   button('−',()=>zoom(1.4),nav);button('+',()=>zoom(1/1.4),nav);button('처음 보기',()=>controller.resetView(),nav);button('최신',()=>controller.scrollTo(1),nav);
    if(compact){
     const summary=doc.createElement('summary');summary.textContent='차트 도구';
     const body=doc.createElement('div');body.className='sb-chart-tool-panel-body';body.append(toolbar,indicatorPanel,indicatorControls,nav,status);
@@ -42,11 +42,11 @@
   }
   // Inputs are separate from chart SVG coordinates; vertical bar height remains fixed.
   const scroll=doc.createElement('input'),scale=doc.createElement('input'),readout=doc.createElement('span');
-  scroll.type=scale.type='range';scroll.min=scale.min='0';scroll.setAttribute('aria-label','차트 가로 스크롤');scale.setAttribute('aria-label','차트 축척');readout.className='sb-chart-count';
-  if(tools){const moveLabel=doc.createElement('label'),scaleLabel=doc.createElement('label');moveLabel.append('이동 ',scroll);scaleLabel.append('축척 ',scale);nav.append(moveLabel,scaleLabel,readout);scroll.addEventListener('input',()=>{const m=controller.getModel();controller.setView(m.count,Number(scroll.value)+m.count);},{signal});scale.addEventListener('input',()=>{const m=controller.getModel();controller.setView(m.all.length-Number(scale.value),m.end);},{signal});}
+  scroll.type=scale.type='range';scroll.min=scale.min='0';scroll.max='1000';scroll.title='가로 이동 전용 · 표시 봉 수 유지';scale.title='확대·축소 전용 · 이동 위치 비율 유지';scroll.setAttribute('aria-label','차트 가로 스크롤');scale.setAttribute('aria-label','차트 축척');readout.className='sb-chart-count';
+  if(tools){const moveLabel=doc.createElement('label'),scaleLabel=doc.createElement('label');moveLabel.append('이동 ',scroll);scaleLabel.append('축척 ',scale);nav.append(moveLabel,scaleLabel,readout);scroll.addEventListener('input',()=>{controller.scrollTo(Number(scroll.value)/1000);},{signal});scale.addEventListener('input',()=>{const m=controller.getModel();controller.zoomTo(m.all.length-Number(scale.value));},{signal});}
   function remember(){history.push({drawings:JSON.parse(JSON.stringify(drawings)),hidden:controller.getHiddenIndicators()});if(history.length>30)history.shift();}
   function resetSettings(){
-   if(gesture&&svg.hasPointerCapture(gesture.id))svg.releasePointerCapture(gesture.id);gesture=null;pending=null;stroke=null;preview=null;pinch=null;touches.clear();svg.classList.remove('sb-chart-object-dragging');selected=null;selectedIndicator=null;center.value='range';history=history.map(item=>({...item,hidden:[]}));setMode('zoom');hide();
+   if(gesture&&svg.hasPointerCapture(gesture.id))svg.releasePointerCapture(gesture.id);gesture=null;pending=null;stroke=null;preview=null;pinch=null;wheelRemainder=0;touches.clear();svg.classList.remove('sb-chart-object-dragging');selected=null;selectedIndicator=null;center.value='range';history=history.map(item=>({...item,hidden:[]}));setMode('zoom');hide();
    host.dispatchEvent(new CustomEvent('stockbook:chart-settings-reset'));controller.resetSettings();try{root.localStorage.setItem('stockbook:chart:type:v1','candle');}catch{}status.textContent='차트 설정을 기본값으로 초기화했습니다. 그린 선·메모는 유지합니다.';
   }
   function deleteSelection(){
@@ -95,7 +95,7 @@
    }
    if(compact){indicatorControls.replaceChildren(...[...host.querySelectorAll('[data-chart-id="legend"] .sb-chart-indicator')].map(item=>item.cloneNode(true)));}
    if(tools){indicatorMemory.set(key,controller.getHiddenIndicators());for(const item of host.querySelectorAll('.sb-chart-indicator'))item.setAttribute('aria-pressed',String(item.dataset.chartIndicator===selectedIndicator));}
-   const m=model();if(compact){barInfo.textContent=describeBar(m.rows.at(-1),m);barInfo.title=barInfo.textContent;}scroll.max=String(Math.max(0,m.all.length-m.count));scroll.value=String(m.offset);scale.max=String(Math.max(0,m.all.length-1));scale.value=String(m.all.length-m.count);readout.textContent=m.count+'봉';
+   const m=model();if(compact){barInfo.textContent=describeBar(m.rows.at(-1),m);barInfo.title=barInfo.textContent;}scroll.value=String(Math.round(m.scrollPosition*1000));scroll.disabled=m.count===m.all.length;scroll.setAttribute('aria-valuetext',m.rows[0].date+' ~ '+m.rows.at(-1).date);scale.max=String(Math.max(0,m.all.length-1));scale.value=String(m.all.length-m.count);readout.textContent=m.count+'봉';
   }
   function hide(){svg.querySelector('.sb-chart-crosshair')?.remove();pressure?.querySelector('.sb-chart-crosshair')?.remove();tip.hidden=true;priceLabel.hidden=true;dateLabel.hidden=true;}
   function show(event,target=svg){
@@ -115,23 +115,22 @@
    else{const prior=m.all[m.offset+i-1]?.close,change=prior?(row.close/prior-1)*100:null;tip.textContent=[m.name+' · '+m.config.label+' · '+row.date,...['open','high','low','close'].map((k,j)=>['시가','고가','저가','종가'][j]+' '+row[k].toLocaleString()),'직전 봉 대비 '+(change===null?'자료 없음':change.toFixed(2)+'%'),'거래량 '+row.volume.toLocaleString(),...(row.incompleteStart?['첫 기간은 수신 범위 내 부분 집계']:[]),...(row.incompleteEnd?['마지막 봉 완성 여부 미확인']:[]),'거래대금 자료 미수신',...m.averages.map((a,j)=>m.periods[j]+m.config.unit+'선 '+(a[i]===null?'이력 부족':a[i].toLocaleString('ko-KR',{maximumFractionDigits:2})))].join('\n');}
    tip.hidden=false;tip.style.left=Math.max(6,Math.min(root.innerWidth-tip.offsetWidth-8,event.clientX+14))+'px';tip.style.top=Math.max(6,Math.min(root.innerHeight-tip.offsetHeight-8,event.clientY+14))+'px';
   }
-  function zoom(factor){const m=model();controller.setView(m.count*factor,m.end);}
+  function zoom(factor){const m=model();controller.zoomTo(m.count*factor);}
   function add(type,points){if(drawings.length>=200){status.textContent='그림은 200개까지 추가할 수 있습니다.';return;}remember();const d={id:nextId++,type,points};if(type==='text')d.text=textInput.value.trim()||'메모';drawings.push(d);selected=d.id;selectedIndicator=null;pending=null;setMode('zoom');draw();}
   function down(e){
    if(e.pointerType==='touch'){touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(touches.size===2){const [a,b]=[...touches.values()],m=model();pinch={distance:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),count:m.count,end:m.end};gesture=null;stroke=null;pending=null;preview=null;svg.setPointerCapture(e.pointerId);e.preventDefault();return;}}
    if(e.button!==0||pinch)return;svg.focus({preventScroll:true});const indicator=e.target.closest('[data-chart-indicator]');if(tools&&indicator&&mode==='zoom'){selectIndicator(indicator.dataset.chartIndicator);e.preventDefault();return;}const p=point(e),m=model();if(p.x<25||p.x>1170||p.y<30||p.y>520)return;
    const hit=e.target.closest('[data-drawing-id]'),d=drawings.find(d=>d.id===Number(hit?.dataset.drawingId));
-   if(d&&(mode==='zoom'||mode==='pan')){selected=d.id;selectedIndicator=null;remember();svg.classList.add('sb-chart-object-dragging');gesture={kind:'drawing',id:e.pointerId,start:p,original:JSON.parse(JSON.stringify(d.points)),handle:hit.hasAttribute('data-handle')?Number(hit.dataset.handle):null,drawing:d.id};draw();}
-   else if(mode==='zoom'||mode==='pan'){selected=null;selectedIndicator=null;gesture={kind:mode==='pan'||e.pointerType==='touch'?'pan':'zoom',id:e.pointerId,x:e.clientX,y:e.clientY,count:m.count,end:m.end,step:m.step*Math.abs(svg.getScreenCTM().a)};}
+   if(d&&mode==='zoom'){selected=d.id;selectedIndicator=null;remember();svg.classList.add('sb-chart-object-dragging');gesture={kind:'drawing',id:e.pointerId,start:p,original:JSON.parse(JSON.stringify(d.points)),handle:hit.hasAttribute('data-handle')?Number(hit.dataset.handle):null,drawing:d.id};draw();}
+   else if(mode==='zoom'){selected=null;selectedIndicator=null;wheelRemainder=0;gesture={kind:'zoom',id:e.pointerId,x:e.clientX,y:e.clientY,count:m.count};}
    else{gesture={kind:'draw',id:e.pointerId,start:p,anchor:anchor(p,m),moved:false};if(mode==='pen')stroke=[gesture.anchor];}
    svg.setPointerCapture(e.pointerId);e.preventDefault();e.stopPropagation();show(e);
   }
   function move(e){
    if(gesture?.id===e.pointerId){gesture.lastX=e.clientX;gesture.lastY=e.clientY;}
-   if(touches.has(e.pointerId))touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pinch){if(touches.size===2){const[a,b]=[...touches.values()];controller.setView(pinch.count*pinch.distance/Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),pinch.end);}e.preventDefault();return;}
+   if(touches.has(e.pointerId))touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pinch){if(touches.size===2){const[a,b]=[...touches.values()];controller.zoomTo(pinch.count*pinch.distance/Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)));}e.preventDefault();return;}
    const m=model(),p=point(e);if(!gesture||gesture.id!==e.pointerId){show(e);if(pending){preview={id:-1,type:mode,points:[pending,anchor(p,m)]};draw();}return;}
-   if(gesture.kind==='zoom')controller.setView(gesture.count*Math.exp(-(e.clientX-gesture.x)/220),gesture.end);
-   else if(gesture.kind==='pan')controller.setView(gesture.count,gesture.end-Math.round((e.clientX-gesture.x)/gesture.step));
+   if(gesture.kind==='zoom')controller.zoomTo(gesture.count*Math.exp(-(e.clientX-gesture.x)/220));
    else if(gesture.kind==='drawing'){
     const d=drawings.find(d=>d.id===gesture.drawing);if(!d)return;
     if(gesture.handle!==null){d.points=JSON.parse(JSON.stringify(gesture.original));d.points[gesture.handle]=anchor(p,m);}
@@ -152,23 +151,28 @@
   }
   svg.addEventListener('pointerdown',down,{signal});svg.addEventListener('pointermove',move,{signal});svg.addEventListener('pointerup',up,{signal});
   svg.addEventListener('pointercancel',()=>{svg.classList.remove('sb-chart-object-dragging');gesture=null;stroke=null;pending=null;preview=null;touches.clear();pinch=null;draw();},{signal});svg.addEventListener('pointerleave',()=>{if(!gesture)hide();},{signal});
-  svg.addEventListener('wheel',e=>{if(e.ctrlKey)return;e.preventDefault();zoom(e.deltaY<0?1/1.25:1.25);},{passive:false,signal});
+  function scrollWheel(e){
+   if(e.ctrlKey)return;const delta=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;if(!delta)return;e.preventDefault();
+   if(gesture||pinch){wheelRemainder=0;return;}
+   wheelRemainder+=e.deltaMode===1?delta:e.deltaMode===2?delta*model().count:delta/40;const bars=Math.trunc(wheelRemainder);if(bars){wheelRemainder-=bars;controller.scrollBy(bars);}
+  }
+  for(const target of [svg,pressure,scroll,scale])target?.addEventListener('wheel',scrollWheel,{passive:false,signal});
   host.querySelector('[data-chart-id="investorChart"]')?.addEventListener('pointerdown',()=>{if(tools&&controller.getIndicators().some(item=>item.id==='investors'&&item.available))selectIndicator('investors');},{signal});
   pressure?.setAttribute('data-chart-indicator','pressure');pressure?.addEventListener('pointerdown',()=>{if(tools)selectIndicator('pressure');},{signal});
   pressure?.addEventListener('pointermove',e=>show(e,pressure),{signal});pressure?.addEventListener('pointerleave',hide,{signal});
   if(compact)doc.addEventListener('pointerdown',event=>{if(!controls.contains(event.target))toolPanel.open=false;},{signal,capture:true});
   doc.addEventListener('keydown',e=>{
    if(e.defaultPrevented||e.isComposing||e.repeat||e.ctrlKey||e.altKey||e.metaKey||e.shiftKey||doc.querySelector('dialog[open]')||root.StockBookShortcuts?.hasOverlay())return;
-   if((e.code==='Space'||e.key===' ')&&gesture&&['zoom','pan'].includes(gesture.kind)){
+   if((e.code==='Space'||e.key===' ')&&gesture?.kind==='zoom'){
     e.preventDefault();if(e.repeat)return;
     const before=model();zoom(1.4);const after=model();
-    gesture.count=after.count;gesture.end=after.end;gesture.x=gesture.lastX??gesture.x;gesture.y=gesture.lastY??gesture.y;gesture.step=after.step*Math.abs(svg.getScreenCTM().a);
+    gesture.count=after.count;gesture.x=gesture.lastX??gesture.x;gesture.y=gesture.lastY??gesture.y;
     status.textContent=after.count===before.count?'수신한 전체 이력이 표시되어 더 축소할 수 없습니다.':'Space 축소 · '+after.count+'봉 표시 · 드래그를 유지한 채 다시 Space를 누를 수 있습니다.';
     return;
    }
    if(!host.contains(doc.activeElement)&&!host.contains(e.target)&&!(tools&&!compact&&e.key==='Escape'))return;
    if(e.key==='Escape'){
-    const drawing=pending||gesture||stroke||!['zoom','pan'].includes(mode),panel=doc.activeElement?.closest('details[open]')||[...host.querySelectorAll('details[open]')].at(-1);
+    const drawing=pending||gesture||stroke||mode!=='zoom',panel=doc.activeElement?.closest('details[open]')||[...host.querySelectorAll('details[open]')].at(-1);
     if(drawing){svg.classList.remove('sb-chart-object-dragging');if(gesture&&svg.hasPointerCapture(gesture.id))svg.releasePointerCapture(gesture.id);pending=null;gesture=null;stroke=null;preview=null;touches.clear();pinch=null;setMode('zoom');}
     else if(panel)panel.open=false;else{selected=null;selectedIndicator=null;}
     hide();draw();e.preventDefault();e.stopPropagation();
