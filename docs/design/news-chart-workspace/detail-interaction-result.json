@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "verifiedAt": "2026-10-27T02:15:45.999Z",
+  "scope": "Self-contained production detail HTML, recorded Samsung data only, served internally over HTTP.",
+  "years": [],
+  "calls": [],
+  "checks": [
+    "annual 1/5/10 and missing history handling",
+    "independent cycle/range selectors",
+    "monthly crosshair and actual candle date",
+    "monthly indicator periods",
+    "monthly fixed-height volume panel"
+  ],
+  "browserErrors": []
+}

@@ -1,6 +1,6 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict');
-const {aggregate,average,cycleConfig,visibleOffset}=require('../src/chart/series.js');
+const {aggregate,average,cycleConfig,visibleOffset,indicatorSettings}=require('../src/chart/series.js');
 const {chartContext}=require('../src/chart/window.cjs');
 const bar=(date,open,high,low,close,volume)=>({date,open,high,low,close,volume});
 test('KRX trading dates group by Monday weeks across years and holidays without zero-filled sessions',()=>{
@@ -22,7 +22,7 @@ test('weekly SMA uses weekly closes with full prehistory and excludes the uncert
 test('invalid OHLCV, duplicate or unordered dates and unsupported cycles are rejected',()=>{
  const valid=bar('2024-01-05',10,15,8,12,100);
  for(const input of [[],[valid,valid],[{...valid,date:'2024-02-30'}],[valid,{...valid,date:'2024-01-04'}],[{...valid,high:11}],[{...valid,volume:-1}],[{...valid,close:NaN}]])assert.throws(()=>aggregate(input,'week'));
- assert.throws(()=>aggregate([valid],'year'));assert.throws(()=>average([valid],0));
+ assert.throws(()=>aggregate([valid],'quarter'));assert.throws(()=>average([valid],0));
 });
 test('approved cycle settings keep weekly 1/4 clouds separate from MA 4/12 and leave monthly Fibonacci pending',()=>{
  assert.deepEqual(cycleConfig('week').periods,[4,12,24,46,73]);assert.deepEqual(cycleConfig('week').cloud,[1,4]);
@@ -31,9 +31,17 @@ test('approved cycle settings keep weekly 1/4 clouds separate from MA 4/12 and l
 });
 test('view range, bar cycle and indicator cycle validate separately while legacy period remains compatible',()=>{
  const current=chartContext({code:'005930',viewRange:'all',barCycle:'week'});assert.equal(current.period,'all');assert.equal(current.viewRange,'all');assert.equal(current.indicatorCycle,'week');
- for(const input of [{code:'005930',period:'6m',viewRange:'1y'},{code:'005930',period:'6m',barCycle:'year'},{code:'005930',period:'6m',barCycle:'week',indicatorCycle:'day'}])assert.throws(()=>chartContext(input));
+ for(const input of [{code:'005930',period:'6m',viewRange:'1y'},{code:'005930',period:'6m',barCycle:'quarter'},{code:'005930',period:'6m',barCycle:'week',indicatorCycle:'day'}])assert.throws(()=>chartContext(input));
  const rows=[{date:'2024-01-31'},{date:'2024-02-29'},{date:'2024-03-31'}];assert.equal(visibleOffset(rows,'1m','month'),1);assert.equal(visibleOffset(rows,'all','month'),0);
  const snapshot=require('../src/chart/proof-data/long-candles.json');
  assert.equal(aggregate(snapshot,'week').length,215);assert.equal(aggregate(snapshot,'month').length,50);
  const full=aggregate(snapshot,'week'),before=average(full,73).at(-1);assert.ok(before>0);assert.ok(visibleOffset(full,'1m','week')>73);assert.ok(Math.abs(before-173803.42465753425)<1e-8);
+});
+
+test('year bars use calendar years and native close SMA 1/5/10 with insufficient history kept missing',()=>{
+ const rows=[];for(let year=2012;year<=2026;year++){rows.push(bar(year+'-01-03',year,year+10,year-10,year+2,100));rows.push(bar(year+'-12-28',year+2,year+20,year-20,year+5,200));}
+ const annual=aggregate(rows,'year');assert.equal(annual.length,15);assert.deepEqual(cycleConfig('year').periods,[1,5,10]);assert.equal(cycleConfig('year').cloud,null);
+ assert.deepEqual([annual.at(-1).open,annual.at(-1).high,annual.at(-1).low,annual.at(-1).close,annual.at(-1).volume],[2026,2046,2006,2031,300]);
+ assert.equal(average(annual,1,{includePartialStart:true})[0],2017);assert.equal(average(annual,5,{includePartialStart:true})[4],2019);assert.equal(average(annual,10,{includePartialStart:true})[9],2021.5);assert.equal(average(annual.slice(0,4),5).at(-1),null);
+ assert.deepEqual(indicatorSettings('year').periods,[1,5,10]);assert.throws(()=>indicatorSettings('week',{periods:[0]}));assert.throws(()=>indicatorSettings('day',{bb:{shift:-1}}));
 });

@@ -13,10 +13,10 @@ function registerChartWindow({ ipcMain, BrowserWindow, getMainWindow, appDir, ge
   const fromMain = event => !!getMainWindow() && event.sender === getMainWindow().webContents;
   const send = () => {if(child && !child.isDestroyed())child.webContents.send('chart-context',{...current,follow});};
   const update = input => { latest=chartContext(input);if(follow){current=latest;send();} };
-  ipcMain.handle('get-chart-data',(event,code)=>{
+  ipcMain.handle('get-chart-data',(event,code,cycle='day')=>{
     if(!fromMain(event) && (!child || event.sender!==child.webContents))return {ok:false,error:'요청한 화면을 확인할 수 없습니다.'};
     if(event.senderFrame && event.senderFrame!==event.sender.mainFrame)return {ok:false};
-    return getChartData?getChartData(code):{ok:false,error:'일봉 공급자가 연결되지 않았습니다.'};
+    return getChartData?getChartData(code,cycle):{ok:false,error:'일봉 공급자가 연결되지 않았습니다.'};
   });
   ipcMain.handle('get-chart-snapshot',(event,code)=>{
     if(!fromMain(event) && (!child || event.sender!==child.webContents))return {ok:false,error:'요청한 화면을 확인할 수 없습니다.'};
@@ -43,6 +43,10 @@ function registerChartWindow({ ipcMain, BrowserWindow, getMainWindow, appDir, ge
       child.loadFile(path.join(appDir,'chart.html')).catch(()=>{if(!opened.isDestroyed())opened.close();});
       return {ok:true};
     }catch{return {ok:false};}
+  });
+  ipcMain.handle('set-chart-view',(event,view)=>{
+    if(!child || event.sender!==child.webContents || (event.senderFrame&&event.senderFrame!==child.webContents.mainFrame))return {ok:false};
+    try{const next=chartContext({...current,barCycle:view.barCycle,indicatorCycle:view.barCycle,period:view.viewRange,viewRange:view.viewRange});current=next;follow=false;send();return {ok:true};}catch{return {ok:false};}
   });
   ipcMain.handle('set-chart-follow',(event,value)=>{
     if(!child || event.sender!==child.webContents || typeof value!=='boolean')return {ok:false};

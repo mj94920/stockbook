@@ -1,0 +1,61 @@
+'use strict';
+const {test}=require('node:test'),assert=require('node:assert/strict'),http=require('node:http'),fs=require('node:fs'),path=require('node:path'),{chromium}=require('playwright');
+const root=path.resolve(__dirname,'..');
+async function setup(touch=false){
+ const server=http.createServer((req,res)=>{try{const file=path.resolve(root,new URL(req.url,'http://x').pathname.slice(1)||'chart.html');if(!file.startsWith(root+path.sep))throw Error();res.setHeader('Content-Type',file.endsWith('.html')?'text/html; charset=utf-8':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'application/octet-stream');res.end(fs.readFileSync(file));}catch{res.writeHead(404);res.end();}});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await chromium.launch(),page=await browser.newPage({viewport:{width:1280,height:1100},hasTouch:touch,timezoneId:'Asia/Seoul'}),errors=[],base='http://127.0.0.1:'+server.address().port;
+ page.on('pageerror',e=>errors.push(e.message));await page.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort());
+ await page.addInitScript(()=>{
+  const candles=[];let date=new Date('2013-01-02T00:00:00Z');while(candles.length<3200){if(date.getUTCDay()!==0&&date.getUTCDay()!==6){const i=candles.length,open=1000+i*.2+Math.sin(i/7)*10,close=open+Math.sin(i)*5;candles.push({date:date.toISOString().slice(0,10),open,high:Math.max(open,close)+3,low:Math.min(open,close)-3,close,volume:100+i%17*20});}date.setUTCDate(date.getUTCDate()+1);}
+  window.stockBookChart={onContext:fn=>window.__context=fn,getData:async(code,cycle)=>({ok:true,candles:cycle==='year'?candles:candles.slice(-1000),investors:null,metadata:{stockCode:code,name:'합성 검증 종목',sourceType:'naver-daily',snapshotDate:candles.at(-1).date,fetchedAt:'2026-10-27T01:00:00Z',lastBarComplete:null}}),setFollow:async value=>{window.__follow=value;return {ok:true};},setView:async value=>{window.__view=value;return {ok:true};}};
+ });
+ await page.goto(base+'/chart.html');await page.evaluate(()=>window.__context({code:'000001',name:'합성 검증 종목',period:'6m',barCycle:'month',follow:true}));await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='month');
+ return {page,browser,errors,close:async()=>{await browser.close();await new Promise(r=>server.close(r));}};
+}
+async function point(page,index,y){return page.evaluate(({index,y})=>{const host=document.getElementById('chartViewport'),m=StockBookCharts.controller(host).getModel(),svg=host.querySelector('[data-chart-id="chart"]'),p=new DOMPoint(m.x(index),y).matrixTransform(svg.getScreenCTM());return {x:p.x,y:p.y};},{index,y});}
+async function clickPoint(page,index,y){const p=await point(page,index,y);await page.mouse.click(p.x,p.y);return p;}
+test('detail controls, indicator settings, annual defaults and monthly bar geometry remain correct on resize',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  await page.locator('#chartPeriod').selectOption('all');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.viewRange==='all');assert.equal(await page.locator('#chartFollow').inputValue(),'pin');
+  await page.locator('#chartIndicatorSettings').click();await page.locator('#chartMAPeriods').fill('2,6,12');await page.getByRole('button',{name:'적용',exact:true}).click();assert.deepEqual(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.periods),[2,6,12]);
+  await page.locator('#chartIndicatorSettings').click();await page.locator('#chartMAPeriods').fill('0,5');await page.getByRole('button',{name:'적용',exact:true}).click();assert.equal(await page.locator('#chartSettings').isVisible(),true);assert.match(await page.locator('#chartSettingsError').innerText(),/1~1200/);await page.locator('#chartSettingsClose').click();
+  await page.locator('#chartPeriod').selectOption('6m');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.viewRange==='6m');
+  async function geometry(){return page.evaluate(()=>{const host=document.getElementById('chartViewport'),vol=[...host.querySelectorAll('.pressure-volume')],inside=[...host.querySelectorAll('.pressure-estimate')],candles=[...host.querySelectorAll('.candle')],panel=host.querySelector('[data-chart-id="pressureChart"]').getBoundingClientRect();return {height:panel.height,rows:vol.map((v,i)=>{const a=v.getBoundingClientRect(),b=inside[i].getBoundingClientRect(),c=candles[i].getBoundingClientRect();return {width:a.width,height:a.height,insideHeight:b.height,centerDiff:Math.abs(a.x+a.width/2-(b.x+b.width/2)),candleDiff:Math.abs(a.x+a.width/2-(c.x+c.width/2)),bottom:a.bottom-panel.y};})};});}
+  for(const width of [1280,840,1500]){await page.setViewportSize({width,height:1100});await page.waitForFunction(()=>{const h=document.getElementById('chartViewport'),svg=h.querySelector('[data-chart-id="pressureChart"]'),rect=h.querySelector('.pressure-volume')?.getBoundingClientRect();return !!rect&&rect.width<=24.5&&svg.clientHeight===80;});const g=await geometry();assert.equal(g.height,80);for(const row of g.rows){assert.ok(row.width<=24.5);assert.ok(row.height<=g.height);assert.ok(row.insideHeight<=row.height+.5);assert.ok(row.centerDiff<.6);assert.ok(row.candleDiff<1.2);assert.ok(row.bottom<=80);}}
+  await page.locator('#chartCycle').selectOption('year');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='year');
+  const annual=await page.locator('#chartViewport').evaluate(h=>h.chartEvidence);assert.equal(annual.viewRange,'all');assert.deepEqual(annual.periods,[1,5,10]);assert.equal(annual.cloudCount,0);assert.equal(annual.bbPeriod,null);assert.equal(await page.locator('[data-chart-id="pressureChart"]').isVisible(),false);assert.equal(await page.locator('#chartViewport .sb-proof-extended').isVisible(),false);assert.ok(annual.lastAverages.every(a=>a.value>0));
+  await page.locator('#chartCycle').selectOption('day');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='day');await page.locator('#chartIndicatorSettings').click();await page.locator('#chartBBPeriod').fill('20');await page.locator('#chartBBMultiplier').fill('2');await page.locator('#chartBBShift').fill('5');await page.getByRole('button',{name:'적용',exact:true}).click();assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.bbShift),5);
+  assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
+test('crosshair OHLC, pan/zoom/scroll and drawing tools work with data anchors and latest edge retained',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  const p=await point(page,2,260);await page.mouse.move(p.x,p.y);assert.equal(await page.locator('.sb-chart-crosshair').count(),2);const expected=await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().rows[2]);assert.match(await page.locator('.sb-chart-tooltip').innerText(),new RegExp(expected.date));assert.match(await page.locator('.sb-chart-tooltip').innerText(),/시가|종가|거래량/);
+  const before=await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().count);
+  await page.mouse.down();await page.mouse.move(p.x+100,p.y,{steps:8});await page.mouse.up();let m=await page.locator('#chartViewport').evaluate(h=>{const m=StockBookCharts.controller(h).getModel();return {count:m.count,end:m.end,total:m.all.length};});assert.ok(m.count<before);assert.equal(m.end,m.total);
+  await page.getByRole('button',{name:'처음 보기',exact:true}).click();await page.getByRole('button',{name:'이동',exact:true}).click();const pan=await point(page,3,260);await page.mouse.move(pan.x,pan.y);await page.mouse.down();await page.mouse.move(pan.x+100,pan.y,{steps:6});await page.mouse.up();assert.ok(await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().end<StockBookCharts.controller(h).getModel().all.length));
+  await page.getByRole('slider',{name:'차트 가로 스크롤',exact:true}).press('Home');assert.equal(await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().offset),0);
+  await page.getByRole('slider',{name:'차트 축척',exact:true}).press('End');assert.equal(await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().count),1);
+  await page.getByRole('button',{name:'최신',exact:true}).click();await page.getByRole('button',{name:'처음 보기',exact:true}).click();
+  for(const tool of ['horizontal','thirds','quarters','midpoint','rectangle','ellipse','triangle','arrow','trend','vertical','text']){await page.locator('[data-tool="'+tool+'"]').click();await clickPoint(page,1,280);if(!['horizontal','midpoint','vertical','text'].includes(tool))await clickPoint(page,4,380);}
+  assert.equal(await page.locator('.sb-chart-drawing').count(),11);
+  await page.locator('[data-tool="pen"]').click();const a=await point(page,2,330);await page.mouse.move(a.x,a.y);await page.mouse.down();for(let n=1;n<=4;n++)await page.mouse.move(a.x+n*12,a.y+(n%2?10:-10));await page.mouse.up();assert.equal(await page.locator('.sb-chart-drawing').count(),12);
+  await page.getByRole('button',{name:'저장',exact:true}).click();const storedBefore=await page.evaluate(()=>JSON.parse(localStorage.getItem('stockbook:chart:drawings:v1:000001:월봉')).drawings.at(-1).points);
+  const handle=page.locator('.sb-chart-drawing').last().locator('circle').first(),box=await handle.boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.mouse.move(box.x+box.width/2+25,box.y+box.height/2+15,{steps:5});await page.mouse.up();
+  await page.getByRole('button',{name:'저장',exact:true}).click();const storedAfter=await page.evaluate(()=>JSON.parse(localStorage.getItem('stockbook:chart:drawings:v1:000001:월봉')).drawings.at(-1).points);assert.notDeepEqual(storedAfter,storedBefore);
+  await page.getByRole('button',{name:'저장',exact:true}).click();await page.getByRole('button',{name:'모두 지우기',exact:true}).click();assert.equal(await page.locator('.sb-chart-drawing').count(),0);await page.getByRole('button',{name:'불러오기',exact:true}).click();assert.equal(await page.locator('.sb-chart-drawing').count(),12);
+  const shapesBefore=await page.locator('.sb-chart-drawing').count();await page.getByRole('button',{name:'+',exact:true}).click();assert.equal(await page.locator('.sb-chart-drawing').count(),shapesBefore);await page.setViewportSize({width:1024,height:1100});assert.equal(await page.locator('.sb-chart-drawing').count(),shapesBefore);
+  assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
+test('tablet touch can draw a horizontal line and pinch zoom without losing the latest candle',async()=>{
+ const h=await setup(true),{page}=h;
+ try{
+  await page.locator('[data-tool="horizontal"]').tap();const p=await point(page,2,260);await page.touchscreen.tap(p.x,p.y);assert.equal(await page.locator('.sb-chart-drawing').count(),1);
+  const session=await page.context().newCDPSession(page),center=await point(page,3,300);const input=(type,d)=>session.send('Input.dispatchTouchEvent',{type,touchPoints:d});
+  await input('touchStart',[{x:center.x-35,y:center.y,id:1},{x:center.x+35,y:center.y,id:2}]);await input('touchMove',[{x:center.x-90,y:center.y,id:1},{x:center.x+90,y:center.y,id:2}]);await input('touchEnd',[]);
+  const m=await page.locator('#chartViewport').evaluate(h=>{const m=StockBookCharts.controller(h).getModel();return {count:m.count,end:m.end,total:m.all.length};});assert.ok(m.count<7);assert.equal(m.end,m.total);assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});

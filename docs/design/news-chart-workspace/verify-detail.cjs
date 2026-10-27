@@ -1,0 +1,30 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),https=require('node:https'),assert=require('node:assert/strict'),crypto=require('node:crypto'),{chromium}=require('playwright');
+const {createChartProvider}=require('../../../src/chart/provider.cjs');
+const root=path.resolve(__dirname,'../../..'),live=process.env.STOCKBOOK_LIVE_CHARTS==='1',calls=[];let agent;
+if(process.env.HTTPS_PROXY||process.env.HTTP_PROXY){const p=require('https-proxy-agent');agent=new (p.HttpsProxyAgent||p)(process.env.HTTPS_PROXY||process.env.HTTP_PROXY);}
+const read=(url,timeout,headers)=>new Promise((resolve,reject)=>{const req=https.get(url,{agent,headers:{'User-Agent':'Mozilla/5.0',...headers}},res=>{let size=0;const chunks=[];res.on('data',b=>{size+=b.length;if(size>4000000)req.destroy(Error('Response too large'));else chunks.push(b);});res.on('error',reject);res.on('end',()=>{const b=Buffer.concat(chunks);calls.push({url,status:res.statusCode,bytes:size,sha256:crypto.createHash('sha256').update(b).digest('hex')});if(res.statusCode!==200)return reject(Error('HTTP '+res.statusCode));resolve(new (require('node:util').TextDecoder)('euc-kr').decode(b));});});req.on('error',reject);req.setTimeout(timeout,()=>req.destroy(Error('Timeout')));});
+(async()=>{
+ const server=http.createServer((req,res)=>{try{const file=path.resolve(root,new URL(req.url,'http://x').pathname.slice(1)||'chart.html');if(!file.startsWith(root+path.sep))throw Error();res.setHeader('Content-Type',file.endsWith('.html')?'text/html; charset=utf-8':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'application/octet-stream');res.end(fs.readFileSync(file));}catch{res.writeHead(404);res.end();}});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
+ try{
+  browser=await chromium.launch({executablePath:process.env.CHART_CHROMIUM_PATH||undefined});const page=await browser.newPage({viewport:{width:1280,height:1000},timezoneId:'Asia/Seoul'}),errors=[],base='http://127.0.0.1:'+server.address().port;page.on('pageerror',e=>errors.push(e.message));await page.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort());
+  const years=[];
+  if(live){
+   const provider=createChartProvider({httpsGet:read});await page.exposeFunction('__daily',(code,cycle)=>provider.get(code,cycle));await page.addInitScript(()=>{window.stockBookChart={onContext:fn=>window.__detailContext=fn,getData:(code,cycle)=>window.__daily(code,cycle),setView:async()=>({ok:true}),setFollow:async()=>({ok:true})};});await page.goto(base+'/chart.html');
+   for(const code of ['005930','402340']){
+    await page.evaluate(code=>window.__detailContext({code,name:code==='005930'?'삼성전자':'SK스퀘어',barCycle:'year',period:'all',viewRange:'all',follow:false}),code);
+    await page.waitForFunction(code=>document.getElementById('chartViewport').chartEvidence?.stockCode===code&&document.getElementById('chartViewport').chartEvidence?.barCycle==='year',code,{timeout:25000});
+    const data=await page.locator('#chartViewport').evaluate(h=>h.chartEvidence);assert.deepEqual(data.periods,[1,5,10]);assert.equal(data.cloudCount,0);assert.equal(data.bbPeriod,null);assert.equal(await page.locator('[data-chart-id="pressureChart"]').isVisible(),false);
+    years.push({code,count:data.count,sourceCount:data.sourceCount,lastAverages:data.lastAverages});await page.screenshot({path:path.join(__dirname,'detail-year-'+code+'.png'),fullPage:true});
+   }
+   assert.ok(years[0].lastAverages.every(a=>a.value>0));assert.equal(years[1].lastAverages[2].value,null);
+  }else{await page.goto(base+'/docs/design/news-chart-workspace/detail-preview.html');await page.waitForFunction(()=>!!document.getElementById('chartViewport').chartEvidence);}
+  await page.locator('#chartCycle').selectOption('month');await page.locator('#chartPeriod').selectOption('6m');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='month'&&document.getElementById('chartViewport').chartEvidence?.viewRange==='6m');
+  await page.locator('[data-chart-id="chart"]').scrollIntoViewIfNeeded();
+  const p=await page.locator('#chartViewport').evaluate(h=>{const m=StockBookCharts.controller(h).getModel(),svg=h.querySelector('[data-chart-id="chart"]'),i=Math.min(2,m.rows.length-1),point=new DOMPoint(m.x(i),260).matrixTransform(svg.getScreenCTM());return {x:point.x,y:point.y,date:m.rows[i].date};});
+  await page.mouse.move(p.x,p.y);assert.ok((await page.locator('.sb-chart-tooltip').innerText()).includes(p.date));assert.equal(await page.locator('.sb-chart-crosshair').count(),2);await page.screenshot({path:path.join(__dirname,live?'detail-live-month.png':'detail-interactive.png'),fullPage:true});
+  await page.locator('#chartIndicatorSettings').click();await page.locator('#chartMAPeriods').fill('1,6,12');await page.getByRole('button',{name:'적용',exact:true}).click();assert.deepEqual(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.periods),[1,6,12]);
+  assert.deepEqual(errors,[]);fs.writeFileSync(path.join(__dirname,live?'detail-live-result.json':'detail-interaction-result.json'),JSON.stringify({passed:true,verifiedAt:new Date().toISOString(),scope:live?'Actual proxy HTTPS + production provider and chart HTML/browser mock preload. Windows Electron/NSIS not verified. No complete history is stored.':'Self-contained production detail HTML, recorded Samsung data only, served internally over HTTP.',years,calls,checks:['annual 1/5/10 and missing history handling','independent cycle/range selectors','monthly crosshair and actual candle date','monthly indicator periods','monthly fixed-height volume panel'],browserErrors:errors},null,2)+'\n');console.log(JSON.stringify({passed:true,live,years,errors}));
+ }finally{await browser?.close();await new Promise(r=>server.close(r));}
+})().catch(e=>{console.error(e);process.exitCode=1;});

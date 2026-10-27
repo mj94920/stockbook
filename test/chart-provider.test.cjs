@@ -32,3 +32,16 @@ test('catalog and held instruments can be selected without registration, and uns
  assert.equal(selection.select('bad/code','',lists),null);
  const noQuote=create().select('000001','보유만',{portfolio:[{ticker:'000001',avgPrice:999}],catalog:[],watchlist:[]});assert.equal(noQuote.price,null);
 });
+
+test('annual data requests use a separate bounded 3000-day history and leave day cache independent',async()=>{
+ const calls=[];const provider=createChartProvider({httpsGet:async url=>{calls.push(url);return xml();}});
+ assert.equal((await provider.get('000660','year')).ok,true);assert.match(calls[0],/count=3000&/);
+ assert.equal((await provider.get('000660','day')).ok,true);assert.match(calls[1],/count=1000&/);
+ await provider.get('000660','year');assert.equal(calls.length,2);assert.equal((await provider.get('000660','minute')).ok,false);assert.equal(calls.length,2);
+});
+
+test('integer-price one-won source bound contradictions are normalized and counted, larger errors still fail',()=>{
+ const input=xml('000660',['20150127|27500|27999|27480|28000|199144']).replace('timeframe="day"','timeframe="day" precision="0"');
+ const result=parseDaily(input,'000660','2026-10-27T00:00:00Z');assert.equal(result.candles[0].high,28000);assert.equal(result.metadata.normalizedBounds,1);assert.equal(result.candles[0].close,28000);
+ assert.throws(()=>parseDaily(input.replace('27999','27998'),'000660','2026-10-27T00:00:00Z'));
+});

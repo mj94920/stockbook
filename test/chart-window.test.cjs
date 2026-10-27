@@ -48,3 +48,15 @@ test('late load failure from a closed window does not close its replacement',asy
  old.emit('closed');assert.equal(open().ok,true);assert.equal(windows.length,2);
  replacement.close();replacement.fail(Error('closed'));await Promise.resolve();
 });
+
+test('detail view changes pin its cycle and range; only the known child may change it, and follow restores latest',()=>{
+ const handlers=new Map(),main={webContents:{}},sent=[];let child;
+ class Window extends EventEmitter{constructor(){super();child=this;this.webContents=new EventEmitter();this.webContents.send=(_channel,value)=>sent.push(value);this.webContents.setWindowOpenHandler=()=>{};}isDestroyed(){return false;}setMenuBarVisibility(){}loadFile(){this.webContents.emit('did-finish-load');return Promise.resolve();}close(){}show(){}focus(){}}
+ registerChartWindow({ipcMain:{handle:(key,fn)=>handlers.set(key,fn)},BrowserWindow:Window,getMainWindow:()=>main,appDir:'/app'});
+ handlers.get('open-chart-window')({sender:main.webContents},{code:'005930',period:'6m',barCycle:'month'});
+ const change=(sender,view)=>handlers.get('set-chart-view')({sender},view);
+ assert.equal(change(main.webContents,{barCycle:'year',viewRange:'all'}).ok,false);assert.equal(change(child.webContents,{barCycle:'minute',viewRange:'all'}).ok,false);
+ assert.equal(change(child.webContents,{barCycle:'year',viewRange:'all'}).ok,true);assert.equal(sent.at(-1).follow,false);assert.equal(sent.at(-1).barCycle,'year');assert.equal(sent.at(-1).viewRange,'all');
+ handlers.get('set-chart-context')({sender:main.webContents},{code:'000660',period:'3m',barCycle:'week'});assert.equal(sent.at(-1).code,'005930');
+ handlers.get('set-chart-follow')({sender:child.webContents},true);assert.equal(sent.at(-1).code,'000660');assert.equal(sent.at(-1).barCycle,'week');assert.equal(sent.at(-1).viewRange,'3m');
+});

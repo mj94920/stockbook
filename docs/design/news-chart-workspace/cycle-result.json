@@ -1,6 +1,6 @@
 {
   "passed": true,
-  "verifiedAt": "2026-10-26T07:25:32.964Z",
+  "verifiedAt": "2026-10-27T02:10:31.448Z",
   "scope": "Recorded Samsung daily data grouped locally; browser renderer, UI/IPC mocks. Not a new live provider or a Windows Electron chart verification.",
   "weekly": {
     "stockCode": "005930",

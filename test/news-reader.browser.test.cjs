@@ -93,7 +93,7 @@ test('reader renders safe text, keeps source link and discards stale article; ch
   await page.addInitScript(()=>{window.stockBookChart={onContext:fn=>{window.__chartContext=fn;},setFollow:async value=>{window.__follow=value;return {ok:true};}};});
   await page.goto(base+'/chart.html');
   await page.evaluate(()=>window.__chartContext({code:'005930',name:'검증 종목',period:'3m',follow:true}));
-  assert.match(await page.locator('#chartName').innerText(),/검증 종목/);assert.equal(await page.locator('#chartPeriod').innerText(),'3개월');
+  assert.match(await page.locator('#chartName').innerText(),/검증 종목/);assert.equal(await page.locator('#chartPeriod').inputValue(),'3m');
   await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.displayed===66);
   assert.equal(await page.locator('#chartViewport .ma').count(),8);
   assert.equal(await page.locator('#chartViewport .investor-line').count(),3);
@@ -104,11 +104,11 @@ test('reader renders safe text, keeps source link and discards stale article; ch
   assert.equal(evidence.bbShift,25);
   await page.evaluate(()=>window.__chartContext({code:'005930',name:'검증 종목',period:'all',barCycle:'week',indicatorCycle:'week',viewRange:'all',follow:true}));
   await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='week');
-  assert.equal(await page.locator('#chartCycle').innerText(),'주봉');assert.equal(await page.locator('#chartPeriod').innerText(),'전체');
+  assert.equal(await page.locator('#chartCycle').inputValue(),'week');assert.equal(await page.locator('#chartPeriod').inputValue(),'all');
   assert.equal(await page.locator('#chartViewport .candle').count(),215);assert.equal(await page.locator('#chartViewport .sb-proof-options').isVisible(),false);
   await page.evaluate(()=>window.__chartContext({code:'005930',name:'검증 종목',period:'1y',barCycle:'month',viewRange:'1y',follow:true}));
   await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='month');
-  assert.equal(await page.locator('#chartCycle').innerText(),'월봉');assert.match(await page.locator('#chartViewport .sb-proof-legend').innerText(),/피보나치 구름/);
+  assert.equal(await page.locator('#chartCycle').inputValue(),'month');assert.match(await page.locator('#chartViewport .sb-proof-legend').innerText(),/피보나치 구름/);
   assert.equal(await page.locator('#chartViewport .ma-cloud').count(),0);
   await page.evaluate(()=>window.__chartContext({code:'005930',name:'검증 종목',period:'3m',follow:true}));
   await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='day');

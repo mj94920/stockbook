@@ -5,6 +5,7 @@
  const cycles=Object.freeze({
   day:{label:'일봉',unit:'일',periods:[5,10,20,60,120,200,350,480],colors:[0,1,2,3,4,5,6,7],cloud:[5,10],bold:[20,200]},
   week:{label:'주봉',unit:'주',periods:[4,12,24,46,73],colors:[3,1,5,2,7],cloud:[1,4],bold:[46]},
+  year:{label:'연봉',unit:'년',periods:[1,5,10],colors:[1,2,5],cloud:null,bold:[]},
   month:{label:'월봉',unit:'개월',periods:[1,5,19,6,9],colors:[1,2,7,3,5],cloud:null,bold:[9]},
  });
  const ranges=Object.freeze(['1m','3m','6m','1y','all']);
@@ -19,6 +20,7 @@
  function bucket(date,cycle){
   const time=dateValue(date);
   if(cycle==='day')return date;
+  if(cycle==='year')return date.slice(0,4);
   if(cycle==='month')return date.slice(0,7);
   const weekday=new Date(time).getUTCDay();return new Date(time-((weekday+6)%7)*86400000).toISOString().slice(0,10);
  }
@@ -40,11 +42,11 @@
   result.at(-1).incompleteEnd=lastBarComplete!==true || (cycle!=='day');
   return result;
  }
- function average(bars,n){
+ function average(bars,n,{includePartialStart=false}={}){
   if(!Number.isInteger(n)||n<1)throw Error('이평 기간 오류');
   return bars.map((_,i)=>{
    if(i<n-1)return null;const window=bars.slice(i-n+1,i+1);
-   return window.some(c=>c.incompleteStart)?null:window.reduce((sum,c)=>sum+c.close,0)/n;
+   return (!includePartialStart&&window.some(c=>c.incompleteStart))?null:window.reduce((sum,c)=>sum+c.close,0)/n;
   });
  }
  function visibleOffset(bars,range='6m',cycle='day'){
@@ -58,5 +60,12 @@
   const cutoff=new Date(Date.UTC(y,m-months,Math.min(d,endOfMonth))).toISOString().slice(0,10);
   const offset=bars.findIndex(bar=>bar.date>=cutoff);return offset<0?Math.max(0,bars.length-1):offset;
  }
- return Object.freeze({cycleConfig,aggregate,average,visibleOffset,ranges});
+ function indicatorSettings(cycle,input={}){
+  const defaults=cycleConfig(cycle),periods=input.periods??defaults.periods,cloud=defaults.cloud?(input.cloud??defaults.cloud):null,bb={period:40,multiplier:1.9,shift:25,...input.bb};
+  if(!Array.isArray(periods)||periods.length<1||periods.length>8||periods.some(n=>!Number.isInteger(n)||n<1||n>1200))throw Error('이평 기간은 1~1200, 최대 8개입니다.');
+  if(cloud&&(!Array.isArray(cloud)||cloud.length!==2||cloud.some(n=>!Number.isInteger(n)||n<1||n>1200)))throw Error('구름 기간 두 개를 확인하세요.');
+  if(!Number.isInteger(bb.period)||bb.period<2||bb.period>500||!Number.isFinite(bb.multiplier)||bb.multiplier<0||bb.multiplier>10||!Number.isInteger(bb.shift)||bb.shift<0||bb.shift>120)throw Error('BB 기간·배수·이동값을 확인하세요.');
+  return {periods:[...periods],cloud:cloud?[...cloud]:null,bb};
+ }
+ return Object.freeze({cycleConfig,aggregate,average,visibleOffset,ranges,indicatorSettings});
 });
