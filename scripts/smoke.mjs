@@ -413,7 +413,7 @@ for (const pg of PAGES) {
     // 주요 창 크기 스크린샷 (다크/라이트)
     try {
       await mkdir(SHOT_DIR, { recursive: true });
-      for (const vp of [{ width: 1400, height: 900 }, { width: 1024, height: 768 }]) {
+      for (const vp of [{ width: 2560, height: 1440 }, { width: 1600, height: 900 }, { width: 1400, height: 900 }, { width: 1024, height: 768 }]) {
         await page.setViewportSize(vp);
         await page.waitForTimeout(300);
         await page.evaluate(() => window._MDI.show('watchlist'));
@@ -425,7 +425,25 @@ for (const pg of PAGES) {
         check(layout.work.y >= layout.ctx.bottom && Math.abs(layout.work.x-layout.ctx.x) < 2 && layout.analysis.x >= layout.work.right && Math.abs(layout.analysis.right-layout.ctx.right) < 2 && Math.abs(layout.analysis.y-layout.work.y) < 2, `${vp.width}px: 하단 작업 패널이 우측 종합 패널 아래에 정렬되지 않음`);
         check(Math.abs(layout.left.bottom-layout.work.bottom)<2 && layout.left.y >= layout.workspace.y, `${vp.width}px: 좌측 종목창 전체 높이 오류`);
         check(layout.workspace.y >= layout.header-1 && layout.work.bottom <= vp.height+1, `${vp.width}px: 상단 겹침 또는 하단 잘림`);
-        check(layout.ctx.height < layout.workspace.height * .4, `${vp.width}px: 종목·차트 영역이 작업 공간을 과도하게 차지함`);
+        check(layout.ctx.height >= layout.workspace.height * .4 && layout.work.height >= 180, `${vp.width}px: 차트 우선 배분 또는 하단 작업 최소 공간 오류`);
+        const priority = await page.evaluate(() => {
+          const ctx=document.getElementById('dockCtx'),analysis=document.getElementById('sbAnalysis');
+          const initial=ctx.getBoundingClientRect().height;
+          const probe=document.createElement('p');probe.textContent='검토용 분석 설명 '.repeat(1000);
+          const section=analysis.querySelector('.sb-analysis-section');
+          let independent=false,scrolls=false;
+          try {
+            section.appendChild(probe);
+            independent=Math.abs(ctx.getBoundingClientRect().height-initial)<1;
+            scrolls=section.scrollHeight>section.clientHeight && getComputedStyle(section).overflowY==='auto';
+          } finally {probe.remove();}
+          sbWorkTab('cash');const cash=ctx.getBoundingClientRect().height;
+          const compact=document.getElementById('mdi-panel-portfolio').getBoundingClientRect().height;
+          sbWorkTab('journal');const journal=document.getElementById('mdi-panel-journal').getBoundingClientRect().height;
+          sbWorkTab('pf');
+          return {independent,scrolls,reclaimed:cash>initial,journal:journal>compact};
+        });
+        for(const [key,value] of Object.entries(priority))check(value, `${vp.width}px: 차트·분석·작업 공간 배분 회귀: ${key}`);
         await page.evaluate(() => window._MDI.show('news'));
         const newsLayout = await page.evaluate(() => {
           const list=document.getElementById('icList').getBoundingClientRect(),detail=document.getElementById('icDetail').getBoundingClientRect();

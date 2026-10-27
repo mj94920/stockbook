@@ -25,6 +25,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
   fetchMarketTickers: () => ipcRenderer.invoke('fetch-market-tickers'),
   // 정보센터 뉴스 — { kind:'market'|'stock', code } → { ok, items, error }
   fetchNews: (opts) => ipcRenderer.invoke('fetch-news', opts),
+  fetchNewsArticle: (url) => ipcRenderer.invoke('fetch-news-article', url),
+  openNewsPage: (value) => ipcRenderer.invoke('open-news-page', value),
+  closeNewsPage: () => ipcRenderer.invoke('close-news-page'),
+  setNewsPageBounds: (value) => ipcRenderer.send('news-page-bounds', value),
+  onNewsPageFailed: (callback) => {
+    const listener = (_event,value) => callback(value);
+    ipcRenderer.on('news-page-failed',listener);
+    return () => ipcRenderer.removeListener('news-page-failed',listener);
+  },
+  getChartData: (code,cycle='day') => ipcRenderer.invoke('get-chart-data', code,cycle),
+  getChartSnapshot: (code) => ipcRenderer.invoke('get-chart-snapshot', code),
+  setChartContext: (value) => ipcRenderer.invoke('set-chart-context', value),
+  openChartWindow: (value) => ipcRenderer.invoke('open-chart-window', value),
   // KIS 실시간 호가 (매도5+매수5 잔량)
   fetchHoga: (code) => ipcRenderer.invoke('fetch-hoga', code),
   // KIS 계좌 잔고 조회 (예수금 + 보유종목) — acctNum 생략 시 첫 번째 저장 계좌 사용

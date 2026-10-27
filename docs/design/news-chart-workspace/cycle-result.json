@@ -1,0 +1,164 @@
+{
+  "passed": true,
+  "verifiedAt": "2026-10-27T05:24:57.489Z",
+  "scope": "Recorded Samsung daily data grouped locally; browser renderer, UI/IPC mocks. Not a new live provider or a Windows Electron chart verification.",
+  "weekly": {
+    "stockCode": "005930",
+    "sourceType": "recorded",
+    "count": 215,
+    "sourceCount": 1000,
+    "displayed": 215,
+    "barCycle": "week",
+    "indicatorCycle": "week",
+    "viewRange": "all",
+    "periods": [
+      4,
+      12,
+      24,
+      46,
+      73
+    ],
+    "cloudCount": 267,
+    "cloudPeriods": [
+      1,
+      4
+    ],
+    "cloudLast": [
+      220250,
+      244062.5
+    ],
+    "bbShift": 0,
+    "bbPeriod": null,
+    "bbMultiplier": null,
+    "referenceBaseCount": 215,
+    "references": [],
+    "chartType": "candle",
+    "profile": null,
+    "hiddenIndicators": [],
+    "lastAverages": [
+      {
+        "period": 4,
+        "value": 244062.5
+      },
+      {
+        "period": 12,
+        "value": 256812.5
+      },
+      {
+        "period": 24,
+        "value": 277843.75
+      },
+      {
+        "period": 46,
+        "value": 229203.26086956522
+      },
+      {
+        "period": 73,
+        "value": 173803.42465753425
+      }
+    ],
+    "pressure": {
+      "count": 215,
+      "buy": 112,
+      "sell": 99,
+      "neutral": 4
+    },
+    "investors": {
+      "dates": [
+        "2026-10-15",
+        "2026-10-16",
+        "2026-10-19",
+        "2026-10-20",
+        "2026-10-21"
+      ],
+      "count": 5,
+      "totals": {
+        "foreign": -1275121,
+        "institution": -1546172,
+        "individual": 2316914
+      },
+      "source": "Naver stock integration / 005930"
+    }
+  },
+  "monthly": {
+    "stockCode": "005930",
+    "sourceType": "recorded",
+    "count": 50,
+    "sourceCount": 1000,
+    "displayed": 50,
+    "barCycle": "month",
+    "indicatorCycle": "month",
+    "viewRange": "all",
+    "periods": [
+      1,
+      5,
+      19,
+      6,
+      9
+    ],
+    "cloudCount": 0,
+    "cloudPeriods": null,
+    "cloudLast": null,
+    "bbShift": 0,
+    "bbPeriod": null,
+    "bbMultiplier": null,
+    "referenceBaseCount": 50,
+    "references": [],
+    "chartType": "candle",
+    "profile": null,
+    "hiddenIndicators": [],
+    "lastAverages": [
+      {
+        "period": 1,
+        "value": 220250
+      },
+      {
+        "period": 5,
+        "value": 269250
+      },
+      {
+        "period": 19,
+        "value": 165913.15789473685
+      },
+      {
+        "period": 6,
+        "value": 277208.3333333333
+      },
+      {
+        "period": 9,
+        "value": 251938.88888888888
+      }
+    ],
+    "pressure": {
+      "count": 50,
+      "buy": 26,
+      "sell": 24,
+      "neutral": 0
+    },
+    "investors": {
+      "dates": [
+        "2026-10-15",
+        "2026-10-16",
+        "2026-10-19",
+        "2026-10-20",
+        "2026-10-21"
+      ],
+      "count": 5,
+      "totals": {
+        "foreign": -1275121,
+        "institution": -1546172,
+        "individual": 2316914
+      },
+      "source": "Naver stock integration / 005930"
+    }
+  },
+  "checks": [
+    "weekly OHLCV and 1/4 cloud",
+    "monthly MA 1/5/19/6/9 without invented Fibonacci",
+    "range-independent MA prehistory",
+    "light/dark palette",
+    "1024px viewport",
+    "daily BB retained"
+  ],
+  "browserErrors": []
+}
