@@ -18,9 +18,10 @@ function getDataFile() {
 }
 
 // ── 내부 HTTPS 헬퍼 (CORS 제한 없음) ────────────────────────────────────────
-function httpsGet(url, timeoutMs = 8000, extraHeaders = {}) {
+function httpsGet(url, timeoutMs = 8000, extraHeaders = {}, {signal} = {}) {
   return new Promise((resolve, reject) => {
     const req = https.get(url, {
+      ...(signal ? { signal } : {}),
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
         'Accept':     'application/json, text/plain, */*',
@@ -28,6 +29,7 @@ function httpsGet(url, timeoutMs = 8000, extraHeaders = {}) {
       }
     }, res => {
       const chunks = [];
+      res.on('error', reject);
       res.on('data', chunk => { chunks.push(chunk); });
       res.on('end',  () => {
         if (res.statusCode >= 200 && res.statusCode < 300) {

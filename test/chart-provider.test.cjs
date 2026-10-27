@@ -45,3 +45,22 @@ test('integer-price one-won source bound contradictions are normalized and count
  const result=parseDaily(input,'000660','2026-10-27T00:00:00Z');assert.equal(result.candles[0].high,28000);assert.equal(result.metadata.normalizedBounds,1);assert.equal(result.candles[0].close,28000);
  assert.throws(()=>parseDaily(input.replace('27999','27998'),'000660','2026-10-27T00:00:00Z'));
 });
+
+test('chart total deadline aborts a stalled request, frees its pending cache and allows retry',async()=>{
+ let calls=0,signal,finish;
+ const provider=createChartProvider({requestTimeoutMs:20,httpsGet:(_url,_timeout,_headers,options)=>{signal=options.signal;if(++calls===1)return new Promise(resolve=>finish=resolve);return Promise.resolve(xml());}});
+ const first=provider.get('000660'),shared=provider.get('000660');
+ assert.match((await first).error,/시간이 초과/);assert.equal((await shared).ok,false);assert.equal(calls,1);assert.equal(signal.aborted,true);
+ assert.equal((await provider.get('000660')).ok,true);assert.equal(calls,2);
+ finish(xml('005930'));await Promise.resolve();assert.equal((await provider.get('000660')).metadata.stockCode,'000660');assert.equal(calls,2);
+});
+
+test('production HTTPS helper forwards chart cancellation and handles aborted response errors',async()=>{
+ const fs=require('node:fs'),vm=require('node:vm');const main=fs.readFileSync(require('node:path').join(__dirname,'../main.js'),'utf8');
+ const start=main.indexOf('function httpsGet('),end=main.indexOf('\nfunction httpsPost(',start),controller=new AbortController();let received;
+ const response=new EventEmitter();response.headers={};response.statusCode=200;
+ const request=new EventEmitter();request.setTimeout=()=>{};
+ const read=vm.runInNewContext('('+main.slice(start,end).trim()+')',{https:{get:(_url,options,callback)=>{received=options.signal;queueMicrotask(()=>callback(response));return request;}},Buffer,require});
+ const pending=read('https://fchart.stock.naver.com/sise.nhn',12000,{}, {signal:controller.signal});await Promise.resolve();assert.equal(received,controller.signal);
+ controller.abort();response.emit('error',Error('Response aborted'));request.emit('error',Error('Request aborted'));await assert.rejects(pending,/Response aborted/);
+});

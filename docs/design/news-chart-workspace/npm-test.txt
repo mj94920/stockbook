@@ -9,7 +9,7 @@
 ✓ main.js
 ✓ preload.js
 ✓ index.html#script1 (line 4920)
-✓ index.html#script2 (line 14872)
+✓ index.html#script2 (line 14895)
 ✓ package.json
 
 모든 정적 검사 통과
@@ -18,51 +18,56 @@ npm notice New major version of npm available! 11.9.0 -> 12.2.1
 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1
 npm notice To update run: npm install -g npm@12.2.1
 npm notice
-✔ detail controls, indicator settings, annual defaults and monthly bar geometry remain correct on resize (1517.677646ms)
-✔ crosshair OHLC, pan/zoom/scroll and drawing tools work with data anchors and latest edge retained (2097.521673ms)
-✔ tablet touch can draw a horizontal line and pinch zoom without losing the latest candle (682.302707ms)
-✔ daily provider retains requested stock and OHLCV, and never attaches Samsung investor data (3.800073ms)
-✔ daily provider restricts destinations and codes, shares pending fetch, expires cache and retries failures (0.704245ms)
-✔ only the app main frame and known chart window can invoke daily data IPC (0.463023ms)
-✔ catalog and held instruments can be selected without registration, and unstar keeps current instrument (0.282172ms)
-✔ annual data requests use a separate bounded 3000-day history and leave day cache independent (0.328192ms)
-✔ integer-price one-won source bound contradictions are normalized and counted, larger errors still fail (0.148993ms)
-✔ KRX trading dates group by Monday weeks across years and holidays without zero-filled sessions (1.499276ms)
-✔ month aggregation uses calendar months and sums received volume, including leap day (0.168763ms)
-✔ weekly SMA uses weekly closes with full prehistory and excludes the uncertain first aggregated bucket (0.197305ms)
-✔ invalid OHLCV, duplicate or unordered dates and unsupported cycles are rejected (0.286098ms)
-✔ approved cycle settings keep weekly 1/4 clouds separate from MA 4/12 and leave monthly Fibonacci pending (0.085358ms)
-✔ view range, bar cycle and indicator cycle validate separately while legacy period remains compatible (7.494488ms)
-✔ year bars use calendar years and native close SMA 1/5/10 with insufficient history kept missing (0.354021ms)
-✔ validates stock and supported period (1.437423ms)
-✔ detail window follows selection, pins context, resumes latest and rejects other senders (0.478577ms)
-✔ recorded chart data is identified and never used for another stock (5.589534ms)
-✔ late load failure from a closed window does not close its replacement (0.306349ms)
-✔ detail view changes pin its cycle and range; only the known child may change it, and follow restores latest (0.269825ms)
-✔ only canonical HTTPS article URLs can be requested (0.981411ms)
-✔ Bloter URLs are limited to canonical public article paths and a single numeric id (0.299259ms)
-✔ observed Bloter structure keeps date labels without inventing a year and extracts text only (2.226265ms)
-✔ Bloter IPC uses a fixed list URL, retains article metadata and rejects unsupported stock queries (1.287188ms)
-✔ extracts article text with paragraph boundaries, entities and no executable markup (0.180601ms)
-✔ legacy nested div body is complete and missing/paywall bodies fail instead of inventing content (0.393099ms)
-✔ received market and stock payloads retain publisher, summary, canonical URL and KST seconds (0.420761ms)
-✔ news IPC checks sender and stock code before network; only fixed provider routes are fetched (0.696424ms)
-✔ native news URL and bounds reject local destinations, credentials, protocols and invalid zoomed rectangles (4.758208ms)
-✔ original destination is derived in main from a canonical provider article, even without text body (1.30828ms)
-✔ native article view has no app preload, blocks remote IPC, local resources, popups, permissions and downloads (1.093498ms)
-✔ hide during publisher resolution and loading is retained; stale bounds cannot expose another article (3.623819ms)
-✔ new selection and close cancel late resolution; load failure and renderer crash release native contents (0.572568ms)
-✔ reader renders safe text, keeps source link and discards stale article; chart controls keep context (1802.496604ms)
-✔ original-page controls keep the native view in the reader and hide it for overlays, tabs and failed loads (868.500701ms)
-✔ unregistered catalog, header search and holding selections drive chart data without changing watchlist (1135.215789ms)
-ℹ tests 37
+✔ detail controls, indicator settings, annual defaults and monthly bar geometry remain correct on resize (1296.486289ms)
+✔ crosshair OHLC, pan/zoom/scroll and drawing tools work with data anchors and latest edge retained (2004.364127ms)
+✔ tablet touch can draw a horizontal line and pinch zoom without losing the latest candle (596.151889ms)
+✔ range and day/week/month switches reuse received history; failed same-view retry restores indicator settings (939.570749ms)
+✔ renderer stops waiting for stuck IPC, retries without restart and ignores the late response (484.222248ms)
+✔ daily provider retains requested stock and OHLCV, and never attaches Samsung investor data (2.264116ms)
+✔ daily provider restricts destinations and codes, shares pending fetch, expires cache and retries failures (0.797656ms)
+✔ only the app main frame and known chart window can invoke daily data IPC (0.539298ms)
+✔ catalog and held instruments can be selected without registration, and unstar keeps current instrument (0.2533ms)
+✔ annual data requests use a separate bounded 3000-day history and leave day cache independent (0.433921ms)
+✔ integer-price one-won source bound contradictions are normalized and counted, larger errors still fail (0.152448ms)
+✔ chart total deadline aborts a stalled request, frees its pending cache and allows retry (21.190954ms)
+✔ production HTTPS helper forwards chart cancellation and handles aborted response errors (1.613701ms)
+✔ KRX trading dates group by Monday weeks across years and holidays without zero-filled sessions (1.498528ms)
+✔ month aggregation uses calendar months and sums received volume, including leap day (0.163285ms)
+✔ weekly SMA uses weekly closes with full prehistory and excludes the uncertain first aggregated bucket (0.220901ms)
+✔ invalid OHLCV, duplicate or unordered dates and unsupported cycles are rejected (0.291067ms)
+✔ approved cycle settings keep weekly 1/4 clouds separate from MA 4/12 and leave monthly Fibonacci pending (0.089344ms)
+✔ view range, bar cycle and indicator cycle validate separately while legacy period remains compatible (8.06722ms)
+✔ year bars use calendar years and native close SMA 1/5/10 with insufficient history kept missing (0.387722ms)
+✔ validates stock and supported period (1.18685ms)
+✔ detail window follows selection, pins context, resumes latest and rejects other senders (0.416244ms)
+✔ recorded chart data is identified and never used for another stock (5.808802ms)
+✔ late load failure from a closed window does not close its replacement (0.289324ms)
+✔ detail view changes pin its cycle and range; only the known child may change it, and follow restores latest (0.297686ms)
+✔ only canonical HTTPS article URLs can be requested (1.028373ms)
+✔ Bloter URLs are limited to canonical public article paths and a single numeric id (0.275232ms)
+✔ observed Bloter structure keeps date labels without inventing a year and extracts text only (2.271958ms)
+✔ Bloter IPC uses a fixed list URL, retains article metadata and rejects unsupported stock queries (1.204948ms)
+✔ extracts article text with paragraph boundaries, entities and no executable markup (0.215623ms)
+✔ legacy nested div body is complete and missing/paywall bodies fail instead of inventing content (0.398978ms)
+✔ received market and stock payloads retain publisher, summary, canonical URL and KST seconds (0.451808ms)
+✔ news IPC checks sender and stock code before network; only fixed provider routes are fetched (0.761202ms)
+✔ native news URL and bounds reject local destinations, credentials, protocols and invalid zoomed rectangles (4.84045ms)
+✔ original destination is derived in main from a canonical provider article, even without text body (2.610596ms)
+✔ native article view has no app preload, blocks remote IPC, local resources, popups, permissions and downloads (1.251347ms)
+✔ hide during publisher resolution and loading is retained; stale bounds cannot expose another article (3.966689ms)
+✔ new selection and close cancel late resolution; load failure and renderer crash release native contents (0.976695ms)
+✔ reader renders safe text, keeps source link and discards stale article; chart controls keep context (1545.646387ms)
+✔ original-page controls keep the native view in the reader and hide it for overlays, tabs and failed loads (845.207147ms)
+✔ unregistered catalog, header search and holding selections drive chart data without changing watchlist (1129.040152ms)
+✔ stock news prioritizes current and searched instruments over holdings, retains explicit scope and rejects stale results (797.071387ms)
+ℹ tests 42
 ℹ suites 0
-ℹ pass 37
+ℹ pass 42
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 4522.742133
+ℹ duration_ms 5515.885987
 
 > stockbook@1.11.1 smoke
 > node scripts/smoke.mjs

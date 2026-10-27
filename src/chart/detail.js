@@ -11,7 +11,7 @@
   if(controller&&settings[current.barCycle])try{controller.setSettings(settings[current.barCycle]);}catch{delete settings[current.barCycle];}
   window.dispatchEvent(new CustomEvent('stockbook:chart-context',{detail:{...current}}));
  }
- api?.onContext(context);
+ api?.onContext(context);host.addEventListener('stockbook:chart-retry',event=>{event.preventDefault();if(current)context(current);});
  async function changeView(){
   if(!current)return;const view={barCycle:cycle.value,viewRange:range.value};
   const result=await api?.setView?.(view);

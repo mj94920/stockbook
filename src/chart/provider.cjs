@@ -27,17 +27,24 @@ function parseDaily(xml,code,at,{maxBars=1000}={}){
  if(!candles.length||candles.length+omitted>maxBars)throw Error('유효한 일봉 자료 없음');aggregate(candles,'day');
  return {ok:true,candles,investors:null,metadata:{stockCode:code,name:decode(attr.name||code),snapshotDate:candles.at(-1).date,source:'Naver fchart',sourceType:'naver-daily',fetchedAt:at,automaticRefresh:false,lastBarComplete:null,omittedRows:omitted,normalizedBounds,priceAdjustment:'공급자 가격 조정 기준 미확인'}};
 }
-function createChartProvider({httpsGet,now=()=>Date.now()}){
+function createChartProvider({httpsGet,now=()=>Date.now(),requestTimeoutMs=12000}){
  const cache=new Map();
  return {async get(code,cycle='day'){
   try{
    stockCode(code);if(!['day','week','month','year'].includes(cycle))throw Error('지원하지 않는 봉 주기');
    const count=cycle==='year'?3000:1000,key=code+':'+count;const existing=cache.get(key);if(existing&&now()-existing.at<60000)return await existing.pending;
    const entry={at:now(),pending:null};
-   entry.pending=Promise.resolve().then(()=>httpsGet(`https://fchart.stock.naver.com/sise.nhn?symbol=${code}&timeframe=day&count=${count}&requestType=0`,12000,{'Referer':'https://finance.naver.com/'})).then(xml=>parseDaily(xml,code,new Date(now()).toISOString(),{maxBars:count}));
+   entry.pending=Promise.resolve().then(async()=>{
+    const controller=new AbortController();let timer;
+    try{
+     const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>{reject(Object.assign(Error('Chart deadline'),{code:'CHART_TIMEOUT'}));controller.abort();},requestTimeoutMs);});
+     const response=httpsGet(`https://fchart.stock.naver.com/sise.nhn?symbol=${code}&timeframe=day&count=${count}&requestType=0`,requestTimeoutMs,{'Referer':'https://finance.naver.com/'},{signal:controller.signal});
+     const xml=await Promise.race([response,timeout]);return parseDaily(xml,code,new Date(now()).toISOString(),{maxBars:count});
+    }finally{clearTimeout(timer);}
+   });
    cache.set(key,entry);while(cache.size>20)cache.delete(cache.keys().next().value);
    entry.pending.catch(()=>{if(cache.get(key)===entry)cache.delete(key);});return await entry.pending;
-  }catch{return {ok:false,error:'선택 종목의 일봉을 불러오지 못했습니다. 잠시 후 다시 선택해 주세요.'};}
+  }catch(error){return {ok:false,error:error?.code==='CHART_TIMEOUT'?'차트 수신 시간이 초과됐습니다. 다시 시도해 주세요.':'선택 종목의 일봉을 불러오지 못했습니다. 다시 시도해 주세요.'};}
  }};
 }
 module.exports={stockCode,parseDaily,createChartProvider};

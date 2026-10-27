@@ -1,0 +1,28 @@
+{
+  "verifiedAt": "2026-10-27T02:41:22.682Z",
+  "scope": "Cloud proxy HTTPS and production chart provider; Windows user latency is unmeasured.",
+  "networkCalls": 1,
+  "results": [
+    {
+      "cycle": "day",
+      "ok": true,
+      "elapsedMs": 3554,
+      "sourceCount": 1000,
+      "error": null
+    },
+    {
+      "cycle": "week",
+      "ok": true,
+      "elapsedMs": 0,
+      "sourceCount": 1000,
+      "error": null
+    },
+    {
+      "cycle": "month",
+      "ok": true,
+      "elapsedMs": 0,
+      "sourceCount": 1000,
+      "error": null
+    }
+  ]
+}

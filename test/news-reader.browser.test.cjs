@@ -200,7 +200,8 @@ test('unregistered catalog, header search and holding selections drive chart dat
   await page.locator('#sbDesktopSearch').fill('SK하이닉스');await page.waitForFunction(()=>typeof window.__lateChart==='function');
   await page.locator('#sbDesktopSearch').fill('고려아연');await page.waitForFunction(()=>document.getElementById('sbEmbeddedChart').chartEvidence?.stockCode==='010130');
   await page.evaluate(()=>window.__lateChart({ok:false,error:'늦은 이전 종목 실패'}));assert.equal(await page.locator('#sbEmbeddedChart .candle').count()>0,true);assert.doesNotMatch(await page.locator('#sbEmbeddedChart').innerText(),/늦은 이전 종목/);
-  await page.evaluate(()=>{window.electronAPI.getChartData=async()=>({ok:false,error:'합성 수신 실패'});});await page.locator('#sbDesktopSearch').fill('123456');await page.waitForFunction(()=>document.getElementById('sbEmbeddedChart').textContent==='합성 수신 실패');assert.equal(await page.locator('#sbEmbeddedChart .candle').count(),0);
+  await page.evaluate(()=>{window.electronAPI.getChartData=async()=>({ok:false,error:'합성 수신 실패'});});await page.locator('#sbDesktopSearch').fill('123456');await page.waitForFunction(()=>document.querySelector('#sbEmbeddedChart > span')?.textContent==='합성 수신 실패');assert.equal(await page.locator('#sbEmbeddedChart .candle').count(),0);assert.equal(await page.getByRole('button',{name:'차트 다시 시도',exact:true}).isVisible(),true);
+  await page.evaluate(()=>{window.electronAPI.getChartData=async code=>window.__syntheticData(code);});await page.getByRole('button',{name:'차트 다시 시도',exact:true}).click();await page.waitForFunction(()=>document.getElementById('sbEmbeddedChart').chartEvidence?.stockCode==='123456');
   assert.equal(await page.evaluate(()=>state.watchlist.length),0);assert.equal(await page.evaluate(()=>window.__requests.includes('005930')),false);assert.deepEqual(errors,[]);
  }finally{await browser?.close();await new Promise(r=>server.close(r));}
 });

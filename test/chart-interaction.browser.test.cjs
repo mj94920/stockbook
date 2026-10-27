@@ -7,7 +7,7 @@ async function setup(touch=false){
  page.on('pageerror',e=>errors.push(e.message));await page.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort());
  await page.addInitScript(()=>{
   const candles=[];let date=new Date('2013-01-02T00:00:00Z');while(candles.length<3200){if(date.getUTCDay()!==0&&date.getUTCDay()!==6){const i=candles.length,open=1000+i*.2+Math.sin(i/7)*10,close=open+Math.sin(i)*5;candles.push({date:date.toISOString().slice(0,10),open,high:Math.max(open,close)+3,low:Math.min(open,close)-3,close,volume:100+i%17*20});}date.setUTCDate(date.getUTCDate()+1);}
-  window.stockBookChart={onContext:fn=>window.__context=fn,getData:async(code,cycle)=>({ok:true,candles:cycle==='year'?candles:candles.slice(-1000),investors:null,metadata:{stockCode:code,name:'합성 검증 종목',sourceType:'naver-daily',snapshotDate:candles.at(-1).date,fetchedAt:'2026-10-27T01:00:00Z',lastBarComplete:null}}),setFollow:async value=>{window.__follow=value;return {ok:true};},setView:async value=>{window.__view=value;return {ok:true};}};
+  window.__chartFetches=[];window.stockBookChart={onContext:fn=>window.__context=fn,getData:async(code,cycle)=>{window.__chartFetches.push({code,cycle});return {ok:true,candles:cycle==='year'?candles:candles.slice(-1000),investors:null,metadata:{stockCode:code,name:'합성 검증 종목',sourceType:'naver-daily',snapshotDate:candles.at(-1).date,fetchedAt:'2026-10-27T01:00:00Z',lastBarComplete:null}};},setFollow:async value=>{window.__follow=value;return {ok:true};},setView:async value=>{window.__view=value;return {ok:true};}};
  });
  await page.goto(base+'/chart.html');await page.evaluate(()=>window.__context({code:'000001',name:'합성 검증 종목',period:'6m',barCycle:'month',follow:true}));await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='month');
  return {page,browser,errors,close:async()=>{await browser.close();await new Promise(r=>server.close(r));}};
@@ -57,5 +57,32 @@ test('tablet touch can draw a horizontal line and pinch zoom without losing the 
   const session=await page.context().newCDPSession(page),center=await point(page,3,300);const input=(type,d)=>session.send('Input.dispatchTouchEvent',{type,touchPoints:d});
   await input('touchStart',[{x:center.x-35,y:center.y,id:1},{x:center.x+35,y:center.y,id:2}]);await input('touchMove',[{x:center.x-90,y:center.y,id:1},{x:center.x+90,y:center.y,id:2}]);await input('touchEnd',[]);
   const m=await page.locator('#chartViewport').evaluate(h=>{const m=StockBookCharts.controller(h).getModel();return {count:m.count,end:m.end,total:m.all.length};});assert.ok(m.count<7);assert.equal(m.end,m.total);assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
+
+test('range and day/week/month switches reuse received history; failed same-view retry restores indicator settings',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  await page.locator('#chartPeriod').selectOption('all');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.viewRange==='all');
+  for(const cycle of ['week','day','month']){await page.locator('#chartCycle').selectOption(cycle);await page.waitForFunction(c=>document.getElementById('chartViewport').chartEvidence?.barCycle===c,cycle);}
+  assert.equal(await page.evaluate(()=>window.__chartFetches.length),1);
+  await page.locator('#chartCycle').selectOption('year');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='year');assert.equal(await page.evaluate(()=>window.__chartFetches.length),2);
+  await page.locator('#chartCycle').selectOption('month');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='month');assert.equal(await page.evaluate(()=>window.__chartFetches.length),2);
+  await page.locator('#chartIndicatorSettings').click();await page.locator('#chartMAPeriods').fill('2,6');await page.getByRole('button',{name:'적용',exact:true}).click();
+  await page.evaluate(async()=>{const read=stockBookChart.getData;let calls=0;stockBookChart.getData=(code,cycle)=>++calls===1?Promise.resolve({ok:false,error:'수신 실패 검증'}):read(code,cycle);await window.__context({code:'000002',name:'재시도 검증',barCycle:'month',period:'6m',follow:false});});
+  assert.match(await page.locator('#chartViewport').innerText(),/수신 실패 검증/);await page.getByRole('button',{name:'차트 다시 시도',exact:true}).click();await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.stockCode==='000002'&&document.getElementById('chartViewport').chartEvidence?.periods[0]===2);
+  assert.deepEqual(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.periods),[2,6]);assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
+
+test('renderer stops waiting for stuck IPC, retries without restart and ignores the late response',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  await page.clock.install();
+  await page.evaluate(()=>{const read=stockBookChart.getData;let calls=0;stockBookChart.getData=(code,cycle)=>++calls===1?new Promise(resolve=>window.__lateChart=resolve):read(code,cycle);void window.__context({code:'000003',name:'대기 검증',barCycle:'month',period:'6m',follow:false});});
+  assert.match(await page.locator('#chartViewport').innerText(),/불러오는 중/);await page.clock.fastForward(14001);assert.match(await page.locator('#chartViewport').innerText(),/응답이 지연/);
+  await page.getByRole('button',{name:'차트 다시 시도',exact:true}).click();await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.stockCode==='000003');
+  await page.evaluate(()=>{window.__lateChart({ok:false,error:'늦은 실패'});const controller=StockBookCharts.controller(document.getElementById('chartViewport')),update=controller.updateTheme;window.__themeUpdates=0;controller.updateTheme=value=>{window.__themeUpdates++;update(value);};document.body.classList.add('unrelated-class');});
+  await page.evaluate(()=>Promise.resolve());assert.equal(await page.evaluate(()=>window.__themeUpdates),0);assert.equal(await page.locator('#chartViewport .candle').count()>0,true);assert.doesNotMatch(await page.locator('#chartViewport').innerText(),/늦은 실패/);assert.deepEqual(h.errors,[]);
  }finally{await h.close();}
 });
