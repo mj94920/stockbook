@@ -28,6 +28,16 @@
   entry.task=Promise.race([Promise.resolve().then(()=>api(code)),deadline]).catch(()=>({ok:false,error:'거래대금을 불러오지 못했습니다.'})).then(data=>{entry.pending=false;if(!data?.ok&&moneyCache.get(code)===entry)moneyCache.delete(code);return data;}).finally(()=>clearTimeout(timer));
   moneyCache.set(code,entry);while(moneyCache.size>20)moneyCache.delete(moneyCache.keys().next().value);return entry.task;
  }
+ const investorCache=new Map();
+ function investors(code,force=false){
+  const api=root.electronAPI?.getChartInvestors||root.stockBookChart?.getInvestors;
+  if(!api)return Promise.resolve({ok:false,error:'KIS 연결 후 투자자별 순매수를 조회할 수 있습니다.'});
+  const old=investorCache.get(code);if(old&&Date.now()-old.at<60000&&(!force||old.pending))return old.task;
+  const entry={at:Date.now(),pending:true,task:null};let timer;
+  const deadline=new Promise(resolve=>{timer=setTimeout(()=>resolve({ok:false,error:'수급 응답이 지연되고 있습니다. 다시 조회해 주세요.'}),9000);});
+  entry.task=Promise.race([Promise.resolve().then(()=>api(code)),deadline]).then(data=>{if(data?.ok){if(data.stockCode!==code||data.source!=='KIS'||data.market!=='KRX'||data.unit!=='주')throw Error('수급 종목/출처 오류');root.StockBookChartSeries.investorSeries(data.rows);}return data;}).catch(()=>({ok:false,error:'수급 자료를 불러오지 못했습니다.'})).then(data=>{entry.pending=false;if(!data?.ok&&investorCache.get(code)===entry)investorCache.delete(code);return data;}).finally(()=>clearTimeout(timer));
+  investorCache.set(code,entry);while(investorCache.size>20)investorCache.delete(investorCache.keys().next().value);return entry.task;
+ }
  const states=new WeakMap();
  function show(host,context,mode){
   if(!host)return Promise.resolve(null);
@@ -57,7 +67,15 @@
      if(retry)retry.disabled=false;
     }
     retry?.addEventListener('click',()=>{if(!retry.disabled)loadMoney(true);});
-    if((context.barCycle||'day')!=='year')loadMoney();
+    const investorRetry=host.querySelector('[data-chart-id="investorRetry"]');
+    async function loadInvestors(force=false){
+     if(investorRetry)investorRetry.disabled=true;const status=host.querySelector('[data-chart-id="investorStatus"]');if(status)status.textContent='투자자별 순매수를 불러오는 중…';
+     const values=await investors(context.code,force);if(states.get(host)!==state)return;
+     try{state.controller.setInvestors(values);}catch{state.controller.setInvestors({ok:false,error:'선택 종목의 수급 자료를 확인할 수 없습니다.'});}
+     if(investorRetry)investorRetry.disabled=false;
+    }
+    investorRetry?.addEventListener('click',()=>{if(!investorRetry.disabled)loadInvestors(true);});
+    if((context.barCycle||'day')!=='year'){loadMoney();if(data.metadata.sourceType==='naver-daily')loadInvestors();}
     return state.controller;
    }catch{state.interaction?.destroy();state.resize?.destroy();failed('차트 자료를 표시하지 못했습니다.');return null;}
   })();return state.task;

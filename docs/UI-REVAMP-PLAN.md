@@ -189,3 +189,5 @@
 | `--sb-chart-money-3000` | `--sb-up` (상세 단독 화면 fallback `#f43f5e`) | `--sb-up` |
 | `--sb-chart-money-5000` | `#d8b4fe` | `#7c3aed` |
 | `--sb-chart-money-10000` | `--sb-text-1` | `--sb-text-1` |
+
+투자자별 수급의 기존 사용자 색은 `--sb-chart-investor-foreign`(분홍, 다크 `#ff94c4`/라이트 `#b52964`), `--sb-chart-investor-institution`(노랑, `#fff16c`/`#957100`), `--sb-chart-investor-individual`(남색, `#3e5eb8`/`#243e89`)으로 제공한다. SVG와 종합 범례는 이 토큰을 참조하며 수량·단위·주체 이름을 함께 표시한다.

@@ -11,7 +11,7 @@ let win;
 const { prepareRendererFiles } = require('./src/desktop/renderer-files.cjs');
 const rendererDirectories = new Set();
 const chartStockSearch = require('./src/chart/stock-search.cjs').createStockSearch({loadMarket:loadNaverStocks,loadBasic:async code=>JSON.parse(await httpsGet(`https://m.stock.naver.com/api/stock/${code}/basic`,8000))});
-const chartWindows = require('./src/chart/window.cjs').registerChartWindow({ ipcMain, BrowserWindow, getMainWindow:()=>win, appDir:__dirname, getChartData:require('./src/chart/provider.cjs').createChartProvider({httpsGet}).get, getTradingValues:require('./src/chart/trading-value.cjs').createTradingValueProvider({httpsGet,getAuth:getKisToken}).get, searchStocks:chartStockSearch.search, resolveStock:chartStockSearch.resolve });
+const chartWindows = require('./src/chart/window.cjs').registerChartWindow({ ipcMain, BrowserWindow, getMainWindow:()=>win, appDir:__dirname, getChartData:require('./src/chart/provider.cjs').createChartProvider({httpsGet}).get, getTradingValues:require('./src/chart/trading-value.cjs').createTradingValueProvider({httpsGet,getAuth:getKisToken}).get, searchStocks:chartStockSearch.search, resolveStock:chartStockSearch.resolve, getInvestors:require('./src/chart/investor-provider.cjs').createInvestorProvider({httpsGet,getAuth:getKisToken}).get });
 
 // ── 데이터 파일 경로: %APPDATA%\StockBook\stockbook-data.json ──────────────
 function getDataFile() {

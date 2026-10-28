@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('stockBookChart',{
   getTradingValues:code=>ipcRenderer.invoke('get-chart-trading-values',code),
   searchStocks:query=>ipcRenderer.invoke('search-chart-stocks',query),
   selectStock:code=>ipcRenderer.invoke('select-chart-stock',code),
+  getInvestors:code=>ipcRenderer.invoke('get-chart-investors',code),
   getSnapshot:code=>ipcRenderer.invoke('get-chart-snapshot',code),
   setView:value=>ipcRenderer.invoke('set-chart-view',value),
   setFollow:value=>ipcRenderer.invoke('set-chart-follow',value),

@@ -36,6 +36,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   getChartData: (code,cycle='day') => ipcRenderer.invoke('get-chart-data', code,cycle),
   getChartTradingValues: code => ipcRenderer.invoke('get-chart-trading-values',code),
+  getChartInvestors: code => ipcRenderer.invoke('get-chart-investors',code),
   getChartSnapshot: (code) => ipcRenderer.invoke('get-chart-snapshot', code),
   setChartContext: (value) => ipcRenderer.invoke('set-chart-context', value),
   openChartWindow: (value) => ipcRenderer.invoke('open-chart-window', value),

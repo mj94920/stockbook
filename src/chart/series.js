@@ -67,6 +67,10 @@
   if(!Number.isInteger(bb.period)||bb.period<2||bb.period>500||!Number.isFinite(bb.multiplier)||bb.multiplier<0||bb.multiplier>10||!Number.isInteger(bb.shift)||bb.shift<0||bb.shift>120)throw Error('BB 기간·배수·이동값을 확인하세요.');
   return {periods:[...periods],cloud:cloud?[...cloud]:null,bb};
  }
+ function investorSeries(input){
+  if(!Array.isArray(input)||!input.length||input.length>100)throw Error('수급 자료 없음');const seen=new Set(),sums={foreign:0,institution:0,individual:0};
+  return input.map(row=>{dateValue(row.date);if(seen.has(row.date)||['foreign','institution','individual'].some(k=>!Number.isSafeInteger(row[k])))throw Error('수급 날짜/수량 오류');seen.add(row.date);return {date:row.date,foreign:row.foreign,institution:row.institution,individual:row.individual};}).sort((a,b)=>a.date.localeCompare(b.date)).map(row=>{const cumulative={};for(const k of Object.keys(sums)){sums[k]+=row[k];if(!Number.isSafeInteger(sums[k]))throw Error('누적 수량 범위 오류');cumulative[k]=sums[k];}return {...row,cumulative};});
+ }
  // Exact daily values are joined only when date and KRX volume match. A group with
  // even one missing/mismatched day has no amount, rather than a partial sum.
  function tradingValues(bars,candles,data){
@@ -104,5 +108,5 @@
   }
   return {bins,total};
  }
- return Object.freeze({cycleConfig,aggregate,average,visibleOffset,ranges,indicatorSettings,chartTypes,barLayout,volumeProfile,tradingValues,tradingValueBand,tradingValueThresholds});
+ return Object.freeze({cycleConfig,aggregate,average,visibleOffset,ranges,indicatorSettings,chartTypes,barLayout,volumeProfile,investorSeries,tradingValues,tradingValueBand,tradingValueThresholds});
 });

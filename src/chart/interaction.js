@@ -2,7 +2,7 @@
  'use strict';
  const memory=new Map(),indicatorMemory=new Map(),types=['trend','horizontal','vertical','thirds','quarters','midpoint','rectangle','ellipse','triangle','arrow','pen','text'];
  function mount(host,controller,{tools=true,compact=false}={}){
-  const doc=host.ownerDocument,svg=host.querySelector('[data-chart-id="chart"]'),pressure=host.querySelector('[data-chart-id="pressureChart"]'),money=host.querySelector('[data-chart-id="moneyChart"]'),abort=new AbortController(),signal=abort.signal;
+  const doc=host.ownerDocument,svg=host.querySelector('[data-chart-id="chart"]'),pressure=host.querySelector('[data-chart-id="pressureChart"]'),money=host.querySelector('[data-chart-id="moneyChart"]'),investor=host.querySelector('[data-chart-id="investorChart"]'),abort=new AbortController(),signal=abort.signal;
   const key=controller.getModel().stockCode+':'+controller.getModel().config.label,storageKey='stockbook:chart:drawings:v1:'+key;
   const visibilityKey='stockbook:chart:visibility:v1:'+key;let hidden=indicatorMemory.get(key)||[],lastVisibility='';
   try{const saved=JSON.parse(root.localStorage.getItem(visibilityKey));if(Array.isArray(saved)&&saved.length<=32&&saved.every(id=>typeof id==='string'&&/^(ma:\d+|bb|cloud|pressure|money|investors|profile)$/.test(id)))hidden=saved;const type=root.localStorage.getItem('stockbook:chart:type:v1');if(root.StockBookChartSeries.chartTypes.includes(type))controller.setType(type);}catch{}
@@ -159,7 +159,7 @@
    wheelRemainder+=e.deltaMode===1?delta:e.deltaMode===2?delta*model().count:delta/40;const bars=Math.trunc(wheelRemainder);if(bars){wheelRemainder-=bars;controller.scrollBy(bars);}
   }
   for(const target of [svg,pressure,money,scroll,scale])target?.addEventListener('wheel',scrollWheel,{passive:false,signal});
-  host.querySelector('[data-chart-id="investorChart"]')?.addEventListener('pointerdown',()=>{if(tools&&controller.getIndicators().some(item=>item.id==='investors'&&item.available))selectIndicator('investors');},{signal});
+  investor?.addEventListener('pointerdown',event=>{if(tools&&controller.getIndicators().some(item=>item.id==='investors'&&item.available)){event.preventDefault();selectIndicator('investors');}},{signal});
   money?.setAttribute('data-chart-indicator','money');money?.addEventListener('pointerdown',event=>{if(tools){event.preventDefault();selectIndicator('money');}},{signal});
   money?.addEventListener('pointermove',e=>show(e,money),{signal});money?.addEventListener('pointerleave',hide,{signal});
   pressure?.setAttribute('data-chart-indicator','pressure');pressure?.addEventListener('pointerdown',()=>{if(tools)selectIndicator('pressure');},{signal});
@@ -185,7 +185,7 @@
    }
   },{signal});
   host.addEventListener('stockbook:chart-render',()=>{hide();draw();},{signal});
-  let size='';const observer=new ResizeObserver(()=>{const next=[svg.clientWidth,svg.clientHeight,pressure?.clientWidth||0,pressure?.clientHeight||0,money?.clientWidth||0,money?.clientHeight||0].join(':');if(next!==size){size=next;controller.refresh();}});observer.observe(svg);if(pressure)observer.observe(pressure);if(money)observer.observe(money);
+  let size='';const observer=new ResizeObserver(()=>{const next=[svg.clientWidth,svg.clientHeight,pressure?.clientWidth||0,pressure?.clientHeight||0,money?.clientWidth||0,money?.clientHeight||0,investor?.clientWidth||0,investor?.clientHeight||0].join(':');if(next!==size){size=next;controller.refresh();}});observer.observe(svg);if(pressure)observer.observe(pressure);if(money)observer.observe(money);if(investor)observer.observe(investor);
   setMode('zoom');draw();
   return {destroy(){memory.set(key,drawings);abort.abort();observer.disconnect();tip.remove();priceLabel.remove();dateLabel.remove();controls.remove();indicatorPanel.remove();toolbar.remove();nav.remove();status.remove();}};
  }
