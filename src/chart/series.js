@@ -117,6 +117,22 @@
   if(!Array.isArray(values)||!Number.isFinite(level)||values.some(value=>value!==null&&!Number.isFinite(value)))throw Error('하향 돌파 자료 오류');
   return values.map((value,i)=>i>0&&value!==null&&values[i-1]!==null&&values[i-1]>=level&&value<level);
  }
+ // User's price-only entry formula. Each A(25)/B(25) is a historical value,
+ // distinct from the chart's future-shifted BB display and its editable periods.
+ function entrySignalSeries(candles){
+  const bars=aggregate(candles,'day'),ma=average(bars,226),range=n=>bars.map((_,i)=>i<n-1?null:{high:Math.max(...bars.slice(i-n+1,i+1).map(c=>c.high)),low:Math.min(...bars.slice(i-n+1,i+1).map(c=>c.low))}),r9=range(9),r26=range(26),r52=range(52);
+  const a=bars.map((_,i)=>r26[i]?(r9[i].high+r9[i].low+r26[i].high+r26[i].low)/4:null),b=bars.map((_,i)=>r52[i]?(r52[i].high+r52[i].low)/2:null);
+  const upper=bars.map((_,i)=>{if(i<19)return null;const values=bars.slice(i-19,i+1).map(c=>c.close),mean=values.reduce((s,v)=>s+v,0)/20;return mean+2*Math.sqrt(values.reduce((s,v)=>s+(v-mean)**2,0)/20);});
+  const cross=(value,line,priorValue,priorLine)=>line!==null&&priorLine!==null&&value>line&&priorValue<=priorLine;
+  return bars.map((c,i)=>{
+   const lineA=a[i-25]??null,lineB=b[i-25]??null;
+   if([lineA,lineB,ma[i],upper[i]].some(v=>v===null))return {signal:null,lineA,lineB,ma226:ma[i],bbUpper:upper[i]};
+   if(![lineA,lineB,ma[i],upper[i]].every(Number.isFinite))throw Error('세력 입장 계산 범위 오류');
+   const previous=bars[i-1],cloudCross=cross(c.close,lineA,previous.close,a[i-26]??null)&&cross(c.close,lineB,previous.close,b[i-26]??null),cloudAbove=c.high>lineA&&c.high>lineB;
+   const maCross=cross(c.close,ma[i],previous.close,ma[i-1]??null),aboveMA=c.close>ma[i],bandCross=cross(c.high,upper[i],previous.high,upper[i-1]??null),openAboveBand=c.open>upper[i];
+   return {signal:(cloudCross||cloudAbove)&&(maCross||aboveMA)&&(bandCross||openAboveBand),lineA,lineB,ma226:ma[i],bbUpper:upper[i],cloudCross,cloudAbove,maCross,aboveMA,bandCross,openAboveBand};
+  });
+ }
  function investorSeries(input){
   if(!Array.isArray(input)||!input.length||input.length>100)throw Error('수급 자료 없음');const seen=new Set(),sums={foreign:0,institution:0,individual:0};
   return input.map(row=>{dateValue(row.date);if(seen.has(row.date)||['foreign','institution','individual'].some(k=>!Number.isSafeInteger(row[k])))throw Error('수급 날짜/수량 오류');seen.add(row.date);return {date:row.date,foreign:row.foreign,institution:row.institution,individual:row.individual};}).sort((a,b)=>a.date.localeCompare(b.date)).map(row=>{const cumulative={};for(const k of Object.keys(sums)){sums[k]+=row[k];if(!Number.isSafeInteger(sums[k]))throw Error('누적 수량 범위 오류');cumulative[k]=sums[k];}return {...row,cumulative};});
@@ -158,5 +174,5 @@
   }
   return {bins,total};
  }
- return Object.freeze({cycleConfig,aggregate,average,visibleOffset,ranges,indicatorSettings,obvSeries,newLowSignals,rsiSeries,crossdown,chartTypes,barLayout,volumeProfile,investorSeries,tradingValues,tradingValueBand,tradingValueThresholds});
+ return Object.freeze({cycleConfig,aggregate,average,visibleOffset,ranges,indicatorSettings,obvSeries,newLowSignals,rsiSeries,crossdown,entrySignalSeries,chartTypes,barLayout,volumeProfile,investorSeries,tradingValues,tradingValueBand,tradingValueThresholds});
 });

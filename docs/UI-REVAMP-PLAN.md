@@ -195,3 +195,5 @@
 OBV 구간은 `--sb-chart-obv`(기존 기관 노랑 토큰)와 `--sb-chart-obv-signal`(기존 거래대금 300억 파랑 토큰)을 참조하며 다크/라이트 팔레트를 공유한다.
 
 봉 신호는 `--sb-chart-signal-new-low`(기존 거래대금 300억 파랑 토큰), `--sb-chart-signal-oversold`(기존 경고 토큰)를 참조한다.
+
+일봉 세력 입장 조건 표시는 `--sb-chart-signal-entry`(기존 `--sb-success`, 상세 단독 화면 fallback `#10b981`)를 참조한다.

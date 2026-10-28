@@ -5,6 +5,7 @@ const {chartContext}=require('../src/chart/window.cjs');
 const {barLayout,volumeProfile}=require('../src/chart/series.js');
 const {obvSeries}=require('../src/chart/series.js');
 const {newLowSignals,rsiSeries,crossdown}=require('../src/chart/series.js');
+const {entrySignalSeries}=require('../src/chart/series.js');
 const bar=(date,open,high,low,close,volume)=>({date,open,high,low,close,volume});
 test('KRX trading dates group by Monday weeks across years and holidays without zero-filled sessions',()=>{
  const input=[bar('2023-12-28',10,14,8,12,100),bar('2023-12-29',12,15,11,14,200),bar('2024-01-02',20,30,18,25,300),bar('2024-01-05',25,28,17,19,400),bar('2024-01-08',19,21,16,20,500)];
@@ -110,4 +111,19 @@ test('cycle-specific additions never leak daily signals into week/month/year or 
  assert.equal(indicatorSettings('day',input).signals.rsiMethod,'wilder');assert.equal(indicatorSettings('day',input).obv.period,9);
  assert.equal(indicatorSettings('week',input).signals.newLowPeriod,null);assert.equal(indicatorSettings('week',input).signals.rsiMethod,'wilder');for(const cycle of ['month','year'])assert.deepEqual(indicatorSettings(cycle,input).signals,{newLowPeriod:null,rsiPeriod:null,rsiLevel:null,rsiMethod:null});
  assert.equal(indicatorSettings('week',input).obv.period,3);assert.equal(indicatorSettings('month',input).obv.period,9);
+});
+
+const entryBars=()=>Array.from({length:230},(_,i)=>bar(new Date(Date.UTC(2024,0,i+1)).toISOString().slice(0,10),100,100,100,100,1));
+test('entry price formula waits for 226 closes and supports high crossing BB or opening above BB without older extra filters',()=>{
+ const rows=entryBars();rows[229]={...rows[229],open:100,high:110,low:100,close:101.5};const before=structuredClone(rows),result=entrySignalSeries(rows);
+ assert.ok(result.slice(0,225).every(r=>r.signal===null));assert.equal(result[225].signal,false);assert.equal(result[229].signal,true);assert.equal(result[229].bandCross,true);assert.equal(result[229].openAboveBand,false);assert.equal(result[229].lineA,100);assert.equal(result[229].lineB,100);assert.ok(Math.abs(result[229].ma226-(22500+101.5)/226)<1e-9);assert.deepEqual(rows,before);
+ const opening=entryBars().map(c=>({...c,high:101,low:99}));opening[229]={...opening[229],open:101,high:110,low:100,close:101.5};const last=entrySignalSeries(opening).at(-1);assert.equal(last.bandCross,false);assert.equal(last.openAboveBand,true);assert.equal(last.signal,true);
+});
+
+test('entry needs every logical group and samples cloud lines 25 bars back without future leakage',()=>{
+ const rows=entryBars();rows[229]={...rows[229],open:99,high:110,low:98,close:99};let last=entrySignalSeries(rows).at(-1);assert.equal(last.cloudAbove,true);assert.equal(last.bandCross,true);assert.equal(last.aboveMA,false);assert.equal(last.signal,false);
+ const cloud=entryBars().map((c,i)=>i>=170?{...c,open:120,high:200,low:120,close:120}:{...c,open:80,high:80,low:80,close:80});cloud[229]={...cloud[229],open:125,high:130,low:123,close:126};last=entrySignalSeries(cloud).at(-1);assert.equal(last.cloudAbove,false);assert.equal(last.aboveMA,true);assert.equal(last.openAboveBand,true);assert.equal(last.signal,false);
+ const band=entryBars().map(c=>({...c,high:101,low:99}));band[229]={...band[229],close:100.1};last=entrySignalSeries(band).at(-1);assert.equal(last.cloudAbove,true);assert.equal(last.aboveMA,true);assert.equal(last.bandCross,false);assert.equal(last.openAboveBand,false);assert.equal(last.signal,false);
+ const shifted=entryBars();shifted[220]={...shifted[220],high:200};shifted[229]={...shifted[229],open:100,high:110,low:100,close:101.5};last=entrySignalSeries(shifted).at(-1);assert.equal(last.lineA,100);assert.equal(last.lineB,100);
+ const past=entrySignalSeries(shifted);shifted.push(bar('2024-08-18',1000,2000,900,1500,1));assert.deepEqual(entrySignalSeries(shifted).slice(0,230),past);assert.throws(()=>entrySignalSeries([{...shifted[0],high:0}]));
 });
