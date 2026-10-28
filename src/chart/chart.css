@@ -96,3 +96,12 @@
 .sb-proof-year.sb-proof-compact { grid-template-rows:auto auto minmax(0,1fr); }
 body.light-mode .sb-proof-chart { --sb-chart-money-500:#4d7c0f;--sb-chart-money-1000:var(--sb-warn);--sb-chart-money-5000:#7c3aed; }
 .sb-proof-compact .sb-proof-money > p,.sb-proof-compact .sb-proof-money > button,.sb-proof-compact .sb-money-legend { display:none; }
+
+.sb-chart-search { position:relative;flex:0 1 300px;min-width:200px;max-width:100%; }
+.sb-chart-search-label { position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%); }
+.sb-chart-search-row { display:flex;gap:var(--sb-space-1,4px); }
+.sb-chart-search-row .sb-input { flex:1;min-width:0;width:100%;font:inherit; }
+.sb-chart-search-panel { position:absolute;inset:calc(100% + 4px) 0 auto;z-index:10001;padding:var(--sb-space-2,8px);background:var(--sb-panel);border:1px solid var(--sb-border);box-shadow:var(--sb-shadow-2);max-height:min(360px,60vh);overflow:auto; }
+.sb-chart-search-panel p { margin:0 0 6px;color:var(--sb-text-2);font-size:12px; }
+.sb-chart-search-result { display:block;width:100%;text-align:left;white-space:normal;overflow-wrap:anywhere;margin-top:4px; }
+.sb-chart-search-result[aria-selected="true"] { border-color:var(--sb-accent);background:var(--sb-surface);color:var(--sb-text-1);outline:1px solid var(--sb-accent); }

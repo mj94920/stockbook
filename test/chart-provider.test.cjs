@@ -64,3 +64,13 @@ test('production HTTPS helper forwards chart cancellation and handles aborted re
  const pending=read('https://fchart.stock.naver.com/sise.nhn',12000,{}, {signal:controller.signal});await Promise.resolve();assert.equal(received,controller.signal);
  controller.abort();response.emit('error',Error('Response aborted'));request.emit('error',Error('Request aborted'));await assert.rejects(pending,/Response aborted/);
 });
+
+test('detail search reuses one catalog, ranks exact names, accepts direct codes without catalog and bounds responses',async()=>{
+ const {createStockSearch}=require('../src/chart/stock-search.cjs');let markets=[],basic=[];
+ const search=createStockSearch({loadMarket:async market=>{markets.push(market);return {ok:true,data:[{code:'005935',name:'삼성전자우',market},{code:'005930',name:'삼성전자',market},{code:'../bad',name:'악성 값'}]};},loadBasic:async code=>{basic.push(code);return {stockCode:code,stockName:'직접 코드'};}});
+ assert.equal((await search.search('')).ok,false);assert.equal((await search.search('x'.repeat(41))).ok,false);assert.equal((await search.search({})).ok,false);assert.equal(markets.length,0);
+ const direct=await search.search('999999');assert.deepEqual(direct.items,[{code:'999999',name:'직접 코드',market:''}]);assert.equal(markets.length,0);
+ const [a,b]=await Promise.all([search.search('삼성'),search.search('삼성 전자')]);assert.equal(a.items.length,2);assert.equal(b.items[0].code,'005930');assert.equal(markets.length,3);assert.equal((await search.resolve('005930')).name,'삼성전자');assert.deepEqual(basic,['999999']);assert.equal(await search.resolve('../bad'),null);assert.equal((await search.search('없는 이름')).items.length,0);
+ const bad=createStockSearch({loadMarket:async()=>({ok:false}),loadBasic:async()=>({stockCode:'000660',stockName:'다른 코드'})});assert.equal((await bad.search('005930')).ok,false);assert.equal((await bad.search('삼성')).ok,false);
+ const slow=createStockSearch({timeoutMs:15,loadMarket:async()=>new Promise(()=>{}),loadBasic:async()=>new Promise(()=>{})});assert.equal((await slow.search('삼성')).ok,false);assert.equal((await slow.search('005930')).ok,false);
+});

@@ -1,6 +1,6 @@
 {
   "passed": true,
-  "verifiedAt": "2026-10-28T01:34:21.891Z",
+  "verifiedAt": "2026-10-28T01:51:16.400Z",
   "scope": "Synthetic KIS-shaped money responses, recorded Samsung prices, production HTML with mock IPC. No authenticated KIS response, Windows Electron or installer verification.",
   "daily": {
     "source": "KIS",

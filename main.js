@@ -10,7 +10,8 @@ app.name = 'StockBook';
 let win;
 const { prepareRendererFiles } = require('./src/desktop/renderer-files.cjs');
 const rendererDirectories = new Set();
-const chartWindows = require('./src/chart/window.cjs').registerChartWindow({ ipcMain, BrowserWindow, getMainWindow:()=>win, appDir:__dirname, getChartData:require('./src/chart/provider.cjs').createChartProvider({httpsGet}).get, getTradingValues:require('./src/chart/trading-value.cjs').createTradingValueProvider({httpsGet,getAuth:getKisToken}).get });
+const chartStockSearch = require('./src/chart/stock-search.cjs').createStockSearch({loadMarket:loadNaverStocks,loadBasic:async code=>JSON.parse(await httpsGet(`https://m.stock.naver.com/api/stock/${code}/basic`,8000))});
+const chartWindows = require('./src/chart/window.cjs').registerChartWindow({ ipcMain, BrowserWindow, getMainWindow:()=>win, appDir:__dirname, getChartData:require('./src/chart/provider.cjs').createChartProvider({httpsGet}).get, getTradingValues:require('./src/chart/trading-value.cjs').createTradingValueProvider({httpsGet,getAuth:getKisToken}).get, searchStocks:chartStockSearch.search, resolveStock:chartStockSearch.resolve });
 
 // ── 데이터 파일 경로: %APPDATA%\StockBook\stockbook-data.json ──────────────
 function getDataFile() {
@@ -460,7 +461,7 @@ async function fetchNaverStockList(market) {
   return results;
 }
 
-ipcMain.handle('fetch-naver-stocks', async (event, market) => {
+async function loadNaverStocks(market) {
   // ETF는 KRX API 사용 → 별도 캐시 키 (naver-stocks-ETF.json 구 캐시 자동 무력화)
   const cacheFile = path.join(app.getPath('userData'),
     market === 'ETF' ? 'etf-naver-v3.json' : `naver-stocks-${market}.json`);
@@ -502,7 +503,8 @@ ipcMain.handle('fetch-naver-stocks', async (event, market) => {
     }
     return { ok: false, error: e.message };
   }
-});
+}
+ipcMain.handle('fetch-naver-stocks', (_event,market)=>loadNaverStocks(market));
 
 // 종목 상세 정보 (팝업: PER·PBR·EPS, 시총·상장주식수·상장일, 52주 최고·최저, 배당)
 ipcMain.handle('fetch-stock-detail', async (event, code) => {

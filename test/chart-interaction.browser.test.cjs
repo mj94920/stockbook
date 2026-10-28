@@ -374,3 +374,29 @@ test('compact money stays in its own row, preserves price-volume split, resizes 
   await page.setViewportSize({width:1600,height:1200});await host.getByRole('separator',{name:'거래대금 구간 높이',exact:true}).press('Enter');await page.waitForFunction(()=>document.querySelector('#sbEmbeddedChart [data-chart-id="moneyChart"]').clientHeight===64);assert.deepEqual(h.errors,[]);
  }finally{await h.close();}
 });
+
+test('detail stock search supports tablet choice and keyboard code entry, keeps view/settings, and pins independently of main',async()=>{
+ const h=await setup(true),{page}=h;
+ try{
+  await page.setViewportSize({width:900,height:1200});await page.locator('#chartPeriod').selectOption('1y');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.viewRange==='1y');
+  await page.locator('#chartIndicatorSettings').click();await page.locator('#chartMAPeriods').fill('2,6');await page.getByRole('button',{name:'적용',exact:true}).click();
+  await page.evaluate(()=>{window.__mainContext={code:'000001',name:'종합 종목',barCycle:'month',viewRange:'1y',period:'1y',follow:true};window.__searchCalls=[];window.__selected=[];const names={'000660':'SK하이닉스','005930':'삼성전자'};window.stockBookChart.searchStocks=async query=>{window.__searchCalls.push(query);return {ok:true,items:query==='005930'?[{code:'005930',name:'삼성전자'}]:[{code:'000660',name:'SK하이닉스'},{code:'000661',name:'SK하이닉스 검증'}]};};window.stockBookChart.selectStock=async code=>{window.__selected.push(code);const context={...window.__mainContext,code,name:names[code],follow:false};window.__context(context);return {ok:true,context};};window.stockBookChart.setFollow=async follow=>{window.__context({...window.__mainContext,follow});return {ok:true};};});
+  const search=page.getByRole('combobox',{name:'종목 검색',exact:true});await search.fill('하이닉스');await page.getByRole('option',{name:'SK하이닉스 · 000660',exact:true}).tap();await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.stockCode==='000660');
+  assert.equal(await page.locator('#chartCycle').inputValue(),'month');assert.equal(await page.locator('#chartPeriod').inputValue(),'1y');assert.equal(await page.locator('#chartFollow').inputValue(),'pin');assert.deepEqual(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.periods),[2,6]);assert.equal(await page.evaluate(()=>window.__mainContext.code),'000001');
+  await search.fill('005930');await search.press('Enter');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.stockCode==='005930');assert.match(await page.locator('#chartName').textContent(),/삼성전자/);assert.deepEqual(await page.evaluate(()=>window.__selected),['000660','005930']);
+  await page.locator('#chartFollow').selectOption('follow');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.stockCode==='000001');assert.equal(await page.locator('#chartFollow').inputValue(),'follow');
+  await page.locator('.sb-chart-indicator-panel > summary').click();await search.fill('하이닉스');await page.getByRole('option',{name:'SK하이닉스 · 000660',exact:true}).waitFor();await search.press('Escape');assert.equal(await page.locator('#chartStockSearchPanel').isVisible(),false);assert.equal(await page.locator('.sb-chart-indicator-panel').evaluate(e=>e.open),true);
+  await search.fill('하이');await page.getByRole('option',{name:'SK하이닉스 · 000660',exact:true}).waitFor();await search.press('ArrowUp');assert.equal(await search.getAttribute('aria-activedescendant'),'chart-stock-result-1');await search.press('ArrowDown');assert.equal(await search.getAttribute('aria-activedescendant'),'chart-stock-result-0');await search.press('Enter');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.stockCode==='000660');assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
+
+test('detail search ignores old results, waits for composition, and keeps the chart on lookup or selection failure',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  await page.evaluate(()=>{window.__searchPending={};window.stockBookChart.searchStocks=query=>new Promise(resolve=>window.__searchPending[query]=resolve);});
+  const input=page.getByRole('combobox',{name:'종목 검색',exact:true});await input.fill('이전');await page.waitForFunction(()=>window.__searchPending['이전']);await input.fill('새 검색');await page.waitForFunction(()=>window.__searchPending['새 검색']);
+  await page.evaluate(()=>{window.__searchPending['새 검색']({ok:true,items:[{code:'005930',name:'삼성전자'}]});window.__searchPending['이전']({ok:true,items:[{code:'000660',name:'지난 검색'}]});});await page.getByRole('option',{name:'삼성전자 · 005930',exact:true}).waitFor();assert.equal(await page.getByRole('option',{name:/지난 검색/}).count(),0);
+  await page.evaluate(()=>window.stockBookChart.selectStock=async()=>({ok:false}));await page.getByRole('option',{name:'삼성전자 · 005930',exact:true}).click();await page.waitForFunction(()=>document.getElementById('chartStockSearchStatus').textContent.includes('변경하지 못했습니다'));assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.stockCode),'000001');assert.ok(await page.locator('.candle').count()>0);
+  await input.dispatchEvent('compositionstart');await input.fill('조합중');await page.waitForTimeout(300);assert.equal(await page.evaluate(()=>!!window.__searchPending['조합중']),false);await input.dispatchEvent('compositionend');await page.waitForFunction(()=>window.__searchPending['조합중']);await page.evaluate(()=>window.__searchPending['조합중']({ok:false,error:'목록 조회 실패'}));await page.waitForFunction(()=>document.getElementById('chartStockSearchStatus').textContent==='목록 조회 실패');assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.stockCode),'000001');assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
