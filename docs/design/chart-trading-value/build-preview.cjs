@@ -1,0 +1,16 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path');
+const root=path.resolve(__dirname,'../../..'),snapshot=require('../../../src/chart/snapshot.cjs').readSnapshot('005930',root);
+if(!snapshot.ok)throw Error(snapshot.error);
+const data={...snapshot,investors:null,metadata:{...snapshot.metadata,name:'모의 응답 · 삼성전자 보존 가격 · 실수신 아님',sourceType:'naver-daily',fetchedAt:'2026-10-28T00:00:00Z'}};
+const rows=data.candles.slice(-100).map((row,i)=>({date:row.date,volume:row.volume,value:[299,300,500,1000,3000,5000,10000][i%7]*1e8}));
+const money={ok:true,stockCode:'005930',source:'KIS',market:'KRX',currency:'KRW',unit:'원',fetchedAt:'2026-10-28T00:00:00Z',rows};
+let html=fs.readFileSync(path.join(root,'chart.html'),'utf8');
+html=html.replace('<link rel="stylesheet" href="src/chart/chart.css">','<style>'+fs.readFileSync(path.join(root,'src/chart/chart.css'),'utf8')+'</style>');
+const payload=JSON.stringify({data,money}).replaceAll('<','\\u003c');
+const boot=`const mock=${payload};let context={code:'005930',name:'거래대금 모의 검증 · 실수신 아님',period:'6m',viewRange:'6m',barCycle:'day',follow:false},apply;window.stockBookChart={onContext:fn=>apply=fn,getData:async()=>structuredClone(mock.data),getTradingValues:async()=>structuredClone(mock.money),setView:async view=>{context={...context,...view,period:view.viewRange,indicatorCycle:view.barCycle,follow:false};apply(context);return {ok:true};},setFollow:async follow=>{context={...context,follow};apply(context);return {ok:true};}};document.addEventListener('DOMContentLoaded',()=>apply(context));`;
+html=html.replace('<script src="src/chart/series.js"></script>','<script>'+boot+'</script><script src="src/chart/series.js"></script>');
+html=html.replace(/<script src="(src\/chart\/[a-z-]+\.js)"><\/script>/g,(_,file)=>'<script>'+fs.readFileSync(path.join(root,file),'utf8').replace(/<\/script/gi,'<\\/script')+'</script>');
+if(/<script src=|href="src\//.test(html))throw Error('Missing embedded resource');
+fs.writeFileSync(path.join(__dirname,'preview.html'),html.replace(/^[ \t]+(?=\r?$)/gm,''));
+console.log('Built synthetic-money preview; recorded prices, no live requests.');

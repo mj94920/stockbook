@@ -176,3 +176,16 @@
 | 라이트/다크 및 주요 창 크기에서 UI 깨짐 없음 | [x] | 테마 전환 pageerror 0건, 두 뷰포트 스크린샷 (smoke-shots) |
 
 남은 항목: 라이트 모드 일부(MDI 타이틀바 등)와 차트·브랜드 계열의 하드코딩 색상은 의도된 값이거나 2차 이후 토큰화 대상이다.
+
+### 차트 거래대금 색 토큰 (2026-10-28)
+
+사용자가 지정한 거래대금 색은 `src/chart/chart.css`의 차트 전용 토큰으로 제공한다. SVG와 범례는 토큰을 참조한다.
+
+| 토큰 | 다크 | 라이트 |
+| --- | --- | --- |
+| `--sb-chart-money-300` | `--sb-down` (상세 단독 화면 fallback `#3b82f6`) | `--sb-down` |
+| `--sb-chart-money-500` | `#adff2f` | `#4d7c0f` |
+| `--sb-chart-money-1000` | `#ff9800` | `--sb-warn` |
+| `--sb-chart-money-3000` | `--sb-up` (상세 단독 화면 fallback `#f43f5e`) | `--sb-up` |
+| `--sb-chart-money-5000` | `#d8b4fe` | `#7c3aed` |
+| `--sb-chart-money-10000` | `--sb-text-1` | `--sb-text-1` |

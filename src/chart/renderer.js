@@ -8,7 +8,7 @@ function mount(host,dataset,{mode='detail',period='6m',viewRange=period,barCycle
  const all=series.aggregate(dataset.candles,barCycle,dataset.metadata);
  const initialOffset=series.visibleOffset(all,viewRange,barCycle);
  let offset=initialOffset,visibleCount=all.length-offset,futureCount=barCycle==='day'?25:0;
- const view={count:visibleCount,end:all.length,position:1};let model=null,bbSettings={period:40,multiplier:1.9,shift:25};
+ const view={count:visibleCount,end:all.length,position:1};let model=null,bbSettings={period:40,multiplier:1.9,shift:25},tradingAmounts=all.map(()=>null),tradingInfo=null,tradingStatus='KIS 연결이 필요한 실제 거래대금입니다.',moneyOpened=false;
  const window={};
  const document={getElementById:id=>host.querySelector('[data-chart-id="'+id+'"]'),body:{classList:{contains:()=>lightMode}}};
  host.className='sb-proof-chart '+(mode==='compact'?'sb-proof-compact':'sb-proof-detail');
@@ -17,7 +17,8 @@ function mount(host,dataset,{mode='detail',period='6m',viewRange=period,barCycle
  <div data-chart-id="legend" class="sb-proof-legend"></div>
  <svg data-chart-id="chart" viewBox="0 0 1280 600" role="img" aria-label="${dataset.metadata.sourceType==='naver-daily'?'조회':'보존'} ${config.label} 가격 차트"></svg>
  <svg data-chart-id="pressureChart" viewBox="0 0 1280 210" role="img" aria-label="거래량과 추정 매매 압력"></svg>
- <div class="sb-proof-extended"><details class="sb-proof-money"><summary>거래대금 · 실제 금액 미수신</summary><p>날짜별 실제 거래대금 자료가 없어 막대를 표시하지 않습니다.</p></details>
+ <details class="sb-proof-money" data-chart-id="moneyPanel"><summary data-chart-id="moneySummary">거래대금 · 실제 금액 미수신</summary><p data-chart-id="moneyStatus"></p><button type="button" class="sb-btn sb-btn--sm" data-chart-id="moneyRetry">거래대금 다시 조회</button><div class="sb-money-legend" data-chart-id="moneyLegend"></div><svg data-chart-id="moneyChart" role="img" aria-label="실제 거래대금 기준 거래량" viewBox="0 0 1280 100"></svg></details>
+ <div class="sb-proof-extended">
  <details ${dataset.investors?'open':''} data-chart-id="investorPanel"><summary>${dataset.investors?'투자자별 순매수 · 별도 5거래일 축':'투자자별 순매수 · 자료 없음'}</summary><svg data-chart-id="investorChart" viewBox="0 0 1280 290" role="img" aria-label="보존 투자자별 누적 순매수"></svg><details><summary>일별 수량·자료 안내</summary><p data-chart-id="investorInfo"></p><table data-chart-id="investorTable"></table></details></details></div>
  <div data-chart-id="period" class="sb-chart-notice"></div>`;
  document.getElementById('chart').setAttribute('preserveAspectRatio','none');
@@ -80,10 +81,25 @@ function render(all){
  svg+=`<text x="25" y="585" fill="${text}">${rows[0].date}</text><text x="${x(rows.length-1)-55}" y="585" fill="${text}">${rows.at(-1).date}</text>`;
  document.getElementById('chart').innerHTML=svg;document.getElementById('legend').innerHTML=periods.map((n,i)=>indicatorLabel('ma:'+n,n+config.unit+(avgs[i].every(v=>v===null)?' (이력 부족)':''),colors[i%colors.length])).join('')+(config.cloud?indicatorLabel('cloud','산·우물 구름 '+config.cloud.join('·')+config.unit):barCycle==='month'?'<span>피보나치 구름 · 기준 종가선 수식 확인 대기</span>':'')+(barCycle==='day'?indicatorLabel('bb','BB '+bbSettings.period+' / '+bbSettings.multiplier+' → +'+bbSettings.shift+'봉',mint):'')+(chartType==='profile'?indicatorLabel('profile','매물대 (추정)'):'')+(barCycle!=='year'?indicatorLabel('pressure','거래량·매매세')+(dataset.investors?indicatorLabel('investors','투자자별 순매수'):''):'');document.getElementById('period').textContent=`수신 기간 ${all[0].firstDate} ~ ${all.at(-1).date} · 일봉 ${dataset.candles.length}개 → ${config.label} ${all.length}개 · 모든 이동평균은 ${config.label} 종가 단순평균${barCycle==='year'?' · 첫 연봉은 수신 시작 이전 OHLC 미확인':barCycle!=='day'?' · 첫 집계봉은 이력 시작 전 자료 미확인으로 이평 계산에서 제외':''}${live?' · 가격 조정 기준 미확인'+(dataset.metadata.omittedRows?' · OHLC 미제공 '+dataset.metadata.omittedRows+'행 제외':'')+(dataset.metadata.normalizedBounds?' · OHLC 1원 이내 상하한 정규화 '+dataset.metadata.normalizedBounds+'행':''):''}${periods.some((_,i)=>avgs[i].every(v=>v===null))?' · 일부 이평선은 이력 부족':''}`;
  if(barCycle!=='year')renderPressure(all,isLight);else window.pressureEvidence=null;
+ renderTradingValues();
  window.chartEvidence={stockCode:dataset.metadata.stockCode,sourceType:dataset.metadata.sourceType||'recorded',count:all.length,sourceCount:dataset.candles.length,displayed:rows.length,barCycle,indicatorCycle,viewRange,periods,cloudCount,cloudPeriods:config.cloud,cloudLast:config.cloud?[cloudA.at(-1),cloudB.at(-1)]:null,bbShift:shift,bbPeriod:barCycle==='day'?bbSettings.period:null,bbMultiplier:barCycle==='day'?bbSettings.multiplier:null,referenceBaseCount:referenceBase.length,references,chartType,profile:profile?{method:'uniform-daily-range',totalVolume:profile.total,bins:profile.bins}:null,hiddenIndicators:[...hiddenIndicators],lastAverages:avgs.map((a,i)=>({period:periods[i],value:a.at(-1)}))};window.renderDone=true;
- model={all,rows,offset,end:view.end,count:rows.length,scrollPosition:view.position,x,y,step,indexForX,barWidth:horizontal.width,chartType,futureCount,periods:periods.filter(n=>!hiddenIndicators.has('ma:'+n)),averages:avgs.filter((_,i)=>!hiddenIndicators.has('ma:'+periods[i])),config,stockCode:dataset.metadata.stockCode,name:dataset.metadata.name,priceForY:v=>hi+pad-(v-30)*(hi-lo+2*pad)/490};
+ model={all,rows,tradingAmounts:tradingAmounts.slice(offset,view.end),offset,end:view.end,count:rows.length,scrollPosition:view.position,x,y,step,indexForX,barWidth:horizontal.width,chartType,futureCount,periods:periods.filter(n=>!hiddenIndicators.has('ma:'+n)),averages:avgs.filter((_,i)=>!hiddenIndicators.has('ma:'+periods[i])),config,stockCode:dataset.metadata.stockCode,name:dataset.metadata.name,priceForY:v=>hi+pad-(v-30)*(hi-lo+2*pad)/490};
 }
 // Independent OHLCV estimate, not the encrypted HTS indicator or actual trade-side volume.
+function renderTradingValues(){
+ const panel=document.getElementById('moneyPanel'),summary=document.getElementById('moneySummary'),status=document.getElementById('moneyStatus'),svg=document.getElementById('moneyChart'),known=tradingAmounts.filter(value=>value!==null).length;
+ panel.hidden=barCycle==='year'||hiddenIndicators.has('money')||(mode==='compact'&&!known);
+ summary.textContent=known?(mode==='compact'?'거래대금 · KIS · 300억 이상':'거래대금 · KIS · 색상은 금액 / 막대 높이는 거래량'):'거래대금 · 실제 금액 미수신';summary.title=tradingStatus+' · 색상은 금액, 막대 높이는 거래량';status.textContent=tradingStatus;
+ document.getElementById('moneyLegend').innerHTML=known?series.tradingValueThresholds.map(n=>`<span style="color:var(--sb-chart-money-${n})">${n===10000?'1조':n+'억'} 이상</span>`).join(''):'';
+ const height=Math.max(32,svg.getBoundingClientRect().height||100),baseline=height-8,rows=all.slice(offset,view.end),max=Math.max(1,...rows.map(row=>row.volume));
+ svg.setAttribute('viewBox','0 0 1280 '+height);svg.setAttribute('preserveAspectRatio','none');
+ let markup=`<line x1="25" y1="${baseline}" x2="1170" y2="${baseline}" stroke="var(--sb-border)"/>`;
+ const widthScale=Math.max(.1,svg.clientWidth/1280);
+ for(let i=0;i<rows.length;i++){const value=tradingAmounts[offset+i],band=series.tradingValueBand(value);if(band===null)continue;const h=rows[i].volume/max*(height-16),width=Math.min(horizontal.width(i)*.72,24/widthScale);markup+=`<rect class="sb-money-bar" data-date="${rows[i].date}" data-amount="${value}" data-band="${band}" x="${horizontal.x(i)-width/2}" y="${baseline-h}" width="${width}" height="${h}" fill="var(--sb-chart-money-${band})" data-chart-indicator="money"/>`;}
+ svg.innerHTML=markup;
+ window.moneyEvidence={source:'KIS',market:'KRX',unit:'원',known,total:all.length,matched:tradingInfo?.matched||0,mismatched:tradingInfo?.mismatched||0,received:tradingInfo?.received||0,fetchedAt:tradingInfo?.fetchedAt||null};
+}
+// OHLCV-only estimate, not the encrypted HTS indicator or actual trade-side volume.
 function estimatePressure(all){return all.map((c,i)=>{const prior=all.slice(Math.max(0,i-20),i);const baseline=prior.length===20?prior.reduce((s,r)=>s+r.volume,0)/20:null;const location=c.high===c.low?0:Math.max(-1,Math.min(1,(2*c.close-c.high-c.low)/(c.high-c.low)));return {date:c.date,volume:c.volume,baseline,aboveAverage:baseline===null?null:c.volume>=baseline,location,pressure:location*c.volume};});}
 function renderPressure(all,isLight){
  const rows=(pressureCache??=estimatePressure(all)).slice(offset,view.end),x=horizontal.x,max=Math.max(1,...rows.map(r=>r.volume));
@@ -137,19 +153,24 @@ function renderInvestorPanel(){
    if(el.hasAttribute('points'))el.setAttribute('points',el.getAttribute('points').split(/\s+/).map(point=>{const [x,y]=point.split(',');return `${x},${10+(Number(y)-top)*ratio}`;}).join(' '));
   }
  }
- function getIndicators(){return [...periods.map(n=>({id:'ma:'+n,label:n+config.unit+' 이평선',available:true})),...(config.cloud?[{id:'cloud',label:'산·우물 구름 '+config.cloud.join('·')+config.unit,available:true}]:[]),...(barCycle==='day'?[{id:'bb',label:'BB 상한선',available:true}]:[]),...(chartType==='profile'?[{id:'profile',label:'매물대 (추정)',available:true}]:[]),...(barCycle!=='year'?[{id:'pressure',label:'거래량·매매세',available:true},{id:'investors',label:'투자자별 순매수'+(dataset.investors?'':' (자료 없음)'),available:!!dataset.investors}]:[])];}
+ function getIndicators(){return [...periods.map(n=>({id:'ma:'+n,label:n+config.unit+' 이평선',available:true})),...(config.cloud?[{id:'cloud',label:'산·우물 구름 '+config.cloud.join('·')+config.unit,available:true}]:[]),...(barCycle==='day'?[{id:'bb',label:'BB 상한선',available:true}]:[]),...(chartType==='profile'?[{id:'profile',label:'매물대 (추정)',available:true}]:[]),...(barCycle!=='year'?[{id:'money',label:'거래대금 (KIS)',available:true},{id:'pressure',label:'거래량·매매세',available:true},{id:'investors',label:'투자자별 순매수'+(dataset.investors?'':' (자료 없음)'),available:!!dataset.investors}]:[])];}
  function indicatorLabel(id,label,color='var(--sb-text-2)'){return hiddenIndicators.has(id)?'':`<button type="button" class="sb-btn sb-chart-indicator" data-chart-indicator="${id}" aria-pressed="false" style="color:${color};border-color:${color}">${label}</button>`;}
  function draw(){render(all);if(barCycle!=='year')renderInvestorPanel();
  const noPressure=barCycle==='year'||hiddenIndicators.has('pressure');document.getElementById('pressureChart').toggleAttribute('hidden',noPressure);host.classList.toggle('sb-proof-no-pressure',noPressure);document.getElementById('investorPanel').hidden=hiddenIndicators.has('investors');
  if(mode!=='compact'&&barCycle!=='year')fitIndicator('investorChart',0,290,84);
- host.chartEvidence={...window.chartEvidence,pressure:window.pressureEvidence,investors:window.investorEvidence};host.dispatchEvent(new root.CustomEvent('stockbook:chart-render'));}
+ host.chartEvidence={...window.chartEvidence,pressure:window.pressureEvidence,money:window.moneyEvidence,investors:window.investorEvidence};host.dispatchEvent(new root.CustomEvent('stockbook:chart-render'));}
  function applyView(count,position){
   const nextCount=Math.max(1,Math.min(all.length,Math.round(count))),nextPosition=Math.max(0,Math.min(1,position)),end=nextCount+Math.round((all.length-nextCount)*nextPosition);
   if(view.count===nextCount&&view.end===end&&view.position===nextPosition)return;
   view.count=nextCount;view.end=end;view.position=nextPosition;draw();
  }
  draw();for(const id of ['refs','original'])document.getElementById(id).onchange=draw;
- return {getModel:()=>model,getIndicators,getType:()=>chartType,setType:value=>{if(!series.chartTypes.includes(value))throw Error('차트 유형 오류');if(chartType!==value){chartType=value;draw();}},getHiddenIndicators:()=>[...hiddenIndicators],setHiddenIndicators:ids=>{hiddenIndicators=new Set(ids.filter(id=>/^(ma:\d+|bb|cloud|pressure|investors|profile)$/.test(id)).slice(0,32));draw();},refresh:draw,updateTheme:value=>{lightMode=value;draw();},
+ return {setTradingValues:data=>{
+  tradingAmounts=all.map(()=>null);tradingInfo=null;
+  if(data?.ok){if(data.stockCode!==dataset.metadata.stockCode)throw Error('거래대금 종목 불일치');const joined=series.tradingValues(all,dataset.candles,data);tradingAmounts=joined.amounts;tradingInfo={...joined,fetchedAt:data.fetchedAt};tradingStatus='KIS · KRX · 원 · 최근 최대 100거래일 중 일봉 거래량 일치 '+joined.matched+'일'+(joined.mismatched?' · 거래량 불일치 '+joined.mismatched+'일 제외':'')+' · 수신하지 못한 날짜와 일부만 수신한 주·월은 빈칸 · 마지막 거래일은 장중 변동 가능';if(!moneyOpened&&joined.amounts.some(value=>value!==null)){moneyOpened=true;document.getElementById('moneyPanel').open=true;}}
+  else tradingStatus=typeof data?.error==='string'?data.error:'날짜별 실제 거래대금 자료가 없어 막대를 표시하지 않습니다.';
+  draw();
+ },getModel:()=>model,getIndicators,getType:()=>chartType,setType:value=>{if(!series.chartTypes.includes(value))throw Error('차트 유형 오류');if(chartType!==value){chartType=value;draw();}},getHiddenIndicators:()=>[...hiddenIndicators],setHiddenIndicators:ids=>{hiddenIndicators=new Set(ids.filter(id=>/^(ma:\d+|bb|cloud|pressure|money|investors|profile)$/.test(id)).slice(0,32));draw();},refresh:draw,updateTheme:value=>{lightMode=value;draw();},
  setView:(count,end=view.end)=>{const n=Math.max(1,Math.min(all.length,Math.round(count))),last=Math.max(n,Math.min(all.length,Math.round(end)));applyView(n,all.length>n?(last-n)/(all.length-n):view.position);},
  zoomTo:count=>applyView(count,view.position),scrollTo:position=>applyView(view.count,position),scrollBy:bars=>{const max=all.length-view.count;if(max)applyView(view.count,Math.max(0,Math.min(max,view.end-view.count+bars))/max);},resetView:()=>applyView(all.length-initialOffset,1),
  resetSettings:()=>{const defaults=series.cycleConfig(barCycle);periods=mode==='compact'&&barCycle==='day'?[5,10,20,60]:defaults.periods;config.cloud=defaults.cloud;bbSettings={period:40,multiplier:1.9,shift:25};hiddenIndicators.clear();chartType='candle';view.count=all.length-initialOffset;view.end=all.length;view.position=1;for(const id of ['refs','original'])document.getElementById(id).checked=false;draw();},

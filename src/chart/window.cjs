@@ -8,7 +8,7 @@ function chartContext(input) {
   series.cycleConfig(barCycle);
   return {code:input.code,name:typeof input.name==='string'?input.name.slice(0,120):input.code,period:viewRange,viewRange,barCycle,indicatorCycle};
 }
-function registerChartWindow({ ipcMain, BrowserWindow, getMainWindow, appDir, getChartData }) {
+function registerChartWindow({ ipcMain, BrowserWindow, getMainWindow, appDir, getChartData, getTradingValues }) {
   let child=null, latest=null, current=null, follow=true;
   const fromMain = event => !!getMainWindow() && event.sender === getMainWindow().webContents;
   const send = () => {if(child && !child.isDestroyed())child.webContents.send('chart-context',{...current,follow});};
@@ -17,6 +17,11 @@ function registerChartWindow({ ipcMain, BrowserWindow, getMainWindow, appDir, ge
     if(!fromMain(event) && (!child || event.sender!==child.webContents))return {ok:false,error:'요청한 화면을 확인할 수 없습니다.'};
     if(event.senderFrame && event.senderFrame!==event.sender.mainFrame)return {ok:false};
     return getChartData?getChartData(code,cycle):{ok:false,error:'일봉 공급자가 연결되지 않았습니다.'};
+  });
+  ipcMain.handle('get-chart-trading-values',(event,code)=>{
+    if((!fromMain(event)&&(!child||event.sender!==child.webContents))||(event.senderFrame&&event.senderFrame!==event.sender.mainFrame))return {ok:false};
+    if(typeof code!=='string'||!/^\d{6}$/.test(code))return {ok:false};
+    return getTradingValues?getTradingValues(code):{ok:false,error:'KIS 거래대금 공급자가 연결되지 않았습니다.'};
   });
   ipcMain.handle('get-chart-snapshot',(event,code)=>{
     if(!fromMain(event) && (!child || event.sender!==child.webContents))return {ok:false,error:'요청한 화면을 확인할 수 없습니다.'};

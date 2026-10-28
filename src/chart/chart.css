@@ -84,3 +84,15 @@
  .mdi-dock.sb-desktop-home.sb-user-split { grid-template-rows:0 minmax(0,1fr) minmax(0,var(--sb-work-height)); }
  .mdi-dock.sb-desktop-home.sb-user-split > :is(#mdi-panel-portfolio,#mdi-panel-trading,.sb-analysis) { max-height:none; }
 }
+
+.sb-proof-chart { --sb-chart-money-300:var(--sb-down,#3b82f6);--sb-chart-money-500:#adff2f;--sb-chart-money-1000:#ff9800;--sb-chart-money-3000:var(--sb-up,#f43f5e);--sb-chart-money-5000:#d8b4fe;--sb-chart-money-10000:var(--sb-text-1); }
+.sb-proof-money { border-top:1px solid var(--sb-border);min-height:0; }
+.sb-proof-money [data-chart-id="moneyChart"] { height:100px;min-height:32px; }
+.sb-money-legend { display:flex;flex-wrap:wrap;gap:4px 12px;padding-block:4px;font-size:11px; }
+.sb-proof-money > p { margin:2px 0; }
+.sb-proof-compact { grid-template-rows:auto auto minmax(0,1fr) var(--sb-volume-height,64px) auto; }
+.sb-proof-compact .sb-proof-money [data-chart-id="moneyChart"] { height:64px; }
+.sb-proof-no-pressure.sb-proof-compact { grid-template-rows:auto auto minmax(0,1fr) auto; }
+.sb-proof-year.sb-proof-compact { grid-template-rows:auto auto minmax(0,1fr); }
+body.light-mode .sb-proof-chart { --sb-chart-money-500:#4d7c0f;--sb-chart-money-1000:var(--sb-warn);--sb-chart-money-5000:#7c3aed; }
+.sb-proof-compact .sb-proof-money > p,.sb-proof-compact .sb-proof-money > button,.sb-proof-compact .sb-money-legend { display:none; }

@@ -2,10 +2,10 @@
  'use strict';
  const memory=new Map(),indicatorMemory=new Map(),types=['trend','horizontal','vertical','thirds','quarters','midpoint','rectangle','ellipse','triangle','arrow','pen','text'];
  function mount(host,controller,{tools=true,compact=false}={}){
-  const doc=host.ownerDocument,svg=host.querySelector('[data-chart-id="chart"]'),pressure=host.querySelector('[data-chart-id="pressureChart"]'),abort=new AbortController(),signal=abort.signal;
+  const doc=host.ownerDocument,svg=host.querySelector('[data-chart-id="chart"]'),pressure=host.querySelector('[data-chart-id="pressureChart"]'),money=host.querySelector('[data-chart-id="moneyChart"]'),abort=new AbortController(),signal=abort.signal;
   const key=controller.getModel().stockCode+':'+controller.getModel().config.label,storageKey='stockbook:chart:drawings:v1:'+key;
   const visibilityKey='stockbook:chart:visibility:v1:'+key;let hidden=indicatorMemory.get(key)||[],lastVisibility='';
-  try{const saved=JSON.parse(root.localStorage.getItem(visibilityKey));if(Array.isArray(saved)&&saved.length<=32&&saved.every(id=>typeof id==='string'&&/^(ma:\d+|bb|cloud|pressure|investors|profile)$/.test(id)))hidden=saved;const type=root.localStorage.getItem('stockbook:chart:type:v1');if(root.StockBookChartSeries.chartTypes.includes(type))controller.setType(type);}catch{}
+  try{const saved=JSON.parse(root.localStorage.getItem(visibilityKey));if(Array.isArray(saved)&&saved.length<=32&&saved.every(id=>typeof id==='string'&&/^(ma:\d+|bb|cloud|pressure|money|investors|profile)$/.test(id)))hidden=saved;const type=root.localStorage.getItem('stockbook:chart:type:v1');if(root.StockBookChartSeries.chartTypes.includes(type))controller.setType(type);}catch{}
   if(tools)controller.setHiddenIndicators(hidden);svg.setAttribute('tabindex','0');
   let drawings=memory.get(key)||[],mode='zoom',selected=null,selectedIndicator=null,pending=null,gesture=null,stroke=null,nextId=Math.max(0,...drawings.map(d=>d.id))+1,history=[],preview=null,touches=new Map(),pinch=null,wheelRemainder=0;
   const ns='http://www.w3.org/2000/svg',node=(tag,attrs={},text)=>{const el=doc.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,String(v));if(text!==undefined)el.textContent=text;return el;};
@@ -79,9 +79,10 @@
    if(selected===d.id)for(const i of d.type==='pen'?[0,points.length-1]:points.map((_,i)=>i)){const p=points[i];group.append(node('circle',{cx:p.x,cy:p.y,r:7,fill:'var(--sb-panel)',stroke:color,'stroke-width':2,'data-drawing-id':d.id,'data-handle':i}));}
    layer.append(group);
   }
+  const moneyText=value=>value===null||value===undefined?'거래대금 자료 미수신':'거래대금 '+value.toLocaleString('ko-KR')+'원';
   function describeBar(row,m){
    if(!row)return '표시 공간 · 가격 자료 없음';
-   return [m.config.label+' '+row.date,...['open','high','low','close'].map((k,i)=>['시가','고가','저가','종가'][i]+' '+row[k].toLocaleString()),'거래량 '+row.volume.toLocaleString()].join(' · ');
+   return [m.config.label+' '+row.date,...['open','high','low','close'].map((k,i)=>['시가','고가','저가','종가'][i]+' '+row[k].toLocaleString()),'거래량 '+row.volume.toLocaleString(),moneyText(m.tradingAmounts[m.rows.indexOf(row)])].join(' · ');
   }
   function draw(){
    svg.querySelector('.sb-chart-indicator-hits')?.remove();
@@ -97,11 +98,12 @@
    if(tools){indicatorMemory.set(key,controller.getHiddenIndicators());for(const item of host.querySelectorAll('.sb-chart-indicator'))item.setAttribute('aria-pressed',String(item.dataset.chartIndicator===selectedIndicator));}
    const m=model();if(compact){barInfo.textContent=describeBar(m.rows.at(-1),m);barInfo.title=barInfo.textContent;}scroll.value=String(Math.round(m.scrollPosition*1000));scroll.disabled=m.count===m.all.length;scroll.setAttribute('aria-valuetext',m.rows[0].date+' ~ '+m.rows.at(-1).date);scale.max=String(Math.max(0,m.all.length-1));scale.value=String(m.all.length-m.count);readout.textContent=m.count+'봉';
   }
-  function hide(){svg.querySelector('.sb-chart-crosshair')?.remove();pressure?.querySelector('.sb-chart-crosshair')?.remove();tip.hidden=true;priceLabel.hidden=true;dateLabel.hidden=true;}
+  function hide(){svg.querySelector('.sb-chart-crosshair')?.remove();pressure?.querySelector('.sb-chart-crosshair')?.remove();money?.querySelector('.sb-chart-crosshair')?.remove();tip.hidden=true;priceLabel.hidden=true;dateLabel.hidden=true;}
   function show(event,target=svg){
    const m=model(),p=point(event,target);if(p.x<25||p.x>1170)return;hide();const i=Math.max(0,Math.min(m.count-1+m.futureCount,m.indexForX(p.x))),xx=m.x(i),row=m.rows[i],yy=target===svg?Math.max(30,Math.min(520,p.y)):(row?m.y(row.close):30);
    const layer=node('g',{class:'sb-chart-crosshair','pointer-events':'none'}),color='var(--sb-text-2)';layer.append(node('line',{x1:xx,x2:xx,y1:30,y2:560,stroke:color,'stroke-dasharray':'4 4'}),node('line',{x1:25,x2:1170,y1:yy,y2:yy,stroke:color,'stroke-dasharray':'4 4'}));svg.append(layer);
    if(pressure&&!pressure.hasAttribute('hidden')){const l=node('g',{class:'sb-chart-crosshair','pointer-events':'none'});l.append(node('line',{x1:xx,x2:xx,y1:0,y2:pressure.viewBox.baseVal.height,stroke:color,'stroke-dasharray':'4 4'}));pressure.append(l);}
+   if(money?.closest('details[open]')&&!money.closest('[hidden]')){const l=node('g',{class:'sb-chart-crosshair','pointer-events':'none'});l.append(node('line',{x1:xx,x2:xx,y1:0,y2:money.viewBox.baseVal.height,stroke:color,'stroke-dasharray':'4 4'}));money.append(l);}
    if(tools&&!compact){const label=row?row.date:'표시 공간',xLabel=Math.max(25,Math.min(1050,xx-52));layer.append(node('rect',{x:1170,y:yy-11,width:108,height:22,fill:'var(--sb-surface)'}),node('text',{x:1175,y:yy+4,fill:'var(--sb-text-1)','font-size':12},Math.round(m.priceForY(yy)).toLocaleString()),node('rect',{x:xLabel,y:563,width:112,height:23,fill:'var(--sb-surface)'}),node('text',{x:xLabel+5,y:579,fill:'var(--sb-text-1)','font-size':11},label));}
    if(compact){
     barInfo.textContent=describeBar(row,m);barInfo.title=barInfo.textContent;
@@ -112,7 +114,7 @@
     priceLabel.hidden=dateLabel.hidden=false;
    }
    if(!row){tip.textContent='BB 이동 표시 공간 · 가격 자료 없음';}
-   else{const prior=m.all[m.offset+i-1]?.close,change=prior?(row.close/prior-1)*100:null;tip.textContent=[m.name+' · '+m.config.label+' · '+row.date,...['open','high','low','close'].map((k,j)=>['시가','고가','저가','종가'][j]+' '+row[k].toLocaleString()),'직전 봉 대비 '+(change===null?'자료 없음':change.toFixed(2)+'%'),'거래량 '+row.volume.toLocaleString(),...(row.incompleteStart?['첫 기간은 수신 범위 내 부분 집계']:[]),...(row.incompleteEnd?['마지막 봉 완성 여부 미확인']:[]),'거래대금 자료 미수신',...m.averages.map((a,j)=>m.periods[j]+m.config.unit+'선 '+(a[i]===null?'이력 부족':a[i].toLocaleString('ko-KR',{maximumFractionDigits:2})))].join('\n');}
+   else{const prior=m.all[m.offset+i-1]?.close,change=prior?(row.close/prior-1)*100:null;tip.textContent=[m.name+' · '+m.config.label+' · '+row.date,...['open','high','low','close'].map((k,j)=>['시가','고가','저가','종가'][j]+' '+row[k].toLocaleString()),'직전 봉 대비 '+(change===null?'자료 없음':change.toFixed(2)+'%'),'거래량 '+row.volume.toLocaleString(),...(row.incompleteStart?['첫 기간은 수신 범위 내 부분 집계']:[]),...(row.incompleteEnd?['마지막 봉 완성 여부 미확인']:[]),moneyText(m.tradingAmounts[i]),...m.averages.map((a,j)=>m.periods[j]+m.config.unit+'선 '+(a[i]===null?'이력 부족':a[i].toLocaleString('ko-KR',{maximumFractionDigits:2})))].join('\n');}
    tip.hidden=false;tip.style.left=Math.max(6,Math.min(root.innerWidth-tip.offsetWidth-8,event.clientX+14))+'px';tip.style.top=Math.max(6,Math.min(root.innerHeight-tip.offsetHeight-8,event.clientY+14))+'px';
   }
   function zoom(factor){const m=model();controller.zoomTo(m.count*factor);}
@@ -156,8 +158,10 @@
    if(gesture||pinch){wheelRemainder=0;return;}
    wheelRemainder+=e.deltaMode===1?delta:e.deltaMode===2?delta*model().count:delta/40;const bars=Math.trunc(wheelRemainder);if(bars){wheelRemainder-=bars;controller.scrollBy(bars);}
   }
-  for(const target of [svg,pressure,scroll,scale])target?.addEventListener('wheel',scrollWheel,{passive:false,signal});
+  for(const target of [svg,pressure,money,scroll,scale])target?.addEventListener('wheel',scrollWheel,{passive:false,signal});
   host.querySelector('[data-chart-id="investorChart"]')?.addEventListener('pointerdown',()=>{if(tools&&controller.getIndicators().some(item=>item.id==='investors'&&item.available))selectIndicator('investors');},{signal});
+  money?.setAttribute('data-chart-indicator','money');money?.addEventListener('pointerdown',event=>{if(tools){event.preventDefault();selectIndicator('money');}},{signal});
+  money?.addEventListener('pointermove',e=>show(e,money),{signal});money?.addEventListener('pointerleave',hide,{signal});
   pressure?.setAttribute('data-chart-indicator','pressure');pressure?.addEventListener('pointerdown',()=>{if(tools)selectIndicator('pressure');},{signal});
   pressure?.addEventListener('pointermove',e=>show(e,pressure),{signal});pressure?.addEventListener('pointerleave',hide,{signal});
   if(compact)doc.addEventListener('pointerdown',event=>{if(!controls.contains(event.target))toolPanel.open=false;},{signal,capture:true});
@@ -181,7 +185,7 @@
    }
   },{signal});
   host.addEventListener('stockbook:chart-render',()=>{hide();draw();},{signal});
-  let size='';const observer=new ResizeObserver(()=>{const next=[svg.clientWidth,svg.clientHeight,pressure?.clientWidth||0,pressure?.clientHeight||0].join(':');if(next!==size){size=next;controller.refresh();}});observer.observe(svg);if(pressure)observer.observe(pressure);
+  let size='';const observer=new ResizeObserver(()=>{const next=[svg.clientWidth,svg.clientHeight,pressure?.clientWidth||0,pressure?.clientHeight||0,money?.clientWidth||0,money?.clientHeight||0].join(':');if(next!==size){size=next;controller.refresh();}});observer.observe(svg);if(pressure)observer.observe(pressure);if(money)observer.observe(money);
   setMode('zoom');draw();
   return {destroy(){memory.set(key,drawings);abort.abort();observer.disconnect();tip.remove();priceLabel.remove();dateLabel.remove();controls.remove();indicatorPanel.remove();toolbar.remove();nav.remove();status.remove();}};
  }

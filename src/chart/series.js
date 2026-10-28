@@ -67,6 +67,18 @@
   if(!Number.isInteger(bb.period)||bb.period<2||bb.period>500||!Number.isFinite(bb.multiplier)||bb.multiplier<0||bb.multiplier>10||!Number.isInteger(bb.shift)||bb.shift<0||bb.shift>120)throw Error('BB 기간·배수·이동값을 확인하세요.');
   return {periods:[...periods],cloud:cloud?[...cloud]:null,bb};
  }
+ // Exact daily values are joined only when date and KRX volume match. A group with
+ // even one missing/mismatched day has no amount, rather than a partial sum.
+ function tradingValues(bars,candles,data){
+  if(!data?.ok||data.source!=='KIS'||data.market!=='KRX'||data.currency!=='KRW'||data.unit!=='원'||!Array.isArray(data.rows)||data.rows.length>100)throw Error('거래대금 자료 오류');
+  const values=new Map();for(const row of data.rows){dateValue(row.date);if(values.has(row.date)||!Number.isSafeInteger(row.value)||row.value<0||!Number.isSafeInteger(row.volume)||row.volume<0)throw Error('거래대금 값 오류');values.set(row.date,row);}
+  const joined=new Map();let mismatched=0,matched=0;
+  for(const candle of candles){const row=values.get(candle.date);if(row&&row.volume===candle.volume){joined.set(candle.date,row.value);matched++;}else if(row)mismatched++;}
+  const amounts=bars.map(bar=>{let total=0,count=0;for(const c of candles){if(c.date<bar.firstDate||c.date>bar.date)continue;if(!joined.has(c.date))return null;total+=joined.get(c.date);count++;}return count===bar.sourceCount&&Number.isSafeInteger(total)&&!bar.incompleteStart?total:null;});
+  return {amounts,matched,mismatched,received:data.rows.length};
+ }
+ const tradingValueThresholds=Object.freeze([300,500,1000,3000,5000,10000]);
+ function tradingValueBand(value){if(value===null||!Number.isFinite(value)||value<300*1e8)return null;return tradingValueThresholds.findLast(n=>value>=n*1e8);}
  const chartTypes=Object.freeze(['candle','hollow','volume','profile']);
  function barLayout(rows,futureCount=0,weighted=false){
   if(!rows.length||!Number.isInteger(futureCount)||futureCount<0||futureCount>120)throw Error('봉 배치 범위 오류');
@@ -92,5 +104,5 @@
   }
   return {bins,total};
  }
- return Object.freeze({cycleConfig,aggregate,average,visibleOffset,ranges,indicatorSettings,chartTypes,barLayout,volumeProfile});
+ return Object.freeze({cycleConfig,aggregate,average,visibleOffset,ranges,indicatorSettings,chartTypes,barLayout,volumeProfile,tradingValues,tradingValueBand,tradingValueThresholds});
 });

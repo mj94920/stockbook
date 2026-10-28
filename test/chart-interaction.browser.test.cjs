@@ -327,3 +327,50 @@ test('default lower pane takes thirty percent and expanded bars keep text size, 
   const after=await compact.evaluate(h=>{const m=StockBookCharts.controller(h).getModel(),v=h.querySelector('[data-chart-id="pressureChart"]'),p=h.querySelector('[data-chart-id="chart"]');return {state:{count:m.count,end:m.end,position:m.scrollPosition},share:v.clientHeight/(p.clientHeight+v.clientHeight),clipped:[...v.querySelectorAll('rect')].some(r=>r.getBoundingClientRect().bottom>v.getBoundingClientRect().bottom+.5)};});assert.ok(after.share>.33);assert.equal(after.clipped,false);assert.deepEqual(after.state,before);assert.deepEqual(h.errors,[]);
  }finally{await h.close();}
 });
+
+test('trading values load after price, show exact threshold colors with volume heights, and preserve anchors through edit/resize',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  await page.evaluate(()=>{window.__moneyCalls=0;window.stockBookChart.getTradingValues=code=>{window.__moneyCalls++;return new Promise(resolve=>window.__moneyResolve=rows=>resolve({ok:true,stockCode:code,source:'KIS',market:'KRX',currency:'KRW',unit:'원',fetchedAt:'2026-10-28T01:00:00Z',rows}));};});
+  await page.locator('#chartCycle').selectOption('day');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='day'&&window.__moneyCalls===1);
+  const host=page.locator('#chartViewport');assert.ok(await host.locator('.candle').count()>0);assert.equal(await host.locator('[data-chart-id="moneyRetry"]').isDisabled(),true);
+  await page.locator('[data-tool="horizontal"]').click();await clickPoint(page,2,300);const drawings=await host.locator('.sb-chart-drawing').innerHTML(),view=await host.evaluate(h=>{const m=StockBookCharts.controller(h).getModel();return [m.count,m.end,m.scrollPosition];});
+  await page.evaluate(()=>{const m=StockBookCharts.controller(document.getElementById('chartViewport')).getModel(),amounts=[29999999999,30000000000,50000000000,100000000000,300000000000,500000000000,1000000000000];window.__moneyResolve(m.all.slice(-100).map((r,i)=>({date:r.date,volume:r.volume,value:amounts[i%7]})));});
+  await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.money?.known===100);
+  assert.deepEqual(await host.locator('.sb-money-bar').evaluateAll(es=>[...new Set(es.map(e=>Number(e.dataset.band)))].sort((a,b)=>a-b)),[300,500,1000,3000,5000,10000]);assert.equal(await host.locator('.sb-money-bar[data-amount="29999999999"]').count(),0);
+  assert.equal(await host.locator('.sb-chart-drawing').innerHTML(),drawings);assert.deepEqual(await host.evaluate(h=>{const m=StockBookCharts.controller(h).getModel();return [m.count,m.end,m.scrollPosition];}),view);
+  const geometry=await host.evaluate(h=>{const m=StockBookCharts.controller(h).getModel(),svg=h.querySelector('[data-chart-id="moneyChart"]'),box=svg.getBoundingClientRect();return [...svg.querySelectorAll('.sb-money-bar')].map(e=>{const i=m.rows.findIndex(r=>r.date===e.dataset.date),p=h.querySelectorAll('.candle')[i].getBoundingClientRect(),b=e.getBoundingClientRect();return {height:b.height,volume:m.rows[i].volume,center:Math.abs(b.x+b.width/2-p.x-p.width/2),width:b.width,clipped:b.bottom>box.bottom+.5};});});assert.ok(geometry.length>50);assert.ok(geometry.every(r=>!r.clipped&&r.center<1&&r.width<=24.5));assert.ok(geometry.every(r=>Math.abs(r.height/r.volume-geometry[0].height/geometry[0].volume)<.001));
+  const bar=host.locator('.sb-money-bar').last();await bar.hover();assert.match(await page.locator('.sb-chart-tooltip').innerText(),/거래대금 [\d,]+원/);await bar.click();await page.keyboard.press('Delete');assert.equal(await host.locator('[data-chart-id="moneyPanel"]').isVisible(),false);
+  await host.locator('.sb-chart-indicator-panel > summary').click();await host.locator('[data-indicator-toggle="money"]').check();assert.equal(await host.locator('[data-chart-id="moneyPanel"]').isVisible(),true);
+  await page.setViewportSize({width:840,height:1100});await host.locator('[data-chart-id="moneyChart"]').scrollIntoViewIfNeeded();await page.waitForFunction(()=>{const svg=document.querySelector('[data-chart-id="moneyChart"]');return Math.abs(svg.viewBox.baseVal.height-svg.clientHeight)<1;});
+  await page.locator('#chartCycle').selectOption('month');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='month'&&document.getElementById('chartViewport').chartEvidence?.money?.matched===100);assert.equal(await page.evaluate(()=>window.__moneyCalls),1);
+  await page.locator('#chartCycle').selectOption('year');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='year');assert.equal(await host.locator('[data-chart-id="moneyPanel"]').isVisible(),false);assert.equal(await page.evaluate(()=>window.__moneyCalls),1);assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
+
+test('late or failed trading-value requests never replace another stock or block price retry',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  await page.evaluate(()=>{window.__pendingMoney={};window.stockBookChart.getTradingValues=code=>new Promise(resolve=>window.__pendingMoney[code]=resolve);window.__context({code:'000002',name:'새 종목',barCycle:'day',period:'6m',follow:false});});
+  await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.stockCode==='000002'&&window.__pendingMoney['000002']);
+  await page.evaluate(()=>window.__context({code:'000003',name:'다음 종목',barCycle:'day',period:'6m',follow:false}));await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.stockCode==='000003'&&window.__pendingMoney['000003']);
+  await page.evaluate(()=>{window.__pendingMoney['000002']({ok:false,error:'이전 종목 오류'});window.__pendingMoney['000003']({ok:false,error:'KIS 미연결'});});await page.waitForFunction(()=>!document.querySelector('[data-chart-id="moneyRetry"]').disabled);
+  assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.stockCode),'000003');assert.ok(await page.locator('.candle').count()>0);assert.equal(await page.locator('.sb-money-bar').count(),0);assert.equal(await page.locator('[data-chart-id="moneyStatus"]').textContent(),'KIS 미연결');
+  await page.evaluate(()=>window.stockBookChart.getTradingValues=async code=>({ok:true,stockCode:code,source:'KIS',market:'KRX',currency:'KRW',unit:'원',rows:StockBookCharts.controller(document.getElementById('chartViewport')).getModel().all.slice(-100).map(r=>({date:r.date,volume:r.volume,value:50000000000}))}));
+  await page.locator('[data-chart-id="moneySummary"]').click();await page.getByRole('button',{name:'거래대금 다시 조회',exact:true}).click();await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.money?.known===100);assert.ok(await page.locator('.sb-money-bar').count()>0);assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
+
+test('compact money stays in its own row, preserves price-volume split, resizes and restores without changing zoom',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  await page.setViewportSize({width:1600,height:1200});await page.goto(h.base+'/index.html');
+  await page.evaluate(()=>{window.stockBookChart.getTradingValues=async code=>({ok:true,stockCode:code,source:'KIS',market:'KRX',currency:'KRW',unit:'원',rows:StockBookCharts.controller(document.getElementById('sbEmbeddedChart')).getModel().all.slice(-100).map((r,i)=>({date:r.date,volume:r.volume,value:[300,500,1000,3000,5000,10000][i%6]*1e8}))});state.watchlist=[{ticker:'000001',name:'합성 검증 종목',price:1000,quoteAt:Date.now()}];window._dockSel='000001';window._MDI.show('watchlist');});
+  await page.waitForFunction(()=>document.getElementById('sbEmbeddedChart').chartEvidence?.money?.known===100);
+  const host=page.locator('#sbEmbeddedChart'),svg=host.locator('[data-chart-id="moneyChart"]');
+  await page.waitForFunction(()=>{const h=document.getElementById('sbEmbeddedChart'),p=h.querySelector('[data-chart-id="chart"]').clientHeight,v=h.querySelector('[data-chart-id="pressureChart"]').clientHeight;return Math.abs(v/(p+v)-.3)<.01;});
+  const before=await svg.boundingBox(),state=await host.evaluate(h=>{const m=StockBookCharts.controller(h).getModel();return [m.count,m.end,m.scrollPosition];});const handle=host.getByRole('separator',{name:'거래대금 구간 높이',exact:true});await handle.press('ArrowDown');await handle.press('ArrowDown');await page.waitForFunction(()=>{const svg=document.querySelector('#sbEmbeddedChart [data-chart-id="moneyChart"]');return Math.abs(svg.viewBox.baseVal.height-svg.clientHeight)<1;});assert.ok((await svg.boundingBox()).height>before.height+25);assert.deepEqual(await host.evaluate(h=>{const m=StockBookCharts.controller(h).getModel();return [m.count,m.end,m.scrollPosition];}),state);
+  for(const width of [1600,1024]){await page.setViewportSize({width,height:900});await page.waitForFunction(()=>{const h=document.getElementById('sbEmbeddedChart'),svg=h.querySelector('[data-chart-id="moneyChart"]'),p=h.querySelector('[data-chart-id="chart"]').clientHeight,v=h.querySelector('[data-chart-id="pressureChart"]').clientHeight;return p>30&&Math.abs(v/(p+v)-.3)<.02&&Math.abs(svg.viewBox.baseVal.height-svg.clientHeight)<1;});const g=await host.evaluate(h=>{const p=h.querySelector('[data-chart-id="chart"]').getBoundingClientRect(),v=h.querySelector('[data-chart-id="pressureChart"]').getBoundingClientRect(),money=h.querySelector('[data-chart-id="moneyChart"]').getBoundingClientRect();return {p:p.height,after:v.bottom<=money.y+1,clipped:[...h.querySelectorAll('.sb-money-bar')].some(r=>r.getBoundingClientRect().bottom>money.bottom+.5)};});assert.ok(g.p>30,JSON.stringify({width,...g}));assert.equal(g.after,true);assert.equal(g.clipped,false);}
+  await page.setViewportSize({width:1600,height:1200});await host.getByRole('separator',{name:'거래대금 구간 높이',exact:true}).press('Enter');await page.waitForFunction(()=>document.querySelector('#sbEmbeddedChart [data-chart-id="moneyChart"]').clientHeight===64);assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
