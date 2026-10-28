@@ -4,8 +4,8 @@
  function mount(host,controller,{tools=true,compact=false}={}){
   const doc=host.ownerDocument,svg=host.querySelector('[data-chart-id="chart"]'),pressure=host.querySelector('[data-chart-id="pressureChart"]'),money=host.querySelector('[data-chart-id="moneyChart"]'),investor=host.querySelector('[data-chart-id="investorChart"]'),obv=host.querySelector('[data-chart-id="obvChart"]'),abort=new AbortController(),signal=abort.signal;
   const key=controller.getModel().stockCode+':'+controller.getModel().config.label,storageKey='stockbook:chart:drawings:v1:'+key;
-  const visibilityKey='stockbook:chart:visibility:v1:'+key;let hidden=indicatorMemory.get(key)||[],lastVisibility='';
-  try{const saved=JSON.parse(root.localStorage.getItem(visibilityKey));if(Array.isArray(saved)&&saved.length<=32&&saved.every(id=>typeof id==='string'&&/^(ma:\d+|bb|cloud|pressure|money|investors|profile|obv|new-low|oversold)$/.test(id)))hidden=saved;const type=root.localStorage.getItem('stockbook:chart:type:v1');if(root.StockBookChartSeries.chartTypes.includes(type))controller.setType(type);}catch{}
+  const typeStorageKey='stockbook:chart:type:v2:'+controller.getModel().config.label;const visibilityKey='stockbook:chart:visibility:v1:'+key;let hidden=indicatorMemory.get(key)||[],lastVisibility='';
+  try{const saved=JSON.parse(root.localStorage.getItem(visibilityKey));if(Array.isArray(saved)&&saved.length<=32&&saved.every(id=>typeof id==='string'&&/^(ma:\d+|bb|cloud|pressure|money|investors|profile|obv|new-low|oversold|volume)$/.test(id)))hidden=saved;const type=root.localStorage.getItem(typeStorageKey);if(root.StockBookChartSeries.chartTypes.includes(type))controller.setType(type);}catch{}
   if(tools)controller.setHiddenIndicators(hidden);svg.setAttribute('tabindex','0');
   let drawings=memory.get(key)||[],mode='zoom',selected=null,selectedIndicator=null,pending=null,gesture=null,stroke=null,nextId=Math.max(0,...drawings.map(d=>d.id))+1,history=[],preview=null,touches=new Map(),pinch=null,wheelRemainder=0;
   const ns='http://www.w3.org/2000/svg',node=(tag,attrs={},text)=>{const el=doc.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,String(v));if(text!==undefined)el.textContent=text;return el;};
@@ -15,7 +15,7 @@
   const nav=doc.createElement('div');nav.className='sb-chart-navigation';const indicatorControls=doc.createElement('div');indicatorControls.className='sb-chart-indicator-controls';indicatorControls.setAttribute('aria-label','차트 지표 선택');
   const typeChoice=doc.createElement('select'),typeLabel=doc.createElement('label');typeChoice.className='sb-input sb-chart-type';typeChoice.setAttribute('aria-label','차트 유형');
   for(const [value,label]of [['candle','기본 캔들'],['hollow','빈 캔들'],['volume','볼륨캔들'],['profile','매물대']])typeChoice.add(new Option(label,value));typeChoice.value=controller.getType();typeLabel.append('유형 ',typeChoice);
-  typeChoice.addEventListener('change',()=>{controller.setType(typeChoice.value);try{root.localStorage.setItem('stockbook:chart:type:v1',typeChoice.value);}catch{}},{signal});
+  typeChoice.addEventListener('change',()=>{controller.setType(typeChoice.value);try{root.localStorage.setItem(typeStorageKey,typeChoice.value);}catch{}},{signal});
   const indicatorPanel=doc.createElement('details'),indicatorList=doc.createElement('div'),indicatorSummary=doc.createElement('summary');indicatorPanel.className='sb-chart-indicator-panel';indicatorSummary.textContent='지표 표시';indicatorList.className='sb-chart-indicator-list';indicatorPanel.append(indicatorSummary,indicatorList);let catalogKey='';
   indicatorList.addEventListener('change',event=>{const id=event.target.dataset.indicatorToggle;if(!id)return;remember();if(!event.target.checked&&selectedIndicator===id)selectedIndicator=null;const hidden=controller.getHiddenIndicators().filter(value=>value!==id);if(!event.target.checked)hidden.push(id);controller.setHiddenIndicators(hidden);},{signal});
   const barInfo=doc.createElement('div');barInfo.className='sb-chart-bar-info';barInfo.setAttribute('aria-label','선택 봉 정보');
@@ -47,7 +47,7 @@
   function remember(){history.push({drawings:JSON.parse(JSON.stringify(drawings)),hidden:controller.getHiddenIndicators()});if(history.length>30)history.shift();}
   function resetSettings(){
    if(gesture&&svg.hasPointerCapture(gesture.id))svg.releasePointerCapture(gesture.id);gesture=null;pending=null;stroke=null;preview=null;pinch=null;wheelRemainder=0;touches.clear();svg.classList.remove('sb-chart-object-dragging');selected=null;selectedIndicator=null;center.value='range';history=history.map(item=>({...item,hidden:[]}));setMode('zoom');hide();
-   host.dispatchEvent(new CustomEvent('stockbook:chart-settings-reset'));controller.resetSettings();try{root.localStorage.setItem('stockbook:chart:type:v1','candle');}catch{}status.textContent='차트 설정을 기본값으로 초기화했습니다. 그린 선·메모는 유지합니다.';
+   host.dispatchEvent(new CustomEvent('stockbook:chart-settings-reset'));controller.resetSettings();try{root.localStorage.setItem(typeStorageKey,controller.getType());}catch{}status.textContent='차트 설정을 기본값으로 초기화했습니다. 그린 선·메모는 유지합니다.';
   }
   function deleteSelection(){
    if(selectedIndicator){remember();const id=selectedIndicator;selectedIndicator=null;controller.setHiddenIndicators([...controller.getHiddenIndicators(),id]);status.textContent='선택 지표를 지웠습니다. 지표 복원 또는 실행 취소로 되돌립니다.';}
@@ -167,7 +167,7 @@
   obv?.addEventListener('pointermove',e=>show(e,obv),{signal});obv?.addEventListener('pointerleave',hide,{signal});
   money?.setAttribute('data-chart-indicator','money');money?.addEventListener('pointerdown',event=>{if(tools){event.preventDefault();selectIndicator('money');}},{signal});
   money?.addEventListener('pointermove',e=>show(e,money),{signal});money?.addEventListener('pointerleave',hide,{signal});
-  pressure?.setAttribute('data-chart-indicator','pressure');pressure?.addEventListener('pointerdown',()=>{if(tools)selectIndicator('pressure');},{signal});
+  pressure?.setAttribute('data-chart-indicator',controller.getModel().config.panels.volume?'volume':'pressure');pressure?.addEventListener('pointerdown',()=>{if(tools)selectIndicator(pressure.dataset.chartIndicator);},{signal});
   pressure?.addEventListener('pointermove',e=>show(e,pressure),{signal});pressure?.addEventListener('pointerleave',hide,{signal});
   if(compact)doc.addEventListener('pointerdown',event=>{if(!controls.contains(event.target))toolPanel.open=false;},{signal,capture:true});
   doc.addEventListener('keydown',e=>{

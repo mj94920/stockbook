@@ -3,15 +3,15 @@
 })(typeof window==='object'?window:globalThis,function(){
  'use strict';
  const cycles=Object.freeze({
-  day:{label:'일봉',unit:'일',periods:[5,10,20,60,120,200,350,480],colors:[0,1,2,3,4,5,6,7],cloud:[5,10],bold:[20,200]},
-  week:{label:'주봉',unit:'주',periods:[4,12,24,46,73],colors:[3,1,5,2,7],cloud:[1,4],bold:[46]},
-  year:{label:'연봉',unit:'년',periods:[1,5,10],colors:[1,2,5],cloud:null,bold:[]},
-  month:{label:'월봉',unit:'개월',periods:[1,5,19,6,9],colors:[1,2,7,3,5],cloud:null,bold:[9]},
+  day:{label:'일봉',unit:'일',defaultType:'candle',periods:[5,10,20,60,120,200,450,350],colors:[0,1,2,3,4,5,6,7],cloud:[5,10],bold:[20,200],panels:{pressure:true,money:true,investors:true,obv:false,signals:true}},
+  week:{label:'주봉',unit:'주',defaultType:'profile',profileBins:10,periods:[4,12,24,46,73],colors:[3,1,5,2,7],cloud:[1,4],bold:[46],panels:{pressure:false,money:false,investors:false,obv:true,signals:true}},
+  year:{label:'연봉',unit:'년',defaultType:'candle',periods:[1,3,5,6,10],colors:[0,1,2,5,4],cloud:null,bold:[],panels:{volume:true,pressure:false,money:false,investors:false,obv:false,signals:false}},
+  month:{label:'월봉',unit:'개월',defaultType:'candle',periods:[1,5,19,6,9],colors:[1,2,7,3,5],cloud:null,bold:[9],panels:{pressure:true,money:false,investors:false,obv:false,signals:false}},
  });
  const ranges=Object.freeze(['1m','3m','6m','1y','all']);
  function cycleConfig(cycle='day'){
   if(!Object.hasOwn(cycles,cycle))throw Error('지원하지 않는 봉 주기');
-  const value=cycles[cycle];return {...value,periods:[...value.periods],colors:[...value.colors],cloud:value.cloud?[...value.cloud]:null,bold:[...value.bold]};
+  const value=cycles[cycle];return {...value,periods:[...value.periods],colors:[...value.colors],cloud:value.cloud?[...value.cloud]:null,bold:[...value.bold],panels:{...value.panels}};
  }
  function dateValue(value){
   if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value))throw Error('거래일 형식 오류');
@@ -61,14 +61,14 @@
   const offset=bars.findIndex(bar=>bar.date>=cutoff);return offset<0?Math.max(0,bars.length-1):offset;
  }
  function indicatorSettings(cycle,input={}){
-  const defaults=cycleConfig(cycle),periods=input.periods??defaults.periods,cloud=defaults.cloud?(input.cloud??defaults.cloud):null,bb={period:40,multiplier:1.9,shift:25,...input.bb},obv={period:9,method:'sma',...input.obv},signals={newLowPeriod:null,rsiPeriod:null,rsiLevel:null,rsiMethod:null,...input.signals};
+  const defaults=cycleConfig(cycle),periods=input.periods??defaults.periods,cloud=defaults.cloud?(input.cloud??defaults.cloud):null,bb={period:40,multiplier:1.9,shift:25,...input.bb},obv={period:9,method:'sma',...(cycle==='week'?input.obv:{})},signals=['day','week'].includes(cycle)?{newLowPeriod:cycle==='day'?40:null,rsiPeriod:14,rsiLevel:30,rsiMethod:null,...input.signals,...(cycle==='week'?{newLowPeriod:null}:{})}:{newLowPeriod:null,rsiPeriod:null,rsiLevel:null,rsiMethod:null};
   if(!Array.isArray(periods)||periods.length<1||periods.length>8||periods.some(n=>!Number.isInteger(n)||n<1||n>1200))throw Error('이평 기간은 1~1200, 최대 8개입니다.');
   if(cloud&&(!Array.isArray(cloud)||cloud.length!==2||cloud.some(n=>!Number.isInteger(n)||n<1||n>1200)))throw Error('구름 기간 두 개를 확인하세요.');
   if(!Number.isInteger(bb.period)||bb.period<2||bb.period>500||!Number.isFinite(bb.multiplier)||bb.multiplier<0||bb.multiplier>10||!Number.isInteger(bb.shift)||bb.shift<0||bb.shift>120)throw Error('BB 기간·배수·이동값을 확인하세요.');
   if(!Number.isInteger(obv.period)||obv.period<1||obv.period>500||!['sma','ema'].includes(obv.method))throw Error('OBV 시그널 기간은 1~500, 방식은 단순/지수입니다.');
   if(signals.newLowPeriod!==null&&(!Number.isInteger(signals.newLowPeriod)||signals.newLowPeriod<1||signals.newLowPeriod>1200))throw Error('신저가 기간은 1~1200봉입니다. 비우면 표시하지 않습니다.');
   const rsi=[signals.rsiPeriod,signals.rsiLevel,signals.rsiMethod];
-  if(rsi.some(value=>value!==null)&&(!Number.isInteger(signals.rsiPeriod)||signals.rsiPeriod<1||signals.rsiPeriod>500||!Number.isFinite(signals.rsiLevel)||signals.rsiLevel<0||signals.rsiLevel>100||!['simple','wilder'].includes(signals.rsiMethod)))throw Error('RSI 기간(1~500), 하단값(0~100), 계산방식을 모두 선택하세요.');
+  if(rsi.some(value=>value!==null)&&(!Number.isInteger(signals.rsiPeriod)||signals.rsiPeriod<1||signals.rsiPeriod>500||!Number.isFinite(signals.rsiLevel)||signals.rsiLevel<0||signals.rsiLevel>100||(signals.rsiMethod!==null&&!['simple','wilder'].includes(signals.rsiMethod))))throw Error('RSI 기간(1~500)과 하단값(0~100)을 함께 입력하고 계산방식을 확인하세요.');
   return {periods:[...periods],cloud:cloud?[...cloud]:null,bb,obv,signals};
  }
  // Zero at the first received close: no volume can be signed without its prior close.

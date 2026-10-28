@@ -134,3 +134,11 @@ body.light-mode .sb-proof-chart { --sb-chart-investor-foreign:#b52964;--sb-chart
 .sb-chart-window .sb-modal[open] > form { display:flex;flex-direction:column;max-height:calc(100dvh - 66px); }
 .sb-chart-window .sb-modal__head,.sb-chart-window .sb-modal__foot { flex-shrink:0; }
 .sb-chart-window .sb-modal__body { min-height:0;overflow:auto; }
+
+/* Each cycle keeps its own lower pane in the compact chart. */
+.sb-proof-week.sb-proof-compact,.sb-proof-year.sb-proof-compact { grid-template-rows:auto auto minmax(0,1fr) var(--sb-volume-height,64px); }
+.sb-proof-week.sb-proof-no-obv.sb-proof-compact,.sb-proof-year.sb-proof-no-pressure.sb-proof-compact { grid-template-rows:auto auto minmax(0,1fr); }
+.sb-proof-week.sb-proof-compact .sb-proof-obv { display:block;min-height:0;height:100%; }
+.sb-proof-week.sb-proof-compact .sb-proof-obv > summary { padding:0;line-height:18px;pointer-events:none;cursor:default; }
+.sb-proof-week.sb-proof-compact .sb-proof-obv > p { display:none; }
+.sb-proof-week.sb-proof-compact [data-chart-id="obvChart"] { min-height:0;height:calc(var(--sb-volume-height,64px) - 20px); }

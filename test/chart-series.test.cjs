@@ -43,10 +43,10 @@ test('view range, bar cycle and indicator cycle validate separately while legacy
 
 test('year bars use calendar years and native close SMA 1/5/10 with insufficient history kept missing',()=>{
  const rows=[];for(let year=2012;year<=2026;year++){rows.push(bar(year+'-01-03',year,year+10,year-10,year+2,100));rows.push(bar(year+'-12-28',year+2,year+20,year-20,year+5,200));}
- const annual=aggregate(rows,'year');assert.equal(annual.length,15);assert.deepEqual(cycleConfig('year').periods,[1,5,10]);assert.equal(cycleConfig('year').cloud,null);
+ const annual=aggregate(rows,'year');assert.equal(annual.length,15);assert.deepEqual(cycleConfig('year').periods,[1,3,5,6,10]);assert.equal(cycleConfig('year').cloud,null);
  assert.deepEqual([annual.at(-1).open,annual.at(-1).high,annual.at(-1).low,annual.at(-1).close,annual.at(-1).volume],[2026,2046,2006,2031,300]);
  assert.equal(average(annual,1,{includePartialStart:true})[0],2017);assert.equal(average(annual,5,{includePartialStart:true})[4],2019);assert.equal(average(annual,10,{includePartialStart:true})[9],2021.5);assert.equal(average(annual.slice(0,4),5).at(-1),null);
- assert.deepEqual(indicatorSettings('year').periods,[1,5,10]);assert.throws(()=>indicatorSettings('week',{periods:[0]}));assert.throws(()=>indicatorSettings('day',{bb:{shift:-1}}));
+ assert.deepEqual(indicatorSettings('year').periods,[1,3,5,6,10]);assert.throws(()=>indicatorSettings('week',{periods:[0]}));assert.throws(()=>indicatorSettings('day',{bb:{shift:-1}}));
 });
 
 test('volume candle layout changes widths without losing bar/date hit mapping or reserved future slots',()=>{
@@ -78,7 +78,7 @@ test('OBV rejects missing/unsafe quantities, duplicate dates and invalid setting
  const rows=[{date:'2024-01-02',close:10,volume:10},{date:'2024-01-03',close:11,volume:20}];
  for(const options of [{period:0},{period:501},{method:'unknown'}])assert.throws(()=>obvSeries(rows,options));
  for(const input of [[],[rows[0],rows[0]],[{...rows[0],volume:-1}],[{...rows[0],volume:1.5}],[{...rows[0],close:NaN}],[rows[0],{...rows[1],volume:Number.MAX_SAFE_INTEGER},{date:'2024-01-04',close:12,volume:1}]])assert.throws(()=>obvSeries(input));
- assert.deepEqual(indicatorSettings('week').obv,{period:9,method:'sma'});assert.throws(()=>indicatorSettings('day',{obv:{period:0}}));
+ assert.deepEqual(indicatorSettings('week').obv,{period:9,method:'sma'});assert.throws(()=>indicatorSettings('week',{obv:{period:0}}));
 });
 
 test('new lows require N prior closes, exclude the current candle, and use strict less-than even on equal lows',()=>{
@@ -100,7 +100,14 @@ test('RSI uses N changes, explicit simple/Wilder smoothing and handles flat/risi
 test('Crossdown only fires when moving from at-or-above to strictly below the level, never throughout an oversold run',()=>{
  assert.deepEqual(crossdown([null,null,40,30,29,20,30,31,29],30),[false,false,false,false,true,false,false,false,true]);
  assert.deepEqual(crossdown([null,10,9],30),[false,false,false]);assert.throws(()=>crossdown([NaN],30));
- const defaults=indicatorSettings('day').signals;assert.deepEqual(defaults,{newLowPeriod:null,rsiPeriod:null,rsiLevel:null,rsiMethod:null});
- assert.equal(indicatorSettings('week',{signals:{newLowPeriod:20}}).signals.newLowPeriod,20);
- for(const signals of [{newLowPeriod:0},{rsiPeriod:14},{rsiPeriod:14,rsiLevel:30,rsiMethod:'unknown'},{rsiPeriod:14,rsiLevel:101,rsiMethod:'simple'}])assert.throws(()=>indicatorSettings('day',{signals}));
+ const defaults=indicatorSettings('day').signals;assert.deepEqual(defaults,{newLowPeriod:40,rsiPeriod:14,rsiLevel:30,rsiMethod:null});
+ assert.equal(indicatorSettings('day',{signals:{newLowPeriod:20}}).signals.newLowPeriod,20);assert.equal(indicatorSettings('day',{signals:{rsiMethod:'wilder'}}).signals.rsiPeriod,14);assert.equal(indicatorSettings('day',{signals:{newLowPeriod:null,rsiPeriod:null,rsiLevel:null,rsiMethod:null}}).signals.newLowPeriod,null);
+ for(const signals of [{newLowPeriod:0},{rsiPeriod:14,rsiLevel:null},{rsiPeriod:14,rsiLevel:30,rsiMethod:'unknown'},{rsiPeriod:14,rsiLevel:101,rsiMethod:'simple'}])assert.throws(()=>indicatorSettings('day',{signals}));
+});
+
+test('cycle-specific additions never leak daily signals into week/month/year or weekly OBV settings into other cycles',()=>{
+ const input={signals:{newLowPeriod:40,rsiPeriod:14,rsiLevel:30,rsiMethod:'wilder'},obv:{period:3,method:'ema'}};
+ assert.equal(indicatorSettings('day',input).signals.rsiMethod,'wilder');assert.equal(indicatorSettings('day',input).obv.period,9);
+ assert.equal(indicatorSettings('week',input).signals.newLowPeriod,null);assert.equal(indicatorSettings('week',input).signals.rsiMethod,'wilder');for(const cycle of ['month','year'])assert.deepEqual(indicatorSettings(cycle,input).signals,{newLowPeriod:null,rsiPeriod:null,rsiLevel:null,rsiMethod:null});
+ assert.equal(indicatorSettings('week',input).obv.period,3);assert.equal(indicatorSettings('month',input).obv.period,9);
 });

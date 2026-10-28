@@ -76,7 +76,7 @@
      if(investorRetry)investorRetry.disabled=false;
     }
     investorRetry?.addEventListener('click',()=>{if(!investorRetry.disabled)loadInvestors(true);});
-    if((context.barCycle||'day')!=='year'){loadMoney();if(data.metadata.sourceType==='naver-daily')loadInvestors();}
+    const panels=root.StockBookChartSeries.cycleConfig(context.barCycle||'day').panels;if(panels.money)loadMoney();if(panels.investors&&data.metadata.sourceType==='naver-daily')loadInvestors();
     return state.controller;
    }catch{state.interaction?.destroy();state.resize?.destroy();failed('차트 자료를 표시하지 못했습니다.');return null;}
   })();return state.task;

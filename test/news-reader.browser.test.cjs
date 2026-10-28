@@ -81,7 +81,7 @@ test('reader renders safe text, keeps source link and discards stale article; ch
   await page.waitForFunction(()=>document.getElementById('sbEmbeddedChart').chartEvidence?.barCycle==='week'&&document.getElementById('sbEmbeddedChart').chartEvidence?.displayed===215);
   const weekly=await page.locator('#sbEmbeddedChart').evaluate(h=>h.chartEvidence);
   assert.deepEqual(weekly.periods,[4,12,24,46,73]);assert.deepEqual(weekly.cloudPeriods,[1,4]);assert.deepEqual(weekly.cloudLast,[220250,244062.5]);assert.ok(weekly.cloudCount>0);
-  assert.equal(await page.locator('#sbEmbeddedChart .ma').count(),5);assert.equal(await page.locator('#sbEmbeddedChart .bb-shift').count(),0);assert.equal(await page.locator('#sbEmbeddedChart .pressure-volume').count(),215);
+  assert.equal(await page.locator('#sbEmbeddedChart .ma').count(),5);assert.equal(await page.locator('#sbEmbeddedChart .bb-shift').count(),0);assert.equal(await page.locator('#sbEmbeddedChart .pressure-volume').count(),0);assert.equal(await page.locator('#sbEmbeddedChart .sb-obv-line').count(),2);assert.equal(weekly.obv.count,215);
   assert.equal(await page.locator('#sbEmbeddedChart .ma[data-period="46"]').getAttribute('stroke-width'),'3');
   await page.locator('#sbChartDetail').click();assert.equal(await page.evaluate(()=>window.__chartWindows.at(-1).barCycle),'week');assert.equal(await page.evaluate(()=>window.__chartWindows.at(-1).viewRange),'all');
   await page.locator('#sbChartCycle').selectOption('month');await page.waitForFunction(()=>document.getElementById('sbEmbeddedChart').chartEvidence?.barCycle==='month');
