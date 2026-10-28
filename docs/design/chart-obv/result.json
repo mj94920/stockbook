@@ -1,0 +1,65 @@
+{
+  "scope": "Production chart HTML with mock IPC and recorded Samsung OHLCV. No live or Windows/HTS comparison.",
+  "verifiedAt": "2026-10-28T04:18:58.192Z",
+  "cycles": {
+    "day": {
+      "period": 9,
+      "method": "sma",
+      "barCycle": "day",
+      "baselineDate": "2022-09-16",
+      "firstDate": "2026-04-08",
+      "lastDate": "2026-10-22",
+      "value": 1302686930,
+      "signal": 1295419024.1111112,
+      "count": 132
+    },
+    "week": {
+      "period": 9,
+      "method": "sma",
+      "barCycle": "week",
+      "baselineDate": "2022-09-16",
+      "firstDate": "2026-04-24",
+      "lastDate": "2026-10-22",
+      "value": 1684842173,
+      "signal": 1743002961.6666667,
+      "count": 27
+    },
+    "month": {
+      "period": 9,
+      "method": "sma",
+      "barCycle": "month",
+      "baselineDate": "2022-09-30",
+      "firstDate": "2026-04-30",
+      "lastDate": "2026-10-22",
+      "value": 2427975855,
+      "signal": 2533860283.4444447,
+      "count": 7
+    }
+  },
+  "signalExample": {
+    "newLowPeriod": 10,
+    "rsiPeriod": 14,
+    "rsiLevel": 30,
+    "rsiMethod": "wilder",
+    "newLowDates": [
+      "2026-07-02",
+      "2026-07-08",
+      "2026-07-13",
+      "2026-07-20",
+      "2026-07-28",
+      "2026-07-29",
+      "2026-07-30",
+      "2026-09-03",
+      "2026-09-14",
+      "2026-10-08",
+      "2026-10-12",
+      "2026-10-13",
+      "2026-10-15"
+    ],
+    "oversoldDates": [
+      "2026-10-15"
+    ],
+    "scope": "Example inputs for verification only; not default or recovered original HTS settings."
+  },
+  "browserErrors": []
+}

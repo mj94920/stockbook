@@ -20,7 +20,7 @@
   const abort=new AbortController(),signal=abort.signal,key='stockbook:chart:heights:v1:'+mode+':'+controller.getModel().config.label,prefs=read(key),compact=mode==='compact';
   for(const field of Object.keys(prefs))if(!Number.isFinite(prefs[field])||prefs[field]<=0||prefs[field]>3)delete prefs[field];
   const layer=host.ownerDocument.createElement('div');layer.className='sb-chart-resizers';host.append(layer);
-  const price=host.querySelector('[data-chart-id="chart"]'),volume=host.querySelector('[data-chart-id="pressureChart"]'),investors=host.querySelector('[data-chart-id="investorChart"]'),money=host.querySelector('[data-chart-id="moneyPanel"]'),moneySvg=host.querySelector('[data-chart-id="moneyChart"]'),investorWrapper=host.querySelector('.sb-proof-extended'),investorPanel=host.querySelector('[data-chart-id="investorPanel"]');
+  const price=host.querySelector('[data-chart-id="chart"]'),volume=host.querySelector('[data-chart-id="pressureChart"]'),investors=host.querySelector('[data-chart-id="investorChart"]'),money=host.querySelector('[data-chart-id="moneyPanel"]'),moneySvg=host.querySelector('[data-chart-id="moneyChart"]'),investorWrapper=host.querySelector('.sb-proof-extended'),investorPanel=host.querySelector('[data-chart-id="investorPanel"]'),obv=host.querySelector('[data-chart-id="obvChart"]');
   const height=()=>Math.max(1,host.clientHeight),visible=element=>!!element?.getClientRects().length&&element.getBoundingClientRect().height>0&&!element.closest('[hidden]')&&!(element.tagName.toLowerCase()!=='details'&&element.closest('details:not([open])'));
   const plotBudget=()=>Math.max(1,host.getBoundingClientRect().top+host.clientTop+host.clientHeight-parseFloat(getComputedStyle(host).paddingBottom||0)-price.getBoundingClientRect().top);
   const available=()=>Math.max(1,plotBudget()-(compact&&visible(money)?money.getBoundingClientRect().height:0)-(compact&&visible(investorWrapper)?investorWrapper.getBoundingClientRect().height:0));
@@ -32,7 +32,7 @@
   const items=[];let frame=0;
   function apply(){
    if(compact){if(investorWrapper){investorWrapper.style.maxHeight=Math.max((investorPanel?.querySelector('summary')?.getBoundingClientRect().height||22)+1,plotBudget()-(visible(money)?money.getBoundingClientRect().height:0)-minPlots)+'px';investorWrapper.style.overflowY='auto';}if(moneySvg){moneySvg.style.height=clamp(prefs.money?prefs.money*height():64,32,Math.max(32,moneyLimit()))+'px';moneySvg.style.maxHeight='none';}if(investors){investors.style.height=clamp(prefs.investors?prefs.investors*height():120,32,investorLimit())+'px';investors.style.maxHeight='none';}if(visible(volume)){const [min,max]=volumeLimits();host.style.setProperty('--sb-volume-height',clamp((prefs.volume??.3)*available(),min,max)+'px');}}
-   else{const total=clamp(height()*.6,240,600);for(const [field,element,min,max]of [['price',price,120,height()*2],['volume',volume,24,height()*.7],['investors',investors,80,Math.max(80,height()*.8)],['money',moneySvg,32,height()*.7]])if(element){const size=prefs[field]?prefs[field]*height():field==='price'?total*.7:field==='volume'?total*.3:null;if(size!==null){element.style.height=clamp(size,min,Math.max(min,max))+'px';element.style.maxHeight='none';}}}
+   else{const total=clamp(height()*.6,240,600);for(const [field,element,min,max]of [['price',price,120,height()*2],['volume',volume,24,height()*.7],['investors',investors,80,Math.max(80,height()*.8)],['money',moneySvg,32,height()*.7],['obv',obv,64,height()*.7]])if(element){const size=prefs[field]?prefs[field]*height():field==='price'?total*.7:field==='volume'?total*.3:null;if(size!==null){element.style.height=clamp(size,min,Math.max(min,max))+'px';element.style.maxHeight='none';}}}
    position();
   }
   function position(){const box=host.getBoundingClientRect();for(const item of items){item.handle.hidden=!visible(item.target)||(compact&&item.field==='price'&&!visible(volume));if(!item.handle.hidden){const rect=item.target.getBoundingClientRect();item.handle.style.top=rect.bottom-box.top+host.scrollTop-5+'px';item.update();}}}
@@ -42,10 +42,10 @@
    items.push({...item,target,field});
   }
   if(compact){add('price',price,'가격·거래량 구간 높이',()=>Math.min(48,available()*.6),()=>available()-volumeLimits()[0]);add('money',moneySvg,'거래대금 구간 높이',32,moneyLimit);add('investors',investors,'수급 구간 높이',32,investorLimit);}
-  else{add('price',price,'가격 차트 높이',120,()=>height()*2);add('volume',volume,'거래량 구간 높이',24,()=>height()*.7);add('investors',investors,'수급 구간 높이',80,investorLimit);add('money',moneySvg,'거래대금 구간 높이',32,moneyLimit);}
-  const observer=new ResizeObserver(schedule);for(const element of [host,price,volume,investors,money,moneySvg,investorWrapper])if(element)observer.observe(element);
+  else{add('obv',obv,'OBV 구간 높이',64,()=>height()*.7);add('price',price,'가격 차트 높이',120,()=>height()*2);add('volume',volume,'거래량 구간 높이',24,()=>height()*.7);add('investors',investors,'수급 구간 높이',80,investorLimit);add('money',moneySvg,'거래대금 구간 높이',32,moneyLimit);}
+  const observer=new ResizeObserver(schedule);for(const element of [host,price,volume,investors,money,moneySvg,investorWrapper,obv])if(element)observer.observe(element);
   host.addEventListener('stockbook:chart-render',schedule,{signal});host.addEventListener('toggle',schedule,{signal,capture:true});
-  host.addEventListener('stockbook:chart-settings-reset',()=>{for(const field of Object.keys(prefs))delete prefs[field];host.style.removeProperty('--sb-volume-height');for(const element of [price,volume,investors,moneySvg]){element?.style.removeProperty('height');element?.style.removeProperty('max-height');}save(key,prefs);schedule();},{signal});
+  host.addEventListener('stockbook:chart-settings-reset',()=>{for(const field of Object.keys(prefs))delete prefs[field];host.style.removeProperty('--sb-volume-height');for(const element of [price,volume,investors,moneySvg,obv]){element?.style.removeProperty('height');element?.style.removeProperty('max-height');}save(key,prefs);schedule();},{signal});
   apply();return {destroy(){abort.abort();observer.disconnect();if(frame)root.cancelAnimationFrame(frame);layer.remove();host.style.removeProperty('--sb-volume-height');}};
  }
  function mountWorkspace(){

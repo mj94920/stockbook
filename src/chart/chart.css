@@ -123,3 +123,14 @@ body.light-mode .sb-proof-chart { --sb-chart-investor-foreign:#b52964;--sb-chart
 .sb-proof-compact .sb-investor-legend > span { flex-shrink:0; }
 .sb-proof-compact .sb-proof-money > summary,.sb-proof-compact .sb-proof-investors > summary { padding:2px 0;line-height:18px; }
 .sb-proof-compact .sb-investor-legend { margin-block:2px; }
+
+.sb-proof-obv { border-top:1px solid var(--sb-border);--sb-chart-obv:var(--sb-chart-investor-institution);--sb-chart-obv-signal:var(--sb-chart-money-300); }
+.sb-proof-obv [data-chart-id="obvChart"] { height:140px;min-height:64px; }
+
+.sb-proof-chart { --sb-chart-signal-new-low:var(--sb-chart-money-300);--sb-chart-signal-oversold:var(--sb-warn); }
+
+/* Keep close/apply available while longer indicator conditions scroll. */
+.sb-chart-window .sb-modal[open] { max-height:calc(100dvh - 32px);overflow:hidden; }
+.sb-chart-window .sb-modal[open] > form { display:flex;flex-direction:column;max-height:calc(100dvh - 66px); }
+.sb-chart-window .sb-modal__head,.sb-chart-window .sb-modal__foot { flex-shrink:0; }
+.sb-chart-window .sb-modal__body { min-height:0;overflow:auto; }

@@ -3,6 +3,8 @@ const {test}=require('node:test'),assert=require('node:assert/strict');
 const {aggregate,average,cycleConfig,visibleOffset,indicatorSettings}=require('../src/chart/series.js');
 const {chartContext}=require('../src/chart/window.cjs');
 const {barLayout,volumeProfile}=require('../src/chart/series.js');
+const {obvSeries}=require('../src/chart/series.js');
+const {newLowSignals,rsiSeries,crossdown}=require('../src/chart/series.js');
 const bar=(date,open,high,low,close,volume)=>({date,open,high,low,close,volume});
 test('KRX trading dates group by Monday weeks across years and holidays without zero-filled sessions',()=>{
  const input=[bar('2023-12-28',10,14,8,12,100),bar('2023-12-29',12,15,11,14,200),bar('2024-01-02',20,30,18,25,300),bar('2024-01-05',25,28,17,19,400),bar('2024-01-08',19,21,16,20,500)];
@@ -60,4 +62,45 @@ test('estimated price profile distributes daily volume by range overlap and cons
  const result=volumeProfile(rows,4);assert.deepEqual(result.bins.map(b=>b.volume),[50,70,50,50]);assert.equal(result.total,220);assert.equal(result.bins.reduce((sum,b)=>sum+b.volume,0),220);
  assert.deepEqual(volumeProfile([{low:10,high:10,close:10,volume:15}],12),{bins:[{low:10,high:10,volume:15}],total:15});assert.deepEqual(volumeProfile([],12),{bins:[],total:0});
  assert.throws(()=>volumeProfile(rows,0));assert.throws(()=>volumeProfile([{low:10,high:5,close:7,volume:1}]));assert.equal(rows[0].volume,100);
+});
+
+test('OBV starts at zero, signs current volume by prior close, preserves ties and seeds SMA/EMA after full periods',()=>{
+ const rows=[10,12,12,9,11,13].map((close,i)=>({date:'2024-01-0'+(i+1),close,volume:(i+1)*10}));
+ const before=structuredClone(rows),simple=obvSeries(rows,{period:3,method:'sma'}),exponential=obvSeries(rows,{period:3,method:'ema'});
+ assert.deepEqual(simple.values,[0,20,20,-20,30,90]);assert.deepEqual(simple.signal,[null,null,40/3,20/3,10,100/3]);
+ assert.equal(exponential.signal[0],null);assert.equal(exponential.signal[2],40/3);assert.ok(Math.abs(exponential.signal[3]+10/3)<1e-12);assert.ok(Math.abs(exponential.signal[4]-40/3)<1e-12);
+ assert.deepEqual(obvSeries(rows,{period:1}).signal,simple.values);assert.deepEqual(obvSeries(rows.slice(0,2),{period:9}).signal,[null,null]);assert.deepEqual(rows,before);
+ const weekly=aggregate([bar('2024-01-05',9,11,8,10,900),bar('2024-01-08',10,12,9,11,100),bar('2024-01-12',11,13,10,12,200),bar('2024-01-15',12,13,8,9,400)],'week');
+ assert.deepEqual(obvSeries(weekly).values,[0,300,-100]);
+});
+
+test('OBV rejects missing/unsafe quantities, duplicate dates and invalid settings rather than manufacturing values',()=>{
+ const rows=[{date:'2024-01-02',close:10,volume:10},{date:'2024-01-03',close:11,volume:20}];
+ for(const options of [{period:0},{period:501},{method:'unknown'}])assert.throws(()=>obvSeries(rows,options));
+ for(const input of [[],[rows[0],rows[0]],[{...rows[0],volume:-1}],[{...rows[0],volume:1.5}],[{...rows[0],close:NaN}],[rows[0],{...rows[1],volume:Number.MAX_SAFE_INTEGER},{date:'2024-01-04',close:12,volume:1}]])assert.throws(()=>obvSeries(input));
+ assert.deepEqual(indicatorSettings('week').obv,{period:9,method:'sma'});assert.throws(()=>indicatorSettings('day',{obv:{period:0}}));
+});
+
+test('new lows require N prior closes, exclude the current candle, and use strict less-than even on equal lows',()=>{
+ const rows=[10,9,9,8,8,7].map((close,i)=>({date:'2024-01-0'+(i+1),close,low:1}));
+ assert.deepEqual(newLowSignals(rows,2),[false,false,false,true,false,true]);assert.deepEqual(newLowSignals(rows,1),[false,true,false,true,false,true]);assert.deepEqual(newLowSignals(rows,10),Array(6).fill(false));
+ assert.throws(()=>newLowSignals(rows,0));assert.throws(()=>newLowSignals([{date:'2024-01-01',close:NaN}],2));
+});
+
+test('RSI uses N changes, explicit simple/Wilder smoothing and handles flat/rising/falling prices without false warmup values',()=>{
+ const rows=values=>values.map((close,i)=>({date:'2024-01-'+String(i+1).padStart(2,'0'),close}));
+ assert.deepEqual(rsiSeries(rows([10,11,10,9,10]),2,'simple'),[null,null,50,0,50]);
+ assert.deepEqual(rsiSeries(rows([10,11,10,9,10]),2,'wilder'),[null,null,50,25,62.5]);
+ const canonical=rsiSeries(rows([44.34,44.09,44.15,43.61,44.33,44.83,45.1,45.42,45.84,46.08,45.89,46.03,45.61,46.28,46.28,46]),14,'wilder');
+ assert.ok(Math.abs(canonical[14]-70.46413502109705)<1e-9);assert.ok(Math.abs(canonical[15]-66.24961855355505)<1e-9);
+ for(const method of ['simple','wilder']){assert.deepEqual(rsiSeries(rows([10,10,10,10]),2,method),[null,null,50,50]);assert.deepEqual(rsiSeries(rows([10,11,12]),2,method),[null,null,100]);assert.deepEqual(rsiSeries(rows([12,11,10]),2,method),[null,null,0]);assert.deepEqual(rsiSeries(rows([10,9]),2,method),[null,null]);}
+ assert.throws(()=>rsiSeries(rows([10,9]),0,'simple'));assert.throws(()=>rsiSeries(rows([10,9]),1,'unknown'));
+});
+
+test('Crossdown only fires when moving from at-or-above to strictly below the level, never throughout an oversold run',()=>{
+ assert.deepEqual(crossdown([null,null,40,30,29,20,30,31,29],30),[false,false,false,false,true,false,false,false,true]);
+ assert.deepEqual(crossdown([null,10,9],30),[false,false,false]);assert.throws(()=>crossdown([NaN],30));
+ const defaults=indicatorSettings('day').signals;assert.deepEqual(defaults,{newLowPeriod:null,rsiPeriod:null,rsiLevel:null,rsiMethod:null});
+ assert.equal(indicatorSettings('week',{signals:{newLowPeriod:20}}).signals.newLowPeriod,20);
+ for(const signals of [{newLowPeriod:0},{rsiPeriod:14},{rsiPeriod:14,rsiLevel:30,rsiMethod:'unknown'},{rsiPeriod:14,rsiLevel:101,rsiMethod:'simple'}])assert.throws(()=>indicatorSettings('day',{signals}));
 });

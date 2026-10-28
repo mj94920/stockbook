@@ -61,11 +61,61 @@
   const offset=bars.findIndex(bar=>bar.date>=cutoff);return offset<0?Math.max(0,bars.length-1):offset;
  }
  function indicatorSettings(cycle,input={}){
-  const defaults=cycleConfig(cycle),periods=input.periods??defaults.periods,cloud=defaults.cloud?(input.cloud??defaults.cloud):null,bb={period:40,multiplier:1.9,shift:25,...input.bb};
+  const defaults=cycleConfig(cycle),periods=input.periods??defaults.periods,cloud=defaults.cloud?(input.cloud??defaults.cloud):null,bb={period:40,multiplier:1.9,shift:25,...input.bb},obv={period:9,method:'sma',...input.obv},signals={newLowPeriod:null,rsiPeriod:null,rsiLevel:null,rsiMethod:null,...input.signals};
   if(!Array.isArray(periods)||periods.length<1||periods.length>8||periods.some(n=>!Number.isInteger(n)||n<1||n>1200))throw Error('이평 기간은 1~1200, 최대 8개입니다.');
   if(cloud&&(!Array.isArray(cloud)||cloud.length!==2||cloud.some(n=>!Number.isInteger(n)||n<1||n>1200)))throw Error('구름 기간 두 개를 확인하세요.');
   if(!Number.isInteger(bb.period)||bb.period<2||bb.period>500||!Number.isFinite(bb.multiplier)||bb.multiplier<0||bb.multiplier>10||!Number.isInteger(bb.shift)||bb.shift<0||bb.shift>120)throw Error('BB 기간·배수·이동값을 확인하세요.');
-  return {periods:[...periods],cloud:cloud?[...cloud]:null,bb};
+  if(!Number.isInteger(obv.period)||obv.period<1||obv.period>500||!['sma','ema'].includes(obv.method))throw Error('OBV 시그널 기간은 1~500, 방식은 단순/지수입니다.');
+  if(signals.newLowPeriod!==null&&(!Number.isInteger(signals.newLowPeriod)||signals.newLowPeriod<1||signals.newLowPeriod>1200))throw Error('신저가 기간은 1~1200봉입니다. 비우면 표시하지 않습니다.');
+  const rsi=[signals.rsiPeriod,signals.rsiLevel,signals.rsiMethod];
+  if(rsi.some(value=>value!==null)&&(!Number.isInteger(signals.rsiPeriod)||signals.rsiPeriod<1||signals.rsiPeriod>500||!Number.isFinite(signals.rsiLevel)||signals.rsiLevel<0||signals.rsiLevel>100||!['simple','wilder'].includes(signals.rsiMethod)))throw Error('RSI 기간(1~500), 하단값(0~100), 계산방식을 모두 선택하세요.');
+  return {periods:[...periods],cloud:cloud?[...cloud]:null,bb,obv,signals};
+ }
+ // Zero at the first received close: no volume can be signed without its prior close.
+ // Compute on all received bars before slicing the viewport; never restart on pan.
+ function obvSeries(bars,{period=9,method='sma'}={}){
+  if(!Number.isInteger(period)||period<1||period>500||!['sma','ema'].includes(method))throw Error('OBV 시그널 설정 오류');
+  if(!Array.isArray(bars)||!bars.length)throw Error('OBV 자료 없음');
+  let total=0,previousDate='';const values=bars.map((bar,i)=>{
+   dateValue(bar.date);if(bar.date<=previousDate||!Number.isFinite(bar.close)||bar.close<=0||!Number.isSafeInteger(bar.volume)||bar.volume<0)throw Error('OBV 종가/거래량 오류');previousDate=bar.date;
+   if(i)total+=Math.sign(bar.close-bars[i-1].close)*bar.volume;
+   if(!Number.isSafeInteger(total))throw Error('OBV 누적 범위 오류');return total;
+  });
+  const signal=[];let sum=0,ema=null;
+  for(let i=0;i<values.length;i++){
+   sum+=values[i];if(i>=period)sum-=values[i-period];
+   if(i<period-1){signal.push(null);continue;}
+   if(method==='sma')signal.push(sum/period);
+   else{ema=ema===null?sum/period:ema+(values[i]-ema)*2/(period+1);signal.push(ema);}
+  }
+  return {values,signal};
+ }
+ function closes(bars){
+  if(!Array.isArray(bars)||!bars.length)throw Error('종가 자료 없음');let previous='';
+  return bars.map(bar=>{dateValue(bar.date);if(bar.date<=previous||!Number.isFinite(bar.close)||bar.close<=0)throw Error('종가 자료 오류');previous=bar.date;return bar.close;});
+ }
+ // lowest(C(1), Period) > C: exclude the current close and require all prior N bars.
+ function newLowSignals(bars,period){
+  if(!Number.isInteger(period)||period<1||period>1200)throw Error('신저가 기간 오류');const values=closes(bars);
+  return values.map((value,i)=>i>=period&&Math.min(...values.slice(i-period,i))>value);
+ }
+ // Explicit alternatives because the supplied RSI formula does not specify smoothing.
+ // Both methods need N close-to-close changes. Wilder seeds with their simple average.
+ function rsiSeries(bars,period,method){
+  if(!Number.isInteger(period)||period<1||period>500||!['simple','wilder'].includes(method))throw Error('RSI 설정 오류');
+  const values=closes(bars),result=values.map(()=>null);let gain=0,loss=0;
+  for(let i=1;i<values.length;i++){
+   const change=values[i]-values[i-1],up=Math.max(0,change),down=Math.max(0,-change);
+   if(i<=period){gain+=up/period;loss+=down/period;}
+   else if(method==='wilder'){gain+=(up-gain)/period;loss+=(down-loss)/period;}
+   else{const old=values[i-period]-values[i-period-1];gain+=(up-Math.max(0,old))/period;loss+=(down-Math.max(0,-old))/period;gain=Math.max(0,gain);loss=Math.max(0,loss);}
+   if(i>=period)result[i]=gain===0&&loss===0?50:loss===0?100:gain===0?0:100*(gain/(gain+loss));
+  }
+  return result;
+ }
+ function crossdown(values,level){
+  if(!Array.isArray(values)||!Number.isFinite(level)||values.some(value=>value!==null&&!Number.isFinite(value)))throw Error('하향 돌파 자료 오류');
+  return values.map((value,i)=>i>0&&value!==null&&values[i-1]!==null&&values[i-1]>=level&&value<level);
  }
  function investorSeries(input){
   if(!Array.isArray(input)||!input.length||input.length>100)throw Error('수급 자료 없음');const seen=new Set(),sums={foreign:0,institution:0,individual:0};
@@ -108,5 +158,5 @@
   }
   return {bins,total};
  }
- return Object.freeze({cycleConfig,aggregate,average,visibleOffset,ranges,indicatorSettings,chartTypes,barLayout,volumeProfile,investorSeries,tradingValues,tradingValueBand,tradingValueThresholds});
+ return Object.freeze({cycleConfig,aggregate,average,visibleOffset,ranges,indicatorSettings,obvSeries,newLowSignals,rsiSeries,crossdown,chartTypes,barLayout,volumeProfile,investorSeries,tradingValues,tradingValueBand,tradingValueThresholds});
 });

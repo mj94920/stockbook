@@ -448,3 +448,42 @@ test('public investor fallback remains explicitly Naver-provided and displays it
   await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.investors?.source==='Naver');assert.equal(await page.locator('.investor-line').count(),3);const evidence=await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.investors);assert.equal(evidence.count,2);assert.equal(evidence.market,'provider');assert.equal(evidence.lastDaily.individual,100);assert.equal(evidence.primaryErrorCode,'KIS_AUTH');assert.match(await page.locator('[data-chart-id="investorSummary"]').textContent(),/네이버/);assert.match(await page.locator('[data-chart-id="investorStatus"]').textContent(),/KIS 조회 실패로 네이버/);assert.doesNotMatch(await page.locator('[data-chart-id="investorStatus"]').textContent(),/KRX/);assert.ok(await page.locator('.candle').count()>0);assert.deepEqual(h.errors,[]);
  }finally{await h.close();}
 });
+
+test('OBV follows candle dates through zoom/pan, exposes values, resizes, restores and persists signal settings per cycle',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  const panel=page.locator('[data-chart-id="obvPanel"]'),plot=page.locator('[data-chart-id="obvChart"]');
+  await panel.locator('summary').click();assert.equal(await plot.locator('.sb-obv-line').count(),2);assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.obv.period),9);
+  const last=await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.obv.value);
+  await page.getByRole('button',{name:'+',exact:true}).click();assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.obv.value),last);
+  await page.getByRole('slider',{name:'차트 가로 스크롤',exact:true}).press('Home');
+  const before=await page.locator('#chartViewport').evaluate(h=>{const m=StockBookCharts.controller(h).getModel(),full=StockBookChartSeries.obvSeries(m.all);return {expected:full.values[m.end-1],shown:h.chartEvidence.obv.value,end:m.end};});assert.equal(before.expected,before.shown);
+  await plot.scrollIntoViewIfNeeded();const data=await plot.evaluate((el)=>{const h=el.closest('[data-chart-host]'),m=StockBookCharts.controller(h).getModel(),p=new DOMPoint(m.x(0),30).matrixTransform(el.getScreenCTM());return {x:p.x,y:p.y,date:m.rows[0].date,value:m.obv[0].value};});await page.mouse.move(data.x,data.y);assert.match(await page.locator('.sb-chart-tooltip').innerText(),new RegExp(data.date));assert.match(await page.locator('.sb-chart-tooltip').innerText(),/OBV/);
+  const candleX=await page.locator('.candle').first().evaluate(el=>el.getBoundingClientRect().x+el.getBoundingClientRect().width/2),crossX=await plot.locator('.sb-chart-crosshair line').evaluate(el=>new DOMPoint(Number(el.getAttribute('x1')),0).matrixTransform(el.getScreenCTM()).x);assert.ok(Math.abs(candleX-crossX)<1);
+  await plot.click({position:{x:50,y:30}});await page.keyboard.press('Delete');assert.equal(await panel.isVisible(),false);await page.getByRole('button',{name:'실행 취소',exact:true}).click();assert.equal(await panel.isVisible(),true);
+  const handle=page.getByRole('separator',{name:'OBV 구간 높이',exact:true});await handle.scrollIntoViewIfNeeded();const oldHeight=await plot.evaluate(el=>el.clientHeight);await handle.press('ArrowDown');await page.waitForFunction(h=>document.querySelector('[data-chart-id="obvChart"]').clientHeight>h,oldHeight);assert.equal(await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().end),before.end);
+  await page.locator('#chartIndicatorSettings').click();await page.locator('#chartOBVPeriod').fill('3');await page.locator('#chartOBVMethod').selectOption('ema');await page.getByRole('button',{name:'적용',exact:true}).click();assert.match(await panel.locator('summary').innerText(),/3개월 지수/);assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.obv.method),'ema');
+  await page.locator('#chartCycle').selectOption('week');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='week');assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.obv.period),9);
+  await page.locator('#chartCycle').selectOption('month');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.obv?.period===3);await page.getByRole('button',{name:'차트 설정 초기화',exact:true}).click();assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.obv.period),9);
+  await page.locator('#chartCycle').selectOption('year');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='year');assert.equal(await panel.isVisible(),false);assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.obv),null);assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
+
+test('configured new-low and RSI crossdown markers follow candle dates, hide/restore and reset without guessed defaults',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  assert.equal(await page.locator('.sb-chart-signal').count(),0);await page.locator('#chartCycle').selectOption('day');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='day');
+  await page.locator('#chartIndicatorSettings').click();assert.equal(await page.locator('#chartNewLowPeriod').inputValue(),'');assert.equal(await page.locator('#chartRSIPeriod').inputValue(),'');assert.equal(await page.locator('#chartRSIMethod').inputValue(),'');
+  await page.locator('#chartNewLowPeriod').fill('5');await page.locator('#chartRSIPeriod').fill('3');await page.getByRole('button',{name:'적용',exact:true}).click();assert.match(await page.locator('#chartSettingsError').innerText(),/모두 선택/);
+  await page.locator('#chartRSILevel').fill('40');await page.locator('#chartRSIMethod').selectOption('simple');await page.getByRole('button',{name:'적용',exact:true}).click();
+  const expected=await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.signals);assert.ok(expected.newLowDates.length>0);assert.ok(expected.oversoldDates.length>0);
+  for(const [kind,dates]of [['new-low',expected.newLowDates],['oversold',expected.oversoldDates]])assert.deepEqual(await page.locator('.sb-chart-signal[data-kind="'+kind+'"]').evaluateAll(es=>es.map(e=>e.dataset.date)),dates);
+  const first=page.locator('.sb-chart-signal[data-kind="oversold"]').first(),date=await first.getAttribute('data-date');await first.hover();assert.match(await page.locator('.sb-chart-tooltip').innerText(),/RSI.*하단값 하향 돌파/);assert.match(await page.locator('.sb-chart-tooltip').innerText(),new RegExp(date));
+  await page.locator('.sb-chart-indicator[data-chart-indicator="new-low"]').click();await page.keyboard.press('Delete');assert.equal(await page.locator('.sb-chart-signal[data-kind="new-low"]').count(),0);assert.ok(await page.locator('.sb-chart-signal[data-kind="oversold"]').count()>0);await page.getByRole('button',{name:'실행 취소',exact:true}).click();assert.equal(await page.locator('.sb-chart-signal[data-kind="new-low"]').count(),expected.newLowDates.length);
+  await page.getByRole('button',{name:'+',exact:true}).click();await page.getByRole('slider',{name:'차트 가로 스크롤',exact:true}).press('Home');
+  const aligned=await page.locator('#chartViewport').evaluate(h=>{const m=StockBookCharts.controller(h).getModel(),dates=new Set(m.rows.map(r=>r.date));return [...h.querySelectorAll('.sb-chart-signal')].every(el=>dates.has(el.dataset.date));});assert.equal(aligned,true);
+  await page.locator('#chartCycle').selectOption('week');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='week');assert.equal(await page.locator('.sb-chart-signal').count(),0);
+  await page.locator('#chartCycle').selectOption('day');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.signals?.newLowPeriod===5);assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.signals.rsiMethod),'simple');
+  await page.getByRole('button',{name:'차트 설정 초기화',exact:true}).click();assert.equal(await page.locator('.sb-chart-signal').count(),0);assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.signals.rsiPeriod),null);assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});

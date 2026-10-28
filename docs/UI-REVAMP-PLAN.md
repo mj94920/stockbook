@@ -191,3 +191,7 @@
 | `--sb-chart-money-10000` | `--sb-text-1` | `--sb-text-1` |
 
 투자자별 수급의 기존 사용자 색은 `--sb-chart-investor-foreign`(분홍, 다크 `#ff94c4`/라이트 `#b52964`), `--sb-chart-investor-institution`(노랑, `#fff16c`/`#957100`), `--sb-chart-investor-individual`(남색, `#3e5eb8`/`#243e89`)으로 제공한다. SVG와 종합 범례는 이 토큰을 참조하며 수량·단위·주체 이름을 함께 표시한다.
+
+OBV 구간은 `--sb-chart-obv`(기존 기관 노랑 토큰)와 `--sb-chart-obv-signal`(기존 거래대금 300억 파랑 토큰)을 참조하며 다크/라이트 팔레트를 공유한다.
+
+봉 신호는 `--sb-chart-signal-new-low`(기존 거래대금 300억 파랑 토큰), `--sb-chart-signal-oversold`(기존 경고 토큰)를 참조한다.
