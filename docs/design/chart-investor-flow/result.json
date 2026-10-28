@@ -1,6 +1,6 @@
 {
   "passed": true,
-  "verifiedAt": "2026-10-28T02:25:12.637Z",
+  "verifiedAt": "2026-10-28T02:54:21.502Z",
   "scope": "Synthetic KIS-shaped investor and money responses, recorded Samsung price data, production HTML with mock IPC. No authenticated investor response or Windows/NSIS verification.",
   "daily": {
     "dates": [
@@ -37,7 +37,11 @@
       "institution": 70000,
       "individual": -79774
     },
+    "loading": false,
     "source": "KIS",
+    "market": "KRX",
+    "primaryErrorCode": null,
+    "omittedRows": 0,
     "unit": "주",
     "fetchedAt": "2026-10-28T00:00:00Z"
   },
@@ -76,7 +80,11 @@
       "institution": 70000,
       "individual": -79774
     },
+    "loading": false,
     "source": "KIS",
+    "market": "KRX",
+    "primaryErrorCode": null,
+    "omittedRows": 0,
     "unit": "주",
     "fetchedAt": "2026-10-28T00:00:00Z"
   },

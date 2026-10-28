@@ -28,3 +28,5 @@ SMA/BB, 매매 압력, 투자자별 순매수 산식과 사용자 색상을 재�
 2026-10-28 거래대금 후속: 별도 `trading-value.cjs`가 기존 KIS 인증으로 KRX 일별 거래대금 `acml_tr_pbmn`·거래량 `acml_vol` 최근 최대 100개를 조회한다. 가격 차트와 별개로 로드하며 날짜/거래량이 일치하는 수신 금액만 연결한다. 주·월의 일부 일자 금액을 전체 합계로 표시하지 않는다. 이 구현은 인증된 KIS 실수신 대조가 끝났음을 뜻하지 않는다. [모의 검증 및 미실행 범위](../../docs/design/chart-trading-value/README.md).
 
 2026-10-28 수급 후속: `investor-provider.cjs`는 KIS `inquire-investor`가 제공한 외국인·기관·개인 순매수 수량을 모두 그대로 받는다. 가격 차트와 별도 일별 축이며 기본은 일별 순매수, 선택 시 받은 행만 0 기준으로 합산한다. 보유량/비율·개인 잔여량 추정이 아니다. [출처·제약·모의 검증](../../docs/design/chart-investor-flow/README.md). 원래 삼성전자 5일 스냅샷 파일은 수정하지 않는다.
+
+2026-10-28 미표시 보완: KIS 실패 시 네이버 integration의 선택 종목 실수신 수급을 별도 출처로 표시한다. 실제 공개 응답으로 포스코DX·삼성전자 5일 수량/날짜를 검증했다. 네이버의 제공 기준을 KRX로 표시하거나 두 소스를 합치지 않으며, 키·토큰을 보완 호스트로 보내지 않는다. [실수신 보완 결과](../../docs/design/chart-investor-flow/live-fallback-result.json). 원래 Windows KIS 실패 원인은 미확정이다.
