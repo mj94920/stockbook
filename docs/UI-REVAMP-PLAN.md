@@ -211,6 +211,6 @@ OBV 구간은 `--sb-chart-obv`(기존 기관 노랑 토큰)와 `--sb-chart-obv-s
 | `--sb-chart-signal-oversold` | `#fbbf24` | `#b45309` | 고가 위 지름 10px 원, 입장 신호와 동시 발생 시 위로 분리 |
 | `--sb-chart-signal-outline` | `--sb-panel` | `--sb-panel` | 차트 배경색 테두리 |
 
-amount의 원본 단위는 사용자도 미확인이다. 설정에 백만원/억원 환산 금액을 명시하고 최초 선택 전에는 규모 신호를 판정하지 않는다. 이는 원본 단위 확인이나 HTS 일치 선언을 뜻하지 않는다. [조건·증거](design/chart-entry-tiers/README.md).
+사용자가 amount 단위를 억원으로 확정했다. 작은형님 150억원·큰형님 5,000억원을 설정·범례에 고정 표시하며, 단위 선택 UI는 제거한다. 실제 거래대금이 없는 날짜의 판정 보류는 유지한다. 전체 HTS 수치 일치는 별도 확인 대상이다. [조건·증거](design/chart-entry-tiers/README.md).
 
 상세 창의 `.sb-chart-window.light-mode`는 §8의 기존 라이트 배경·서피스·텍스트·경계·강조·경고·오버레이 값을 재사용한다. 별도 테마 버튼은 추가하지 않는다.

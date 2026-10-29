@@ -6,8 +6,6 @@
   const key=controller.getModel().stockCode+':'+controller.getModel().config.label,storageKey='stockbook:chart:drawings:v1:'+key;
   const typeStorageKey='stockbook:chart:type:v2:'+controller.getModel().config.label;const visibilityKey='stockbook:chart:visibility:v1:'+key;let hidden=indicatorMemory.get(key)||[],lastVisibility='';
   try{const saved=JSON.parse(root.localStorage.getItem(visibilityKey));if(Array.isArray(saved)&&saved.length<=32&&saved.every(id=>typeof id==='string'&&/^(ma:\d+|bb|cloud|pressure|money|investors|profile|obv|new-low|oversold|volume|entry|entry-small|entry-big)$/.test(id)))hidden=saved;const type=root.localStorage.getItem(typeStorageKey);if(root.StockBookChartSeries.chartTypes.includes(type))controller.setType(type);}catch{}
-  function syncEntryUnit(){if(!compact||controller.getModel().config.label!=='일봉')return;try{const saved=JSON.parse(root.localStorage.getItem('stockbook:chart:settings:v1')),unit=saved?.day?.signals?.entryAmountUnit??null;if(unit===null||['million','eok'].includes(unit))controller.setEntryAmountUnit(unit);}catch{}}
-  syncEntryUnit();root.addEventListener('storage',event=>{if(event.key==='stockbook:chart:settings:v1')syncEntryUnit();},{signal});
   if(tools)controller.setHiddenIndicators(hidden);svg.setAttribute('tabindex','0');
   let drawings=memory.get(key)||[],mode='zoom',selected=null,selectedIndicator=null,pending=null,gesture=null,stroke=null,nextId=Math.max(0,...drawings.map(d=>d.id))+1,history=[],preview=null,touches=new Map(),pinch=null,wheelRemainder=0;
   const ns='http://www.w3.org/2000/svg',node=(tag,attrs={},text)=>{const el=doc.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,String(v));if(text!==undefined)el.textContent=text;return el;};
@@ -86,7 +84,7 @@
    if(m.config.label!=='일봉')return [];const r=m.signals?.[i],hidden=controller.getHiddenIndicators();
    if(r?.entryBig===true&&!hidden.includes('entry-big'))return ['큰형님 · 세력 입장 전체 조건 충족'];
    if(r?.entrySmall===true&&!hidden.includes('entry-small'))return ['작은형님 · 세력 입장 전체 조건 충족'];
-   if(r&&(r.entrySmall===null||r.entryBig===null))return ['세력 입장 판정 보류 · amount 단위·거래대금·이력 확인 필요'];return [];
+   if(r&&(r.entrySmall===null||r.entryBig===null))return ['세력 입장 판정 보류 · 거래대금·이력 확인 필요'];return [];
   }
   function describeBar(row,m){
    if(!row)return '표시 공간 · 가격 자료 없음';

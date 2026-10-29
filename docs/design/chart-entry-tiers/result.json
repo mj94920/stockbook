@@ -1,7 +1,7 @@
 {
-  "scope": "Synthetic OHLCV and synthetic KIS-shaped amounts. Production chart HTML with mock IPC; not live, not a Windows/HTS match. Million-won interpretation is a test input, not confirmation of the original unit.",
-  "verifiedAt": "2026-10-29T07:51:26.634Z",
-  "pending": "세력 입장 · amount 단위 선택 필요 · 거래대금 100/132봉 · 판정 보류 17봉",
+  "scope": "Synthetic OHLCV and synthetic KIS-shaped amounts. Production chart HTML with mock IPC; not live, not a Windows/HTS match. Formula amount is fixed to hundred-million won as confirmed by the user; monetary inputs here remain synthetic.",
+  "verifiedAt": "2026-10-29T09:55:26.769Z",
+  "initialStatus": "세력 입장 · 작은형님 150억 · 큰형님 5,000억 · 거래대금 100/132봉 · 판정 보류 15봉",
   "views": [
     {
       "name": "dark-wide",
@@ -12,7 +12,7 @@
         "rsiPeriod": 2,
         "rsiLevel": 60,
         "rsiMethod": "simple",
-        "entryAmountUnit": "million",
+        "entryAmountUnit": "eok",
         "newLowDates": [
           "2024-08-05",
           "2024-08-06",
@@ -165,7 +165,7 @@
         "rsiPeriod": 2,
         "rsiLevel": 60,
         "rsiMethod": "simple",
-        "entryAmountUnit": "million",
+        "entryAmountUnit": "eok",
         "newLowDates": [
           "2024-08-05",
           "2024-08-06",
@@ -318,7 +318,7 @@
         "rsiPeriod": 2,
         "rsiLevel": 60,
         "rsiMethod": "simple",
-        "entryAmountUnit": "million",
+        "entryAmountUnit": "eok",
         "newLowDates": [
           "2024-08-05",
           "2024-08-06",

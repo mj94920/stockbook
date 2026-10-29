@@ -61,7 +61,7 @@
   const offset=bars.findIndex(bar=>bar.date>=cutoff);return offset<0?Math.max(0,bars.length-1):offset;
  }
  function indicatorSettings(cycle,input={}){
-  const defaults=cycleConfig(cycle),periods=input.periods??defaults.periods,cloud=defaults.cloud?(input.cloud??defaults.cloud):null,bb={period:40,multiplier:1.9,shift:25,...input.bb},obv={period:9,method:'sma',...(cycle==='week'?input.obv:{})},signals=['day','week'].includes(cycle)?{newLowPeriod:cycle==='day'?40:null,rsiPeriod:14,rsiLevel:30,rsiMethod:null,entryAmountUnit:null,...input.signals,...(cycle==='week'?{newLowPeriod:null,entryAmountUnit:null}:{})}:{newLowPeriod:null,rsiPeriod:null,rsiLevel:null,rsiMethod:null,entryAmountUnit:null};
+  const defaults=cycleConfig(cycle),periods=input.periods??defaults.periods,cloud=defaults.cloud?(input.cloud??defaults.cloud):null,bb={period:40,multiplier:1.9,shift:25,...input.bb},obv={period:9,method:'sma',...(cycle==='week'?input.obv:{})},signals=['day','week'].includes(cycle)?{newLowPeriod:cycle==='day'?40:null,rsiPeriod:14,rsiLevel:30,rsiMethod:null,entryAmountUnit:null,...input.signals,...(cycle==='week'?{newLowPeriod:null,entryAmountUnit:null}:{entryAmountUnit:'eok'})}:{newLowPeriod:null,rsiPeriod:null,rsiLevel:null,rsiMethod:null,entryAmountUnit:null};
   if(!Array.isArray(periods)||periods.length<1||periods.length>8||periods.some(n=>!Number.isInteger(n)||n<1||n>1200))throw Error('이평 기간은 1~1200, 최대 8개입니다.');
   if(cloud&&(!Array.isArray(cloud)||cloud.length!==2||cloud.some(n=>!Number.isInteger(n)||n<1||n>1200)))throw Error('구름 기간 두 개를 확인하세요.');
   if(!Number.isInteger(bb.period)||bb.period<2||bb.period>500||!Number.isFinite(bb.multiplier)||bb.multiplier<0||bb.multiplier>10||!Number.isInteger(bb.shift)||bb.shift<0||bb.shift>120)throw Error('BB 기간·배수·이동값을 확인하세요.');
@@ -69,7 +69,6 @@
   if(signals.newLowPeriod!==null&&(!Number.isInteger(signals.newLowPeriod)||signals.newLowPeriod<1||signals.newLowPeriod>1200))throw Error('신저가 기간은 1~1200봉입니다. 비우면 표시하지 않습니다.');
   const rsi=[signals.rsiPeriod,signals.rsiLevel,signals.rsiMethod];
   if(rsi.some(value=>value!==null)&&(!Number.isInteger(signals.rsiPeriod)||signals.rsiPeriod<1||signals.rsiPeriod>500||!Number.isFinite(signals.rsiLevel)||signals.rsiLevel<0||signals.rsiLevel>100||(signals.rsiMethod!==null&&!['simple','wilder'].includes(signals.rsiMethod))))throw Error('RSI 기간(1~500)과 하단값(0~100)을 함께 입력하고 계산방식을 확인하세요.');
-  if(signals.entryAmountUnit!==null&&!['million','eok'].includes(signals.entryAmountUnit))throw Error('세력 입장 거래대금 단위를 확인하세요.');
   return {periods:[...periods],cloud:cloud?[...cloud]:null,bb,obv,signals};
  }
  // Zero at the first received close: no volume can be signed without its prior close.
@@ -134,16 +133,17 @@
    return {signal:(cloudCross||cloudAbove)&&(maCross||aboveMA)&&(bandCross||openAboveBand),lineA,lineB,ma226:ma[i],bbUpper:upper[i],cloudCross,cloudAbove,maCross,aboveMA,bandCross,openAboveBand};
   });
  }
- // The amount scale is explicit: a formula amount is not a volume-derived estimate.
- function entryTierSeries(candles,amounts,amountUnitWon){
-  if((amountUnitWon!==null&&(!Number.isSafeInteger(amountUnitWon)||amountUnitWon<=0||!Number.isSafeInteger(5000*amountUnitWon)))||!Array.isArray(amounts)||amounts.length!==candles.length||amounts.some(v=>v!==null&&(!Number.isSafeInteger(v)||v<0)))throw Error('세력 입장 거래대금 단위/자료 오류');
+ // User confirmed amount is in hundred-million KRW; provider amounts are exact won.
+ function entryTierSeries(candles,amounts){
+  const amountUnitWon=100000000;
+  if(!Array.isArray(amounts)||amounts.length!==candles.length||amounts.some(v=>v!==null&&(!Number.isSafeInteger(v)||v<0)))throw Error('세력 입장 거래대금 자료 오류');
   const base=entrySignalSeries(candles),bars=aggregate(candles,'day'),byDate=new Map(candles.map((c,i)=>[c.date,amounts[i]]));
   return base.map((r,i)=>{
    const c=bars[i],previous=bars[i-1],rise=!!previous&&(c.close>=previous.close*1.025||c.close>=c.open*1.025),bullish=c.open<c.close,amount=byDate.get(c.date);
    const falling226=i>=228?base[i-3].ma226>base[i-2].ma226&&base[i-2].ma226>base[i-1].ma226:null;
    function tier(volume,minimum,trend){
     if(r.signal===false||c.volume<volume||!bullish||!rise||trend===false)return false;
-    if(r.signal===null||trend===null||amount===null||amountUnitWon===null)return null;
+    if(r.signal===null||trend===null||amount===null)return null;
     return amount>=minimum*amountUnitWon;
    }
    return {...r,amount,falling226,small:tier(2000,150,true),big:tier(70000,5000,falling226)};

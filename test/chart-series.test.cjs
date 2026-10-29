@@ -101,7 +101,7 @@ test('RSI uses N changes, explicit simple/Wilder smoothing and handles flat/risi
 test('Crossdown only fires when moving from at-or-above to strictly below the level, never throughout an oversold run',()=>{
  assert.deepEqual(crossdown([null,null,40,30,29,20,30,31,29],30),[false,false,false,false,true,false,false,false,true]);
  assert.deepEqual(crossdown([null,10,9],30),[false,false,false]);assert.throws(()=>crossdown([NaN],30));
- const defaults=indicatorSettings('day').signals;assert.deepEqual(defaults,{newLowPeriod:40,rsiPeriod:14,rsiLevel:30,rsiMethod:null,entryAmountUnit:null});
+ const defaults=indicatorSettings('day').signals;assert.deepEqual(defaults,{newLowPeriod:40,rsiPeriod:14,rsiLevel:30,rsiMethod:null,entryAmountUnit:'eok'});
  assert.equal(indicatorSettings('day',{signals:{newLowPeriod:20}}).signals.newLowPeriod,20);assert.equal(indicatorSettings('day',{signals:{rsiMethod:'wilder'}}).signals.rsiPeriod,14);assert.equal(indicatorSettings('day',{signals:{newLowPeriod:null,rsiPeriod:null,rsiLevel:null,rsiMethod:null}}).signals.newLowPeriod,null);
  for(const signals of [{newLowPeriod:0},{rsiPeriod:14,rsiLevel:null},{rsiPeriod:14,rsiLevel:30,rsiMethod:'unknown'},{rsiPeriod:14,rsiLevel:101,rsiMethod:'simple'}])assert.throws(()=>indicatorSettings('day',{signals}));
 });
@@ -129,18 +129,18 @@ test('entry needs every logical group and samples cloud lines 25 bars back witho
 });
 
 function tierBars(){return Array.from({length:240},(_,i)=>{const c=i<15?200:100;return bar(new Date(Date.UTC(2024,0,i+1)).toISOString().slice(0,10),c,c,c,c,100000);}).map((c,i)=>i===239?{...c,open:110,high:125,low:110,close:120}:c);}
-test('entry tiers enforce exact volume, chosen amount scale, bullish/rise filters and the prior three 226-day averages',()=>{
- const rows=tierBars(),amounts=rows.map(()=>null);amounts[239]=5000*1e6;const before=structuredClone(rows),last=(bars=rows,values=amounts,scale=1e6)=>entryTierSeries(bars,values,scale).at(-1);
+test('entry tiers enforce exact volume, confirmed hundred-million-won thresholds, bullish/rise filters and the prior three 226-day averages',()=>{
+ const rows=tierBars(),amounts=rows.map(()=>null);amounts[239]=5000*1e8;const before=structuredClone(rows),last=(bars=rows,values=amounts)=>entryTierSeries(bars,values).at(-1);
  assert.equal(last().small,true);assert.equal(last().big,true);assert.equal(last().falling226,true);assert.deepEqual(rows,before);
  const change=patch=>rows.map((c,i)=>i===239?{...c,...patch}:c),money=n=>amounts.map((v,i)=>i===239?n:v);
- assert.equal(last(change({volume:2000}),money(150e6)).small,true);assert.equal(last(change({volume:1999}),money(150e6)).small,false);assert.equal(last(rows,money(150e6-1)).small,false);
- assert.equal(last(change({volume:70000})).big,true);assert.equal(last(change({volume:69999})).big,false);assert.equal(last(rows,money(5000e6-1)).big,false);
+ assert.equal(last(change({volume:2000}),money(150e8)).small,true);assert.equal(last(change({volume:1999}),money(150e8)).small,false);assert.equal(last(rows,money(150e8-1)).small,false);
+ assert.equal(last(change({volume:70000})).big,true);assert.equal(last(change({volume:69999})).big,false);assert.equal(last(rows,money(5000e8-1)).big,false);
  assert.equal(last(change({open:120})).small,false);assert.equal(last(change({open:100,close:102.5,low:100})).small,true);assert.equal(last(change({open:100,close:102.49,low:100})).small,false);
  const currentOpen=rows.map((c,i)=>i===238?{...c,open:120,high:120,low:120,close:120}:i===239?{...c,open:115,close:117.875}:c);assert.equal(last(currentOpen).small,true);
  const rising=rows.map((c,i)=>i<15?{...c,open:50,high:50,low:50,close:50}:c);assert.equal(last(rising).small,true);assert.equal(last(rising).big,false);
- assert.equal(last(rows,amounts,1e8).small,false);assert.equal(last(rows,money(150e8),1e8).small,true);assert.equal(last(rows,money(5000e8),1e8).big,true);
- assert.equal(last(rows,money(null)).small,null);assert.equal(last(rows,amounts,null).big,null);assert.equal(last(change({volume:1}),money(null),null).small,false);
- const future=entryTierSeries(rows,amounts,1e6);assert.throws(()=>entryTierSeries([...rows].reverse(),[...amounts].reverse(),1e6));rows.push(bar('2024-08-28',1000,2000,900,1500,1));amounts.push(1);assert.deepEqual(entryTierSeries(rows,amounts,1e6).slice(0,240),future);
- assert.throws(()=>entryTierSeries(rows,[],1e6));assert.throws(()=>entryTierSeries(rows,amounts,-1));assert.throws(()=>entryTierSeries(rows,amounts,Number.MAX_SAFE_INTEGER));
- assert.equal(indicatorSettings('day').signals.entryAmountUnit,null);assert.equal(indicatorSettings('day',{signals:{entryAmountUnit:'million'}}).signals.entryAmountUnit,'million');assert.equal(indicatorSettings('week',{signals:{entryAmountUnit:'eok'}}).signals.entryAmountUnit,null);assert.throws(()=>indicatorSettings('day',{signals:{entryAmountUnit:'guess'}}));
+ assert.equal(last(rows,money(150e6)).small,false);assert.equal(last(rows,money(5000e6)).big,false);
+ assert.equal(last(rows,money(null)).small,null);assert.equal(last(change({volume:1}),money(null)).small,false);
+ const future=entryTierSeries(rows,amounts);assert.throws(()=>entryTierSeries([...rows].reverse(),[...amounts].reverse()));rows.push(bar('2024-08-28',1000,2000,900,1500,1));amounts.push(1);assert.deepEqual(entryTierSeries(rows,amounts).slice(0,240),future);
+ assert.throws(()=>entryTierSeries(rows,[]));assert.throws(()=>entryTierSeries(rows,amounts.map(()=>-1)));assert.throws(()=>entryTierSeries(rows,amounts.map(()=>Number.MAX_SAFE_INTEGER+1)));
+ assert.equal(indicatorSettings('day').signals.entryAmountUnit,'eok');assert.equal(indicatorSettings('day',{signals:{entryAmountUnit:'million'}}).signals.entryAmountUnit,'eok');assert.equal(indicatorSettings('week',{signals:{entryAmountUnit:'eok'}}).signals.entryAmountUnit,null);assert.equal(indicatorSettings('day',{signals:{entryAmountUnit:null}}).signals.entryAmountUnit,'eok');
 });
