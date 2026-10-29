@@ -130,7 +130,7 @@
   function add(type,points){if(drawings.length>=200){status.textContent='그림은 200개까지 추가할 수 있습니다.';return;}remember();const d={id:nextId++,type,points};if(type==='text')d.text=textInput.value.trim()||'메모';drawings.push(d);selected=d.id;selectedIndicator=null;pending=null;setMode('zoom');draw();}
   function down(e){
    if(e.pointerType==='touch'){touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(touches.size===2){const [a,b]=[...touches.values()],m=model();pinch={distance:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),count:m.count,end:m.end};gesture=null;stroke=null;pending=null;preview=null;svg.setPointerCapture(e.pointerId);e.preventDefault();return;}}
-   if(e.button!==0||pinch)return;svg.focus({preventScroll:true});const indicator=e.target.closest('[data-chart-indicator]');if(tools&&indicator&&mode==='zoom'){selectIndicator(indicator.dataset.chartIndicator);e.preventDefault();return;}const p=point(e),m=model();if(p.x<25||p.x>1170||p.y<30||p.y>520)return;
+   if(e.button!==0||pinch)return;svg.focus({preventScroll:true});const indicator=e.target.closest('[data-chart-indicator]');if(tools&&indicator&&mode==='zoom'){selectIndicator(indicator.dataset.chartIndicator);show(e);e.preventDefault();return;}const p=point(e),m=model();if(p.x<25||p.x>1170||p.y<30||p.y>520)return;
    const hit=e.target.closest('[data-drawing-id]'),d=drawings.find(d=>d.id===Number(hit?.dataset.drawingId));
    if(d&&mode==='zoom'){selected=d.id;selectedIndicator=null;remember();svg.classList.add('sb-chart-object-dragging');gesture={kind:'drawing',id:e.pointerId,start:p,original:JSON.parse(JSON.stringify(d.points)),handle:hit.hasAttribute('data-handle')?Number(hit.dataset.handle):null,drawing:d.id};draw();}
    else if(mode==='zoom'){selected=null;selectedIndicator=null;wheelRemainder=0;gesture={kind:'zoom',id:e.pointerId,x:e.clientX,y:e.clientY,count:m.count};}
@@ -161,7 +161,8 @@
    }else if(g.moved||pending)add(mode,[pending||g.anchor,a]);else{pending=g.anchor;status.textContent='끝점을 누르세요. Esc로 취소합니다.';}
   }
   svg.addEventListener('pointerdown',down,{signal});svg.addEventListener('pointermove',move,{signal});svg.addEventListener('pointerup',up,{signal});
-  svg.addEventListener('pointercancel',()=>{svg.classList.remove('sb-chart-object-dragging');gesture=null;stroke=null;pending=null;preview=null;touches.clear();pinch=null;draw();},{signal});svg.addEventListener('pointerleave',()=>{if(!gesture)hide();},{signal});
+  svg.addEventListener('pointercancel',()=>{svg.classList.remove('sb-chart-object-dragging');gesture=null;stroke=null;pending=null;preview=null;touches.clear();pinch=null;draw();},{signal});svg.addEventListener('pointerleave',event=>{if(event.pointerType!=='touch'&&!gesture)hide();},{signal});
+  doc.addEventListener('pointerdown',event=>{if(!host.contains(event.target))hide();},{signal});
   function scrollWheel(e){
    if(e.ctrlKey)return;const delta=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;if(!delta)return;e.preventDefault();
    if(gesture||pinch){wheelRemainder=0;return;}
