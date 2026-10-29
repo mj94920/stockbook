@@ -1,0 +1,467 @@
+{
+  "scope": "Synthetic OHLCV and synthetic KIS-shaped amounts. Production chart HTML with mock IPC; not live, not a Windows/HTS match. Million-won interpretation is a test input, not confirmation of the original unit.",
+  "verifiedAt": "2026-10-29T07:51:26.634Z",
+  "pending": "세력 입장 · amount 단위 선택 필요 · 거래대금 100/132봉 · 판정 보류 17봉",
+  "views": [
+    {
+      "name": "dark-wide",
+      "width": 1500,
+      "height": 1050,
+      "signals": {
+        "newLowPeriod": 3,
+        "rsiPeriod": 2,
+        "rsiLevel": 60,
+        "rsiMethod": "simple",
+        "entryAmountUnit": "million",
+        "newLowDates": [
+          "2024-08-05",
+          "2024-08-06",
+          "2024-08-07",
+          "2024-08-08",
+          "2024-08-15",
+          "2024-08-16",
+          "2024-08-17",
+          "2024-08-18",
+          "2024-08-24",
+          "2024-08-25",
+          "2024-08-26"
+        ],
+        "oversoldDates": [
+          "2024-08-04",
+          "2024-08-14",
+          "2024-08-24"
+        ],
+        "entrySmallDates": [
+          "2024-08-22",
+          "2024-08-27"
+        ],
+        "entryBigDates": [
+          "2024-08-27"
+        ],
+        "entryAmountReceived": 70,
+        "entryWaiting": 15
+      },
+      "markers": [
+        {
+          "kind": "oversold",
+          "date": "2024-08-04",
+          "width": 10,
+          "height": 10,
+          "fill": "rgb(251, 191, 36)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-05",
+          "width": 10,
+          "height": 10,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-06",
+          "width": 10.00006103515625,
+          "height": 10,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-07",
+          "width": 10.00006103515625,
+          "height": 10,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-08",
+          "width": 10.00006103515625,
+          "height": 10.00006103515625,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "oversold",
+          "date": "2024-08-14",
+          "width": 10,
+          "height": 10,
+          "fill": "rgb(251, 191, 36)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-15",
+          "width": 10,
+          "height": 10,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-16",
+          "width": 10.00006103515625,
+          "height": 10,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-17",
+          "width": 10.00006103515625,
+          "height": 10.00006103515625,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-18",
+          "width": 10.00006103515625,
+          "height": 10,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "entry-small",
+          "date": "2024-08-22",
+          "width": 13.99993896484375,
+          "height": 16,
+          "fill": "rgb(216, 180, 254)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-24",
+          "width": 10.00006103515625,
+          "height": 10,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "oversold",
+          "date": "2024-08-24",
+          "width": 10,
+          "height": 10,
+          "fill": "rgb(251, 191, 36)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-25",
+          "width": 10,
+          "height": 10,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-26",
+          "width": 10.00006103515625,
+          "height": 10,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "entry-big",
+          "date": "2024-08-27",
+          "width": 15.21685791015625,
+          "height": 14.472137451171875,
+          "fill": "rgb(255, 227, 77)"
+        }
+      ]
+    },
+    {
+      "name": "light-wide",
+      "width": 1500,
+      "height": 1050,
+      "signals": {
+        "newLowPeriod": 3,
+        "rsiPeriod": 2,
+        "rsiLevel": 60,
+        "rsiMethod": "simple",
+        "entryAmountUnit": "million",
+        "newLowDates": [
+          "2024-08-05",
+          "2024-08-06",
+          "2024-08-07",
+          "2024-08-08",
+          "2024-08-15",
+          "2024-08-16",
+          "2024-08-17",
+          "2024-08-18",
+          "2024-08-24",
+          "2024-08-25",
+          "2024-08-26"
+        ],
+        "oversoldDates": [
+          "2024-08-04",
+          "2024-08-14",
+          "2024-08-24"
+        ],
+        "entrySmallDates": [
+          "2024-08-22",
+          "2024-08-27"
+        ],
+        "entryBigDates": [
+          "2024-08-27"
+        ],
+        "entryAmountReceived": 70,
+        "entryWaiting": 15
+      },
+      "markers": [
+        {
+          "kind": "oversold",
+          "date": "2024-08-04",
+          "width": 10,
+          "height": 10,
+          "fill": "rgb(180, 83, 9)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-05",
+          "width": 10,
+          "height": 10,
+          "fill": "rgb(3, 105, 161)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-06",
+          "width": 10.00006103515625,
+          "height": 10,
+          "fill": "rgb(3, 105, 161)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-07",
+          "width": 10.00006103515625,
+          "height": 10,
+          "fill": "rgb(3, 105, 161)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-08",
+          "width": 10.00006103515625,
+          "height": 10.00006103515625,
+          "fill": "rgb(3, 105, 161)"
+        },
+        {
+          "kind": "oversold",
+          "date": "2024-08-14",
+          "width": 10,
+          "height": 10,
+          "fill": "rgb(180, 83, 9)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-15",
+          "width": 10,
+          "height": 10,
+          "fill": "rgb(3, 105, 161)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-16",
+          "width": 10.00006103515625,
+          "height": 10,
+          "fill": "rgb(3, 105, 161)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-17",
+          "width": 10.00006103515625,
+          "height": 10.00006103515625,
+          "fill": "rgb(3, 105, 161)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-18",
+          "width": 10.00006103515625,
+          "height": 10,
+          "fill": "rgb(3, 105, 161)"
+        },
+        {
+          "kind": "entry-small",
+          "date": "2024-08-22",
+          "width": 13.99993896484375,
+          "height": 16,
+          "fill": "rgb(124, 58, 237)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-24",
+          "width": 10.00006103515625,
+          "height": 10,
+          "fill": "rgb(3, 105, 161)"
+        },
+        {
+          "kind": "oversold",
+          "date": "2024-08-24",
+          "width": 10,
+          "height": 10,
+          "fill": "rgb(180, 83, 9)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-25",
+          "width": 10,
+          "height": 10,
+          "fill": "rgb(3, 105, 161)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-26",
+          "width": 10.00006103515625,
+          "height": 10,
+          "fill": "rgb(3, 105, 161)"
+        },
+        {
+          "kind": "entry-big",
+          "date": "2024-08-27",
+          "width": 15.21685791015625,
+          "height": 14.472137451171875,
+          "fill": "rgb(155, 115, 0)"
+        }
+      ]
+    },
+    {
+      "name": "dark-tablet",
+      "width": 840,
+      "height": 1000,
+      "signals": {
+        "newLowPeriod": 3,
+        "rsiPeriod": 2,
+        "rsiLevel": 60,
+        "rsiMethod": "simple",
+        "entryAmountUnit": "million",
+        "newLowDates": [
+          "2024-08-05",
+          "2024-08-06",
+          "2024-08-07",
+          "2024-08-08",
+          "2024-08-15",
+          "2024-08-16",
+          "2024-08-17",
+          "2024-08-18",
+          "2024-08-24",
+          "2024-08-25",
+          "2024-08-26"
+        ],
+        "oversoldDates": [
+          "2024-08-04",
+          "2024-08-14",
+          "2024-08-24"
+        ],
+        "entrySmallDates": [
+          "2024-08-22",
+          "2024-08-27"
+        ],
+        "entryBigDates": [
+          "2024-08-27"
+        ],
+        "entryAmountReceived": 70,
+        "entryWaiting": 15
+      },
+      "markers": [
+        {
+          "kind": "oversold",
+          "date": "2024-08-04",
+          "width": 10,
+          "height": 10,
+          "fill": "rgb(251, 191, 36)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-05",
+          "width": 9.99993896484375,
+          "height": 10,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-06",
+          "width": 9.999969482421875,
+          "height": 10,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-07",
+          "width": 9.999969482421875,
+          "height": 10,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-08",
+          "width": 9.999969482421875,
+          "height": 9.99993896484375,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "oversold",
+          "date": "2024-08-14",
+          "width": 10,
+          "height": 10,
+          "fill": "rgb(251, 191, 36)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-15",
+          "width": 9.99993896484375,
+          "height": 10,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-16",
+          "width": 9.999969482421875,
+          "height": 10,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-17",
+          "width": 9.999969482421875,
+          "height": 10,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-18",
+          "width": 9.999969482421875,
+          "height": 10,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "entry-small",
+          "date": "2024-08-22",
+          "width": 13.99993896484375,
+          "height": 15.999969482421875,
+          "fill": "rgb(216, 180, 254)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-24",
+          "width": 9.99993896484375,
+          "height": 10,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "oversold",
+          "date": "2024-08-24",
+          "width": 10,
+          "height": 10,
+          "fill": "rgb(251, 191, 36)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-25",
+          "width": 10,
+          "height": 10,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "new-low",
+          "date": "2024-08-26",
+          "width": 9.99993896484375,
+          "height": 10,
+          "fill": "rgb(56, 189, 248)"
+        },
+        {
+          "kind": "entry-big",
+          "date": "2024-08-27",
+          "width": 15.2169189453125,
+          "height": 14.472137451171875,
+          "fill": "rgb(255, 227, 77)"
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

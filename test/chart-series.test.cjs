@@ -5,7 +5,7 @@ const {chartContext}=require('../src/chart/window.cjs');
 const {barLayout,volumeProfile}=require('../src/chart/series.js');
 const {obvSeries}=require('../src/chart/series.js');
 const {newLowSignals,rsiSeries,crossdown}=require('../src/chart/series.js');
-const {entrySignalSeries}=require('../src/chart/series.js');
+const {entrySignalSeries,entryTierSeries}=require('../src/chart/series.js');
 const bar=(date,open,high,low,close,volume)=>({date,open,high,low,close,volume});
 test('KRX trading dates group by Monday weeks across years and holidays without zero-filled sessions',()=>{
  const input=[bar('2023-12-28',10,14,8,12,100),bar('2023-12-29',12,15,11,14,200),bar('2024-01-02',20,30,18,25,300),bar('2024-01-05',25,28,17,19,400),bar('2024-01-08',19,21,16,20,500)];
@@ -101,7 +101,7 @@ test('RSI uses N changes, explicit simple/Wilder smoothing and handles flat/risi
 test('Crossdown only fires when moving from at-or-above to strictly below the level, never throughout an oversold run',()=>{
  assert.deepEqual(crossdown([null,null,40,30,29,20,30,31,29],30),[false,false,false,false,true,false,false,false,true]);
  assert.deepEqual(crossdown([null,10,9],30),[false,false,false]);assert.throws(()=>crossdown([NaN],30));
- const defaults=indicatorSettings('day').signals;assert.deepEqual(defaults,{newLowPeriod:40,rsiPeriod:14,rsiLevel:30,rsiMethod:null});
+ const defaults=indicatorSettings('day').signals;assert.deepEqual(defaults,{newLowPeriod:40,rsiPeriod:14,rsiLevel:30,rsiMethod:null,entryAmountUnit:null});
  assert.equal(indicatorSettings('day',{signals:{newLowPeriod:20}}).signals.newLowPeriod,20);assert.equal(indicatorSettings('day',{signals:{rsiMethod:'wilder'}}).signals.rsiPeriod,14);assert.equal(indicatorSettings('day',{signals:{newLowPeriod:null,rsiPeriod:null,rsiLevel:null,rsiMethod:null}}).signals.newLowPeriod,null);
  for(const signals of [{newLowPeriod:0},{rsiPeriod:14,rsiLevel:null},{rsiPeriod:14,rsiLevel:30,rsiMethod:'unknown'},{rsiPeriod:14,rsiLevel:101,rsiMethod:'simple'}])assert.throws(()=>indicatorSettings('day',{signals}));
 });
@@ -109,7 +109,7 @@ test('Crossdown only fires when moving from at-or-above to strictly below the le
 test('cycle-specific additions never leak daily signals into week/month/year or weekly OBV settings into other cycles',()=>{
  const input={signals:{newLowPeriod:40,rsiPeriod:14,rsiLevel:30,rsiMethod:'wilder'},obv:{period:3,method:'ema'}};
  assert.equal(indicatorSettings('day',input).signals.rsiMethod,'wilder');assert.equal(indicatorSettings('day',input).obv.period,9);
- assert.equal(indicatorSettings('week',input).signals.newLowPeriod,null);assert.equal(indicatorSettings('week',input).signals.rsiMethod,'wilder');for(const cycle of ['month','year'])assert.deepEqual(indicatorSettings(cycle,input).signals,{newLowPeriod:null,rsiPeriod:null,rsiLevel:null,rsiMethod:null});
+ assert.equal(indicatorSettings('week',input).signals.newLowPeriod,null);assert.equal(indicatorSettings('week',input).signals.rsiMethod,'wilder');for(const cycle of ['month','year'])assert.deepEqual(indicatorSettings(cycle,input).signals,{newLowPeriod:null,rsiPeriod:null,rsiLevel:null,rsiMethod:null,entryAmountUnit:null});
  assert.equal(indicatorSettings('week',input).obv.period,3);assert.equal(indicatorSettings('month',input).obv.period,9);
 });
 
@@ -126,4 +126,21 @@ test('entry needs every logical group and samples cloud lines 25 bars back witho
  const band=entryBars().map(c=>({...c,high:101,low:99}));band[229]={...band[229],close:100.1};last=entrySignalSeries(band).at(-1);assert.equal(last.cloudAbove,true);assert.equal(last.aboveMA,true);assert.equal(last.bandCross,false);assert.equal(last.openAboveBand,false);assert.equal(last.signal,false);
  const shifted=entryBars();shifted[220]={...shifted[220],high:200};shifted[229]={...shifted[229],open:100,high:110,low:100,close:101.5};last=entrySignalSeries(shifted).at(-1);assert.equal(last.lineA,100);assert.equal(last.lineB,100);
  const past=entrySignalSeries(shifted);shifted.push(bar('2024-08-18',1000,2000,900,1500,1));assert.deepEqual(entrySignalSeries(shifted).slice(0,230),past);assert.throws(()=>entrySignalSeries([{...shifted[0],high:0}]));
+});
+
+function tierBars(){return Array.from({length:240},(_,i)=>{const c=i<15?200:100;return bar(new Date(Date.UTC(2024,0,i+1)).toISOString().slice(0,10),c,c,c,c,100000);}).map((c,i)=>i===239?{...c,open:110,high:125,low:110,close:120}:c);}
+test('entry tiers enforce exact volume, chosen amount scale, bullish/rise filters and the prior three 226-day averages',()=>{
+ const rows=tierBars(),amounts=rows.map(()=>null);amounts[239]=5000*1e6;const before=structuredClone(rows),last=(bars=rows,values=amounts,scale=1e6)=>entryTierSeries(bars,values,scale).at(-1);
+ assert.equal(last().small,true);assert.equal(last().big,true);assert.equal(last().falling226,true);assert.deepEqual(rows,before);
+ const change=patch=>rows.map((c,i)=>i===239?{...c,...patch}:c),money=n=>amounts.map((v,i)=>i===239?n:v);
+ assert.equal(last(change({volume:2000}),money(150e6)).small,true);assert.equal(last(change({volume:1999}),money(150e6)).small,false);assert.equal(last(rows,money(150e6-1)).small,false);
+ assert.equal(last(change({volume:70000})).big,true);assert.equal(last(change({volume:69999})).big,false);assert.equal(last(rows,money(5000e6-1)).big,false);
+ assert.equal(last(change({open:120})).small,false);assert.equal(last(change({open:100,close:102.5,low:100})).small,true);assert.equal(last(change({open:100,close:102.49,low:100})).small,false);
+ const currentOpen=rows.map((c,i)=>i===238?{...c,open:120,high:120,low:120,close:120}:i===239?{...c,open:115,close:117.875}:c);assert.equal(last(currentOpen).small,true);
+ const rising=rows.map((c,i)=>i<15?{...c,open:50,high:50,low:50,close:50}:c);assert.equal(last(rising).small,true);assert.equal(last(rising).big,false);
+ assert.equal(last(rows,amounts,1e8).small,false);assert.equal(last(rows,money(150e8),1e8).small,true);assert.equal(last(rows,money(5000e8),1e8).big,true);
+ assert.equal(last(rows,money(null)).small,null);assert.equal(last(rows,amounts,null).big,null);assert.equal(last(change({volume:1}),money(null),null).small,false);
+ const future=entryTierSeries(rows,amounts,1e6);assert.throws(()=>entryTierSeries([...rows].reverse(),[...amounts].reverse(),1e6));rows.push(bar('2024-08-28',1000,2000,900,1500,1));amounts.push(1);assert.deepEqual(entryTierSeries(rows,amounts,1e6).slice(0,240),future);
+ assert.throws(()=>entryTierSeries(rows,[],1e6));assert.throws(()=>entryTierSeries(rows,amounts,-1));assert.throws(()=>entryTierSeries(rows,amounts,Number.MAX_SAFE_INTEGER));
+ assert.equal(indicatorSettings('day').signals.entryAmountUnit,null);assert.equal(indicatorSettings('day',{signals:{entryAmountUnit:'million'}}).signals.entryAmountUnit,'million');assert.equal(indicatorSettings('week',{signals:{entryAmountUnit:'eok'}}).signals.entryAmountUnit,null);assert.throws(()=>indicatorSettings('day',{signals:{entryAmountUnit:'guess'}}));
 });

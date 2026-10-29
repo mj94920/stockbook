@@ -5,7 +5,9 @@
   const doc=host.ownerDocument,svg=host.querySelector('[data-chart-id="chart"]'),pressure=host.querySelector('[data-chart-id="pressureChart"]'),money=host.querySelector('[data-chart-id="moneyChart"]'),investor=host.querySelector('[data-chart-id="investorChart"]'),obv=host.querySelector('[data-chart-id="obvChart"]'),abort=new AbortController(),signal=abort.signal;
   const key=controller.getModel().stockCode+':'+controller.getModel().config.label,storageKey='stockbook:chart:drawings:v1:'+key;
   const typeStorageKey='stockbook:chart:type:v2:'+controller.getModel().config.label;const visibilityKey='stockbook:chart:visibility:v1:'+key;let hidden=indicatorMemory.get(key)||[],lastVisibility='';
-  try{const saved=JSON.parse(root.localStorage.getItem(visibilityKey));if(Array.isArray(saved)&&saved.length<=32&&saved.every(id=>typeof id==='string'&&/^(ma:\d+|bb|cloud|pressure|money|investors|profile|obv|new-low|oversold|volume|entry)$/.test(id)))hidden=saved;const type=root.localStorage.getItem(typeStorageKey);if(root.StockBookChartSeries.chartTypes.includes(type))controller.setType(type);}catch{}
+  try{const saved=JSON.parse(root.localStorage.getItem(visibilityKey));if(Array.isArray(saved)&&saved.length<=32&&saved.every(id=>typeof id==='string'&&/^(ma:\d+|bb|cloud|pressure|money|investors|profile|obv|new-low|oversold|volume|entry|entry-small|entry-big)$/.test(id)))hidden=saved;const type=root.localStorage.getItem(typeStorageKey);if(root.StockBookChartSeries.chartTypes.includes(type))controller.setType(type);}catch{}
+  function syncEntryUnit(){if(!compact||controller.getModel().config.label!=='일봉')return;try{const saved=JSON.parse(root.localStorage.getItem('stockbook:chart:settings:v1')),unit=saved?.day?.signals?.entryAmountUnit??null;if(unit===null||['million','eok'].includes(unit))controller.setEntryAmountUnit(unit);}catch{}}
+  syncEntryUnit();root.addEventListener('storage',event=>{if(event.key==='stockbook:chart:settings:v1')syncEntryUnit();},{signal});
   if(tools)controller.setHiddenIndicators(hidden);svg.setAttribute('tabindex','0');
   let drawings=memory.get(key)||[],mode='zoom',selected=null,selectedIndicator=null,pending=null,gesture=null,stroke=null,nextId=Math.max(0,...drawings.map(d=>d.id))+1,history=[],preview=null,touches=new Map(),pinch=null,wheelRemainder=0;
   const ns='http://www.w3.org/2000/svg',node=(tag,attrs={},text)=>{const el=doc.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,String(v));if(text!==undefined)el.textContent=text;return el;};
@@ -80,9 +82,15 @@
    layer.append(group);
   }
   const moneyText=value=>value===null||value===undefined?'거래대금 자료 미수신':'거래대금 '+value.toLocaleString('ko-KR')+'원';
+  function entryDescription(m,i){
+   if(m.config.label!=='일봉')return [];const r=m.signals?.[i],hidden=controller.getHiddenIndicators();
+   if(r?.entryBig===true&&!hidden.includes('entry-big'))return ['큰형님 · 세력 입장 전체 조건 충족'];
+   if(r?.entrySmall===true&&!hidden.includes('entry-small'))return ['작은형님 · 세력 입장 전체 조건 충족'];
+   if(r&&(r.entrySmall===null||r.entryBig===null))return ['세력 입장 판정 보류 · amount 단위·거래대금·이력 확인 필요'];return [];
+  }
   function describeBar(row,m){
    if(!row)return '표시 공간 · 가격 자료 없음';
-   return [m.config.label+' '+row.date,...['open','high','low','close'].map((k,i)=>['시가','고가','저가','종가'][i]+' '+row[k].toLocaleString()),'거래량 '+row.volume.toLocaleString(),moneyText(m.tradingAmounts[m.rows.indexOf(row)]),...(m.signals?.[m.rows.indexOf(row)]?.entry===true&&!controller.getHiddenIndicators().includes('entry')?['세력 입장']:[])].join(' · ');
+   return [m.config.label+' '+row.date,...['open','high','low','close'].map((k,i)=>['시가','고가','저가','종가'][i]+' '+row[k].toLocaleString()),'거래량 '+row.volume.toLocaleString(),moneyText(m.tradingAmounts[m.rows.indexOf(row)]),...entryDescription(m,m.rows.indexOf(row))].join(' · ');
   }
   function draw(){
    svg.querySelector('.sb-chart-indicator-hits')?.remove();
@@ -117,7 +125,7 @@
     priceLabel.hidden=dateLabel.hidden=false;
    }
    if(!row){tip.textContent='BB 이동 표시 공간 · 가격 자료 없음';}
-   else{const prior=m.all[m.offset+i-1]?.close,change=prior?(row.close/prior-1)*100:null;tip.textContent=[m.name+' · '+m.config.label+' · '+row.date,...['open','high','low','close'].map((k,j)=>['시가','고가','저가','종가'][j]+' '+row[k].toLocaleString()),'직전 봉 대비 '+(change===null?'자료 없음':change.toFixed(2)+'%'),'거래량 '+row.volume.toLocaleString(),...(row.incompleteStart?['첫 기간은 수신 범위 내 부분 집계']:[]),...(row.incompleteEnd?['마지막 봉 완성 여부 미확인']:[]),moneyText(m.tradingAmounts[i]),...(m.signals?.[i]?.entry===true&&!controller.getHiddenIndicators().includes('entry')?['세력 입장 · 사용자 수식의 세 조건 충족']:[]),...(m.signals?.[i]?.newLow&&!controller.getHiddenIndicators().includes('new-low')?['신저가 · 직전 '+m.signalSettings.newLowPeriod+'봉 종가 기준']:[]),...(m.signals?.[i]?.rsi!==null&&m.signals?.[i]?.rsi!==undefined&&!controller.getHiddenIndicators().includes('oversold')?['RSI '+m.signals[i].rsi.toFixed(2)+(m.signals[i].oversold?' · 하단값 하향 돌파':'')]:[]),...(m.obv&&obv?.closest('details[open]')&&!obv.closest('[hidden]')?['OBV '+m.obv[i].value.toLocaleString(),'OBV 시그널 '+(m.obv[i].signal===null?'이력 부족':m.obv[i].signal.toLocaleString('ko-KR',{maximumFractionDigits:2}))]:[]),...m.averages.map((a,j)=>m.periods[j]+m.config.unit+'선 '+(a[i]===null?'이력 부족':a[i].toLocaleString('ko-KR',{maximumFractionDigits:2})))].join('\n');}
+   else{const prior=m.all[m.offset+i-1]?.close,change=prior?(row.close/prior-1)*100:null;tip.textContent=[m.name+' · '+m.config.label+' · '+row.date,...['open','high','low','close'].map((k,j)=>['시가','고가','저가','종가'][j]+' '+row[k].toLocaleString()),'직전 봉 대비 '+(change===null?'자료 없음':change.toFixed(2)+'%'),'거래량 '+row.volume.toLocaleString(),...(row.incompleteStart?['첫 기간은 수신 범위 내 부분 집계']:[]),...(row.incompleteEnd?['마지막 봉 완성 여부 미확인']:[]),moneyText(m.tradingAmounts[i]),...entryDescription(m,i),...(m.signals?.[i]?.newLow&&!controller.getHiddenIndicators().includes('new-low')?['신저가 · 직전 '+m.signalSettings.newLowPeriod+'봉 종가 기준']:[]),...(m.signals?.[i]?.rsi!==null&&m.signals?.[i]?.rsi!==undefined&&!controller.getHiddenIndicators().includes('oversold')?['RSI '+m.signals[i].rsi.toFixed(2)+(m.signals[i].oversold?' · 하단값 하향 돌파':'')]:[]),...(m.obv&&obv?.closest('details[open]')&&!obv.closest('[hidden]')?['OBV '+m.obv[i].value.toLocaleString(),'OBV 시그널 '+(m.obv[i].signal===null?'이력 부족':m.obv[i].signal.toLocaleString('ko-KR',{maximumFractionDigits:2}))]:[]),...m.averages.map((a,j)=>m.periods[j]+m.config.unit+'선 '+(a[i]===null?'이력 부족':a[i].toLocaleString('ko-KR',{maximumFractionDigits:2})))].join('\n');}
    tip.hidden=false;tip.style.left=Math.max(6,Math.min(root.innerWidth-tip.offsetWidth-8,event.clientX+14))+'px';tip.style.top=Math.max(6,Math.min(root.innerHeight-tip.offsetHeight-8,event.clientY+14))+'px';
   }
   function zoom(factor){const m=model();controller.zoomTo(m.count*factor);}
