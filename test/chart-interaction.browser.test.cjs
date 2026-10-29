@@ -548,3 +548,58 @@ test('signal shapes retain pixel geometry, contrast and candle anchors through a
   const separator=page.getByRole('separator',{name:'가격 차트 높이',exact:true});await separator.press('Home');await page.waitForFunction(()=>[...document.querySelectorAll('.sb-chart-signal[data-kind="entry-small"]')].every(e=>Math.abs(e.getBoundingClientRect().height-16)<.1));for(const shape of await geometry()){assert.ok(shape.inside);assert.ok(shape.anchor<.1);}assert.deepEqual(h.errors,[]);
  }finally{await h.close();}
 });
+
+async function setupHistoryPage(page,code,{failSecond=false}={}){
+ await page.evaluate(({code,failSecond})=>{
+  const candles=Array.from({length:400},(_,i)=>{const c=i<15?200:100;return {date:new Date(Date.UTC(2024,0,i+1)).toISOString().slice(0,10),open:c,high:c,low:c,close:c,volume:100000};});candles[239]={...candles[239],open:110,high:125,low:110,close:120};candles[399]={...candles[399],open:105,high:120,low:100,close:115};
+  window.__historyRows=candles.map(c=>({date:c.date,value:500000000000,volume:c.volume}));window.__historyCalls=[];window.__historyPending=[];
+  stockBookChart.getData=async code=>({ok:true,candles,investors:null,metadata:{stockCode:code,name:'과거 합성 검증',sourceType:'naver-daily',snapshotDate:candles.at(-1).date,fetchedAt:'2026-10-29T00:00:00Z'}});
+  stockBookChart.getTradingValues=(code,range)=>{const page=rows=>({ok:true,stockCode:code,source:'KIS',market:'KRX',currency:'KRW',unit:'원',fetchedAt:'2026-10-29T00:00:00Z',rows});if(!range)return Promise.resolve(page(window.__historyRows.slice(-100)));window.__historyCalls.push({code,...range});if(failSecond&&window.__historyCalls.length===2)return Promise.resolve({ok:false,error:'private mock'});return new Promise(resolve=>window.__historyPending.push(()=>resolve(page(window.__historyRows.filter(r=>r.date>=range.start&&r.date<=range.end).slice(-100).reverse()))));};
+  void window.__context({code,name:'과거 합성 검증',barCycle:'day',period:'all',follow:false});
+ },{code,failSecond});
+ await page.waitForFunction(code=>document.getElementById('chartViewport').chartEvidence?.stockCode===code&&document.getElementById('chartViewport').chartEvidence?.money.known===100,code);
+}
+test('manual history preserves price interaction, updates old daily entry signals by page and reuses completed history',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  await setupHistoryPage(page,'000004');assert.equal(await page.locator('.sb-chart-signal[data-kind="entry-big"]').count(),0);assert.equal(await page.evaluate(()=>__historyCalls.length),0);
+  await page.getByRole('button',{name:'과거 거래대금 불러오기',exact:true}).click();await page.waitForFunction(()=>__historyCalls.length===1);assert.equal(await page.locator('[data-chart-id="moneyRetry"]').isDisabled(),true);assert.equal(await page.locator('[data-chart-id="moneyHistoryLoad"]').isDisabled(),true);assert.equal(await page.getByRole('button',{name:'추가 조회 취소',exact:true}).isVisible(),true);
+  const before=await page.locator('#chartViewport').evaluate(h=>StockBookCharts.controller(h).getModel().count);await page.getByRole('button',{name:'+',exact:true}).click();assert.ok(await page.locator('#chartViewport').evaluate((h,n)=>StockBookCharts.controller(h).getModel().count<n,before));await page.getByRole('button',{name:'처음 보기',exact:true}).click();
+  await page.evaluate(()=>__historyPending.shift()());await page.waitForFunction(()=>__historyCalls.length===2);assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.money.known),200);assert.equal(await page.locator('.sb-chart-signal[data-kind="entry-big"][data-date="2024-08-27"]').count(),1);
+  await page.evaluate(()=>__historyPending.shift()());await page.waitForFunction(()=>__historyCalls.length===3);await page.evaluate(()=>__historyPending.shift()());await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence.money.history?.status==='complete');assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.money.known),400);assert.match(await page.locator('[data-chart-id="moneyHistoryStatus"]').innerText(),/조회 완료.*400\/400봉/);assert.equal(await page.getByRole('button',{name:'추가 조회 취소',exact:true}).isVisible(),false);
+  await page.getByRole('button',{name:'과거 거래대금 불러오기',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('[data-chart-id="moneyHistoryLoad"]').disabled);assert.equal(await page.evaluate(()=>__historyCalls.length),3);
+  await page.locator('#chartPeriod').selectOption('1y');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.viewRange==='1y'&&document.getElementById('chartViewport').chartEvidence.money.known===400);assert.equal(await page.evaluate(()=>__historyCalls.length),3);assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
+test('history cancellation and stock changes stop subsequent pages and ignore late responses',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  await setupHistoryPage(page,'000005');await page.getByRole('button',{name:'과거 거래대금 불러오기',exact:true}).click();await page.waitForFunction(()=>__historyCalls.length===1);await page.getByRole('button',{name:'추가 조회 취소',exact:true}).click();assert.match(await page.locator('[data-chart-id="moneyHistoryStatus"]').innerText(),/취소.*100\/400봉/);await page.evaluate(()=>__historyPending.shift()());await page.evaluate(()=>new Promise(r=>setTimeout(r,30)));assert.equal(await page.evaluate(()=>__historyCalls.length),1);assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.money.known),100);
+  await page.getByRole('button',{name:'과거 거래대금 불러오기',exact:true}).click();await page.waitForFunction(()=>__historyCalls.length===2);await page.evaluate(()=>window.__context({code:'000006',name:'변경 종목',barCycle:'day',period:'6m',follow:false}));await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.stockCode==='000006'&&document.getElementById('chartViewport').chartEvidence.money.known===100);await page.evaluate(()=>__historyPending.shift()());await page.evaluate(()=>new Promise(r=>setTimeout(r,30)));assert.equal(await page.evaluate(()=>__historyCalls.length),2);assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.stockCode),'000006');assert.equal(await page.locator('.sb-chart-signal[data-kind="entry-big"]').count(),0);assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
+test('a later history page failure retains successful older amounts and signals without reporting complete',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  await setupHistoryPage(page,'000007',{failSecond:true});await page.getByRole('button',{name:'과거 거래대금 불러오기',exact:true}).click();await page.waitForFunction(()=>__historyCalls.length===1);await page.evaluate(()=>__historyPending.shift()());await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence.money.history?.status==='request-failed');assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.money.known),200);assert.equal(await page.locator('.sb-chart-signal[data-kind="entry-big"][data-date="2024-08-27"]').count(),1);const status=await page.locator('[data-chart-id="moneyHistoryStatus"]').innerText();assert.match(status,/추가 조회 실패.*200\/400봉/);assert.doesNotMatch(status,/조회 완료|private mock/);assert.equal(await page.locator('[data-chart-id="moneyHistoryLoad"]').isDisabled(),false);assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
+
+test('compact history controls stay in chart tools and share a pending job while cancellation only detaches that view',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  await setupHistoryPage(page,'000008');await page.locator('#chartViewport [data-chart-id="moneyHistoryLoad"]').click();await page.waitForFunction(()=>__historyCalls.length===1);
+  await page.evaluate(async()=>{const host=document.createElement('div');host.id='historyCompact';host.setAttribute('data-chart-host','');host.style.cssText='width:800px;height:400px';document.body.append(host);await StockBookCharts.show(host,{code:'000008',barCycle:'day',period:'all'},'compact');});await page.waitForFunction(()=>document.getElementById('historyCompact').chartEvidence?.money.known===100);
+  const compact=page.locator('#historyCompact');assert.equal(await compact.locator('.sb-proof-money > .sb-money-actions').count(),0);assert.equal(await compact.locator('.sb-chart-tool-panel-body .sb-money-actions').count(),1);await compact.locator('.sb-chart-tool-panel > summary').click();await compact.locator('[data-chart-id="moneyHistoryLoad"]').click();assert.equal(await page.evaluate(()=>__historyCalls.length),1);
+  await compact.locator('[data-chart-id="moneyHistoryCancel"]').click();assert.match(await compact.locator('[data-chart-id="moneyHistoryStatus"]').innerText(),/취소/);assert.equal(await page.locator('#chartViewport [data-chart-id="moneyHistoryCancel"]').isVisible(),true);
+  await page.evaluate(()=>__historyPending.shift()());await page.waitForFunction(()=>__historyCalls.length===2);assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.money.known),200);assert.equal(await compact.evaluate(h=>h.chartEvidence.money.known),100);await page.locator('#chartViewport [data-chart-id="moneyHistoryCancel"]').click();await page.evaluate(()=>__historyPending.shift()());assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});
+
+test('view-range changes preserve received partial history, pause further pages and reject the old in-flight result',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  await setupHistoryPage(page,'000010');await page.locator('#chartViewport [data-chart-id="moneyHistoryLoad"]').click();await page.waitForFunction(()=>__historyCalls.length===1);await page.evaluate(()=>__historyPending.shift()());await page.waitForFunction(()=>__historyCalls.length===2);assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.money.known),200);
+  await page.locator('#chartPeriod').selectOption('1y');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.viewRange==='1y'&&document.getElementById('chartViewport').chartEvidence.money.known===200);assert.doesNotMatch(await page.locator('[data-chart-id="moneyHistoryStatus"]').innerText(),/추가 조회 중/);assert.ok(['paused','cancelled'].includes(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.money.history.status)));await page.evaluate(()=>__historyPending.shift()());await page.evaluate(()=>new Promise(r=>setTimeout(r,30)));assert.equal(await page.evaluate(()=>__historyCalls.length),2);assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.money.known),200);assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});

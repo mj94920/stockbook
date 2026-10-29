@@ -1,0 +1,19 @@
+✔ actual KIS amounts retain integer won and date, reject other stocks, malformed days and unsafe amounts (6.830798ms)
+✔ KIS requests fixed one-page daily KRX endpoint, shares pending reads and caps cache time (0.73186ms)
+✔ missing KIS auth makes no price call; deadlines release cache, abort and allow retry without exposing errors (15.964878ms)
+✔ money joins require equal date/volume and aggregate only full groups; never modifies OHLCV (0.780903ms)
+✔ only app and chart main frames can request integer domestic trading values through IPC (1.040885ms)
+✔ history ranges keep fixed KRX endpoint, validate before auth, cache each range separately and accept explicit empty pages (0.418218ms)
+✔ history uses cached latest rows, moves the end date backwards, joins multiple pages and retains source amounts (6.248402ms)
+✔ history stops at caps, empty ranges, repeated/wrong responses and preserves prior rows as partial (9.554882ms)
+✔ history cancellation and deadline finish promptly without applying late pages or inventing missing rows (17.460836ms)
+✔ queued history page timeout cancels its delay and never sends a late API request (80.85587ms)
+✔ history caps its target at 1000 received price dates and reaches that target with nine extra full pages (10.890449ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 190.629404

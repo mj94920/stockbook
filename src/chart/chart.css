@@ -152,3 +152,9 @@ body.light-mode .sb-proof-chart,.sb-proof-chart.sb-proof-light { --sb-chart-sign
 
 /* Standalone detail uses the same light tokens as the main app when themed. */
 .sb-chart-window.light-mode { color-scheme:light;--sb-bg:#f8fafc;--sb-panel:#ffffff;--sb-surface:#f1f5f9;--sb-border:#e2e8f0;--sb-text-1:#0f172a;--sb-text-2:#475569;--sb-accent:#2563eb;--sb-warn:#d97706;--sb-overlay:rgba(15,23,42,.4); }
+
+.sb-money-actions { display:flex;flex-wrap:wrap;gap:var(--sb-space-2,8px); }
+
+.sb-proof-chart [data-chart-id="moneyHistoryStatus"]:empty { display:none; }
+
+.sb-proof-compact .sb-proof-money > .sb-money-actions { display:none; }

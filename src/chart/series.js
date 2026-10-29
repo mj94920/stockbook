@@ -156,7 +156,7 @@
  // Exact daily values are joined only when date and KRX volume match. A group with
  // even one missing/mismatched day has no amount, rather than a partial sum.
  function tradingValues(bars,candles,data){
-  if(!data?.ok||data.source!=='KIS'||data.market!=='KRX'||data.currency!=='KRW'||data.unit!=='원'||!Array.isArray(data.rows)||data.rows.length>100)throw Error('거래대금 자료 오류');
+  if(!data?.ok||data.source!=='KIS'||data.market!=='KRX'||data.currency!=='KRW'||data.unit!=='원'||!Array.isArray(data.rows)||data.rows.length>1000)throw Error('거래대금 자료 오류');
   const values=new Map();for(const row of data.rows){dateValue(row.date);if(values.has(row.date)||!Number.isSafeInteger(row.value)||row.value<0||!Number.isSafeInteger(row.volume)||row.volume<0)throw Error('거래대금 값 오류');values.set(row.date,row);}
   const joined=new Map();let mismatched=0,matched=0;
   for(const candle of candles){const row=values.get(candle.date);if(row&&row.volume===candle.volume){joined.set(candle.date,row.value);matched++;}else if(row)mismatched++;}

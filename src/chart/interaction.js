@@ -35,7 +35,7 @@
    button('−',()=>zoom(1.4),nav);button('+',()=>zoom(1/1.4),nav);button('처음 보기',()=>controller.resetView(),nav);button('최신',()=>controller.scrollTo(1),nav);
    if(compact){
     const summary=doc.createElement('summary');summary.textContent='차트 도구';
-    const body=doc.createElement('div');body.className='sb-chart-tool-panel-body';body.append(toolbar,indicatorPanel,indicatorControls,nav,status);
+    const body=doc.createElement('div');body.className='sb-chart-tool-panel-body';const moneyActions=host.querySelector('.sb-money-actions'),historyStatus=host.querySelector('[data-chart-id="moneyHistoryStatus"]');if(moneyActions)moneyActions.hidden=!controller.getModel().config.panels.money;body.append(...[moneyActions,historyStatus,toolbar,indicatorPanel,indicatorControls,nav,status].filter(Boolean));
     toolPanel.append(summary,body);controls.append(typeLabel,toolPanel,barInfo);svg.before(controls);
     toolPanel.addEventListener('toggle',()=>{if(toolPanel.open)body.style.maxHeight=Math.max(60,Math.min(260,host.clientHeight-controls.offsetTop-controls.offsetHeight-8))+'px';},{signal});
    }else{toolbar.prepend(typeLabel);host.prepend(toolbar);toolbar.after(indicatorPanel);svg.after(nav);nav.after(status);}
