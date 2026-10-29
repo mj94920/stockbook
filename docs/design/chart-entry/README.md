@@ -40,6 +40,6 @@ A(25)·B(25)는 25봉 전의 값이다. Crossup은 이전 값이 이전 기준 �
 
 전체 `npm test` 92개·정적 검사·기존 스모크 통과. 226봉 준비 기간, 두 BB 분기, 세 논리 그룹, 정확한 25봉 참조, 미래 자료 배제, 부가 금액 대기 중 표시, 삭제·복원, 이동·확대·주기 제한 및 종합 표시를 확인했다.
 
-`live-result.json`은 실제 네이버 응답의 해시·수신 시각과 해당 날짜 계산값이다. `browser-result.json`과 PNG는 이 실제 수신 가격을 모의 IPC로 제공한 운영 HTML의 화면 검사다. 합성 자료를 쓰는 Node/브라우저 회귀 검사와 구분한다. Windows Electron/NSIS의 이번 신호 실기는 미실행이다.
+`live-result.json`은 실제 네이버 응답의 해시·수신 시각과 해당 날짜 계산값이다. `browser-result.json`과 PNG는 이 실제 수신 가격을 모의 IPC로 제공한 운영 HTML의 화면 검사다. 합성 자료를 쓰는 Node/브라우저 회귀 검사와 구분한다. 기능 코드 `ab025ea5e6bab96b4ba2e79908bec4add7afeb3a`의 일봉 세력 입장은 이후 사용자 Windows 실기를 통과했다. 이는 사용자 실행 결과이며 이 환경의 Windows 실행 증거는 아니다. 새 NSIS 설치본 검증과 전체 HTS 수치 일치는 확인하지 않았다.
 
 재검증은 `node docs/design/chart-entry/verify-live.cjs`로 공개 가격 자료를 받아 `/tmp/stockbook-entry-live-data.json`에 준비한 뒤 `node docs/design/chart-entry/verify-browser.cjs`를 실행한다. 새 수신값이 과거 관측값과 다를 수 있으며 원자료 차이는 별도로 기록한다. 앱에 별도 수집·저장·인증·API 경로를 추가하지 않는다.
