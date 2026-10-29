@@ -2,6 +2,17 @@
 
 자동 생성 — `scripts/bump-version.mjs`
 
+## v1.13.0 — 2026-10-29
+
+- docs(chart): 사용자 실기 통과와 미확인 지표 범위 정리
+- feat(chart): 일봉 세력 입장 수식 신호 연결
+- fix(chart): 봉 주기별 지표 구성과 표시 설정 분리
+- feat(chart): OBV와 조건 입력형 신저가·RSI 신호 추가
+- fix(chart): 수급 조회 실패 시 실수신 네이버 자료 연결
+- feat(chart): KIS 투자자별 일별 순매수와 수신 누적 표시
+- feat(chart): 상세 창 종목 검색과 독립 선택 추가
+- feat(chart): KIS 일별 거래대금 별도 조회와 색상 구간 표시
+
 ## v1.12.0 — 2026-10-27
 
 - fix(chart): 하단 지표 기본 비중 확대와 높이별 막대 표시 보정
