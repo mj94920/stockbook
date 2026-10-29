@@ -1,0 +1,9 @@
+{
+  "verifiedAt": "2026-10-29T12:37:15.297Z",
+  "scope": "Standalone bundled preview, localhost initial document then offline simulated 840px touch. Synthetic prices/amounts; not native Windows/KIS.",
+  "before": 100,
+  "after": 400,
+  "oldBigSignalDate": "2024-08-27",
+  "externalRequests": [],
+  "errors": []
+}

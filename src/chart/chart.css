@@ -127,7 +127,10 @@ body.light-mode .sb-proof-chart { --sb-chart-investor-foreign:#b52964;--sb-chart
 .sb-proof-obv { border-top:1px solid var(--sb-border);--sb-chart-obv:var(--sb-chart-investor-institution);--sb-chart-obv-signal:var(--sb-chart-money-300); }
 .sb-proof-obv [data-chart-id="obvChart"] { height:140px;min-height:64px; }
 
-.sb-proof-chart { --sb-chart-signal-new-low:var(--sb-chart-money-300);--sb-chart-signal-oversold:var(--sb-warn); }
+/* Defined here for standalone detail windows as well as the embedded chart. */
+.sb-proof-chart { --sb-chart-signal-new-low:#38bdf8;--sb-chart-signal-oversold:#fbbf24;--sb-chart-signal-outline:var(--sb-panel); }
+body.light-mode .sb-proof-chart,.sb-proof-chart.sb-proof-light { --sb-chart-signal-new-low:#0369a1;--sb-chart-signal-oversold:#b45309; }
+.sb-chart-signal { stroke:var(--sb-chart-signal-outline);stroke-width:1.5px;stroke-linejoin:round;paint-order:stroke fill;cursor:grab; }
 
 /* Keep close/apply available while longer indicator conditions scroll. */
 .sb-chart-window .sb-modal[open] { max-height:calc(100dvh - 32px);overflow:hidden; }
@@ -143,4 +146,15 @@ body.light-mode .sb-proof-chart { --sb-chart-investor-foreign:#b52964;--sb-chart
 .sb-proof-week.sb-proof-compact .sb-proof-obv > p { display:none; }
 .sb-proof-week.sb-proof-compact [data-chart-id="obvChart"] { min-height:0;height:calc(var(--sb-volume-height,64px) - 20px); }
 
-.sb-proof-chart { --sb-chart-signal-entry:var(--sb-success,#10b981); }
+.sb-proof-chart { --sb-chart-signal-entry-small:var(--sb-chart-money-5000);--sb-chart-signal-entry-big:#ffe34d; }
+body.light-mode .sb-proof-chart,.sb-proof-chart.sb-proof-light { --sb-chart-signal-entry-big:#9b7300;--sb-chart-signal-entry-small:#7c3aed; }
+.sb-chart-entry-status { color:var(--sb-text-2); }
+
+/* Standalone detail uses the same light tokens as the main app when themed. */
+.sb-chart-window.light-mode { color-scheme:light;--sb-bg:#f8fafc;--sb-panel:#ffffff;--sb-surface:#f1f5f9;--sb-border:#e2e8f0;--sb-text-1:#0f172a;--sb-text-2:#475569;--sb-accent:#2563eb;--sb-warn:#d97706;--sb-overlay:rgba(15,23,42,.4); }
+
+.sb-money-actions { display:flex;flex-wrap:wrap;gap:var(--sb-space-2,8px); }
+
+.sb-proof-chart [data-chart-id="moneyHistoryStatus"]:empty { display:none; }
+
+.sb-proof-compact .sb-proof-money > .sb-money-actions { display:none; }

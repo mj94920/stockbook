@@ -18,10 +18,11 @@ function registerChartWindow({ ipcMain, BrowserWindow, getMainWindow, appDir, ge
     if(event.senderFrame && event.senderFrame!==event.sender.mainFrame)return {ok:false};
     return getChartData?getChartData(code,cycle):{ok:false,error:'일봉 공급자가 연결되지 않았습니다.'};
   });
-  ipcMain.handle('get-chart-trading-values',(event,code)=>{
+  ipcMain.handle('get-chart-trading-values',(event,code,range)=>{
     if((!fromMain(event)&&(!child||event.sender!==child.webContents))||(event.senderFrame&&event.senderFrame!==event.sender.mainFrame))return {ok:false};
     if(typeof code!=='string'||!/^\d{6}$/.test(code))return {ok:false};
-    return getTradingValues?getTradingValues(code):{ok:false,error:'KIS 거래대금 공급자가 연결되지 않았습니다.'};
+    try{require('./trading-value.cjs').tradingRange(range);}catch{return {ok:false};}
+    return getTradingValues?getTradingValues(code,range):{ok:false,error:'KIS 거래대금 공급자가 연결되지 않았습니다.'};
   });
   ipcMain.handle('get-chart-investors',(event,code)=>{
     if((!fromMain(event)&&(!child||event.sender!==child.webContents))||(event.senderFrame&&event.senderFrame!==event.sender.mainFrame)||typeof code!=='string'||!/^\d{6}$/.test(code))return {ok:false};

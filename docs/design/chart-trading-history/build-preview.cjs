@@ -1,0 +1,14 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),{createFixture}=require('./fixture.cjs');
+const root=path.resolve(__dirname,'../../..');
+let html=fs.readFileSync(path.join(root,'chart.html'),'utf8');
+html=html.replace('<link rel="stylesheet" href="src/chart/chart.css">','<style>'+fs.readFileSync(path.join(root,'src/chart/chart.css'),'utf8')+'</style>');
+const payload=JSON.stringify(createFixture()).replaceAll('<','\\u003c');
+const boot=`const mock=${payload};let context={code:'000009',name:'과거 거래대금 미리보기 · 합성 자료',period:'all',viewRange:'all',barCycle:'day',follow:false},apply;
+window.stockBookChart={onContext:fn=>apply=fn,getData:async code=>code==='000009'?structuredClone(mock.data):{ok:false},getTradingValues:async(code,range)=>{if(code!=='000009')return {ok:false};if(!range)return structuredClone(mock.money);await new Promise(r=>setTimeout(r,700));return {...structuredClone(mock.money),rows:mock.rows.filter(r=>r.date>=range.start&&r.date<=range.end).slice(-100).reverse()};},getInvestors:async()=>({ok:false,error:'합성 미리보기 수급 제외'}),searchStocks:async()=>({ok:true,items:[{code:'000009',name:'과거 조회 합성 예시'}]}),selectStock:async code=>code==='000009'?{ok:true,context}:{ok:false},setView:async view=>{context={...context,...view,period:view.viewRange,indicatorCycle:view.barCycle,follow:false};return {ok:true};},setFollow:async follow=>{context={...context,follow};apply(context);return {ok:true};}};
+document.addEventListener('DOMContentLoaded',async()=>{await apply(context);StockBookCharts.controller(document.getElementById('chartViewport')).setView(280,mock.data.candles.length);});`;
+html=html.replace('<script src="src/chart/series.js"></script>','<script>'+boot+'</script><script src="src/chart/series.js"></script>');
+html=html.replace(/<script src="(src\/chart\/[a-z-]+\.js)"><\/script>/g,(_,file)=>'<script>'+fs.readFileSync(path.join(root,file),'utf8').replace(/<\/script/gi,'<\\/script')+'</script>');
+if(/<script src=|href="src\//.test(html))throw Error('Missing embedded resource');
+fs.writeFileSync(path.join(__dirname,'preview.html'),html.replace(/^[ \t]+(?=\r?$)/gm,''));
+console.log('Built synthetic history preview; no live requests.');

@@ -5,7 +5,7 @@
   const doc=host.ownerDocument,svg=host.querySelector('[data-chart-id="chart"]'),pressure=host.querySelector('[data-chart-id="pressureChart"]'),money=host.querySelector('[data-chart-id="moneyChart"]'),investor=host.querySelector('[data-chart-id="investorChart"]'),obv=host.querySelector('[data-chart-id="obvChart"]'),abort=new AbortController(),signal=abort.signal;
   const key=controller.getModel().stockCode+':'+controller.getModel().config.label,storageKey='stockbook:chart:drawings:v1:'+key;
   const typeStorageKey='stockbook:chart:type:v2:'+controller.getModel().config.label;const visibilityKey='stockbook:chart:visibility:v1:'+key;let hidden=indicatorMemory.get(key)||[],lastVisibility='';
-  try{const saved=JSON.parse(root.localStorage.getItem(visibilityKey));if(Array.isArray(saved)&&saved.length<=32&&saved.every(id=>typeof id==='string'&&/^(ma:\d+|bb|cloud|pressure|money|investors|profile|obv|new-low|oversold|volume|entry)$/.test(id)))hidden=saved;const type=root.localStorage.getItem(typeStorageKey);if(root.StockBookChartSeries.chartTypes.includes(type))controller.setType(type);}catch{}
+  try{const saved=JSON.parse(root.localStorage.getItem(visibilityKey));if(Array.isArray(saved)&&saved.length<=32&&saved.every(id=>typeof id==='string'&&/^(ma:\d+|bb|cloud|pressure|money|investors|profile|obv|new-low|oversold|volume|entry|entry-small|entry-big)$/.test(id)))hidden=saved;const type=root.localStorage.getItem(typeStorageKey);if(root.StockBookChartSeries.chartTypes.includes(type))controller.setType(type);}catch{}
   if(tools)controller.setHiddenIndicators(hidden);svg.setAttribute('tabindex','0');
   let drawings=memory.get(key)||[],mode='zoom',selected=null,selectedIndicator=null,pending=null,gesture=null,stroke=null,nextId=Math.max(0,...drawings.map(d=>d.id))+1,history=[],preview=null,touches=new Map(),pinch=null,wheelRemainder=0;
   const ns='http://www.w3.org/2000/svg',node=(tag,attrs={},text)=>{const el=doc.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,String(v));if(text!==undefined)el.textContent=text;return el;};
@@ -35,7 +35,7 @@
    button('−',()=>zoom(1.4),nav);button('+',()=>zoom(1/1.4),nav);button('처음 보기',()=>controller.resetView(),nav);button('최신',()=>controller.scrollTo(1),nav);
    if(compact){
     const summary=doc.createElement('summary');summary.textContent='차트 도구';
-    const body=doc.createElement('div');body.className='sb-chart-tool-panel-body';body.append(toolbar,indicatorPanel,indicatorControls,nav,status);
+    const body=doc.createElement('div');body.className='sb-chart-tool-panel-body';const moneyActions=host.querySelector('.sb-money-actions'),historyStatus=host.querySelector('[data-chart-id="moneyHistoryStatus"]');if(moneyActions)moneyActions.hidden=!controller.getModel().config.panels.money;body.append(...[moneyActions,historyStatus,toolbar,indicatorPanel,indicatorControls,nav,status].filter(Boolean));
     toolPanel.append(summary,body);controls.append(typeLabel,toolPanel,barInfo);svg.before(controls);
     toolPanel.addEventListener('toggle',()=>{if(toolPanel.open)body.style.maxHeight=Math.max(60,Math.min(260,host.clientHeight-controls.offsetTop-controls.offsetHeight-8))+'px';},{signal});
    }else{toolbar.prepend(typeLabel);host.prepend(toolbar);toolbar.after(indicatorPanel);svg.after(nav);nav.after(status);}
@@ -80,9 +80,15 @@
    layer.append(group);
   }
   const moneyText=value=>value===null||value===undefined?'거래대금 자료 미수신':'거래대금 '+value.toLocaleString('ko-KR')+'원';
+  function entryDescription(m,i){
+   if(m.config.label!=='일봉')return [];const r=m.signals?.[i],hidden=controller.getHiddenIndicators();
+   if(r?.entryBig===true&&!hidden.includes('entry-big'))return ['큰형님 · 세력 입장 전체 조건 충족'];
+   if(r?.entrySmall===true&&!hidden.includes('entry-small'))return ['작은형님 · 세력 입장 전체 조건 충족'];
+   if(r&&(r.entrySmall===null||r.entryBig===null))return ['세력 입장 판정 보류 · 거래대금·이력 확인 필요'];return [];
+  }
   function describeBar(row,m){
    if(!row)return '표시 공간 · 가격 자료 없음';
-   return [m.config.label+' '+row.date,...['open','high','low','close'].map((k,i)=>['시가','고가','저가','종가'][i]+' '+row[k].toLocaleString()),'거래량 '+row.volume.toLocaleString(),moneyText(m.tradingAmounts[m.rows.indexOf(row)]),...(m.signals?.[m.rows.indexOf(row)]?.entry===true&&!controller.getHiddenIndicators().includes('entry')?['세력 입장']:[])].join(' · ');
+   return [m.config.label+' '+row.date,...['open','high','low','close'].map((k,i)=>['시가','고가','저가','종가'][i]+' '+row[k].toLocaleString()),'거래량 '+row.volume.toLocaleString(),moneyText(m.tradingAmounts[m.rows.indexOf(row)]),...entryDescription(m,m.rows.indexOf(row))].join(' · ');
   }
   function draw(){
    svg.querySelector('.sb-chart-indicator-hits')?.remove();
@@ -117,14 +123,14 @@
     priceLabel.hidden=dateLabel.hidden=false;
    }
    if(!row){tip.textContent='BB 이동 표시 공간 · 가격 자료 없음';}
-   else{const prior=m.all[m.offset+i-1]?.close,change=prior?(row.close/prior-1)*100:null;tip.textContent=[m.name+' · '+m.config.label+' · '+row.date,...['open','high','low','close'].map((k,j)=>['시가','고가','저가','종가'][j]+' '+row[k].toLocaleString()),'직전 봉 대비 '+(change===null?'자료 없음':change.toFixed(2)+'%'),'거래량 '+row.volume.toLocaleString(),...(row.incompleteStart?['첫 기간은 수신 범위 내 부분 집계']:[]),...(row.incompleteEnd?['마지막 봉 완성 여부 미확인']:[]),moneyText(m.tradingAmounts[i]),...(m.signals?.[i]?.entry===true&&!controller.getHiddenIndicators().includes('entry')?['세력 입장 · 사용자 수식의 세 조건 충족']:[]),...(m.signals?.[i]?.newLow&&!controller.getHiddenIndicators().includes('new-low')?['신저가 · 직전 '+m.signalSettings.newLowPeriod+'봉 종가 기준']:[]),...(m.signals?.[i]?.rsi!==null&&m.signals?.[i]?.rsi!==undefined&&!controller.getHiddenIndicators().includes('oversold')?['RSI '+m.signals[i].rsi.toFixed(2)+(m.signals[i].oversold?' · 하단값 하향 돌파':'')]:[]),...(m.obv&&obv?.closest('details[open]')&&!obv.closest('[hidden]')?['OBV '+m.obv[i].value.toLocaleString(),'OBV 시그널 '+(m.obv[i].signal===null?'이력 부족':m.obv[i].signal.toLocaleString('ko-KR',{maximumFractionDigits:2}))]:[]),...m.averages.map((a,j)=>m.periods[j]+m.config.unit+'선 '+(a[i]===null?'이력 부족':a[i].toLocaleString('ko-KR',{maximumFractionDigits:2})))].join('\n');}
+   else{const prior=m.all[m.offset+i-1]?.close,change=prior?(row.close/prior-1)*100:null;tip.textContent=[m.name+' · '+m.config.label+' · '+row.date,...['open','high','low','close'].map((k,j)=>['시가','고가','저가','종가'][j]+' '+row[k].toLocaleString()),'직전 봉 대비 '+(change===null?'자료 없음':change.toFixed(2)+'%'),'거래량 '+row.volume.toLocaleString(),...(row.incompleteStart?['첫 기간은 수신 범위 내 부분 집계']:[]),...(row.incompleteEnd?['마지막 봉 완성 여부 미확인']:[]),moneyText(m.tradingAmounts[i]),...entryDescription(m,i),...(m.signals?.[i]?.newLow&&!controller.getHiddenIndicators().includes('new-low')?['신저가 · 직전 '+m.signalSettings.newLowPeriod+'봉 종가 기준']:[]),...(m.signals?.[i]?.rsi!==null&&m.signals?.[i]?.rsi!==undefined&&!controller.getHiddenIndicators().includes('oversold')?['RSI '+m.signals[i].rsi.toFixed(2)+(m.signals[i].oversold?' · 하단값 하향 돌파':'')]:[]),...(m.obv&&obv?.closest('details[open]')&&!obv.closest('[hidden]')?['OBV '+m.obv[i].value.toLocaleString(),'OBV 시그널 '+(m.obv[i].signal===null?'이력 부족':m.obv[i].signal.toLocaleString('ko-KR',{maximumFractionDigits:2}))]:[]),...m.averages.map((a,j)=>m.periods[j]+m.config.unit+'선 '+(a[i]===null?'이력 부족':a[i].toLocaleString('ko-KR',{maximumFractionDigits:2})))].join('\n');}
    tip.hidden=false;tip.style.left=Math.max(6,Math.min(root.innerWidth-tip.offsetWidth-8,event.clientX+14))+'px';tip.style.top=Math.max(6,Math.min(root.innerHeight-tip.offsetHeight-8,event.clientY+14))+'px';
   }
   function zoom(factor){const m=model();controller.zoomTo(m.count*factor);}
   function add(type,points){if(drawings.length>=200){status.textContent='그림은 200개까지 추가할 수 있습니다.';return;}remember();const d={id:nextId++,type,points};if(type==='text')d.text=textInput.value.trim()||'메모';drawings.push(d);selected=d.id;selectedIndicator=null;pending=null;setMode('zoom');draw();}
   function down(e){
    if(e.pointerType==='touch'){touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(touches.size===2){const [a,b]=[...touches.values()],m=model();pinch={distance:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),count:m.count,end:m.end};gesture=null;stroke=null;pending=null;preview=null;svg.setPointerCapture(e.pointerId);e.preventDefault();return;}}
-   if(e.button!==0||pinch)return;svg.focus({preventScroll:true});const indicator=e.target.closest('[data-chart-indicator]');if(tools&&indicator&&mode==='zoom'){selectIndicator(indicator.dataset.chartIndicator);e.preventDefault();return;}const p=point(e),m=model();if(p.x<25||p.x>1170||p.y<30||p.y>520)return;
+   if(e.button!==0||pinch)return;svg.focus({preventScroll:true});const indicator=e.target.closest('[data-chart-indicator]');if(tools&&indicator&&mode==='zoom'){selectIndicator(indicator.dataset.chartIndicator);show(e);e.preventDefault();return;}const p=point(e),m=model();if(p.x<25||p.x>1170||p.y<30||p.y>520)return;
    const hit=e.target.closest('[data-drawing-id]'),d=drawings.find(d=>d.id===Number(hit?.dataset.drawingId));
    if(d&&mode==='zoom'){selected=d.id;selectedIndicator=null;remember();svg.classList.add('sb-chart-object-dragging');gesture={kind:'drawing',id:e.pointerId,start:p,original:JSON.parse(JSON.stringify(d.points)),handle:hit.hasAttribute('data-handle')?Number(hit.dataset.handle):null,drawing:d.id};draw();}
    else if(mode==='zoom'){selected=null;selectedIndicator=null;wheelRemainder=0;gesture={kind:'zoom',id:e.pointerId,x:e.clientX,y:e.clientY,count:m.count};}
@@ -155,7 +161,8 @@
    }else if(g.moved||pending)add(mode,[pending||g.anchor,a]);else{pending=g.anchor;status.textContent='끝점을 누르세요. Esc로 취소합니다.';}
   }
   svg.addEventListener('pointerdown',down,{signal});svg.addEventListener('pointermove',move,{signal});svg.addEventListener('pointerup',up,{signal});
-  svg.addEventListener('pointercancel',()=>{svg.classList.remove('sb-chart-object-dragging');gesture=null;stroke=null;pending=null;preview=null;touches.clear();pinch=null;draw();},{signal});svg.addEventListener('pointerleave',()=>{if(!gesture)hide();},{signal});
+  svg.addEventListener('pointercancel',()=>{svg.classList.remove('sb-chart-object-dragging');gesture=null;stroke=null;pending=null;preview=null;touches.clear();pinch=null;draw();},{signal});svg.addEventListener('pointerleave',event=>{if(event.pointerType!=='touch'&&!gesture)hide();},{signal});
+  doc.addEventListener('pointerdown',event=>{if(!host.contains(event.target))hide();},{signal});
   function scrollWheel(e){
    if(e.ctrlKey)return;const delta=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;if(!delta)return;e.preventDefault();
    if(gesture||pinch){wheelRemainder=0;return;}
