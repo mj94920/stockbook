@@ -1,0 +1,160 @@
+{
+  "passed": true,
+  "verifiedAt": "2026-10-28T02:38:40.225Z",
+  "scope": "Actual public Naver HTTPS for prices and investor data through production fallback; deliberately unavailable KIS-auth dependency. Production HTML with mock preload. Windows KIS failure cause and authenticated KIS response are not established.",
+  "calls": [
+    {
+      "url": "https://m.stock.naver.com/api/stock/022100/integration",
+      "status": 200,
+      "bytes": 8794,
+      "sha256": "423dec3c40a587c69b1537482eca9ace4135476f1a3f3f34219b1e6c01bc5473"
+    },
+    {
+      "url": "https://fchart.stock.naver.com/sise.nhn?symbol=022100&timeframe=day&count=1000&requestType=0",
+      "status": 200,
+      "bytes": 64090,
+      "sha256": "b3dd7d734b9aca41d530c134fc79a1a513ee59f35f4b3c72c0fbe185b5ace303"
+    },
+    {
+      "url": "https://m.stock.naver.com/api/stock/005930/integration",
+      "status": 200,
+      "bytes": 9387,
+      "sha256": "e5db7c850a8fe4d133f692f6fe9f39964acec42b42b0c3fade17630ec1e94b4d"
+    },
+    {
+      "url": "https://fchart.stock.naver.com/sise.nhn?symbol=005930&timeframe=day&count=1000&requestType=0",
+      "status": 200,
+      "bytes": 67073,
+      "sha256": "7f71a9a0d4434d1016c6ed747c049787f347f2ca809a9009aa40a6b8c29c5316"
+    }
+  ],
+  "evidence": [
+    {
+      "code": "022100",
+      "name": "포스코DX",
+      "rows": [
+        {
+          "date": "2026-10-21",
+          "foreign": 27262,
+          "institution": -26111,
+          "individual": -925
+        },
+        {
+          "date": "2026-10-22",
+          "foreign": 14301,
+          "institution": -16936,
+          "individual": 2629
+        },
+        {
+          "date": "2026-10-23",
+          "foreign": 19672,
+          "institution": -8653,
+          "individual": -10525
+        },
+        {
+          "date": "2026-10-26",
+          "foreign": -1274,
+          "institution": 13921,
+          "individual": -12652
+        },
+        {
+          "date": "2026-10-27",
+          "foreign": 43891,
+          "institution": 5695,
+          "individual": -49597
+        }
+      ],
+      "chart": {
+        "dates": [
+          "2026-10-21",
+          "2026-10-22",
+          "2026-10-23",
+          "2026-10-26",
+          "2026-10-27"
+        ],
+        "count": 5,
+        "mode": "daily",
+        "totals": {
+          "foreign": 103852,
+          "institution": -32084,
+          "individual": -71070
+        },
+        "lastDaily": {
+          "foreign": 43891,
+          "institution": 5695,
+          "individual": -49597
+        },
+        "source": "Naver",
+        "market": "provider",
+        "primaryErrorCode": "KIS_AUTH",
+        "omittedRows": 0,
+        "unit": "주",
+        "fetchedAt": "2026-10-28T02:38:34.375Z"
+      }
+    },
+    {
+      "code": "005930",
+      "name": "삼성전자",
+      "rows": [
+        {
+          "date": "2026-10-21",
+          "foreign": 2055241,
+          "institution": 313027,
+          "individual": -2324529
+        },
+        {
+          "date": "2026-10-22",
+          "foreign": -585787,
+          "institution": -400833,
+          "individual": 977352
+        },
+        {
+          "date": "2026-10-23",
+          "foreign": -868997,
+          "institution": 627670,
+          "individual": -61043
+        },
+        {
+          "date": "2026-10-26",
+          "foreign": -984399,
+          "institution": 627948,
+          "individual": 324939
+        },
+        {
+          "date": "2026-10-27",
+          "foreign": 1052520,
+          "institution": 412198,
+          "individual": -1576114
+        }
+      ],
+      "chart": {
+        "dates": [
+          "2026-10-21",
+          "2026-10-22",
+          "2026-10-23",
+          "2026-10-26",
+          "2026-10-27"
+        ],
+        "count": 5,
+        "mode": "daily",
+        "totals": {
+          "foreign": 668578,
+          "institution": 1580010,
+          "individual": -2659395
+        },
+        "lastDaily": {
+          "foreign": 1052520,
+          "institution": 412198,
+          "individual": -1576114
+        },
+        "source": "Naver",
+        "market": "provider",
+        "primaryErrorCode": "KIS_AUTH",
+        "omittedRows": 0,
+        "unit": "주",
+        "fetchedAt": "2026-10-28T02:38:38.014Z"
+      }
+    }
+  ],
+  "browserErrors": []
+}

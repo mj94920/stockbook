@@ -84,3 +84,63 @@
  .mdi-dock.sb-desktop-home.sb-user-split { grid-template-rows:0 minmax(0,1fr) minmax(0,var(--sb-work-height)); }
  .mdi-dock.sb-desktop-home.sb-user-split > :is(#mdi-panel-portfolio,#mdi-panel-trading,.sb-analysis) { max-height:none; }
 }
+
+.sb-proof-chart { --sb-chart-money-300:var(--sb-down,#3b82f6);--sb-chart-money-500:#adff2f;--sb-chart-money-1000:#ff9800;--sb-chart-money-3000:var(--sb-up,#f43f5e);--sb-chart-money-5000:#d8b4fe;--sb-chart-money-10000:var(--sb-text-1); }
+.sb-proof-money { border-top:1px solid var(--sb-border);min-height:0; }
+.sb-proof-money [data-chart-id="moneyChart"] { height:100px;min-height:32px; }
+.sb-money-legend { display:flex;flex-wrap:wrap;gap:4px 12px;padding-block:4px;font-size:11px; }
+.sb-proof-money > p { margin:2px 0; }
+.sb-proof-compact { grid-template-rows:auto auto minmax(0,1fr) var(--sb-volume-height,64px) auto; }
+.sb-proof-compact .sb-proof-money [data-chart-id="moneyChart"] { height:64px; }
+.sb-proof-no-pressure.sb-proof-compact { grid-template-rows:auto auto minmax(0,1fr) auto; }
+.sb-proof-year.sb-proof-compact { grid-template-rows:auto auto minmax(0,1fr); }
+body.light-mode .sb-proof-chart { --sb-chart-money-500:#4d7c0f;--sb-chart-money-1000:var(--sb-warn);--sb-chart-money-5000:#7c3aed; }
+.sb-proof-compact .sb-proof-money > p,.sb-proof-compact .sb-proof-money > button,.sb-proof-compact .sb-money-legend { display:none; }
+
+.sb-chart-search { position:relative;flex:0 1 300px;min-width:200px;max-width:100%; }
+.sb-chart-search-label { position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%); }
+.sb-chart-search-row { display:flex;gap:var(--sb-space-1,4px); }
+.sb-chart-search-row .sb-input { flex:1;min-width:0;width:100%;font:inherit; }
+.sb-chart-search-panel { position:absolute;inset:calc(100% + 4px) 0 auto;z-index:10001;padding:var(--sb-space-2,8px);background:var(--sb-panel);border:1px solid var(--sb-border);box-shadow:var(--sb-shadow-2);max-height:min(360px,60vh);overflow:auto; }
+.sb-chart-search-panel p { margin:0 0 6px;color:var(--sb-text-2);font-size:12px; }
+.sb-chart-search-result { display:block;width:100%;text-align:left;white-space:normal;overflow-wrap:anywhere;margin-top:4px; }
+.sb-chart-search-result[aria-selected="true"] { border-color:var(--sb-accent);background:var(--sb-surface);color:var(--sb-text-1);outline:1px solid var(--sb-accent); }
+
+.sb-proof-chart { --sb-chart-investor-foreign:#ff94c4;--sb-chart-investor-institution:#fff16c;--sb-chart-investor-individual:#3e5eb8; }
+body.light-mode .sb-proof-chart { --sb-chart-investor-foreign:#b52964;--sb-chart-investor-institution:#957100;--sb-chart-investor-individual:#243e89; }
+.sb-investor-controls,.sb-investor-legend { display:flex;align-items:center;flex-wrap:wrap;gap:4px 12px;margin-block:4px; }
+.sb-proof-detail [data-chart-id="investorChart"] { height:180px; }
+.sb-proof-detail .sb-investor-legend { display:none; }
+.sb-proof-compact { grid-template-rows:auto auto minmax(0,1fr) var(--sb-volume-height,64px) auto auto; }
+.sb-proof-no-pressure.sb-proof-compact { grid-template-rows:auto auto minmax(0,1fr) auto auto; }
+.sb-proof-year.sb-proof-compact { grid-template-rows:auto auto minmax(0,1fr); }
+.sb-proof-compact .sb-proof-extended { display:block;min-height:0; }
+.sb-proof-compact .sb-proof-investors { border-top:1px solid var(--sb-border); }
+.sb-proof-compact .sb-proof-investors > p,.sb-proof-compact .sb-investor-controls,.sb-proof-compact .sb-proof-investors > details { display:none; }
+.sb-proof-compact [data-chart-id="investorChart"] { height:120px; }
+.sb-proof-compact .sb-proof-money > summary,.sb-proof-compact .sb-proof-investors > summary { white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.sb-proof-compact .sb-investor-legend { flex-wrap:nowrap;white-space:nowrap;overflow-x:auto;font-size:11px;line-height:16px; }
+.sb-proof-compact .sb-investor-legend > span { flex-shrink:0; }
+.sb-proof-compact .sb-proof-money > summary,.sb-proof-compact .sb-proof-investors > summary { padding:2px 0;line-height:18px; }
+.sb-proof-compact .sb-investor-legend { margin-block:2px; }
+
+.sb-proof-obv { border-top:1px solid var(--sb-border);--sb-chart-obv:var(--sb-chart-investor-institution);--sb-chart-obv-signal:var(--sb-chart-money-300); }
+.sb-proof-obv [data-chart-id="obvChart"] { height:140px;min-height:64px; }
+
+.sb-proof-chart { --sb-chart-signal-new-low:var(--sb-chart-money-300);--sb-chart-signal-oversold:var(--sb-warn); }
+
+/* Keep close/apply available while longer indicator conditions scroll. */
+.sb-chart-window .sb-modal[open] { max-height:calc(100dvh - 32px);overflow:hidden; }
+.sb-chart-window .sb-modal[open] > form { display:flex;flex-direction:column;max-height:calc(100dvh - 66px); }
+.sb-chart-window .sb-modal__head,.sb-chart-window .sb-modal__foot { flex-shrink:0; }
+.sb-chart-window .sb-modal__body { min-height:0;overflow:auto; }
+
+/* Each cycle keeps its own lower pane in the compact chart. */
+.sb-proof-week.sb-proof-compact,.sb-proof-year.sb-proof-compact { grid-template-rows:auto auto minmax(0,1fr) var(--sb-volume-height,64px); }
+.sb-proof-week.sb-proof-no-obv.sb-proof-compact,.sb-proof-year.sb-proof-no-pressure.sb-proof-compact { grid-template-rows:auto auto minmax(0,1fr); }
+.sb-proof-week.sb-proof-compact .sb-proof-obv { display:block;min-height:0;height:100%; }
+.sb-proof-week.sb-proof-compact .sb-proof-obv > summary { padding:0;line-height:18px;pointer-events:none;cursor:default; }
+.sb-proof-week.sb-proof-compact .sb-proof-obv > p { display:none; }
+.sb-proof-week.sb-proof-compact [data-chart-id="obvChart"] { min-height:0;height:calc(var(--sb-volume-height,64px) - 20px); }
+
+.sb-proof-chart { --sb-chart-signal-entry:var(--sb-success,#10b981); }

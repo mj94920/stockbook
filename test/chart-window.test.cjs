@@ -60,3 +60,15 @@ test('detail view changes pin its cycle and range; only the known child may chan
  handlers.get('set-chart-context')({sender:main.webContents},{code:'000660',period:'3m',barCycle:'week'});assert.equal(sent.at(-1).code,'005930');
  handlers.get('set-chart-follow')({sender:child.webContents},true);assert.equal(sent.at(-1).code,'000660');assert.equal(sent.at(-1).barCycle,'week');assert.equal(sent.at(-1).viewRange,'3m');
 });
+
+test('detail-only search selects canonical stock, preserves view, pins only detail and rejects stale or foreign selections',async()=>{
+ const handlers=new Map(),main={webContents:{mainFrame:{}}},sent=[];let child,calls=0,resolveSlow;
+ class Window extends EventEmitter{constructor(){super();child=this;this.webContents=new EventEmitter();this.webContents.mainFrame={};this.webContents.setWindowOpenHandler=()=>{};this.webContents.send=(_c,v)=>sent.push(v);}isDestroyed(){return false;}setMenuBarVisibility(){}loadFile(){return Promise.resolve();}show(){}focus(){}}
+ registerChartWindow({ipcMain:{handle:(key,fn)=>handlers.set(key,fn)},BrowserWindow:Window,getMainWindow:()=>main,appDir:'/app',searchStocks:q=>{calls++;return {ok:true,items:[{code:'000660',name:q}]};},resolveStock:async code=>code==='000660'?new Promise(r=>resolveSlow=r):{code,name:'공식 명칭'}});
+ const mainEvent={sender:main.webContents,senderFrame:main.webContents.mainFrame};handlers.get('open-chart-window')(mainEvent,{code:'005930',name:'삼성전자',barCycle:'month',period:'1y'});const event={sender:child.webContents,senderFrame:child.webContents.mainFrame};
+ assert.equal(handlers.get('search-chart-stocks')(mainEvent,'삼성').ok,false);assert.equal(handlers.get('search-chart-stocks')({...event,senderFrame:{}},'삼성').ok,false);assert.equal(calls,0);assert.equal(handlers.get('search-chart-stocks')(event,'삼성').ok,true);
+ assert.equal((await handlers.get('select-chart-stock')(event,'../../evil')).ok,false);
+ const slow=handlers.get('select-chart-stock')(event,'000660'),fast=await handlers.get('select-chart-stock')(event,'035420');resolveSlow({code:'000660',name:'늦은 응답'});assert.equal((await slow).ok,false);assert.equal(fast.ok,true);assert.equal(sent.at(-1).code,'035420');assert.equal(sent.at(-1).name,'공식 명칭');assert.equal(sent.at(-1).barCycle,'month');assert.equal(sent.at(-1).viewRange,'1y');assert.equal(sent.at(-1).follow,false);
+ handlers.get('set-chart-context')(mainEvent,{code:'010130',name:'종합 선택',barCycle:'week',period:'6m'});assert.equal(sent.at(-1).code,'035420');handlers.get('set-chart-follow')(event,true);assert.equal(sent.at(-1).code,'010130');assert.equal(sent.at(-1).barCycle,'week');
+ const pending=handlers.get('select-chart-stock')(event,'000660');handlers.get('set-chart-follow')(event,true);resolveSlow({code:'000660',name:'취소된 선택'});assert.equal((await pending).ok,false);assert.equal(sent.at(-1).code,'010130');
+});
