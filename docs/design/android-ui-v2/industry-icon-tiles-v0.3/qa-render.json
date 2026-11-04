@@ -1,0 +1,42 @@
+{
+  "imageCount": 70,
+  "brokenImages": 0,
+  "overflow": false,
+  "market": {
+    "rows": 6,
+    "tiles": [
+      {
+        "width": 48,
+        "height": 48,
+        "radius": "25%"
+      },
+      {
+        "width": 48,
+        "height": 48,
+        "radius": "25%"
+      },
+      {
+        "width": 48,
+        "height": 48,
+        "radius": "25%"
+      },
+      {
+        "width": 48,
+        "height": 48,
+        "radius": "25%"
+      },
+      {
+        "width": 48,
+        "height": 48,
+        "radius": "25%"
+      },
+      {
+        "width": 48,
+        "height": 48,
+        "radius": "25%"
+      }
+    ],
+    "overflow": false
+  },
+  "scriptErrors": []
+}

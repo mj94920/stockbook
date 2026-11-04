@@ -1,0 +1,1055 @@
+{
+  "status": "design_assets_not_taxonomy",
+  "assets": [
+    {
+      "iconAssetKey": "industry/semiconductor",
+      "nameKo": "반도체",
+      "kind": "industry",
+      "file": "assets/industry/semiconductor.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "simple graphite microchip with silver central square and six small subdued gold pins",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/battery",
+      "nameKo": "이차전지/배터리",
+      "kind": "industry",
+      "file": "assets/industry/battery.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E7EEEA",
+      "motif": "one upright graphite battery cell with a tiny muted green charge mark",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/display",
+      "nameKo": "디스플레이",
+      "kind": "industry",
+      "file": "assets/industry/display.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one slim simple flat screen monitor, blue screen and small white stand",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/electronic-components",
+      "nameKo": "전자부품",
+      "kind": "industry",
+      "file": "assets/industry/electronic-components.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E7EEEA",
+      "motif": "one simplified blue printed circuit board with three clearly large components",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/electronics",
+      "nameKo": "전기전자/반도체",
+      "kind": "industry",
+      "file": "assets/industry/electronics.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one flat compact graphite ELECTRONIC MICROCONTROLLER MODULE with a single pale silver central chip and six broad copper contact fingers along bottom. A simple electronic component, NOT an electrical wall socket, NOT an outlet, NOT a plug, NOT a laptop. Distinct from bare microchip: module has an enclosing dark gray rectangular housing",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/gaming",
+      "nameKo": "게임",
+      "kind": "industry",
+      "file": "assets/industry/gaming.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#EBE8F0",
+      "motif": "simple white game controller with dark directional pad and three small subdued colored buttons",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/entertainment",
+      "nameKo": "엔터테인먼트",
+      "kind": "industry",
+      "file": "assets/industry/entertainment.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#EBE8F0",
+      "motif": "one silver stage microphone with a small dark head, no stage",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/ai-robotics",
+      "nameKo": "인공지능/로봇",
+      "kind": "industry",
+      "file": "assets/industry/ai-robotics.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one simple white friendly neutral robot head with two blue circular eyes, no smiley decorative detail",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/internet-platform",
+      "nameKo": "IT/플랫폼",
+      "kind": "industry",
+      "file": "assets/industry/internet-platform.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E4EEED",
+      "motif": "one small white laptop with subdued teal browser window and minimal screen content",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/telecom-security-server",
+      "nameKo": "통신/보안/서버",
+      "kind": "industry",
+      "file": "assets/industry/telecom-security-server.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one simplified upright server cabinet with three drawers and tiny muted green status lights",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/aerospace",
+      "nameKo": "항공우주",
+      "kind": "industry",
+      "file": "assets/industry/aerospace.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#EBE8F0",
+      "motif": "one simplified silver satellite with two dark muted blue solar panels",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/defense",
+      "nameKo": "방위산업",
+      "kind": "industry",
+      "file": "assets/industry/defense.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one solid dark blue protective shield with a small silver central inset, no star or letters",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/automotive",
+      "nameKo": "자동차",
+      "kind": "industry",
+      "file": "assets/industry/automotive.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one simple rounded white compact car in three-quarter view, two dark wheels",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/nuclear-energy",
+      "nameKo": "원자력/에너지",
+      "kind": "industry",
+      "file": "assets/industry/nuclear-energy.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E7EEEA",
+      "motif": "one simplified pale gray cooling tower with clean silhouette, no smoke or plant scene",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/hydrogen-gas",
+      "nameKo": "수소/가스",
+      "kind": "industry",
+      "file": "assets/industry/hydrogen-gas.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E4EEED",
+      "motif": "one small pale blue industrial gas cylinder with single dark top valve, no words",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/petroleum",
+      "nameKo": "석유에너지",
+      "kind": "industry",
+      "file": "assets/industry/petroleum.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#F0EBE3",
+      "motif": "one simple dark charcoal oil barrel with a tiny silver droplet embossed on front",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/biopharma",
+      "nameKo": "제약/바이오",
+      "kind": "industry",
+      "file": "assets/industry/biopharma.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E7EEEA",
+      "motif": "one clear simplified DNA helix with white outer strands and muted blue rungs",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/medical-equipment",
+      "nameKo": "의료장비",
+      "kind": "industry",
+      "file": "assets/industry/medical-equipment.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E4EEED",
+      "motif": "one simplified silver and teal stethoscope with single loop and round chestpiece",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/construction-machinery",
+      "nameKo": "건설/기계장비",
+      "kind": "industry",
+      "file": "assets/industry/construction-machinery.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#F0EBE3",
+      "motif": "one simple muted yellow excavator, clean chunky form, no construction scene",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/shipbuilding",
+      "nameKo": "조선/해양산업",
+      "kind": "industry",
+      "file": "assets/industry/shipbuilding.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one simplified dark blue ship hull with small white cabin, no tanker tanks or sea",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/transport",
+      "nameKo": "운송",
+      "kind": "industry",
+      "file": "assets/industry/transport.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one simple pale gray cargo truck with muted blue cab and dark wheels",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/finance",
+      "nameKo": "금융/은행",
+      "kind": "industry",
+      "file": "assets/industry/finance.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#ECECEC",
+      "motif": "one simple white classical bank facade with triangular roof and three columns, tiny muted gold round inset",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/holding-company",
+      "nameKo": "지주",
+      "kind": "industry",
+      "file": "assets/industry/holding-company.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#ECECEC",
+      "motif": "one compact office tower with three simple connected stacked blocks representing a group",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/chemical-materials",
+      "nameKo": "화학/소재",
+      "kind": "industry",
+      "file": "assets/industry/chemical-materials.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E4EEED",
+      "motif": "one simple round-bottom laboratory flask with muted teal liquid, no bubbles outside",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/steel-metals",
+      "nameKo": "철강/금속",
+      "kind": "industry",
+      "file": "assets/industry/steel-metals.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#ECECEC",
+      "motif": "one matte silver rolled steel coil with dark central hole, no photoreal sheen",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/fourth-industry",
+      "nameKo": "4차산업",
+      "kind": "industry",
+      "file": "assets/industry/fourth-industry.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one simplified digital cube with a few connected blue nodes on its surfaces",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/food-retail",
+      "nameKo": "식품/유통",
+      "kind": "industry",
+      "file": "assets/industry/food-retail.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#F0EBE3",
+      "motif": "one simple beige grocery bag with minimal embossed wheat mark, no separate groceries",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/consumer-goods",
+      "nameKo": "소비재",
+      "kind": "industry",
+      "file": "assets/industry/consumer-goods.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#EBE8F0",
+      "motif": "one muted lavender shopping bag with simple handle, no brand logo",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/real-estate",
+      "nameKo": "부동산/임대",
+      "kind": "industry",
+      "file": "assets/industry/real-estate.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#ECECEC",
+      "motif": "one simple white midrise apartment building with muted blue window grid",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/power-equipment",
+      "nameKo": "전력기기",
+      "kind": "industry",
+      "file": "assets/industry/power-equipment.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#ECECEC",
+      "motif": "one simplified gray transformer with two terracotta insulator posts and tiny muted gold lightning inset",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/logistics",
+      "nameKo": "물류",
+      "kind": "industry",
+      "file": "assets/industry/logistics.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E7EEEA",
+      "motif": "one simple muted blue shipping container with sparse vertical ridges, no forklift",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/food",
+      "nameKo": "식품",
+      "kind": "industry",
+      "file": "assets/industry/food.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#F0EBE3",
+      "motif": "one single simplified matte golden wheat ear, no bread or scattered grains",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/energy",
+      "nameKo": "에너지",
+      "kind": "industry",
+      "file": "assets/industry/energy.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E7EEEA",
+      "motif": "one simple subdued golden lightning bolt with soft beveled depth, no ring or electricity glow",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/construction",
+      "nameKo": "건설",
+      "kind": "industry",
+      "file": "assets/industry/construction.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#F0EBE3",
+      "motif": "one simple muted yellow tower crane with thick clear structure and one small hook",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/memory-chip",
+      "nameKo": "메모리반도체",
+      "kind": "industry",
+      "file": "assets/industry/memory-chip.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one simple dark memory module board with three silver memory blocks and subdued gold contacts",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/foundry",
+      "nameKo": "파운드리",
+      "kind": "industry",
+      "file": "assets/industry/foundry.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#ECECEC",
+      "motif": "one simplified compact gray factory building with blue front wafer symbol, no smoke",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/semiconductor-equipment",
+      "nameKo": "반도체장비",
+      "kind": "industry",
+      "file": "assets/industry/semiconductor-equipment.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one simple white wafer-processing machine cube with one dark round front opening",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/semiconductor-materials",
+      "nameKo": "반도체소재",
+      "kind": "industry",
+      "file": "assets/industry/semiconductor-materials.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E4EEED",
+      "motif": "one simple upright muted blue silicon wafer disc with subtle sparse grid",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/semiconductor-packaging",
+      "nameKo": "반도체패키징",
+      "kind": "industry",
+      "file": "assets/industry/semiconductor-packaging.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one simplified chip package with two clearly visible stacked silver layers and small gold leads",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/aluminum",
+      "nameKo": "알루미늄",
+      "kind": "industry",
+      "file": "assets/industry/aluminum.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#ECECEC",
+      "motif": "one simple matte silver cylindrical billet with softly beveled top",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/display-equipment",
+      "nameKo": "디스플레이장비",
+      "kind": "industry",
+      "file": "assets/industry/display-equipment.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one simple white industrial machine frame enclosing a single muted blue panel",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "industry/consumer-electronics",
+      "nameKo": "가전·모바일",
+      "kind": "industry",
+      "file": "assets/industry/consumer-electronics.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one simple white washing machine with a large charcoal round door",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "theme/ai",
+      "nameKo": "인공지능",
+      "kind": "theme",
+      "file": "assets/theme/ai.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#EBE8F0",
+      "motif": "one simplified muted blue brain shape with three sparse neural connection insets, no glow",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "theme/robotics",
+      "nameKo": "로봇",
+      "kind": "theme",
+      "file": "assets/theme/robotics.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one simplified white industrial robot arm with muted blue joints and small gripper",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "theme/space",
+      "nameKo": "우주항공",
+      "kind": "theme",
+      "file": "assets/theme/space.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#EBE8F0",
+      "motif": "one simple white rocket with muted blue fins, no exhaust or stars",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "theme/renewable",
+      "nameKo": "신재생에너지",
+      "kind": "theme",
+      "file": "assets/theme/renewable.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E7EEEA",
+      "motif": "one simple white wind turbine with three blades and muted blue center",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "theme/content",
+      "nameKo": "콘텐츠",
+      "kind": "theme",
+      "file": "assets/theme/content.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#EBE8F0",
+      "motif": "one simple white clapperboard with muted lavender slate and dark diagonal top segments",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "theme/defense-space",
+      "nameKo": "방산/우주",
+      "kind": "theme",
+      "file": "assets/theme/defense-space.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one simplified muted blue aircraft silhouette with softly beveled surfaces, no weapons",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "theme/game-entertainment",
+      "nameKo": "게임/엔터",
+      "kind": "theme",
+      "file": "assets/theme/game-entertainment.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#EBE8F0",
+      "motif": "one simple muted lavender theatrical ticket with a small embossed gamepad motif",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "theme/hbm",
+      "nameKo": "HBM",
+      "kind": "theme",
+      "file": "assets/theme/hbm.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one clearly simplified stack of four graphite memory layers with tiny muted gold connectors",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "theme/export",
+      "nameKo": "수출주",
+      "kind": "theme",
+      "file": "assets/theme/export.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E4EEED",
+      "motif": "one simple muted teal shipping box with a small outward arrow embossed on front",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "fund/etf-index",
+      "nameKo": "ETF/인덱스",
+      "kind": "fund",
+      "file": "assets/fund/etf-index.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one simplified blue ring binder with three visible muted gray pages, no lettering",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "fund/leverage",
+      "nameKo": "레버리지",
+      "kind": "fund",
+      "file": "assets/fund/leverage.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one simplified blue pair of upward arrow chevrons stacked vertically, embossed matte depth",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "fund/inverse",
+      "nameKo": "인버스",
+      "kind": "fund",
+      "file": "assets/fund/inverse.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#EBE8F0",
+      "motif": "one simplified muted blue downward bent arrow, no chart",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "fund/us-equities",
+      "nameKo": "미국주식",
+      "kind": "fund",
+      "file": "assets/fund/us-equities.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E7EEEA",
+      "motif": "one small simplified cream Statue of Liberty bust with crown, no flag or letters",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "fund/china-equities",
+      "nameKo": "중국주식",
+      "kind": "fund",
+      "file": "assets/fund/china-equities.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#F0EBE3",
+      "motif": "one simple muted red traditional Chinese palace gate with clean roof, no text",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "fund/japan-equities",
+      "nameKo": "일본주식",
+      "kind": "fund",
+      "file": "assets/fund/japan-equities.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#F0EBE3",
+      "motif": "one simple muted terracotta Japanese torii gate, no flag or scenery",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "fund/india-equities",
+      "nameKo": "인도주식",
+      "kind": "fund",
+      "file": "assets/fund/india-equities.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#F0EBE3",
+      "motif": "one simple ivory Taj Mahal dome facade reduced to dome and two columns, no landscape",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "fund/emerging-equities",
+      "nameKo": "신흥국주식",
+      "kind": "fund",
+      "file": "assets/fund/emerging-equities.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E7EEEA",
+      "motif": "one simple muted teal globe with a tiny sprout embossed into the front, one unified object",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "fund/global-equities",
+      "nameKo": "글로벌주식",
+      "kind": "fund",
+      "file": "assets/fund/global-equities.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one simple pale blue globe with muted gray continent shapes, no stand or stars",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "fund/kospi200",
+      "nameKo": "코스피200",
+      "kind": "fund",
+      "file": "assets/fund/kospi200.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one simple solid muted blue circular coin with raised abstract three bar market motif, no numerals or text",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "fund/kosdaq150",
+      "nameKo": "코스닥150",
+      "kind": "fund",
+      "file": "assets/fund/kosdaq150.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#EBE8F0",
+      "motif": "one simple muted lavender hexagonal market token with raised abstract diagonal growth motif, no numerals or text",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "fund/bonds",
+      "nameKo": "채권",
+      "kind": "fund",
+      "file": "assets/fund/bonds.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#F0EBE3",
+      "motif": "one simple rolled cream certificate with a small muted blue ribbon seal, no writing",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "fund/commodities",
+      "nameKo": "원자재",
+      "kind": "fund",
+      "file": "assets/fund/commodities.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#F0EBE3",
+      "motif": "one simple RECTANGULAR trapezoidal gold BULLION BAR, a solid matte muted golden ingot with flat top and sloped sides. NOT a boat-shaped Chinese sycee, NOT a bowl, NOT a coin, no stamps, no writing, no currency",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "fund/reits",
+      "nameKo": "리츠",
+      "kind": "fund",
+      "file": "assets/fund/reits.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E4EEED",
+      "motif": "one simple modern midrise REAL ESTATE office property building, rectangular white structure with a muted teal grid of six large windows and flat roof. NO columns, NO triangular roof, NO bank architecture, NO currency symbol, NO coin, NO dollar, NO writing",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "fund/dividend",
+      "nameKo": "배당",
+      "kind": "fund",
+      "file": "assets/fund/dividend.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#F0EBE3",
+      "motif": "one simple small stack of three muted gold coins with subtle top plus inset, no currency lettering",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "fund/cash",
+      "nameKo": "단기/현금",
+      "kind": "fund",
+      "file": "assets/fund/cash.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E4EEED",
+      "motif": "one simple muted teal wallet with two pale gray card edges visible, no text",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "fallback/unknown-industry",
+      "nameKo": "미지원 업종",
+      "kind": "fallback",
+      "file": "assets/fallback/unknown-industry.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#ECECEC",
+      "motif": "one simple matte gray cube with a small inset neutral circle, no question mark",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "fallback/unknown-theme",
+      "nameKo": "미지원 테마",
+      "kind": "fallback",
+      "file": "assets/fallback/unknown-theme.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#EBE8F0",
+      "motif": "one simple matte lavender tag with round hole, no words or symbols",
+      "status": "generated_review_asset",
+      "contractKey": null
+    },
+    {
+      "iconAssetKey": "fallback/other-etf",
+      "nameKo": "기타ETF",
+      "kind": "fallback",
+      "file": "assets/fallback/other-etf.png",
+      "pixelSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "backgroundTarget": "#E5ECF2",
+      "motif": "one simple muted blue folder with three softly separated tabs, no text",
+      "status": "generated_review_asset",
+      "contractKey": null
+    }
+  ]
+}

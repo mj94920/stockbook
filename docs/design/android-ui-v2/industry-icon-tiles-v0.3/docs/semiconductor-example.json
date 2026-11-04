@@ -1,0 +1,64 @@
+{
+  "_notice": "ILLUSTRATIVE EXAMPLE ONLY. 구조 검증용 예시이며 실제 분류·실제 사업 설명·실제 소속 판단이 아니다. 키 이름, 값, primary 지정은 모두 임의로 둔 것이다.",
+  "contractVersion": "draft-0",
+  "dataset": {
+    "datasetVersion": "example-1",
+    "generatedAt": "2026-10-10T00:00:00Z",
+    "sources": [
+      { "sourceId": "EXAMPLE_CURATION", "kind": "CURATED", "asOf": "2026-10-10" }
+    ]
+  },
+
+  "industries": [
+    { "industryKey": "semiconductor",       "parentKey": null,            "entry": true,  "name": { "ko": "반도체" },            "status": "ACTIVE", "order": 10 },
+    { "industryKey": "memory-chip",         "parentKey": "semiconductor", "entry": false, "name": { "ko": "메모리" },            "status": "ACTIVE", "order": 10 },
+    { "industryKey": "foundry",             "parentKey": "semiconductor", "entry": false, "name": { "ko": "파운드리·시스템반도체" }, "status": "ACTIVE", "order": 20 },
+    { "industryKey": "semi-equipment",      "parentKey": "semiconductor", "entry": false, "name": { "ko": "반도체 장비" },        "status": "ACTIVE", "order": 30 },
+    { "industryKey": "semi-materials",      "parentKey": "semiconductor", "entry": false, "name": { "ko": "반도체 소재" },        "status": "ACTIVE", "order": 40 },
+    { "industryKey": "consumer-electronics","parentKey": null,            "entry": true,  "name": { "ko": "가전·모바일기기" },    "status": "ACTIVE", "order": 50 },
+    { "industryKey": "software-platform",   "parentKey": null,            "entry": true,  "name": { "ko": "소프트웨어·플랫폼" },  "status": "ACTIVE", "order": 60 }
+  ],
+
+  "instruments": [
+    { "ref": { "market": "KRX", "stockCode": "005930" }, "name": { "ko": "삼성전자" },
+      "profile": { "businessSummary": { "ko": "[예시] 메모리·시스템반도체와 가전·모바일 기기 등 여러 사업을 영위한다." }, "sourceId": "EXAMPLE_CURATION", "asOf": "2026-10-10" } },
+    { "ref": { "market": "KRX", "stockCode": "000660" }, "name": { "ko": "SK하이닉스" },
+      "profile": { "businessSummary": { "ko": "[예시] 메모리 반도체를 주력으로 한다." }, "sourceId": "EXAMPLE_CURATION", "asOf": "2026-10-10" } },
+    { "ref": { "market": "KRX", "stockCode": "042700" }, "name": { "ko": "한미반도체" },
+      "profile": { "businessSummary": { "ko": "[예시] 반도체 제조 후공정 장비를 다룬다." }, "sourceId": "EXAMPLE_CURATION", "asOf": "2026-10-10" } },
+    { "ref": { "market": "KRX", "stockCode": "357780" }, "name": { "ko": "솔브레인" },
+      "profile": { "businessSummary": { "ko": "[예시] 반도체 공정용 소재를 다룬다." }, "sourceId": "EXAMPLE_CURATION", "asOf": "2026-10-10" } },
+    { "ref": { "market": "KRX", "stockCode": "035420" }, "name": { "ko": "NAVER" },
+      "profile": { "businessSummary": { "ko": "[예시] 검색·플랫폼과 AI 기술 서비스를 영위한다." }, "sourceId": "EXAMPLE_CURATION", "asOf": "2026-10-10" } }
+  ],
+
+  "industryLinks": [
+    { "ref": { "market": "KRX", "stockCode": "005930" }, "industryKey": "memory-chip",          "role": "PRIMARY",
+      "businessNote": { "ko": "[예시] 메모리 사업" }, "basis": { "sourceId": "EXAMPLE_CURATION" } },
+    { "ref": { "market": "KRX", "stockCode": "005930" }, "industryKey": "foundry",              "role": "SECONDARY",
+      "businessNote": { "ko": "[예시] 파운드리·시스템반도체 사업" }, "basis": { "sourceId": "EXAMPLE_CURATION" } },
+    { "ref": { "market": "KRX", "stockCode": "005930" }, "industryKey": "consumer-electronics", "role": "SECONDARY",
+      "businessNote": { "ko": "[예시] 가전·모바일 기기 사업" }, "basis": { "sourceId": "EXAMPLE_CURATION" } },
+    { "ref": { "market": "KRX", "stockCode": "000660" }, "industryKey": "memory-chip",          "role": "PRIMARY",
+      "businessNote": { "ko": "[예시] 메모리 반도체" }, "basis": { "sourceId": "EXAMPLE_CURATION" } },
+    { "ref": { "market": "KRX", "stockCode": "042700" }, "industryKey": "semi-equipment",       "role": "PRIMARY",
+      "businessNote": { "ko": "[예시] 후공정 장비" }, "basis": { "sourceId": "EXAMPLE_CURATION" } },
+    { "ref": { "market": "KRX", "stockCode": "357780" }, "industryKey": "semi-materials",       "role": "PRIMARY",
+      "businessNote": { "ko": "[예시] 공정용 소재" }, "basis": { "sourceId": "EXAMPLE_CURATION" } },
+    { "ref": { "market": "KRX", "stockCode": "035420" }, "industryKey": "software-platform",    "role": "PRIMARY",
+      "businessNote": { "ko": "[예시] 검색·플랫폼" }, "basis": { "sourceId": "EXAMPLE_CURATION" } }
+  ],
+
+  "themes": [
+    { "themeKey": "ai", "name": { "ko": "AI" }, "status": "ACTIVE", "validFrom": "2023-01-01", "validTo": null,
+      "description": { "ko": "[예시] 여러 산업의 기업을 가로질러 묶는 테마" } }
+  ],
+  "themeMembers": [
+    { "themeKey": "ai", "ref": { "market": "KRX", "stockCode": "000660" }, "relevance": "CORE",
+      "rationaleCode": "EXAMPLE_HBM_SUPPLY", "basis": { "sourceId": "EXAMPLE_CURATION", "asOf": "2026-10-10" } },
+    { "themeKey": "ai", "ref": { "market": "KRX", "stockCode": "042700" }, "relevance": "RELATED",
+      "rationaleCode": "EXAMPLE_EQUIPMENT", "basis": { "sourceId": "EXAMPLE_CURATION", "asOf": "2026-10-10" } },
+    { "themeKey": "ai", "ref": { "market": "KRX", "stockCode": "035420" }, "relevance": "CORE",
+      "rationaleCode": "EXAMPLE_AI_SERVICE", "basis": { "sourceId": "EXAMPLE_CURATION", "asOf": "2026-10-10" } }
+  ]
+}
