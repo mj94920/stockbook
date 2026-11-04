@@ -89,6 +89,7 @@ jobs:
           echo "branch=$BR" >> "$GITHUB_OUTPUT"
 
       - name: Claude Code (작업 큐)
+        id: queue_claude
         if: github.event_name == 'workflow_dispatch'
         continue-on-error: true   # 턴 제한 등으로 중단돼도 지금까지의 작업은 푸시해 검증·자동수정 단계로 넘긴다
         uses: anthropics/claude-code-action@v1
@@ -118,14 +119,37 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           BR: ${{ steps.prep.outputs.branch }}
+          EXEC_FILE: ${{ steps.queue_claude.outputs.execution_file }}
         run: |
           if [ -n "$(git log origin/main..HEAD --oneline)" ]; then
             git push -u origin HEAD
             echo "branch=$BR" >> "$GITHUB_OUTPUT"
-          else
-            gh issue edit "$ISSUE_NO" --add-label needs-human
-            gh issue comment "$ISSUE_NO" --body "⚠️ Claude 가 커밋을 만들지 못했습니다. 실행 로그를 확인하고 이슈 내용을 보완한 뒤 \`in-progress\` 라벨을 지우고 \`queue\` 라벨을 다시 붙여 주세요."
+            exit 0
           fi
+          gh issue edit "$ISSUE_NO" --add-label needs-human
+
+          # 커밋이 없을 때 원인 구분: 모델을 한 번도 쓰지 못하고 끝났으면(비용 0 + 오류) 이슈 내용이 아니라
+          # 실행 한도·인증 문제다. 실행 기록은 액션 출력 경로, 없으면 기본 경로에서 읽는다.
+          F="${EXEC_FILE:-$RUNNER_TEMP/claude-execution-output.json}"
+          KIND=task
+          if [ -f "$F" ]; then
+            if jq -e '[.[]? | select(.type=="result")] | last | (.is_error == true) and ((.total_cost_usd // 0) == 0)' "$F" >/dev/null 2>&1; then
+              if grep -qiE 'usage limit|rate.?limit|limit reached|quota|overloaded|429' "$F"; then KIND=limit
+              elif grep -qiE 'auth|401|403|invalid.*(token|key)|expired' "$F"; then KIND=auth
+              else KIND=infra
+              fi
+            fi
+          fi
+          echo "실패 구분: $KIND" >> "$GITHUB_STEP_SUMMARY"
+
+          RETRY="리셋·복구 후 \`in-progress\` 라벨을 지우고 \`queue\` 라벨을 다시 붙여 주세요. **이슈 내용은 고칠 필요 없습니다.**"
+          case "$KIND" in
+            limit) MSG="⏸️ **실행 한도로 작업이 시작되지 않았습니다** (모델 사용량 0). Claude 구독 사용 한도를 확인해 주세요. $RETRY" ;;
+            auth)  MSG="🔑 **인증 문제로 작업이 시작되지 않았습니다** (모델 사용량 0). \`CLAUDE_CODE_OAUTH_TOKEN\` 시크릿을 갱신해 주세요(\`claude setup-token\`). $RETRY" ;;
+            infra) MSG="⏸️ **Claude 가 모델을 한 번도 호출하지 못하고 종료됐습니다** (사용량 0). 실행 한도·인증·일시 장애 중 하나입니다. [실행 로그](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})를 확인해 주세요. $RETRY" ;;
+            *)     MSG="⚠️ Claude 가 커밋을 만들지 못했습니다. 실행 로그를 확인하고 이슈 내용을 보완한 뒤 \`in-progress\` 라벨을 지우고 \`queue\` 라벨을 다시 붙여 주세요." ;;
+          esac
+          gh issue comment "$ISSUE_NO" --body "$MSG"
 
       # ── 이슈/댓글 모드 (@claude · claude 라벨) ───────────────────────────
       - name: Claude Code
