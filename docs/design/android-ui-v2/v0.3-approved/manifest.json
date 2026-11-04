@@ -1,0 +1,38 @@
+{
+  "scope": "StockBook mobile v0.3 explicit approvals only",
+  "date": "2026-10-19",
+  "screens": [
+    {
+      "id": "home",
+      "source": "source/home.html",
+      "preview": "home.html",
+      "approval": "explicit-user-design-approval",
+      "approvalEvidence": "통과",
+      "originalFile": "stockbook-mobile-home-integration-review.html",
+      "originalSha256": "c0714cee6240acf99b9243936f90d13b056305596bad618c546d35392bf4dc12",
+      "exportSha256": "fecf8e1f737e53083957dac193b46efd178cf4da7d10f401e99fc691a90efeff",
+      "implementationApproval": false,
+      "previewSha256": "d891be114f831f655cad30580023395dbdeb1b8c98d6d1d3b00f9960ae7883e9"
+    },
+    {
+      "id": "news-disclosures",
+      "source": "source/news-disclosures.html",
+      "preview": "news-disclosures.html",
+      "approval": "explicit-user-design-approval",
+      "approvalEvidence": "음 데이터를 어떻게 가져올 건지는 확실치 않아도 일단 합격",
+      "originalFile": "stockbook-mobile-news-integration-review.html",
+      "originalSha256": "a4f2a78b3472c919f90c798948df1c9da81dd5514b5d81fb0f90071de0cc3995",
+      "exportSha256": "1b716b7d382a88cd1af1b071f2973b8a80608c7e707fdc0691940917f3034f13",
+      "implementationApproval": false,
+      "previewSha256": "5238f5599c5e289a78bae0b54688d04a0a6df135c103c84ce08aa275049a9de5"
+    }
+  ],
+  "excluded": [
+    "market overview integration",
+    "economic calendar integration",
+    "stocks list integration",
+    "stock overview integration",
+    "business integration",
+    "all unreviewed and superseded variants"
+  ]
+}
