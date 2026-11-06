@@ -1,0 +1,7 @@
+.sb-theme-explorer { flex:0 0 auto; min-height:0; max-height:40%; overflow:auto; padding:8px; border-bottom:1px solid var(--sb-border); color:var(--sb-text-1); }
+.sb-theme-explorer p { margin:6px 0; }
+.sb-theme-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
+.sb-theme-grid .sb-btn { white-space:normal; text-align:left; min-width:0; }
+.sb-theme-explorer .sb-btn[aria-pressed="true"] { border-color:var(--sb-accent); color:var(--sb-accent); background:var(--sb-surface); }
+.sb-theme-children { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+@media(max-width:1100px) { .sb-theme-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }

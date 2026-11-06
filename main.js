@@ -443,6 +443,8 @@ async function fetchNaverStockList(market) {
         code:      s.stockCode || s.itemCode || s.etfCode || s.code || s.reutersCode?.split('.')[0] || '',
         name:      s.stockName || s.itemName || s.etfName || s.name || '',
         industry:  s.industryGroupName || s.industryName || (s.industry?.name) || s.sector || '',
+        stockType: s.stockType || '',
+        stockEndType: s.stockEndType || '',
         market,
         price:     parseInt(s.closePriceRaw || (s.closePrice || s.currentPrice || s.price || '0').replace(/,/g,''), 10),
         change:    parseInt(s.compareToPreviousClosePriceRaw || (s.compareToPreviousClosePrice || s.priceChange || s.change || '0').replace(/,/g,''), 10),

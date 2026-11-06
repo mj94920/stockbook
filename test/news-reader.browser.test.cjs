@@ -267,6 +267,7 @@ test('news catalog clicks and Enter keep the news workspace and load the selecte
   assert.equal(await page.locator('#mdiWorkspace').getAttribute('data-dock-screen'),'news');
   // Sector rows use the same navigation as the ordinary catalog.
   await page.evaluate(()=>{renderAllStockSectorView();});
+  await page.locator('[data-theme-group="반도체"]').click();
   await page.locator('#allStockBody tr[data-code="000660"] td').nth(1).click();
   await page.waitForFunction(()=>!_ic.loading&&_ic.items[0]?.code==='000660');
   assert.equal(await page.locator('#mdiWorkspace').getAttribute('data-dock-screen'),'news');
@@ -278,5 +279,63 @@ test('news catalog clicks and Enter keep the news workspace and load the selecte
   await page.locator('#asr-000660 td').nth(1).click();
   assert.equal(await page.locator('#mdiWorkspace').getAttribute('data-dock-screen'),'trading');
   assert.equal(await page.locator('#qo_stock_code').inputValue(),'000660');assert.deepEqual(errors,[]);
+ }finally{await browser?.close();await new Promise(r=>server.close(r));}
+});
+
+test('theme classification separates funds, known semiconductor businesses, unknowns and multiple themes without duplicate stocks',()=>{
+ const themes=require('../src/desktop/themes.js');
+ assert.deepEqual(themes.classify({code:'399720',name:'가온칩스'})[0].leaf,'설계·IP');
+ assert.equal(themes.classify({code:'396270',name:'넥스트칩'})[0].group,'반도체');
+ assert.equal(themes.classify({code:'403870',name:'HPSP'})[0].leaf,'장비');
+ assert.equal(themes.classify({code:'0183V0',name:'KIWOOM 삼성전자SK하이닉스채권혼합50'},'반도체')[0].group,'ETF·ETN');
+ assert.equal(themes.classify({code:'190001',name:'삼성전자 추종 상품',stockType:'ETF'},'반도체')[0].group,'ETF·ETN');
+ assert.equal(themes.classify({code:'190002',name:'정보 없는 종목'})[0].group,'분류 확인 필요');
+ assert.equal(themes.classify({code:'190003',name:'기존 분류 종목'},'전기전자/반도체')[0].leaf,'세부분류 확인 필요');
+ assert.deepEqual(themes.classify({code:'190004',industry:'반도체장비 배터리장비'}).map(p=>p.group),['반도체','이차전지']);
+ const stocks=[{code:'012450',name:'한화에어로스페이스'}, {code:'012450',name:'중복'}];
+ assert.equal(themes.index(stocks).length,1);assert.equal(themes.index(stocks)[0].paths.length,2);assert.equal(stocks.length,2);
+});
+
+test('theme browser drills from large themes to children, searches, separates ETFs and keeps the table usable',async()=>{
+ const root=path.resolve(__dirname,'..');const server=createServer(async(req,res)=>{try{const target=path.resolve(root,'.'+new URL(req.url,'http://x').pathname);if(!target.startsWith(root+path.sep))throw Error();res.setHeader('Content-Type',target.endsWith('.html')?'text/html; charset=utf-8':target.endsWith('.js')?'text/javascript':target.endsWith('.css')?'text/css':'application/octet-stream');res.end(await fs.readFile(target));}catch{res.writeHead(404);res.end();}});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;let browser;
+ try{
+  browser=await chromium.launch();const page=await browser.newPage({viewport:{width:1400,height:900}});const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort());await page.goto(base+'/index.html');
+  await page.evaluate(()=>{
+   _allStockRaw={KOSPI:[
+    {code:'005930',name:'삼성전자',market:'KOSPI'}, {code:'399720',name:'가온칩스',market:'KOSPI'},
+    {code:'403870',name:'HPSP',market:'KOSPI'}, {code:'005290',name:'동진쎄미켐',market:'KOSPI'},
+    {code:'0183V0',name:'KIWOOM 삼성전자SK하이닉스채권혼합50',market:'KOSPI'},
+    {code:'190002',name:'정보 없는 종목',market:'KOSPI'}, {code:'012450',name:'한화에어로스페이스',market:'KOSPI'}
+   ],KOSDAQ:[{code:'396270',name:'넥스트칩',market:'KOSDAQ'}]};
+   window._MDIPanelTab('watchlist','as');switchAllMarket('SECTOR');
+  });
+  assert.equal(await page.locator('#allStockBody tr[data-code]').count(),0);
+  await page.locator('[data-theme-group="반도체"]').click();
+  assert.equal(await page.locator('#allStockBody tr[data-code]').count(),5);
+  assert.equal(await page.locator('#allStockBody tr[data-code="0183V0"]').count(),0);
+  await page.locator('[data-theme-leaf="설계·IP"]').click();
+  assert.equal(await page.locator('#allStockBody tr[data-code]').count(),2);
+  assert.match(await page.locator('#allStockBody').innerText(),/가온칩스/);
+  await page.locator('#sbThemeExplorer').getByRole('button',{name:'반도체 전체',exact:true}).click();
+  assert.equal(await page.locator('#allStockBody tr[data-code]').count(),5);
+  await page.locator('[data-theme-group="방산·우주"]').click();
+  assert.equal(await page.locator('#allStockBody tr[data-code]').count(),1);
+  assert.equal(await page.locator('[data-theme-leaf]').count(),2);
+  await page.locator('[data-theme-group="ETF·ETN"]').click();assert.equal(await page.locator('#allStockBody tr[data-code]').count(),1);
+  await page.locator('[data-theme-group="분류 확인 필요"]').click();assert.match(await page.locator('#allStockBody').innerText(),/정보 없는 종목/);
+  await page.locator('#allStockSearch').fill('장비');await page.locator('[data-theme-group="반도체"]').click();
+  assert.equal(await page.locator('#allStockBody tr[data-code]').count(),1);assert.match(await page.locator('#allStockBody').innerText(),/HPSP/);
+  await page.locator('#allStockSearch').fill('없는검색어');assert.equal(await page.locator('#allStockBody tr[data-code]').count(),0);
+  await page.locator('#allStockSearch').fill('');await page.locator('[data-theme-group="반도체"]').click();
+  await page.evaluate(()=>setTheme('dark'));await page.waitForTimeout(250);
+  await page.screenshot({path:'/tmp/stockbook-theme-dark.png'});
+  await page.setViewportSize({width:1000,height:800});await page.evaluate(()=>setTheme('light'));await page.waitForTimeout(250);
+  assert.equal(await page.locator('#sbThemeExplorer').evaluate(el=>el.scrollWidth<=el.clientWidth+1),true);
+  await page.screenshot({path:'/tmp/stockbook-theme-light.png'});
+  await page.locator('#allMktTab-KOSPI').click();assert.equal(await page.locator('#sbThemeExplorer').isVisible(),false);
+  assert.equal(await page.locator('#allStockBody tr[data-code]').count(),7);
+  await page.locator('#allMktTab-SECTOR').click();assert.equal(await page.locator('#sbThemeExplorer').isVisible(),true);
+  assert.deepEqual(errors,[]);
  }finally{await browser?.close();await new Promise(r=>server.close(r));}
 });

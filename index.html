@@ -3530,6 +3530,7 @@
 
 </style>
 <link rel="stylesheet" href="src/chart/chart.css">
+<link rel="stylesheet" href="src/desktop/themes.css">
 </head>
 <body>
 
@@ -6785,6 +6786,8 @@ function renderAllStockTab() {
 function switchAllMarket(mkt) {
   if (mkt === 'ETF') mkt = 'KOSPI'; // ETF 탭 제거됨 — KOSPI로 폴백
   _allMkt = mkt;
+  const themeHost=document.getElementById('sbThemeExplorer');if(themeHost)themeHost.hidden=mkt!=='SECTOR'&&mkt!=='ETF';
+  const classificationHead=document.querySelector('#allStockTable thead th:nth-child(4)');if(classificationHead)classificationHead.textContent=mkt==='SECTOR'?'세부 테마':'업종';
   ['KOSPI','KOSDAQ','SECTOR'].forEach(m => {
     const btn = document.getElementById('allMktTab-' + m);
     if (!btn) return;
@@ -6935,114 +6938,17 @@ async function _loadEtfData() {
 
 // 전종목 섹터별/ETF 그룹 뷰
 function renderAllStockSectorView(searchQ) {
-  const bodyEl = document.getElementById('allStockBody');
-  if (!bodyEl) return;
-  const q = (searchQ !== undefined ? searchQ : (document.getElementById('allStockSearch')?.value||'')).toLowerCase().trim();
-
-  const isEtfMode = (_allMkt === 'ETF');
-
-  // 데이터 소스 분기
-  let rawData;
-  if (isEtfMode) {
-    rawData = _allStockRaw['ETF'] || [];
-    if (!rawData.length) { _loadEtfData(); return; }
-  } else {
-    rawData = [...(_allStockRaw['KOSPI']||[]), ...(_allStockRaw['KOSDAQ']||[])];
-    if (!rawData.length) {
-      bodyEl.closest('table').parentElement.innerHTML =
-        `<div style="text-align:center;padding:40px;color:var(--text3);">
-          섹터별 분류를 위해 KOSPI/KOSDAQ 데이터를 먼저 불러옵니다...<br>
-          <button onclick="_loadSectorData()" style="margin-top:12px;padding:7px 18px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">데이터 불러오기</button>
-        </div>`;
-      return;
-    }
-  }
-
-  // 검색 필터 적용
-  const allData = q ? rawData.filter(s =>
-    (s.name||'').toLowerCase().includes(q) ||
-    (s.code||'').includes(q) ||
-    (s.industry||'').toLowerCase().includes(q)
-  ) : rawData;
-
-  // 분류 함수 분기
-  const sectors = {};
-  allData.forEach(s => {
-    let sec;
-    if (isEtfMode) {
-      sec = _getAutoETFTheme(s.name || '');
-    } else {
-      sec = _getAutoSector(s.name || s.ISU_ABBRV || '', s.industry || '');
-      // ETF/인덱스 섹터는 포함하되 목록 맨 뒤에 배치 (sort 로직에서 처리)
-    }
-    if (!sectors[sec]) sectors[sec] = [];
-    sectors[sec].push(s);
-  });
-  const lastKey = isEtfMode ? '기타ETF' : '기타';
-  const etfKey = 'ETF/인덱스';
-  const secNames = Object.keys(sectors).sort((a,b) => {
-    if (a===lastKey) return 1; if (b===lastKey) return -1;
-    if (a===etfKey) return 1; if (b===etfKey) return -1;
-    return a.localeCompare(b,'ko');
-  });
-  const countEl = document.getElementById('allStockCount');
-  const countSuffix = q ? ` · "${q}" 검색` : '';
-  const groupLabel = isEtfMode ? '테마' : '섹터';
-  if (countEl) countEl.textContent = `(${allData.length.toLocaleString()}종목 / ${secNames.length}${groupLabel}${countSuffix})`;
-
-  const fmt = n => n > 0 ? n.toLocaleString('ko-KR') : '-';
-  const capStr = mc => mc > 0 ? Math.round(mc/100000000).toLocaleString()+'억' : '-';
-
-  // 섹터 그룹 렌더
-  const table = bodyEl.closest('table');
-  let html = '';
-  secNames.forEach(sec => {
-    const stocks = sectors[sec];
-    const totalCap = stocks.reduce((a,s)=>(a + (s.marketCap||0)), 0);
-    html += `<tr>
-      <td colspan="13" onclick="_toggleSector(this,'${sec.replace(/'/g,"\\'")}')"
-        style="background:var(--bg2);padding:8px 12px;cursor:pointer;font-weight:700;color:var(--accent);font-size:13px;user-select:none;">
-        ▶ ${sec} <span style="font-size:11px;font-weight:400;color:var(--text3);margin-left:8px;">${stocks.length}종목 · 시총 ${capStr(totalCap)}</span>
-      </td>
-    </tr>`;
-    stocks.sort((a,b)=>(b.marketCap||0)-(a.marketCap||0)).forEach(s => {
-      const up = (s.changePct||0) >= 0;
-      const cls = s.change === 0 ? '' : (up ? 'up' : 'dn');
-      const safeCode = (s.code||'').replace(/'/g,'');
-      const safeName = (s.name||'').replace(/'/g,'').replace(/"/g,'');
-      const isW = (state.watchlist||[]).some(w => w.ticker === safeCode);
-      html += `<tr class="sector-row-${sec.replace(/[^a-z0-9가-힣]/gi,'_')}"
-        style="cursor:pointer;" data-code="${safeCode}" data-name="${safeName}"
-        onclick="selectStockFromList('${safeCode}','${safeName}')">
-        <td style="text-align:center;width:28px;padding:2px 3px;" onclick="event.stopPropagation();_toggleAllWatch('${safeCode}','${safeName}')" title="${isW?'관심 해제':'관심 추가'}">
-          <span style="font-size:13px;color:${isW?'gold':'var(--text3)'};">${isW?'★':'☆'}</span>
-        </td>
-        <td style="font-weight:600;white-space:nowrap;">${_cleanName(s.name)}</td>
-        <td style="font-family:monospace;font-size:11px;color:var(--text3);">${s.code||''}</td>
-        <td style="font-size:11px;color:var(--text3);">${s.industry||'-'}</td>
-        <td style="text-align:right;font-weight:600;">${fmt(s.price)}</td>
-        <td class="${cls}" style="text-align:right;">${s.change===0?'—':(up?'▲':'▼')+' '+Math.abs(s.change||0).toLocaleString()}</td>
-        <td class="${cls}" style="text-align:right;font-weight:600;">${!s.changePct?'0.00%':(up?'+':'')+Number(s.changePct).toFixed(2)+'%'}</td>
-        <td style="text-align:right;font-size:11px;">${s.volume>0?s.volume.toLocaleString():'-'}</td>
-        <td style="text-align:right;font-size:11px;">${capStr(s.marketCap)}</td>
-        <td colspan="3" style="font-size:11px;color:var(--text3);text-align:center;">-</td>
-        <td style="text-align:center;padding:2px 3px;" onclick="event.stopPropagation();allStockOpenChart('${safeCode}','${safeName}')" title="기업분석">
-          <button style="padding:1px 6px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-size:10px;cursor:pointer;">분석</button>
-        </td>
-      </tr>`;
-    });
-  });
-  bodyEl.innerHTML = html;
-}
-
-function _toggleSector(tr, sec) {
-  const cls = 'sector-row-' + sec.replace(/[^a-z0-9가-힣]/gi,'_');
-  const rows = tr.closest('tbody').querySelectorAll('.' + cls);
-  const hidden = rows.length && rows[0].style.display === 'none';
-  rows.forEach(r => r.style.display = hidden ? '' : 'none');
-  tr.querySelector('span:first-child') && (tr.innerHTML = tr.innerHTML.replace(hidden?'▶':'▼', hidden?'▼':'▶'));
-  const arrow = tr.querySelector('td');
-  if (arrow) arrow.textContent = arrow.textContent.replace(hidden?'▶':'▼', hidden?'▼':'▶');
+  const body = document.getElementById('allStockBody');
+  const table = body?.closest('table');if (!table) return;
+  let host=document.getElementById('sbThemeExplorer');
+  if(!host){host=document.createElement('div');host.id='sbThemeExplorer';host.className='sb-theme-explorer';table.parentElement.before(host);}
+  host.hidden=false;
+  const query=searchQ ?? document.getElementById('allStockSearch')?.value ?? '';
+  const stocks=_allMkt==='ETF'?(_allStockRaw.ETF||[]):[...(_allStockRaw.KOSPI||[]),...(_allStockRaw.KOSDAQ||[])];
+  _allFiltered=window.StockBookThemeBrowser?.render({stocks,host,query,getHint:s=>_getAutoSector(s.name,s.industry),onChange:()=>renderAllStockSectorView()})||[];
+  allStockPage=1;renderAllStockTable();
+  const count=document.getElementById('allStockCount');if(count)count.textContent='(수신 '+new Set(stocks.map(s=>s.code)).size.toLocaleString()+'종목 · 선택 '+_allFiltered.length+'종목)';
+  if(!_allFiltered.length)body.innerHTML='<tr><td colspan="15">큰 테마를 선택하거나 검색 조건을 확인하세요.</td></tr>';
 }
 
 async function _loadSectorData() {
@@ -7169,7 +7075,7 @@ function renderAllStockTable() {
         </td>
         <td style="font-weight:600;white-space:nowrap;">${_cleanName(s.name)}</td>
         <td style="font-family:monospace;font-size:11px;color:var(--text3);">${s.code || ''}</td>
-        <td style="font-size:11px;color:var(--text3);white-space:nowrap;">${s.industry || '-'}</td>
+        <td title="${escHtml(s.themeBasis || s.industry || '')}" style="font-size:11px;color:var(--text3);white-space:nowrap;">${escHtml(s.themeLabel || s.industry || '-')}</td>
         <td id="${rowId}-price" style="text-align:right;font-weight:600;">${priceStr}</td>
         <td id="${rowId}-chg" style="text-align:right;" class="${cls}">${arrow}</td>
         <td id="${rowId}-pct" style="text-align:right;font-weight:600;" class="${cls}">${pctStr}</td>
@@ -14863,6 +14769,8 @@ function wlAssignGroup(idx, gName) {
   </div>
 </div>
 <script src="src/desktop/stock-selection.js"></script>
+<script src="src/desktop/themes.js"></script>
+<script src="src/desktop/theme-browser.js"></script>
 <script src="src/news/page-client.js"></script>
 <script src="src/desktop/shortcuts.js"></script>
 <script>StockBookShortcuts.mount(SB_MODAL_CLOSERS);</script>
