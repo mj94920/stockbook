@@ -7013,7 +7013,7 @@ function renderAllStockSectorView(searchQ) {
       const isW = (state.watchlist||[]).some(w => w.ticker === safeCode);
       html += `<tr class="sector-row-${sec.replace(/[^a-z0-9가-힣]/gi,'_')}"
         style="cursor:pointer;" data-code="${safeCode}" data-name="${safeName}"
-        onclick="connectToHoga('${safeCode}','${safeName}')">
+        onclick="selectStockFromList('${safeCode}','${safeName}')">
         <td style="text-align:center;width:28px;padding:2px 3px;" onclick="event.stopPropagation();_toggleAllWatch('${safeCode}','${safeName}')" title="${isW?'관심 해제':'관심 추가'}">
           <span style="font-size:13px;color:${isW?'gold':'var(--text3)'};">${isW?'★':'☆'}</span>
         </td>
@@ -7162,7 +7162,7 @@ function renderAllStockTable() {
       const hasFund = !!(epsRaw || roeRaw);
       return `<tr id="${rowId}" tabindex="0" data-code="${safeCode}" data-name="${safeName}"
           style="cursor:pointer;outline:none;"
-          onclick="connectToHoga('${safeCode}','${safeName}')"
+          onclick="selectStockFromList('${safeCode}','${safeName}')"
           onkeydown="_allRowKey(event,this,'${safeCode}','${safeName}')">
         <td style="text-align:center;width:26px;padding:2px 3px;" onclick="event.stopPropagation();_toggleAllWatch('${safeCode}','${safeName}')" title="${isW?'관심 해제':'관심 추가'}">
           <span style="font-size:13px;color:${isW?'gold':'var(--text3)'};">${isW?'★':'☆'}</span>
@@ -7394,6 +7394,13 @@ function allStockAddWatch(code, name, market) {
 }
 
 // ─── 전종목 키보드/호가 연결 함수 ───────────────────────────────
+function selectStockFromList(code, name) {
+  if (document.getElementById('mdiWorkspace')?.dataset.dockScreen === 'news') {
+    if (sbSelectInstrument(code, name)) icSelectStock(code);
+    return;
+  }
+  connectToHoga(code, name);
+}
 function connectToHoga(code, name) {
   if(code && (window._dockSel!==code || !sbSelectedStock()))sbSelectInstrument(code,name);
   if (document.getElementById('qo_stock_code')?.value !== code) {
@@ -7480,7 +7487,7 @@ function _allRowKey(e, el, code, name) {
     if (prev) { prev.focus(); prev.scrollIntoView({ block: 'nearest' }); }
   } else if (e.key === 'Enter') {
     e.preventDefault();
-    connectToHoga(code, name);
+    selectStockFromList(code, name);
   } else if (e.key === 'Escape') {
     document.getElementById('allStockSearch')?.focus();
   }

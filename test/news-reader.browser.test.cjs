@@ -240,3 +240,39 @@ test('stock news prioritizes current and searched instruments over holdings, ret
   assert.equal(await page.evaluate(()=>state.portfolio[0].ticker),'005930');assert.deepEqual(errors,[]);
  }finally{await browser?.close();await new Promise(r=>server.close(r));}
 });
+
+test('news catalog clicks and Enter keep the news workspace and load the selected stock',async()=>{
+ const root=path.resolve(__dirname,'..');const server=createServer(async(req,res)=>{try{const target=path.resolve(root,'.'+new URL(req.url,'http://x').pathname);if(!target.startsWith(root+path.sep))throw Error();res.setHeader('Content-Type',target.endsWith('.html')?'text/html; charset=utf-8':target.endsWith('.js')?'text/javascript':target.endsWith('.css')?'text/css':'application/octet-stream');res.end(await fs.readFile(target));}catch{res.writeHead(404);res.end();}});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;let browser;
+ try{
+  browser=await chromium.launch();const page=await browser.newPage({viewport:{width:1400,height:900}});const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort());await page.goto(base+'/index.html');
+  await page.evaluate(()=>{
+   state.watchlist=[{ticker:'005930',name:'합성 종목 A',quoteAt:Date.now()}];
+   _allStockRaw={KOSPI:[{code:'005930',name:'합성 종목 A',price:100},{code:'000660',name:'합성 종목 B',price:200}]};
+   window.__newsRequests=[];window.electronAPI={fetchNews:async opts=>{window.__newsRequests.push(opts);return {ok:true,items:opts.code?[{id:opts.code,code:opts.code,title:opts.code+' 합성 기사'}]:[]};}};
+   window._MDIPanelTab('watchlist','as');filterAndRenderAll();window._MDI.show('news');icSetTab('stock');
+   document.getElementById('qo_price').value='123';document.getElementById('qo_qty').value='7';
+  });
+  await page.locator('#asr-000660 td').nth(1).click();
+  assert.equal(await page.locator('#mdiWorkspace').getAttribute('data-dock-screen'),'news');
+  await page.waitForFunction(()=>!_ic.loading&&_ic.items[0]?.code==='000660');
+  assert.equal(await page.evaluate(()=>window._dockSel),'000660');
+  assert.equal(await page.locator('#qo_price').inputValue(),'123');assert.equal(await page.locator('#qo_qty').inputValue(),'7');
+  await page.locator('#asr-005930').focus();await page.locator('#asr-005930').press('Enter');
+  await page.waitForFunction(()=>!_ic.loading&&_ic.items[0]?.code==='005930');
+  assert.equal(await page.locator('#mdiWorkspace').getAttribute('data-dock-screen'),'news');
+  // Sector rows use the same navigation as the ordinary catalog.
+  await page.evaluate(()=>{renderAllStockSectorView();});
+  await page.locator('#allStockBody tr[data-code="000660"] td').nth(1).click();
+  await page.waitForFunction(()=>!_ic.loading&&_ic.items[0]?.code==='000660');
+  assert.equal(await page.locator('#mdiWorkspace').getAttribute('data-dock-screen'),'news');
+  await page.evaluate(()=>{window._MDIPanelTab('watchlist','wl');});await page.locator('#wl-row-005930 td').nth(1).click({position:{x:8,y:8}});
+  await page.waitForFunction(()=>!_ic.loading&&_ic.items[0]?.code==='005930');
+  assert.equal(await page.locator('#mdiWorkspace').getAttribute('data-dock-screen'),'news');
+  // Catalog selection outside news still navigates to trading.
+  await page.evaluate(()=>{window._MDI.show('watchlist');window._MDIPanelTab('watchlist','as');filterAndRenderAll();});
+  await page.locator('#asr-000660 td').nth(1).click();
+  assert.equal(await page.locator('#mdiWorkspace').getAttribute('data-dock-screen'),'trading');
+  assert.equal(await page.locator('#qo_stock_code').inputValue(),'000660');assert.deepEqual(errors,[]);
+ }finally{await browser?.close();await new Promise(r=>server.close(r));}
+});
