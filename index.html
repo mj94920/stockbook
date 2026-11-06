@@ -3740,10 +3740,10 @@
       </div>
       <div class="mdi-body" id="mdi-body-watchlist">
   <div class="mdi-ptab-bar">
-    <button class="mdi-ptab" onclick="window._MDIPanelTab('watchlist','as')">전종목</button>
-    <button class="mdi-ptab active" onclick="window._MDIPanelTab('watchlist','wl')">★ 관심종목</button>
+    <button class="mdi-ptab active" onclick="window._MDIPanelTab('watchlist','as')">전종목</button>
+    <button class="mdi-ptab" onclick="window._MDIPanelTab('watchlist','wl')">★ 관심종목</button>
   </div>
-  <div class="mdi-ptab-pane" id="mdi-ptc-watchlist-wl" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden">
+  <div class="mdi-ptab-pane" id="mdi-ptc-watchlist-wl" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden">
     <!-- ① 통합 검색창 (종목 추가 + 관심종목 필터) -->
     <div style="padding:8px 10px 4px;flex-shrink:0;">
       <div style="display:flex;gap:6px;align-items:center;">
@@ -3769,7 +3769,7 @@
     <!-- ③ 관심종목 리스트 -->
     <div id="watchlistBody" style="flex:1;overflow:auto;min-height:0;"></div>
   </div>
-  <div class="mdi-ptab-pane" id="mdi-ptc-watchlist-as" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
+  <div class="mdi-ptab-pane" id="mdi-ptc-watchlist-as" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
   <!-- 고정 헤더 -->
   <div style="flex-shrink:0;padding:6px 8px 0;">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;margin-bottom:5px;">
@@ -13214,7 +13214,6 @@ function _toggleCheck(stockKey, checkKey, val) {
         else this._render('watchlist');
         renderSummary();
       }
-      if (pid === 'watchlist') try { window._MDIPanelTab('watchlist', 'wl'); } catch(e) {}
       dockQueueSubscription();
     },
 
@@ -13549,6 +13548,7 @@ function _toggleCheck(stockKey, checkKey, val) {
         if (this._dockReady) return;   // 창 크기 변경·사이드바 접기 때 재렌더 방지 (CSS grid 가 처리)
         this._dockReady = true;
         this.show(this.DOCK_HOME);
+        window._MDIPanelTab?.('watchlist', 'as');
         return;
       }
       const layout = this._layout();

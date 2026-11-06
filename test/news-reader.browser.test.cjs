@@ -246,6 +246,10 @@ test('news catalog clicks and Enter keep the news workspace and load the selecte
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;let browser;
  try{
   browser=await chromium.launch();const page=await browser.newPage({viewport:{width:1400,height:900}});const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort());await page.goto(base+'/index.html');
+  assert.equal(await page.locator('#mdi-ptc-watchlist-as').isVisible(),true);
+  assert.equal(await page.locator('#mdi-ptc-watchlist-wl').isVisible(),false);
+  await page.evaluate(()=>{window._MDIPanelTab('watchlist','wl');window._MDI.show('news');window._MDI.show('watchlist');});
+  assert.equal(await page.locator('#mdi-ptc-watchlist-wl').isVisible(),true);
   await page.evaluate(()=>{
    state.watchlist=[{ticker:'005930',name:'합성 종목 A',quoteAt:Date.now()}];
    _allStockRaw={KOSPI:[{code:'005930',name:'합성 종목 A',price:100},{code:'000660',name:'합성 종목 B',price:200}]};
