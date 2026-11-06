@@ -6787,7 +6787,7 @@ function switchAllMarket(mkt) {
   if (mkt === 'ETF') mkt = 'KOSPI'; // ETF 탭 제거됨 — KOSPI로 폴백
   _allMkt = mkt;
   const themeHost=document.getElementById('sbThemeExplorer');if(themeHost)themeHost.hidden=mkt!=='SECTOR'&&mkt!=='ETF';
-  const classificationHead=document.querySelector('#allStockTable thead th:nth-child(4)');if(classificationHead)classificationHead.textContent=mkt==='SECTOR'?'세부 테마':'업종';
+  const classificationHead=document.querySelector('#allStockTable thead th:nth-child(4)');if(classificationHead)classificationHead.textContent='업종';
   ['KOSPI','KOSDAQ','SECTOR'].forEach(m => {
     const btn = document.getElementById('allMktTab-' + m);
     if (!btn) return;
@@ -6945,10 +6945,11 @@ function renderAllStockSectorView(searchQ) {
   host.hidden=false;
   const query=searchQ ?? document.getElementById('allStockSearch')?.value ?? '';
   const stocks=_allMkt==='ETF'?(_allStockRaw.ETF||[]):[...(_allStockRaw.KOSPI||[]),...(_allStockRaw.KOSDAQ||[])];
-  _allFiltered=window.StockBookThemeBrowser?.render({stocks,host,query,getHint:s=>_getAutoSector(s.name,s.industry),onChange:()=>renderAllStockSectorView()})||[];
+  _allFiltered=window.StockBookThemeBrowser?.render({stocks,host,query,onChange:()=>renderAllStockSectorView()})||[];
   allStockPage=1;renderAllStockTable();
-  const count=document.getElementById('allStockCount');if(count)count.textContent='(수신 '+new Set(stocks.map(s=>s.code)).size.toLocaleString()+'종목 · 선택 '+_allFiltered.length+'종목)';
-  if(!_allFiltered.length)body.innerHTML='<tr><td colspan="15">큰 테마를 선택하거나 검색 조건을 확인하세요.</td></tr>';
+  const count=document.getElementById('allStockCount');if(count)count.textContent='(업종자료 '+(window.StockBookThemes?.size||0).toLocaleString()+'종목 · 선택 '+_allFiltered.length+'종목)';
+  const status=document.getElementById('allStockStatus');if(status)status.textContent='네이버 업종 '+(window.StockBookThemes?.asOf||'')+' · 시세 미수신 종목은 - 표시';
+  if(!_allFiltered.length)body.innerHTML='<tr><td colspan="15">큰 업종을 선택하거나 검색 조건을 확인하세요.</td></tr>';
 }
 
 async function _loadSectorData() {
@@ -7046,9 +7047,10 @@ function renderAllStockTable() {
   } else {
     bodyEl.innerHTML = slice.map(s => {
       const up       = (s.changePct || 0) >= 0;
-      const cls      = s.change === 0 ? '' : (up ? 'up' : 'dn');
-      const arrow    = s.change === 0 ? '—' : (up ? '▲' : '▼') + ' ' + Math.abs(s.change || 0).toLocaleString();
-      const pctStr   = !s.changePct ? '0.00%' : (up ? '+' : '') + Number(s.changePct).toFixed(2) + '%';
+      const quoteMissing = s.themeBasis && !(s.price > 0);
+      const cls      = quoteMissing || s.change === 0 ? '' : (up ? 'up' : 'dn');
+      const arrow    = quoteMissing ? '-' : s.change === 0 ? '—' : (up ? '▲' : '▼') + ' ' + Math.abs(s.change || 0).toLocaleString();
+      const pctStr   = quoteMissing ? '-' : !s.changePct ? '0.00%' : (up ? '+' : '') + Number(s.changePct).toFixed(2) + '%';
       const capStr   = s.marketCap > 0 ? Math.round(s.marketCap / 100000000).toLocaleString() : '-';
       const volStr   = s.volume > 0 ? s.volume.toLocaleString() : '-';
       const priceStr = s.price > 0 ? s.price.toLocaleString() : '-';
@@ -7353,7 +7355,7 @@ function _toggleAllWatch(code, name) {
     save?.();
     if (typeof showToast === 'function') showToast(`★ ${name} 관심 해제`);
   } else {
-    const mkt = _allMkt || 'KOSPI';
+    const mkt = _allFiltered.find(s=>s.code===code)?.market || _allMkt || 'KOSPI';
     state.watchlist.push({ ticker: code, name, market: mkt, addedAt: Date.now() });
     save?.();
     if (typeof showToast === 'function') showToast(`★ ${name} 관심 추가`);
@@ -14769,6 +14771,7 @@ function wlAssignGroup(idx, gName) {
   </div>
 </div>
 <script src="src/desktop/stock-selection.js"></script>
+<script src="src/desktop/industry-data.js"></script>
 <script src="src/desktop/themes.js"></script>
 <script src="src/desktop/theme-browser.js"></script>
 <script src="src/news/page-client.js"></script>

@@ -1,0 +1,1337 @@
+{
+  "startedAtUTC": "2026-11-06T13:51:44.554553+00:00",
+  "finishedAtUTC": "2026-11-06T13:52:21.985363+00:00",
+  "source": "https://m.stock.naver.com/api/stocks/industry?page=1&pageSize=100",
+  "expectedGroups": 79,
+  "verifiedGroups": 79,
+  "failedGroups": [],
+  "expectedMemberships": 4425,
+  "receivedMemberships": 4425,
+  "uniqueSecurities": 4425,
+  "productTypes": {
+    "etn": 363,
+    "etf": 1184,
+    "stock": 2771,
+    "konex": 107
+  },
+  "overlappingCodes": {},
+  "groups": [
+    {
+      "industryCode": 25,
+      "industryName": "기타",
+      "reportedCount": 1549,
+      "receivedCount": 1549,
+      "productTypes": {
+        "etn": 363,
+        "etf": 1184,
+        "stock": 2
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 100
+        },
+        {
+          "page": 2,
+          "count": 100
+        },
+        {
+          "page": 3,
+          "count": 100
+        },
+        {
+          "page": 4,
+          "count": 100
+        },
+        {
+          "page": 5,
+          "count": 100
+        },
+        {
+          "page": 6,
+          "count": 100
+        },
+        {
+          "page": 7,
+          "count": 100
+        },
+        {
+          "page": 8,
+          "count": 100
+        },
+        {
+          "page": 9,
+          "count": 100
+        },
+        {
+          "page": 10,
+          "count": 100
+        },
+        {
+          "page": 11,
+          "count": 100
+        },
+        {
+          "page": 12,
+          "count": 100
+        },
+        {
+          "page": 13,
+          "count": 100
+        },
+        {
+          "page": 14,
+          "count": 100
+        },
+        {
+          "page": 15,
+          "count": 100
+        },
+        {
+          "page": 16,
+          "count": 49
+        }
+      ]
+    },
+    {
+      "industryCode": 261,
+      "industryName": "제약",
+      "reportedCount": 174,
+      "receivedCount": 174,
+      "productTypes": {
+        "stock": 169,
+        "konex": 5
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 100
+        },
+        {
+          "page": 2,
+          "count": 74
+        }
+      ]
+    },
+    {
+      "industryCode": 262,
+      "industryName": "생명과학도구및서비스",
+      "reportedCount": 41,
+      "receivedCount": 41,
+      "productTypes": {
+        "stock": 38,
+        "konex": 3
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 41
+        }
+      ]
+    },
+    {
+      "industryCode": 263,
+      "industryName": "게임엔터테인먼트",
+      "reportedCount": 34,
+      "receivedCount": 34,
+      "productTypes": {
+        "stock": 33,
+        "konex": 1
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 34
+        }
+      ]
+    },
+    {
+      "industryCode": 264,
+      "industryName": "백화점과일반상점",
+      "reportedCount": 14,
+      "receivedCount": 14,
+      "productTypes": {
+        "stock": 14
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 14
+        }
+      ]
+    },
+    {
+      "industryCode": 265,
+      "industryName": "판매업체",
+      "reportedCount": 13,
+      "receivedCount": 13,
+      "productTypes": {
+        "stock": 12,
+        "konex": 1
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 13
+        }
+      ]
+    },
+    {
+      "industryCode": 266,
+      "industryName": "화장품",
+      "reportedCount": 64,
+      "receivedCount": 64,
+      "productTypes": {
+        "stock": 62,
+        "konex": 2
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 64
+        }
+      ]
+    },
+    {
+      "industryCode": 267,
+      "industryName": "IT서비스",
+      "reportedCount": 119,
+      "receivedCount": 119,
+      "productTypes": {
+        "stock": 112,
+        "konex": 7
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 100
+        },
+        {
+          "page": 2,
+          "count": 19
+        }
+      ]
+    },
+    {
+      "industryCode": 268,
+      "industryName": "식품",
+      "reportedCount": 90,
+      "receivedCount": 90,
+      "productTypes": {
+        "stock": 87,
+        "konex": 3
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 90
+        }
+      ]
+    },
+    {
+      "industryCode": 269,
+      "industryName": "디스플레이장비및부품",
+      "reportedCount": 72,
+      "receivedCount": 72,
+      "productTypes": {
+        "stock": 67,
+        "konex": 5
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 72
+        }
+      ]
+    },
+    {
+      "industryCode": 270,
+      "industryName": "자동차부품",
+      "reportedCount": 153,
+      "receivedCount": 153,
+      "productTypes": {
+        "stock": 150,
+        "konex": 3
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 100
+        },
+        {
+          "page": 2,
+          "count": 53
+        }
+      ]
+    },
+    {
+      "industryCode": 271,
+      "industryName": "레저용장비와제품",
+      "reportedCount": 13,
+      "receivedCount": 13,
+      "productTypes": {
+        "stock": 11,
+        "konex": 2
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 13
+        }
+      ]
+    },
+    {
+      "industryCode": 272,
+      "industryName": "화학",
+      "reportedCount": 122,
+      "receivedCount": 122,
+      "productTypes": {
+        "konex": 3,
+        "stock": 119
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 100
+        },
+        {
+          "page": 2,
+          "count": 22
+        }
+      ]
+    },
+    {
+      "industryCode": 273,
+      "industryName": "자동차",
+      "reportedCount": 12,
+      "receivedCount": 12,
+      "productTypes": {
+        "stock": 12
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 12
+        }
+      ]
+    },
+    {
+      "industryCode": 274,
+      "industryName": "섬유,의류,신발,호화품",
+      "reportedCount": 82,
+      "receivedCount": 82,
+      "productTypes": {
+        "stock": 79,
+        "konex": 3
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 82
+        }
+      ]
+    },
+    {
+      "industryCode": 275,
+      "industryName": "담배",
+      "reportedCount": 1,
+      "receivedCount": 1,
+      "productTypes": {
+        "stock": 1
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "industryCode": 276,
+      "industryName": "복합기업",
+      "reportedCount": 24,
+      "receivedCount": 24,
+      "productTypes": {
+        "stock": 24
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 24
+        }
+      ]
+    },
+    {
+      "industryCode": 277,
+      "industryName": "창업투자",
+      "reportedCount": 89,
+      "receivedCount": 89,
+      "productTypes": {
+        "stock": 89
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 89
+        }
+      ]
+    },
+    {
+      "industryCode": 278,
+      "industryName": "반도체와반도체장비",
+      "reportedCount": 173,
+      "receivedCount": 173,
+      "productTypes": {
+        "stock": 169,
+        "konex": 4
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 100
+        },
+        {
+          "page": 2,
+          "count": 73
+        }
+      ]
+    },
+    {
+      "industryCode": 279,
+      "industryName": "건설",
+      "reportedCount": 78,
+      "receivedCount": 78,
+      "productTypes": {
+        "stock": 76,
+        "konex": 2
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 78
+        }
+      ]
+    },
+    {
+      "industryCode": 280,
+      "industryName": "부동산",
+      "reportedCount": 30,
+      "receivedCount": 30,
+      "productTypes": {
+        "stock": 30
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 30
+        }
+      ]
+    },
+    {
+      "industryCode": 281,
+      "industryName": "건강관리장비와용품",
+      "reportedCount": 105,
+      "receivedCount": 105,
+      "productTypes": {
+        "konex": 14,
+        "stock": 91
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 100
+        },
+        {
+          "page": 2,
+          "count": 5
+        }
+      ]
+    },
+    {
+      "industryCode": 282,
+      "industryName": "전자장비와기기",
+      "reportedCount": 105,
+      "receivedCount": 105,
+      "productTypes": {
+        "konex": 3,
+        "stock": 102
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 100
+        },
+        {
+          "page": 2,
+          "count": 5
+        }
+      ]
+    },
+    {
+      "industryCode": 283,
+      "industryName": "전기제품",
+      "reportedCount": 68,
+      "receivedCount": 68,
+      "productTypes": {
+        "stock": 66,
+        "konex": 2
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 68
+        }
+      ]
+    },
+    {
+      "industryCode": 284,
+      "industryName": "우주항공과국방",
+      "reportedCount": 35,
+      "receivedCount": 35,
+      "productTypes": {
+        "stock": 33,
+        "konex": 2
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 35
+        }
+      ]
+    },
+    {
+      "industryCode": 285,
+      "industryName": "방송과엔터테인먼트",
+      "reportedCount": 58,
+      "receivedCount": 58,
+      "productTypes": {
+        "stock": 54,
+        "konex": 4
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 58
+        }
+      ]
+    },
+    {
+      "industryCode": 286,
+      "industryName": "생물공학",
+      "reportedCount": 59,
+      "receivedCount": 59,
+      "productTypes": {
+        "stock": 54,
+        "konex": 5
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 59
+        }
+      ]
+    },
+    {
+      "industryCode": 287,
+      "industryName": "소프트웨어",
+      "reportedCount": 76,
+      "receivedCount": 76,
+      "productTypes": {
+        "stock": 74,
+        "konex": 2
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 76
+        }
+      ]
+    },
+    {
+      "industryCode": 288,
+      "industryName": "건강관리기술",
+      "reportedCount": 13,
+      "receivedCount": 13,
+      "productTypes": {
+        "stock": 13
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 13
+        }
+      ]
+    },
+    {
+      "industryCode": 289,
+      "industryName": "건축자재",
+      "reportedCount": 51,
+      "receivedCount": 51,
+      "productTypes": {
+        "stock": 48,
+        "konex": 3
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 51
+        }
+      ]
+    },
+    {
+      "industryCode": 290,
+      "industryName": "교육서비스",
+      "reportedCount": 24,
+      "receivedCount": 24,
+      "productTypes": {
+        "stock": 23,
+        "konex": 1
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 24
+        }
+      ]
+    },
+    {
+      "industryCode": 291,
+      "industryName": "조선",
+      "reportedCount": 31,
+      "receivedCount": 31,
+      "productTypes": {
+        "stock": 31
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 31
+        }
+      ]
+    },
+    {
+      "industryCode": 292,
+      "industryName": "핸드셋",
+      "reportedCount": 57,
+      "receivedCount": 57,
+      "productTypes": {
+        "stock": 57
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 57
+        }
+      ]
+    },
+    {
+      "industryCode": 293,
+      "industryName": "컴퓨터와주변기기",
+      "reportedCount": 21,
+      "receivedCount": 21,
+      "productTypes": {
+        "stock": 21
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 21
+        }
+      ]
+    },
+    {
+      "industryCode": 294,
+      "industryName": "통신장비",
+      "reportedCount": 55,
+      "receivedCount": 55,
+      "productTypes": {
+        "stock": 51,
+        "konex": 4
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 55
+        }
+      ]
+    },
+    {
+      "industryCode": 295,
+      "industryName": "에너지장비및서비스",
+      "reportedCount": 35,
+      "receivedCount": 35,
+      "productTypes": {
+        "stock": 32,
+        "konex": 3
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 35
+        }
+      ]
+    },
+    {
+      "industryCode": 296,
+      "industryName": "운송인프라",
+      "reportedCount": 8,
+      "receivedCount": 8,
+      "productTypes": {
+        "stock": 8
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 8
+        }
+      ]
+    },
+    {
+      "industryCode": 297,
+      "industryName": "가정용품",
+      "reportedCount": 12,
+      "receivedCount": 12,
+      "productTypes": {
+        "konex": 3,
+        "stock": 9
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 12
+        }
+      ]
+    },
+    {
+      "industryCode": 298,
+      "industryName": "가정용기기와용품",
+      "reportedCount": 20,
+      "receivedCount": 20,
+      "productTypes": {
+        "stock": 20
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 20
+        }
+      ]
+    },
+    {
+      "industryCode": 299,
+      "industryName": "기계",
+      "reportedCount": 106,
+      "receivedCount": 106,
+      "productTypes": {
+        "stock": 104,
+        "konex": 2
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 100
+        },
+        {
+          "page": 2,
+          "count": 6
+        }
+      ]
+    },
+    {
+      "industryCode": 300,
+      "industryName": "양방향미디어와서비스",
+      "reportedCount": 16,
+      "receivedCount": 16,
+      "productTypes": {
+        "stock": 15,
+        "konex": 1
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 16
+        }
+      ]
+    },
+    {
+      "industryCode": 301,
+      "industryName": "은행",
+      "reportedCount": 11,
+      "receivedCount": 11,
+      "productTypes": {
+        "stock": 11
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 11
+        }
+      ]
+    },
+    {
+      "industryCode": 302,
+      "industryName": "식품과기본식료품소매",
+      "reportedCount": 7,
+      "receivedCount": 7,
+      "productTypes": {
+        "konex": 1,
+        "stock": 6
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 7
+        }
+      ]
+    },
+    {
+      "industryCode": 303,
+      "industryName": "가구",
+      "reportedCount": 11,
+      "receivedCount": 11,
+      "productTypes": {
+        "stock": 11
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 11
+        }
+      ]
+    },
+    {
+      "industryCode": 304,
+      "industryName": "철강",
+      "reportedCount": 55,
+      "receivedCount": 55,
+      "productTypes": {
+        "stock": 54,
+        "konex": 1
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 55
+        }
+      ]
+    },
+    {
+      "industryCode": 305,
+      "industryName": "항공사",
+      "reportedCount": 9,
+      "receivedCount": 9,
+      "productTypes": {
+        "stock": 9
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 9
+        }
+      ]
+    },
+    {
+      "industryCode": 306,
+      "industryName": "전기장비",
+      "reportedCount": 35,
+      "receivedCount": 35,
+      "productTypes": {
+        "stock": 32,
+        "konex": 3
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 35
+        }
+      ]
+    },
+    {
+      "industryCode": 307,
+      "industryName": "전자제품",
+      "reportedCount": 15,
+      "receivedCount": 15,
+      "productTypes": {
+        "stock": 15
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 15
+        }
+      ]
+    },
+    {
+      "industryCode": 308,
+      "industryName": "인터넷과카탈로그소매",
+      "reportedCount": 6,
+      "receivedCount": 6,
+      "productTypes": {
+        "stock": 6
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 6
+        }
+      ]
+    },
+    {
+      "industryCode": 309,
+      "industryName": "음료",
+      "reportedCount": 16,
+      "receivedCount": 16,
+      "productTypes": {
+        "stock": 15,
+        "konex": 1
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 16
+        }
+      ]
+    },
+    {
+      "industryCode": 310,
+      "industryName": "광고",
+      "reportedCount": 19,
+      "receivedCount": 19,
+      "productTypes": {
+        "stock": 19
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 19
+        }
+      ]
+    },
+    {
+      "industryCode": 311,
+      "industryName": "포장재",
+      "reportedCount": 27,
+      "receivedCount": 27,
+      "productTypes": {
+        "stock": 27
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 27
+        }
+      ]
+    },
+    {
+      "industryCode": 312,
+      "industryName": "가스유틸리티",
+      "reportedCount": 12,
+      "receivedCount": 12,
+      "productTypes": {
+        "stock": 12
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 12
+        }
+      ]
+    },
+    {
+      "industryCode": 313,
+      "industryName": "석유와가스",
+      "reportedCount": 19,
+      "receivedCount": 19,
+      "productTypes": {
+        "stock": 19
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 19
+        }
+      ]
+    },
+    {
+      "industryCode": 314,
+      "industryName": "출판",
+      "reportedCount": 7,
+      "receivedCount": 7,
+      "productTypes": {
+        "stock": 7
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 7
+        }
+      ]
+    },
+    {
+      "industryCode": 315,
+      "industryName": "손해보험",
+      "reportedCount": 12,
+      "receivedCount": 12,
+      "productTypes": {
+        "stock": 12
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 12
+        }
+      ]
+    },
+    {
+      "industryCode": 316,
+      "industryName": "건강관리업체및서비스",
+      "reportedCount": 30,
+      "receivedCount": 30,
+      "productTypes": {
+        "stock": 28,
+        "konex": 2
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 30
+        }
+      ]
+    },
+    {
+      "industryCode": 317,
+      "industryName": "호텔,레스토랑,레저",
+      "reportedCount": 20,
+      "receivedCount": 20,
+      "productTypes": {
+        "stock": 20
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 20
+        }
+      ]
+    },
+    {
+      "industryCode": 318,
+      "industryName": "종이와목재",
+      "reportedCount": 14,
+      "receivedCount": 14,
+      "productTypes": {
+        "stock": 14
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 14
+        }
+      ]
+    },
+    {
+      "industryCode": 319,
+      "industryName": "기타금융",
+      "reportedCount": 6,
+      "receivedCount": 6,
+      "productTypes": {
+        "stock": 5,
+        "konex": 1
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 6
+        }
+      ]
+    },
+    {
+      "industryCode": 320,
+      "industryName": "건축제품",
+      "reportedCount": 11,
+      "receivedCount": 11,
+      "productTypes": {
+        "stock": 11
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 11
+        }
+      ]
+    },
+    {
+      "industryCode": 321,
+      "industryName": "증권",
+      "reportedCount": 39,
+      "receivedCount": 39,
+      "productTypes": {
+        "stock": 39
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 39
+        }
+      ]
+    },
+    {
+      "industryCode": 322,
+      "industryName": "비철금속",
+      "reportedCount": 40,
+      "receivedCount": 40,
+      "productTypes": {
+        "stock": 39,
+        "konex": 1
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 40
+        }
+      ]
+    },
+    {
+      "industryCode": 323,
+      "industryName": "해운사",
+      "reportedCount": 11,
+      "receivedCount": 11,
+      "productTypes": {
+        "stock": 11
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 11
+        }
+      ]
+    },
+    {
+      "industryCode": 324,
+      "industryName": "상업서비스와공급품",
+      "reportedCount": 31,
+      "receivedCount": 31,
+      "productTypes": {
+        "stock": 29,
+        "konex": 2
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 31
+        }
+      ]
+    },
+    {
+      "industryCode": 325,
+      "industryName": "전기유틸리티",
+      "reportedCount": 5,
+      "receivedCount": 5,
+      "productTypes": {
+        "stock": 5
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 5
+        }
+      ]
+    },
+    {
+      "industryCode": 326,
+      "industryName": "항공화물운송과물류",
+      "reportedCount": 13,
+      "receivedCount": 13,
+      "productTypes": {
+        "konex": 1,
+        "stock": 12
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 13
+        }
+      ]
+    },
+    {
+      "industryCode": 327,
+      "industryName": "디스플레이패널",
+      "reportedCount": 6,
+      "receivedCount": 6,
+      "productTypes": {
+        "stock": 6
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 6
+        }
+      ]
+    },
+    {
+      "industryCode": 328,
+      "industryName": "전문소매",
+      "reportedCount": 5,
+      "receivedCount": 5,
+      "productTypes": {
+        "stock": 5
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 5
+        }
+      ]
+    },
+    {
+      "industryCode": 329,
+      "industryName": "도로와철도운송",
+      "reportedCount": 8,
+      "receivedCount": 8,
+      "productTypes": {
+        "stock": 8
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 8
+        }
+      ]
+    },
+    {
+      "industryCode": 330,
+      "industryName": "생명보험",
+      "reportedCount": 3,
+      "receivedCount": 3,
+      "productTypes": {
+        "stock": 3
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 3
+        }
+      ]
+    },
+    {
+      "industryCode": 331,
+      "industryName": "복합유틸리티",
+      "reportedCount": 1,
+      "receivedCount": 1,
+      "productTypes": {
+        "stock": 1
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "industryCode": 332,
+      "industryName": "문구류",
+      "reportedCount": 1,
+      "receivedCount": 1,
+      "productTypes": {
+        "stock": 1
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "industryCode": 333,
+      "industryName": "무선통신서비스",
+      "reportedCount": 4,
+      "receivedCount": 4,
+      "productTypes": {
+        "stock": 4
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 4
+        }
+      ]
+    },
+    {
+      "industryCode": 334,
+      "industryName": "무역회사와판매업체",
+      "reportedCount": 8,
+      "receivedCount": 8,
+      "productTypes": {
+        "stock": 8
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 8
+        }
+      ]
+    },
+    {
+      "industryCode": 336,
+      "industryName": "다각화된통신서비스",
+      "reportedCount": 3,
+      "receivedCount": 3,
+      "productTypes": {
+        "stock": 2,
+        "konex": 1
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 3
+        }
+      ]
+    },
+    {
+      "industryCode": 337,
+      "industryName": "카드",
+      "reportedCount": 1,
+      "receivedCount": 1,
+      "productTypes": {
+        "stock": 1
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "industryCode": 338,
+      "industryName": "사무용전자제품",
+      "reportedCount": 1,
+      "receivedCount": 1,
+      "productTypes": {
+        "stock": 1
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "industryCode": 339,
+      "industryName": "다각화된소비자서비스",
+      "reportedCount": 1,
+      "receivedCount": 1,
+      "productTypes": {
+        "stock": 1
+      },
+      "pages": [
+        {
+          "page": 1,
+          "count": 1
+        }
+      ]
+    }
+  ]
+}

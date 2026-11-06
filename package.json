@@ -31,6 +31,7 @@
       "src/news/page-client.js",
       "src/desktop/renderer-files.cjs",
       "src/desktop/stock-selection.js",
+      "src/desktop/industry-data.js",
       "src/desktop/themes.js",
       "src/desktop/theme-browser.js",
       "src/desktop/themes.css",

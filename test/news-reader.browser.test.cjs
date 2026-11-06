@@ -267,7 +267,7 @@ test('news catalog clicks and Enter keep the news workspace and load the selecte
   assert.equal(await page.locator('#mdiWorkspace').getAttribute('data-dock-screen'),'news');
   // Sector rows use the same navigation as the ordinary catalog.
   await page.evaluate(()=>{renderAllStockSectorView();});
-  await page.getByRole('combobox',{name:'큰 테마',exact:true}).selectOption('반도체');
+  await page.getByRole('combobox',{name:'큰 업종',exact:true}).selectOption('반도체');
   await page.locator('#allStockBody tr[data-code="000660"] td').nth(1).click();
   await page.waitForFunction(()=>!_ic.loading&&_ic.items[0]?.code==='000660');
   assert.equal(await page.locator('#mdiWorkspace').getAttribute('data-dock-screen'),'news');
@@ -282,61 +282,63 @@ test('news catalog clicks and Enter keep the news workspace and load the selecte
  }finally{await browser?.close();await new Promise(r=>server.close(r));}
 });
 
-test('theme classification separates funds, known semiconductor businesses, unknowns and multiple themes without duplicate stocks',()=>{
- const themes=require('../src/desktop/themes.js');
- assert.deepEqual(themes.classify({code:'399720',name:'가온칩스'})[0].leaf,'설계·IP');
- assert.equal(themes.classify({code:'396270',name:'넥스트칩'})[0].group,'반도체');
- assert.equal(themes.classify({code:'403870',name:'HPSP'})[0].leaf,'장비');
- assert.equal(themes.classify({code:'0183V0',name:'KIWOOM 삼성전자SK하이닉스채권혼합50'},'반도체')[0].group,'ETF·ETN');
- assert.equal(themes.classify({code:'190001',name:'삼성전자 추종 상품',stockType:'ETF'},'반도체')[0].group,'ETF·ETN');
- assert.equal(themes.classify({code:'190002',name:'정보 없는 종목'})[0].group,'분류 확인 필요');
- assert.equal(themes.classify({code:'190003',name:'기존 분류 종목'},'전기전자/반도체')[0].leaf,'세부분류 확인 필요');
- assert.deepEqual(themes.classify({code:'190004',industry:'반도체장비 배터리장비'}).map(p=>p.group),['반도체','이차전지']);
- const stocks=[{code:'012450',name:'한화에어로스페이스'}, {code:'012450',name:'중복'}];
- assert.equal(themes.index(stocks).length,1);assert.equal(themes.index(stocks)[0].paths.length,2);assert.equal(stocks.length,2);
+test('source industry membership covers the full snapshot, excludes products and never guesses from names',()=>{
+ const themes=require('../src/desktop/themes.js'),data=require('../src/desktop/industry-data.js');
+ const all=themes.index([],{complete:true});
+ assert.equal(all.length,2876);assert.equal(new Set(all.map(r=>r.stock.code)).size,2876);
+ assert.equal(themes.industryCount,78);assert.equal(new Set(all.map(r=>r.paths[0].industryCode)).size,78);
+ assert.equal(all.filter(r=>r.paths[0].group==='반도체').length,173);
+ assert.deepEqual(all.reduce((out,r)=>{out[r.stock.market]=(out[r.stock.market]||0)+1;return out;},{}),{KOSPI:938,KOSDAQ:1831,KONEX:107});
+ for(const [code] of data.excluded)assert.deepEqual(themes.classify({code,stockEndType:'stock'}),[]);
+ for(const type of ['ETF','ETN','ELS','ELW','DLS','fund'])assert.deepEqual(themes.classify({code:'190001',stockType:'domestic',stockEndType:type}),[]);
+ for(const code of ['399720','396270','403870','394280'])assert.equal(themes.classify({code,name:'바뀐 종목명'})[0].leaf,'반도체와반도체장비');
+ assert.equal(themes.classify({code:'190002',name:'삼성전자',industry:'반도체장비'})[0].group,'분류 확인 필요');
+ const quotes=[{code:'005930',name:'삼성전자',price:100,market:'KOSPI'}, {code:'005930',name:'삼성전자',price:200,market:'KOSPI'},{code:'190002',name:'신규 종목',market:'KOSDAQ'}];
+ const merged=themes.index(quotes,{complete:true});assert.equal(merged.length,2877);assert.equal(merged.find(r=>r.stock.code==='005930').stock.price,200);
+ assert.equal(merged.find(r=>r.stock.code==='396270').stock.price,undefined);assert.equal(quotes.length,3);
+ assert.equal(all.some(r=>r.paths[0].group==='분류 확인 필요'),false);
 });
 
-test('theme browser drills from large themes to children, searches, separates ETFs and keeps the table usable',async()=>{
+test('industry browser uses all source memberships, keeps missing quotes blank, excludes funds and preserves search and pagination',async()=>{
  const root=path.resolve(__dirname,'..');const server=createServer(async(req,res)=>{try{const target=path.resolve(root,'.'+new URL(req.url,'http://x').pathname);if(!target.startsWith(root+path.sep))throw Error();res.setHeader('Content-Type',target.endsWith('.html')?'text/html; charset=utf-8':target.endsWith('.js')?'text/javascript':target.endsWith('.css')?'text/css':'application/octet-stream');res.end(await fs.readFile(target));}catch{res.writeHead(404);res.end();}});
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;let browser;
  try{
   browser=await chromium.launch();const page=await browser.newPage({viewport:{width:1400,height:900}});const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort());await page.goto(base+'/index.html');
   await page.evaluate(()=>{
    _allStockRaw={KOSPI:[
-    {code:'005930',name:'삼성전자',market:'KOSPI'}, {code:'399720',name:'가온칩스',market:'KOSPI'},
-    {code:'403870',name:'HPSP',market:'KOSPI'}, {code:'005290',name:'동진쎄미켐',market:'KOSPI'},
+    {code:'005930',name:'삼성전자',market:'KOSPI',price:193500,change:-8000,changePct:-3.97},
     {code:'0183V0',name:'KIWOOM 삼성전자SK하이닉스채권혼합50',market:'KOSPI'},
-    {code:'190002',name:'정보 없는 종목',market:'KOSPI'}, {code:'012450',name:'한화에어로스페이스',market:'KOSPI'}
-   ],KOSDAQ:[{code:'396270',name:'넥스트칩',market:'KOSDAQ'}]};
+    {code:'190002',name:'원본 이후 신규 종목',market:'KOSPI'},
+    {code:'190003',name:'검증 ELS 상품',market:'KOSPI',stockType:'domestic',stockEndType:'els'}
+   ],KOSDAQ:[]};
    window._MDIPanelTab('watchlist','as');switchAllMarket('SECTOR');
   });
   assert.equal(await page.locator('#allStockBody tr[data-code]').count(),0);
-  assert.equal(await page.getByRole('combobox',{name:'세부 테마',exact:true}).isDisabled(),true);
-  await page.getByRole('combobox',{name:'큰 테마',exact:true}).selectOption('반도체');
-  assert.equal(await page.locator('#allStockBody tr[data-code]').count(),5);
+  assert.equal(await page.getByRole('combobox',{name:'세부 업종',exact:true}).isDisabled(),true);
+  assert.equal(await page.getByRole('combobox',{name:'큰 업종',exact:true}).locator('option').filter({hasText:'ETF'}).count(),0);
+  await page.getByRole('combobox',{name:'큰 업종',exact:true}).selectOption('반도체');
+  assert.equal(await page.evaluate(()=>_allFiltered.length),173);
+  assert.equal(await page.locator('#allStockBody tr[data-code]').count(),100);
+  assert.equal(await page.locator('#asr-005930-price').innerText(),'193,500');
+  assert.equal(await page.locator('#asr-000660-price').innerText(),'-');assert.equal(await page.locator('#asr-000660-pct').innerText(),'-');
   assert.equal(await page.locator('#allStockBody tr[data-code="0183V0"]').count(),0);
-  await page.getByRole('combobox',{name:'세부 테마',exact:true}).selectOption('설계·IP');
-  assert.equal(await page.locator('#allStockBody tr[data-code]').count(),2);
-  assert.match(await page.locator('#allStockBody').innerText(),/가온칩스/);
-  await page.getByRole('combobox',{name:'세부 테마',exact:true}).selectOption('');
-  assert.equal(await page.locator('#allStockBody tr[data-code]').count(),5);
-  await page.getByRole('combobox',{name:'큰 테마',exact:true}).selectOption('방산·우주');
-  assert.equal(await page.locator('#allStockBody tr[data-code]').count(),1);
-  assert.equal(await page.getByRole('combobox',{name:'세부 테마',exact:true}).locator('option').count(),3);
-  await page.getByRole('combobox',{name:'큰 테마',exact:true}).selectOption('ETF·ETN');assert.equal(await page.locator('#allStockBody tr[data-code]').count(),1);
-  await page.getByRole('combobox',{name:'큰 테마',exact:true}).selectOption('분류 확인 필요');assert.match(await page.locator('#allStockBody').innerText(),/정보 없는 종목/);
-  await page.locator('#allStockSearch').fill('장비');await page.getByRole('combobox',{name:'큰 테마',exact:true}).selectOption('반도체');
-  assert.equal(await page.locator('#allStockBody tr[data-code]').count(),1);assert.match(await page.locator('#allStockBody').innerText(),/HPSP/);
+  await page.getByRole('combobox',{name:'세부 업종',exact:true}).selectOption('반도체와반도체장비');assert.equal(await page.evaluate(()=>_allFiltered.length),173);
+  await page.locator('#allStockPagination').getByRole('button',{name:'2',exact:true}).click();assert.equal(await page.locator('#allStockBody tr[data-code]').count(),73);
+  await page.locator('#allStockSearch').fill('가온칩스');assert.equal(await page.evaluate(()=>_allFiltered.length),1);assert.equal(await page.locator('#asr-399720').count(),1);
+  await page.locator('#asr-399720 td').first().click();assert.equal(await page.evaluate(()=>state.watchlist.find(s=>s.ticker==='399720').market),'KOSDAQ');
   await page.locator('#allStockSearch').fill('없는검색어');assert.equal(await page.locator('#allStockBody tr[data-code]').count(),0);
-  await page.locator('#allStockSearch').fill('');await page.getByRole('combobox',{name:'큰 테마',exact:true}).selectOption('반도체');
-  await page.evaluate(()=>setTheme('dark'));await page.waitForTimeout(250);
-  await page.screenshot({path:'/tmp/stockbook-theme-dark.png'});
+  await page.locator('#allStockSearch').fill('');await page.getByRole('combobox',{name:'큰 업종',exact:true}).selectOption('분류 확인 필요');
+  assert.equal(await page.evaluate(()=>_allFiltered.length),1);assert.match(await page.locator('#allStockBody').innerText(),/원본 이후 신규 종목/);assert.doesNotMatch(await page.locator('#allStockBody').innerText(),/ELS/);
+  await page.getByRole('combobox',{name:'큰 업종',exact:true}).selectOption('바이오·의료');
+  assert.ok(await page.getByRole('combobox',{name:'세부 업종',exact:true}).locator('option').count()>2);
+  await page.getByRole('combobox',{name:'세부 업종',exact:true}).selectOption('제약');assert.ok(await page.evaluate(()=>_allFiltered.every(s=>s.themeLabel==='제약')));
+  await page.getByRole('combobox',{name:'큰 업종',exact:true}).selectOption('반도체');await page.evaluate(()=>setTheme('dark'));await page.waitForTimeout(250);
+  await page.screenshot({path:'/tmp/stockbook-industry-source-dark.png'});
   await page.setViewportSize({width:1000,height:800});await page.evaluate(()=>setTheme('light'));await page.waitForTimeout(250);
-  assert.equal(await page.locator('#sbThemeExplorer').evaluate(el=>el.scrollWidth<=el.clientWidth+1&&el.getBoundingClientRect().height<100),true);
-  await page.screenshot({path:'/tmp/stockbook-theme-light.png'});
+  assert.equal(await page.locator('#sbThemeExplorer').evaluate(el=>el.scrollWidth<=el.clientWidth+1&&el.getBoundingClientRect().height<110),true);
+  await page.screenshot({path:'/tmp/stockbook-industry-source-light.png'});
   await page.locator('#allMktTab-KOSPI').click();assert.equal(await page.locator('#sbThemeExplorer').isVisible(),false);
-  assert.equal(await page.locator('#allStockBody tr[data-code]').count(),7);
-  await page.locator('#allMktTab-SECTOR').click();assert.equal(await page.locator('#sbThemeExplorer').isVisible(),true);
+  await page.locator('#allMktTab-SECTOR').click();assert.equal(await page.locator('#sbThemeExplorer').isVisible(),true);assert.equal(await page.evaluate(()=>_allFiltered.length),173);
   assert.deepEqual(errors,[]);
  }finally{await browser?.close();await new Promise(r=>server.close(r));}
 });
