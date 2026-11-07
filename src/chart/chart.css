@@ -403,11 +403,11 @@
   display: none !important;
 }
 @media (min-width: 901px) {
-  .mdi-dock.sb-desktop-home.sb-user-split {
+  .mdi-dock.sb-desktop-home.sb-fixed-split {
     grid-template-rows: 0 minmax(0, 1fr) minmax(0, var(--sb-work-height));
   }
-  .mdi-dock.sb-desktop-home.sb-user-split
-    > :is(#mdi-panel-portfolio, #mdi-panel-trading, .sb-analysis) {
+  .mdi-dock.sb-desktop-home.sb-fixed-split
+    > :is(#mdi-panel-portfolio, #mdi-panel-trading, #mdi-panel-journal, .sb-analysis) {
     max-height: none;
   }
 }

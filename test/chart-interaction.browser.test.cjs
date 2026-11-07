@@ -1351,7 +1351,7 @@ test('indicator heights drag independently, resize proportionally, persist and r
   }
 });
 
-test('workspace split keeps per-tab proportions, clamps small windows and compact indicator split preserves candle alignment', async () => {
+test('workspace split shares proportions across tabs, clamps small windows and compact indicator split preserves candle alignment', async () => {
   const h = await setup(),
     { page } = h;
   try {
@@ -1384,17 +1384,16 @@ test('workspace split keeps per-tab proportions, clamps small windows and compac
     const fraction = await page
       .locator('#mdiWorkspace')
       .evaluate((e) =>
-        Number(JSON.parse(localStorage.getItem('stockbook:workspace:heights:v1')).ord),
+        Number(JSON.parse(localStorage.getItem('stockbook:workspace:heights:v2')).chartRatio),
       );
     assert.ok(fraction > 0 && fraction < 1);
     await page.evaluate(() => sbWorkTab('cash'));
-    await page.waitForFunction(
-      () => !document.getElementById('mdiWorkspace').classList.contains('sb-user-split'),
-    );
+    await page.waitForTimeout(80);
     assert.equal(
       await page.locator('#mdiWorkspace').evaluate((e) => e.classList.contains('sb-user-split')),
-      false,
+      true,
     );
+    assert.ok(Math.abs((await ctx.boundingBox()).height - after) < 2);
     await page.evaluate(() => sbWorkTab('ord'));
     await page.waitForTimeout(80);
     assert.ok(Math.abs((await ctx.boundingBox()).height - after) < 2);
@@ -2974,6 +2973,183 @@ test('every drawing tool stays selected for repeated use, suppresses hover infor
     const p = await point(page, 1, 260);
     await page.mouse.move(p.x, p.y);
     assert.equal(await page.locator('.sb-chart-tooltip').isVisible(), true);
+    assert.deepEqual(h.errors, []);
+  } finally {
+    await h.close();
+  }
+});
+
+async function openWorkspaceChart(page) {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.goto(page.url().replace('/chart.html', '/index.html'));
+  await page.evaluate(() => {
+    state.watchlist = [
+      { ticker: '000001', name: '합성 검증 종목', price: 1000, quoteAt: Date.now() },
+    ];
+    window._dockSel = '000001';
+    window._MDI.show('watchlist');
+    sbWorkTab('pf');
+  });
+  await page.waitForFunction(
+    () =>
+      document.getElementById('sbEmbeddedChart').chartEvidence?.stockCode === '000001' &&
+      document.getElementById('mdiWorkspace').classList.contains('sb-fixed-split'),
+  );
+  await page.waitForTimeout(80);
+}
+
+async function workspaceChartSize(page) {
+  return page.locator('#dockCtx').evaluate((ctx) => {
+    const rect = (el) => {
+      const r = el.getBoundingClientRect();
+      return { width: r.width, height: r.height };
+    };
+    const host = document.getElementById('sbEmbeddedChart');
+    return {
+      context: rect(ctx),
+      price: rect(host.querySelector('[data-chart-id="chart"]')),
+      volume: rect(host.querySelector('[data-chart-id="pressureChart"]')),
+    };
+  });
+}
+function sameChartSize(actual, expected) {
+  for (const panel of ['context', 'price', 'volume'])
+    for (const axis of ['width', 'height'])
+      assert.ok(
+        Math.abs(actual[panel][axis] - expected[panel][axis]) < 2,
+        panel + '.' + axis + ': ' + actual[panel][axis] + ' != ' + expected[panel][axis],
+      );
+}
+
+test('balance establishes the default chart size for all seven work tabs; user resizing, content growth and reset preserve it', async () => {
+  const h = await setup(),
+    { page } = h;
+  try {
+    await openWorkspaceChart(page);
+    const initial = await workspaceChartSize(page);
+    const naturalBalance = await page.locator('#mdiWorkspace').evaluate((workspace) => {
+      workspace.classList.remove('sb-fixed-split');
+      const height = document.getElementById('dockCtx').getBoundingClientRect().height;
+      workspace.classList.add('sb-fixed-split');
+      return height;
+    });
+    assert.ok(Math.abs(initial.context.height - naturalBalance) < 2);
+    const tabs = ['pf', 'ord', 'calc', 'journal', 'trd', 'rlz', 'cash'];
+    const choose = async (tab) => {
+      await page
+        .locator('.sb-task-tabs [data-work-tab="' + tab + '"]:visible')
+        .first()
+        .click();
+      await page.waitForTimeout(80);
+    };
+    for (const tab of tabs) {
+      await choose(tab);
+      sameChartSize(await workspaceChartSize(page), initial);
+    }
+    await page.locator('#mdi-ptc-portfolio-cash').evaluate((pane) => {
+      const content = document.createElement('div');
+      content.style.minHeight = '2400px';
+      content.textContent = '긴 예수금 내역 검증';
+      pane.append(content);
+    });
+    await page.waitForTimeout(80);
+    sameChartSize(await workspaceChartSize(page), initial);
+    assert.equal(
+      await page
+        .locator('#mdi-ptc-portfolio-cash')
+        .evaluate((p) => p.scrollHeight > p.clientHeight),
+      true,
+    );
+    const split = page.getByRole('separator', { name: '차트와 하단 작업 패널 높이', exact: true });
+    await split.press('ArrowUp');
+    await split.press('ArrowUp');
+    await split.press('ArrowUp');
+    await page.waitForTimeout(80);
+    const resized = await workspaceChartSize(page);
+    assert.ok(resized.context.height < initial.context.height - 40);
+    for (const tab of tabs) {
+      await choose(tab);
+      sameChartSize(await workspaceChartSize(page), resized);
+    }
+    await choose('journal');
+    assert.equal(
+      await page.locator('#mdi-body-journal').evaluate((p) => p.scrollHeight > p.clientHeight),
+      true,
+    );
+    await openWorkspaceChart(page); // A new document must restore the common setting.
+    sameChartSize(await workspaceChartSize(page), resized);
+    await choose('journal');
+    await split.press('Enter');
+    await page.waitForTimeout(80);
+    sameChartSize(await workspaceChartSize(page), initial);
+    assert.equal(
+      await page.evaluate(
+        () => JSON.parse(localStorage.getItem('stockbook:workspace:heights:v2')).chartRatio,
+      ),
+      null,
+    );
+    for (const tab of tabs) {
+      await choose(tab);
+      sameChartSize(await workspaceChartSize(page), initial);
+    }
+    await page.screenshot({ path: '/tmp/stockbook-shared-chart-height.png' });
+    assert.deepEqual(h.errors, []);
+  } finally {
+    await h.close();
+  }
+});
+
+test('old balance height wins over other tab preferences, reset survives reload, and non-balance legacy preferences are ignored', async () => {
+  const h = await setup(),
+    { page } = h;
+  try {
+    await page.evaluate(() => {
+      localStorage.removeItem('stockbook:workspace:heights:v2');
+      localStorage.setItem(
+        'stockbook:workspace:heights:v1',
+        JSON.stringify({ pf: 0.6, ord: 0.25, journal: 0.8 }),
+      );
+    });
+    await openWorkspaceChart(page);
+    const restored = await workspaceChartSize(page);
+    assert.equal(
+      await page.evaluate(
+        () => JSON.parse(localStorage.getItem('stockbook:workspace:heights:v2')).chartRatio,
+      ),
+      0.6,
+    );
+    for (const tab of ['ord', 'journal', 'cash', 'pf']) {
+      await page.evaluate((tab) => sbWorkTab(tab), tab);
+      await page.waitForTimeout(80);
+      sameChartSize(await workspaceChartSize(page), restored);
+    }
+    const split = page.getByRole('separator', { name: '차트와 하단 작업 패널 높이', exact: true });
+    await split.press('Enter');
+    await page.waitForTimeout(80);
+    const defaults = await workspaceChartSize(page);
+    await openWorkspaceChart(page);
+    sameChartSize(await workspaceChartSize(page), defaults);
+    assert.equal(
+      await page.evaluate(
+        () => JSON.parse(localStorage.getItem('stockbook:workspace:heights:v2')).chartRatio,
+      ),
+      null,
+    );
+    await page.evaluate(() => {
+      localStorage.removeItem('stockbook:workspace:heights:v2');
+      localStorage.setItem(
+        'stockbook:workspace:heights:v1',
+        JSON.stringify({ ord: 0.9, journal: 0.2 }),
+      );
+    });
+    await openWorkspaceChart(page);
+    sameChartSize(await workspaceChartSize(page), defaults);
+    assert.equal(
+      await page.evaluate(
+        () => JSON.parse(localStorage.getItem('stockbook:workspace:heights:v2')).chartRatio,
+      ),
+      null,
+    );
     assert.deepEqual(h.errors, []);
   } finally {
     await h.close();

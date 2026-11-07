@@ -341,18 +341,26 @@
     };
   }
   function mountWorkspace() {
-    const workspace = document.getElementById('mdiWorkspace');
-    if (!workspace) return;
-    const key = 'stockbook:workspace:heights:v1',
-      prefs = read(key),
+    const workspace = document.getElementById('mdiWorkspace'),
+      context = document.getElementById('dockCtx');
+    if (!workspace || !context) return;
+    const key = 'stockbook:workspace:heights:v2',
+      stored = read(key),
+      legacy = read('stockbook:workspace:heights:v1'),
+      valid = (value) => Number.isFinite(value) && value > 0 && value < 1,
+      prefs = {
+        chartRatio: valid(stored.chartRatio)
+          ? stored.chartRatio
+          : !Object.hasOwn(stored, 'chartRatio') && valid(legacy.pf)
+            ? legacy.pf
+            : null,
+      },
       abort = new AbortController(),
       signal = abort.signal;
-    for (const field of Object.keys(prefs))
-      if (!Number.isFinite(prefs[field]) || prefs[field] <= 0 || prefs[field] >= 1)
-        delete prefs[field];
-    const context = document.getElementById('dockCtx');
-    let frame = 0;
-    const tab = () => workspace.dataset.workTab || 'pf';
+    // A null value records a reset, so an old per-tab preference cannot return on reload.
+    save(key, prefs);
+    let frame = 0,
+      defaultRatio = null;
     const available = () => {
       const css = getComputedStyle(workspace);
       return Math.max(
@@ -366,18 +374,58 @@
     const limits = () => {
       const size = available(),
         min = Math.min(220, size * 0.45);
-      return [min, Math.max(min, size - Math.min(tab() === 'journal' ? 240 : 180, size * 0.4))];
+      return [min, Math.max(min, size - Math.min(180, size * 0.4))];
     };
+    function balanceRatio() {
+      // Measure the balance layout synchronously, without switching application tabs,
+      // rendering forms or changing data. Restore before the browser paints.
+      const screen = workspace.dataset.dockScreen,
+        fixed = workspace.classList.contains('sb-fixed-split'),
+        user = workspace.classList.contains('sb-user-split'),
+        elements = [
+          ...['portfolio', 'trading', 'journal'].map((pid) =>
+            document.getElementById('mdi-panel-' + pid),
+          ),
+          ...document.querySelectorAll('#mdi-body-portfolio > .mdi-ptab-pane'),
+        ].filter(Boolean),
+        displays = elements.map((element) => [element, element.style.display]),
+        states = elements
+          .filter((element) => element.hasAttribute('data-mdi-state'))
+          .map((element) => [element, element.dataset.mdiState]);
+      try {
+        workspace.dataset.dockScreen = 'portfolio';
+        workspace.classList.remove('sb-fixed-split', 'sb-user-split');
+        for (const [element] of states)
+          element.dataset.mdiState = element.id === 'mdi-panel-portfolio' ? 'open' : 'closed';
+        for (const element of elements)
+          element.style.display =
+            element.id === 'mdi-panel-portfolio'
+              ? ''
+              : element.id === 'mdi-ptc-portfolio-pf'
+                ? 'flex'
+                : 'none';
+        return clamp(context.getBoundingClientRect().height / available(), 0.01, 0.99);
+      } finally {
+        for (const [element, display] of displays) element.style.display = display;
+        for (const [element, state] of states) element.dataset.mdiState = state;
+        if (screen === undefined) delete workspace.dataset.dockScreen;
+        else workspace.dataset.dockScreen = screen;
+        workspace.classList.toggle('sb-fixed-split', fixed);
+        workspace.classList.toggle('sb-user-split', user);
+      }
+    }
     function apply() {
       const enabled = root.innerWidth > 900 && context.getBoundingClientRect().width > 0;
       split.handle.hidden = !enabled;
-      if (enabled && prefs[tab()]) {
+      if (enabled) {
+        if (defaultRatio === null) defaultRatio = balanceRatio();
         const [min, max] = limits(),
-          chart = clamp(prefs[tab()] * available(), min, max);
+          chart = clamp((prefs.chartRatio ?? defaultRatio) * available(), min, max);
         workspace.style.setProperty('--sb-work-height', available() - chart + 'px');
-        workspace.classList.add('sb-user-split');
+        workspace.classList.add('sb-fixed-split');
+        workspace.classList.toggle('sb-user-split', prefs.chartRatio !== null);
       } else {
-        workspace.classList.remove('sb-user-split');
+        workspace.classList.remove('sb-fixed-split', 'sb-user-split');
         workspace.style.removeProperty('--sb-work-height');
       }
       if (enabled) {
@@ -403,12 +451,13 @@
         value: () => context.getBoundingClientRect().height,
         limits,
         change: (value) => {
-          prefs[tab()] = value / available();
+          prefs.chartRatio = value / available();
           apply();
         },
         commit: () => save(key, prefs),
         reset: () => {
-          delete prefs[tab()];
+          prefs.chartRatio = null;
+          defaultRatio = null;
           save(key, prefs);
           apply();
         },
