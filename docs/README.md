@@ -12,6 +12,7 @@
 | UI 토큰·1차 개편 기준 및 결과 | [UI-REVAMP-PLAN.md](UI-REVAMP-PLAN.md) |
 | 2차 작업 순서·보존 범위 | [STRUCTURE-REVAMP-PLAN.md](STRUCTURE-REVAMP-PLAN.md) |
 | Desktop Main v2 검토 기록 | [DESKTOP-MAIN-V2-IMPLEMENTATION-WAIT.md](DESKTOP-MAIN-V2-IMPLEMENTATION-WAIT.md) — 작성 당시 상태는 이슈·PR로 재확인 |
+| 최근 개발 기록 | [DEVLOG.md](DEVLOG.md) |
 | SQLite 설계 | [SQLITE-STORAGE-DESIGN.md](SQLITE-STORAGE-DESIGN.md) — 설계와 구현 구분 |
 | 계좌·장부 설계 / 계약 초안 | [ACCOUNT-LEDGER-DESIGN.md](ACCOUNT-LEDGER-DESIGN.md), [LEDGER-CONTRACT-DRAFT.md](LEDGER-CONTRACT-DRAFT.md) |
 | 신규 Android 전용 시안 | [android-ui-v2/REVIEW.md](design/android-ui-v2/REVIEW.md) — 폐기된 PWA/TWA와 별개, PC 적용 금지 |
