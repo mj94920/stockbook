@@ -9,7 +9,7 @@
       label: '일봉',
       unit: '일',
       defaultType: 'candle',
-      periods: [5, 10, 20, 60, 120, 200, 450, 350],
+      periods: [5, 10, 20, 60, 120, 200, 480, 350],
       colors: [0, 1, 2, 3, 4, 5, 6, 7],
       cloud: [5, 10],
       bold: [20, 200],

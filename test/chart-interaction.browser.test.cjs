@@ -1106,7 +1106,7 @@ test('chart reset restores current-cycle defaults and saved display preferences 
     );
     await page.getByRole('button', { name: '차트 설정 초기화', exact: true }).click();
     const daily = await page.locator('#chartViewport').evaluate((h) => h.chartEvidence);
-    assert.deepEqual(daily.periods, [5, 10, 20, 60, 120, 200, 450, 350]);
+    assert.deepEqual(daily.periods, [5, 10, 20, 60, 120, 200, 480, 350]);
     assert.equal(daily.bbPeriod, 40);
     assert.equal(daily.bbMultiplier, 1.9);
     assert.equal(daily.bbShift, 25);
@@ -2667,7 +2667,7 @@ test('each cycle exposes its own indicator catalog and settings, and only daily 
     for (const [cycle, periods, ids] of [
       [
         'day',
-        [5, 10, 20, 60, 120, 200, 450, 350],
+        [5, 10, 20, 60, 120, 200, 480, 350],
         ['bb', 'cloud', 'money', 'pressure', 'investors', 'new-low', 'oversold', 'entry'],
       ],
       ['week', [4, 12, 24, 46, 73], ['cloud', 'profile', 'obv', 'oversold']],
