@@ -1,0 +1,28 @@
+{
+  "base_commit": "b52166deeea5b2e69aa197fa6e0a9d447ba9a0b9",
+  "change": "turnover direct entry, separate preview row, positive received-format validation",
+  "calculation_changed": false,
+  "default_search_changed": false,
+  "npm_test": {
+    "tests": 138,
+    "passed": 138,
+    "failures": 0,
+    "smoke": "passed"
+  },
+  "legacy_differential_inputs": 3796,
+  "new_tests": {
+    "unit": "received actual-value format, point/count/streak, missing row, volume mismatch, unit mismatch, not close-times-volume",
+    "browser": "shortcut creates turnover, won amount visible, one turnover request per scan"
+  },
+  "test_data": "simulated IPC and fixtures, not a live KIS receipt",
+  "preview": {
+    "turnover_condition_visible": true,
+    "turnover_data": "not included in snapshot; unknown",
+    "page_errors": 0,
+    "automatic_external_requests": 0,
+    "horizontal_overflow_1024": false
+  },
+  "live_kis_windows": "not verified",
+  "kiwoom_equivalence": "not verified",
+  "merge_deploy": "not run"
+}

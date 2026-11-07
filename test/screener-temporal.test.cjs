@@ -58,3 +58,15 @@ test('invalid windows are rejected and default migrated documents remain unmodif
  assert.throws(()=>temporal.evaluate({kind:'streak',span:1},()=>({state:'missing'})));
  const doc=expression.migrateLegacy([{id:'volume',op:'gte',threshold:0}]);assert.equal(Object.hasOwn(doc.conditions[0],'window'),false);const d=data([100,100]);assert.equal(expression.evaluateExpression(d,JSON.parse(JSON.stringify(doc))).state,legacy.evaluate(d,[doc.conditions[0].condition]).state);
 });
+
+test('received real turnover drives point, count and streak results while missing rows, mismatched volume and wrong units stay unknown',()=>{
+ const d=data([100,100,100,100,100],false),amounts=[10100,10150,10250,10290,10450],money={ok:true,stockCode:'005930',source:'KIS',market:'KRX',currency:'KRW',unit:'원',rows:d.candles.map((c,i)=>({date:c.date,volume:c.volume,value:amounts[i]}))};
+ const doc=expression.migrateLegacy([{id:'turnover',op:'gte',threshold:10240}]);
+ let result=expression.evaluateExpression(d,doc,{turnover:money}).results[0];assert.equal(result.value,10290);assert.notEqual(result.value,d.candles[3].close*d.candles[3].volume);
+ doc.conditions[0].window={kind:'count',span:3,operator:'gte',threshold:2};result=expression.evaluateExpression(d,doc,{turnover:money}).results[0];assert.equal(result.state,'match');assert.equal(result.window.matched,2);assert.equal(result.window.unknown,0);
+ doc.conditions[0].window={kind:'streak',span:3};assert.equal(expression.evaluateExpression(d,doc,{turnover:money}).state,'no-match');
+ doc.conditions[0].window={kind:'count',span:3,operator:'gte',threshold:2};const missing=structuredClone(money);missing.rows.splice(2,1);result=expression.evaluateExpression(d,doc,{turnover:missing}).results[0];assert.equal(result.state,'unknown');assert.equal(result.window.lowerBound,1);assert.equal(result.window.upperBound,2);
+ const mismatch=structuredClone(money);mismatch.rows[2].volume=99;assert.equal(expression.evaluateExpression(d,doc,{turnover:mismatch}).state,'unknown');
+ const wrongUnit={...money,unit:'억원'};assert.equal(expression.evaluateExpression(d,doc,{turnover:wrongUnit}).state,'unknown');
+ delete doc.conditions[0].window;doc.conditions[0].condition.threshold=10300;assert.equal(expression.evaluateExpression(d,doc,{turnover:money}).state,'no-match');assert.ok(d.candles[3].close*d.candles[3].volume>10300);
+});
