@@ -303,6 +303,7 @@ test('crosshair OHLC, pan/zoom/scroll and drawing tools work with data anchors a
         JSON.parse(localStorage.getItem('stockbook:chart:drawings:v1:000001:월봉')).drawings.at(-1)
           .points,
     );
+    await page.locator('[data-tool="zoom"]').click(); // End drawing before editing its handles.
     const handle = page.locator('.sb-chart-drawing').last().locator('circle').first(),
       box = await handle.boundingBox();
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -339,6 +340,7 @@ test('tablet touch can draw a horizontal line and pinch zoom without losing the 
     const p = await point(page, 2, 260);
     await page.touchscreen.tap(p.x, p.y);
     assert.equal(await page.locator('.sb-chart-drawing').count(), 1);
+    await page.locator('[data-tool="horizontal"]').tap(); // Explicitly turn off the persistent tool.
     const session = await page.context().newCDPSession(page),
       center = await point(page, 3, 300);
     const input = (type, d) => session.send('Input.dispatchTouchEvent', { type, touchPoints: d });
@@ -540,6 +542,20 @@ test('embedded chart exposes crosshair labels, persistent bar data and foldable 
     p = await at(3, 260);
     await page.mouse.click(p.x, p.y);
     assert.equal(await host.locator('.sb-chart-drawings > g').count(), 1);
+    assert.equal(
+      await host.locator('[data-tool="horizontal"]').getAttribute('aria-pressed'),
+      'true',
+    );
+    assert.equal(await host.locator('.sb-chart-tooltip').isVisible(), false);
+    p = await at(4, 300);
+    await page.mouse.click(p.x, p.y);
+    assert.equal(await host.locator('.sb-chart-drawings > g').count(), 2);
+    assert.equal(await host.locator('.sb-chart-tooltip').isVisible(), false);
+    await page.keyboard.press('Delete');
+    assert.equal(await host.locator('.sb-chart-drawings > g').count(), 1);
+    await page.keyboard.press('Escape');
+    const remaining = await at(3, 260);
+    await page.mouse.click(remaining.x, remaining.y);
     await page.keyboard.press('Delete');
     assert.equal(await host.locator('.sb-chart-drawings > g').count(), 0);
     const before = await host.evaluate((h) => StockBookCharts.controller(h).getModel().count);
@@ -574,6 +590,7 @@ test('embedded chart exposes crosshair labels, persistent bar data and foldable 
         ),
       true,
     );
+    await page.keyboard.press('Escape'); // Re-enable information display before inspecting another cycle.
     await page.locator('#sbChartCycle').selectOption('month');
     await page.waitForFunction(
       () => document.getElementById('sbEmbeddedChart').chartEvidence?.barCycle === 'month',
@@ -702,7 +719,10 @@ test('Delete removes the selected indicator or drawing, protects editing and res
     await clickPoint(page, 1, 300);
     await page.keyboard.press('Delete');
     assert.equal(await page.locator('.sb-chart-drawing').count(), 0);
-    await page.locator('[data-tool="horizontal"]').click();
+    assert.equal(
+      await page.locator('[data-tool="horizontal"]').getAttribute('aria-pressed'),
+      'true',
+    );
     await clickPoint(page, 1, 300);
     const memo = page.getByRole('textbox', { name: '차트 메모', exact: true });
     await memo.fill('memo');
@@ -710,6 +730,7 @@ test('Delete removes the selected indicator or drawing, protects editing and res
     await memo.press('Delete');
     assert.equal(await memo.inputValue(), 'emo');
     assert.equal(await page.locator('.sb-chart-drawing').count(), 1);
+    await page.locator('[data-tool="zoom"]').click();
     await indicator('ma:5').click();
     await page.locator('#chartIndicatorSettings').click();
     await page.locator('#chartSettingsClose').focus();
@@ -860,6 +881,7 @@ test('individual indicator switches remain available after Delete and reopening;
     assert.equal(await page.locator('.ma[data-period="19"]').count(), 1);
     await page.locator('[data-tool="horizontal"]').click();
     await clickPoint(page, 2, 300);
+    await page.locator('[data-tool="zoom"]').click();
     const handle = page.locator('.sb-chart-drawing circle').first();
     assert.equal(await handle.evaluate((el) => getComputedStyle(el).cursor), 'grab');
     const box = await handle.boundingBox();
@@ -962,6 +984,9 @@ test('four chart types preserve OHLC and data anchors, use volume widths and lab
         .locator('#chartViewport')
         .evaluate((h) => StockBookCharts.controller(h).getModel().count),
       future = await point(page, count + 3, 300);
+    await page.mouse.move(future.x, future.y);
+    assert.equal(await page.locator('.sb-chart-tooltip').isVisible(), false);
+    await page.locator('[data-tool="zoom"]').click();
     await page.mouse.move(future.x, future.y);
     assert.match(await page.locator('.sb-chart-tooltip').innerText(), /가격 자료 없음/);
     await page.reload();
@@ -1670,6 +1695,9 @@ test('trading values load after price, show exact threshold colors with volume h
       ),
     );
     const bar = host.locator('.sb-money-bar').last();
+    await bar.hover();
+    assert.equal(await page.locator('.sb-chart-tooltip').isVisible(), false);
+    await page.locator('[data-tool="zoom"]').click();
     await bar.hover();
     assert.match(await page.locator('.sb-chart-tooltip').innerText(), /거래대금 [\d,]+원/);
     await bar.click();
@@ -2864,6 +2892,88 @@ test('price-only entry markers appear before money, follow dates, survive MA edi
       await page.locator('#entryCompact .sb-chart-signal[data-kind="entry"]').count(),
       1,
     );
+    assert.deepEqual(h.errors, []);
+  } finally {
+    await h.close();
+  }
+});
+
+test('every drawing tool stays selected for repeated use, suppresses hover information until toggled off, and survives rerenders', async () => {
+  const h = await setup(),
+    { page } = h;
+  try {
+    const onePoint = ['horizontal', 'vertical', 'midpoint', 'text'];
+    let count = 0;
+    for (const name of [
+      'trend',
+      'horizontal',
+      'vertical',
+      'thirds',
+      'quarters',
+      'midpoint',
+      'rectangle',
+      'ellipse',
+      'triangle',
+      'arrow',
+      'pen',
+      'text',
+    ]) {
+      const tool = page.locator('[data-tool="' + name + '"]');
+      const p = await point(page, 2, 240);
+      await page.mouse.move(p.x, p.y);
+      assert.equal(await page.locator('.sb-chart-tooltip').isVisible(), true);
+      await tool.click();
+      assert.equal(await tool.getAttribute('aria-pressed'), 'true');
+      assert.equal(await page.locator('.sb-chart-tooltip').isVisible(), false);
+      for (let n = 0; n < 2; n++) {
+        const start = await point(page, 1 + n, 230 + n * 20);
+        await page.mouse.move(start.x, start.y);
+        assert.equal(await page.locator('.sb-chart-tooltip').isVisible(), false);
+        if (name === 'pen') {
+          await page.mouse.down();
+          await page.mouse.move(start.x + 30, start.y + 20, { steps: 4 });
+          assert.equal(await page.locator('.sb-chart-tooltip').isVisible(), false);
+          await page.mouse.up();
+        } else {
+          await clickPoint(page, 1 + n, 230 + n * 20);
+          if (!onePoint.includes(name)) await clickPoint(page, 4 + n, 350 + n * 20);
+        }
+        assert.equal(await page.locator('.sb-chart-drawing').count(), ++count, name);
+        assert.equal(await tool.getAttribute('aria-pressed'), 'true', name);
+        assert.equal(await page.locator('.sb-chart-tooltip').isVisible(), false);
+        await page
+          .locator('#chartViewport')
+          .evaluate((host) => StockBookCharts.controller(host).refresh());
+        assert.equal(await tool.getAttribute('aria-pressed'), 'true');
+        const sub = await page.locator('[data-chart-id="pressureChart"]').boundingBox();
+        await page.mouse.move(sub.x + sub.width / 2, sub.y + sub.height / 2);
+        assert.equal(await page.locator('.sb-chart-tooltip').isVisible(), false);
+      }
+      await tool.click();
+      assert.equal(await tool.getAttribute('aria-pressed'), 'false');
+      const current = await point(page, 2, 240);
+      await page.mouse.move(current.x, current.y);
+      assert.equal(await page.locator('.sb-chart-tooltip').isVisible(), true);
+    }
+    await page.locator('[data-tool="horizontal"]').click();
+    await page.locator('#chartPeriod').selectOption('3m');
+    await page.waitForFunction(
+      () => document.getElementById('chartViewport').chartEvidence?.viewRange === '3m',
+    );
+    assert.equal(
+      await page.locator('[data-tool="horizontal"]').getAttribute('aria-pressed'),
+      'true',
+    );
+    await clickPoint(page, 1, 300);
+    assert.equal(await page.locator('.sb-chart-tooltip').isVisible(), false);
+    await page.keyboard.press('Escape');
+    assert.equal(
+      await page.locator('[data-tool="horizontal"]').getAttribute('aria-pressed'),
+      'false',
+    );
+    const p = await point(page, 1, 260);
+    await page.mouse.move(p.x, p.y);
+    assert.equal(await page.locator('.sb-chart-tooltip').isVisible(), true);
     assert.deepEqual(h.errors, []);
   } finally {
     await h.close();

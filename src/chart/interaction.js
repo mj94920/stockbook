@@ -2,6 +2,7 @@
   'use strict';
   const memory = new Map(),
     indicatorMemory = new Map(),
+    toolMemory = new WeakMap(),
     types = [
       'trend',
       'horizontal',
@@ -51,7 +52,7 @@
     if (tools) controller.setHiddenIndicators(hidden);
     svg.setAttribute('tabindex', '0');
     let drawings = memory.get(key) || [],
-      mode = 'zoom',
+      mode = tools ? toolMemory.get(host) || 'zoom' : 'zoom',
       selected = null,
       selectedIndicator = null,
       pending = null,
@@ -168,9 +169,11 @@
     const setMode = (value) => {
       if (compact) toolPanel.open = false;
       mode = value;
+      if (tools) toolMemory.set(host, mode);
       pending = null;
       stroke = null;
       preview = null;
+      hide();
       for (const b of toolbar.querySelectorAll('[data-tool]'))
         b.setAttribute('aria-pressed', String(b.dataset.tool === mode));
       status.textContent =
@@ -179,7 +182,10 @@
           midpoint: '봉을 누르면 선택 기준의 중심선을 그립니다.',
           pen: '누른 채 자유롭게 그립니다.',
           text: '메모를 입력한 뒤 표시할 곳을 누르세요.',
-        }[value] || '시작점과 끝점을 누르거나 끌어 그립니다. Esc로 취소합니다.';
+        }[value] || '시작점과 끝점을 누르거나 끌어 그립니다.';
+      if (value !== 'zoom')
+        status.textContent +=
+          ' 연속해서 그릴 수 있습니다. 같은 도구를 다시 누르거나 Esc로 해제합니다.';
     };
     if (tools) {
       for (const [value, label] of [
@@ -197,7 +203,7 @@
         ['pen', '펜'],
         ['text', '텍스트'],
       ])
-        button(label, () => setMode(value), toolbar, { tool: value });
+        button(label, () => setMode(mode === value ? 'zoom' : value), toolbar, { tool: value });
       toolbar.append(center, textInput);
       button('선택 삭제', deleteSelection);
       button('실행 취소', () => {
@@ -719,6 +725,8 @@
         dateLabel.style.top = Math.max(rect.top, rect.bottom - 22) + 'px';
         priceLabel.hidden = dateLabel.hidden = false;
       }
+      // Keep crosshair/axis guidance while drawing, without a floating information window.
+      if (mode !== 'zoom') return;
       if (!row) {
         tip.textContent = 'BB 이동 표시 공간 · 가격 자료 없음';
       } else {
@@ -791,7 +799,7 @@
       selected = d.id;
       selectedIndicator = null;
       pending = null;
-      setMode('zoom');
+      setMode(mode);
       draw();
     }
     function down(e) {
@@ -1170,7 +1178,7 @@
     if (money) observer.observe(money);
     if (investor) observer.observe(investor);
     if (obv) observer.observe(obv);
-    setMode('zoom');
+    setMode(mode);
     draw();
     return {
       destroy() {
