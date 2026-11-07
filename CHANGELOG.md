@@ -2,6 +2,10 @@
 
 자동 생성 — `scripts/bump-version.mjs`
 
+## v1.13.3 — 2026-11-08
+
+- fix(build): Electron 설치 스크립트 허용
+
 ## v1.13.2 — 2026-11-08
 
 - fix(portfolio): 빠른 매도 수익률과 실현손익 집계 보정
