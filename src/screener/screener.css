@@ -7,3 +7,5 @@
 .sb-screen-rule{padding:10px 0;border-block:1px solid var(--sb-border)}.sb-screen-params{margin:0}
 .sb-screen-result{padding:12px 0;border-top:1px solid var(--sb-border)}.sb-screen-result small{color:var(--sb-text-2);overflow-wrap:anywhere}.sb-screen-result button{margin:8px 6px 0 0}
 .sb-screen-dialog details{line-height:1.8}.sb-screen-dialog summary{cursor:pointer;color:var(--sb-accent)}
+
+.sb-screen-dialog input[aria-label="중첩 논리식"]{width:min(100%,640px);box-sizing:border-box}

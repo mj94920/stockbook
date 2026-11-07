@@ -22,16 +22,18 @@
   if(['volume','turnover'].includes(condition.id)&&(condition.op!=='gte'||!Number.isSafeInteger(condition.threshold)||condition.threshold<0))throw Error('거래량·거래대금 기준값 오류');
   return {...condition};
  }
- function evaluate(dataset,conditions,{join='all',mode='closed',cycle='day',turnover=null}={}){
-  if(!['all','any'].includes(join)||!['closed','latest'].includes(mode)||!Array.isArray(conditions)||conditions.length<1||conditions.length>12)throw Error('검색 조합·봉 기준·조건 개수 오류');
-  conditions=conditions.map(validate);
+ function prepare(dataset,{mode='closed',cycle='day',turnover=null}={}){
+  if(!['closed','latest'].includes(mode))throw Error('봉 기준 오류');
   if(!dataset?.ok||!/^\d{6}$/.test(dataset.metadata?.stockCode||''))throw Error('종목 일봉 자료 없음');
   const bars=series.aggregate(dataset.candles,cycle,dataset.metadata);
-  // Only the final provider bar has uncertain completion; never call it confirmed by clock inference.
   const index=bars.length-1-(mode==='closed'&&bars.at(-1).incompleteEnd?1:0);
-  const date=bars[index]?.date||null,provisional=!!bars[index]?.incompleteEnd;
   let amounts=null;if(turnover)try{amounts=series.tradingValues(bars,dataset.candles,turnover).amounts;}catch{}
-  const results=conditions.map(condition=>{
+  return {dataset,bars,index,cycle,mode,amounts};
+ }
+ function evaluateLeaf(context,condition,index=context.index){
+  const {bars,cycle,amounts}=context;
+  const date=bars[index]?.date||null,provisional=!!bars[index]?.incompleteEnd;
+
    const base={condition,formula:registry[condition.id].formula,version:registry[condition.id].version,unit:registry[condition.id].unit,date,provisional,value:null,reference:null,previousValue:null,previousReference:null};
    const unknown=reason=>({...base,state:'unknown',reason});
    if(index<0)return unknown('완성 봉 이력 없음');
@@ -58,10 +60,19 @@
    if(crossing&&(!Number.isFinite(previousValue)||!Number.isFinite(previousReference)))return {...base,state:'unknown',reason:'돌파 판정용 직전 봉 이력 부족'};
    const match=condition.op==='gte'?value>=reference:condition.op==='above'?value>reference:condition.op==='below'?value<reference:condition.op==='crossUp'?previousValue<=previousReference&&value>reference:previousValue>=previousReference&&value<reference;
    return {...base,state:match?'match':'no-match',reason:match?'조건 충족':'조건 미충족'};
-  });
-  const states=results.map(r=>r.state);
-  const state=join==='all'?(states.includes('no-match')?'no-match':states.includes('unknown')?'unknown':'match'):(states.includes('match')?'match':states.includes('unknown')?'unknown':'no-match');
+ }
+ function summarize(context,results,state,join){
+  const {dataset,bars,index,mode,cycle}=context,date=bars[index]?.date||null,provisional=!!bars[index]?.incompleteEnd;
   return {code:dataset.metadata.stockCode,date,mode,cycle,provisional,historyStartPartial:!!bars[0].incompleteStart,state,join,source:dataset.metadata.source||'공급자 미표시',fetchedAt:dataset.metadata.fetchedAt||null,results};
  }
- return Object.freeze({registry,pending,validate,evaluate});
+ function evaluate(dataset,conditions,{join='all',mode='closed',cycle='day',turnover=null}={}){
+  if(!['all','any'].includes(join)||!['closed','latest'].includes(mode)||!Array.isArray(conditions)||conditions.length<1||conditions.length>12)throw Error('검색 조합·봉 기준·조건 개수 오류');
+  conditions=conditions.map(validate);
+  const context=prepare(dataset,{mode,cycle,turnover});
+  const results=conditions.map(condition=>evaluateLeaf(context,condition));
+  const states=results.map(r=>r.state);
+  const state=join==='all'?(states.includes('no-match')?'no-match':states.includes('unknown')?'unknown':'match'):(states.includes('match')?'match':states.includes('unknown')?'unknown':'no-match');
+  return summarize(context,results,state,join);
+ }
+ return Object.freeze({registry,pending,validate,evaluate,prepare,evaluateLeaf,summarize});
 });
