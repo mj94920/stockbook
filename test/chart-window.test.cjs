@@ -25,8 +25,8 @@ test('recorded chart data is identified and never used for another stock',()=>{
  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'sb-chart-package-'));
  try{
   const staged=prepareRendererFiles(app,temp);
-  for(const file of ['src/desktop/shortcuts.js','src/desktop/industry-data.js','src/desktop/themes.js','src/desktop/theme-browser.js','src/desktop/themes.css','src/chart/renderer.js','src/chart/series.js','src/chart/client.js','src/chart/chart.css','src/chart/proof-data/long-candles.json'])assert.equal(fs.existsSync(path.join(staged.directory,file)),true);
-  const pkg=require('../package.json');assert.ok(pkg.build.files.includes('src/chart/**'));assert.ok(pkg.build.files.includes('src/desktop/renderer-files.cjs'));for(const file of ['src/desktop/industry-data.js','src/desktop/themes.js','src/desktop/theme-browser.js','src/desktop/themes.css'])assert.ok(pkg.build.files.includes(file));
+  for(const file of ['src/ai/client.js','src/ai/policy.js','src/ai/ai.css','src/desktop/shortcuts.js','src/desktop/industry-data.js','src/desktop/themes.js','src/desktop/theme-browser.js','src/desktop/themes.css','src/chart/renderer.js','src/chart/series.js','src/chart/client.js','src/chart/chart.css','src/chart/proof-data/long-candles.json'])assert.equal(fs.existsSync(path.join(staged.directory,file)),true);
+  const pkg=require('../package.json');assert.ok(pkg.build.files.includes('src/chart/**'));assert.ok(pkg.build.files.includes('src/ai/**')); assert.ok(pkg.build.files.includes('src/desktop/renderer-files.cjs'));for(const file of ['src/desktop/industry-data.js','src/desktop/themes.js','src/desktop/theme-browser.js','src/desktop/themes.css'])assert.ok(pkg.build.files.includes(file));
  }finally{fs.rmSync(temp,{recursive:true,force:true});}
 });
 

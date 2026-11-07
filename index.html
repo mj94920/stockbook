@@ -3531,6 +3531,7 @@
 </style>
 <link rel="stylesheet" href="src/chart/chart.css">
 <link rel="stylesheet" href="src/desktop/themes.css">
+<link rel="stylesheet" href="src/ai/ai.css">
 </head>
 <body>
 
@@ -3863,7 +3864,7 @@
           </div>
           <!-- 빠른 액션 버튼 -->
           <div id="qo_quick_btns" style="display:none;gap:5px;">
-            <button onclick="_qoOpenAnalysis()" style="font-size:11px;padding:2px 9px;border-radius:4px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font-family:inherit;">기업분석</button>
+            <button onclick="_qoOpenAnalysis()" style="font-size:11px;padding:2px 9px;border-radius:4px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font-family:inherit;">기업 리서치</button>
             <button onclick="_qoOpenJournal()" style="font-size:11px;padding:2px 9px;border-radius:4px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font-family:inherit;">일지</button>
           </div>
         </div>
@@ -4521,7 +4522,7 @@
           <div class="sb-detail-identity"><strong class="dock-ctx__name" id="dockCtxName">--</strong><span class="dock-ctx__code" id="dockCtxCode">--</span></div>
           <div class="sb-detail-price"><strong class="dock-ctx__price" id="dockCtxPrice">--</strong><span class="dock-ctx__chg" id="dockCtxChg">--</span></div>
           <div class="dock-ctx__none" id="dockCtxStatus" role="status"></div>
-        </div><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('chart')">기업분석 ↗</button></div>
+        </div><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('chart')">기업 리서치 ↗</button></div>
         <div class="sb-context-tabs" aria-label="선택 종목 보기">
           <button type="button" class="active" data-context-tab="chart" onclick="sbContextTab('chart')">차트</button>
           <button type="button" data-context-tab="hoga" onclick="sbContextTab('hoga')">호가</button>
@@ -4533,7 +4534,7 @@
             <div id="sbEmbeddedChart" data-chart-host class="sb-data-empty"><strong>차트 데이터 없음</strong><span>차트 원본 연결 후 가격·거래량을 표시합니다.</span></div><div id="sbChartStatus" role="status"></div>
           </section>
           <section class="sb-context-pane" data-context-pane="hoga" hidden><section class="sb-order-region" aria-label="선택 종목 5호가"><div class="sb-region-title"><strong>5호가</strong><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" id="sbHogaRefresh" onclick="sbDesktopHoga()">조회</button></div><div id="sbHogaStatus" class="dock-ctx__none" role="status">호가 데이터 없음 · 조회 대기</div><table class="sb-hoga-table"><thead><tr><th>매도잔량</th><th>가격</th><th>매수잔량</th></tr></thead><tbody id="sbHogaRows"></tbody></table></section></section>
-          <section class="sb-context-pane" data-context-pane="info" hidden><div class="dock-ctx__rows dock-ctx__quote-grid" id="dockCtxQuote"></div><button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('chart')">기업분석 열기 ↗</button></section>
+          <section class="sb-context-pane" data-context-pane="info" hidden><div class="dock-ctx__rows dock-ctx__quote-grid" id="dockCtxQuote"></div><button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('chart')">기업 리서치 열기 ↗</button></section>
         </div>
         <details class="sb-context-details"><summary>보유 · 목표/손절 · 일정</summary><div class="sb-detail-content"><div class="dock-ctx__rows" id="dockCtxHold"></div><div class="dock-ctx__rows" id="sbDesktopTargets"></div><div class="dock-ctx__rows" id="dockCtxEvents"></div></div></details>
       </div>
@@ -6271,6 +6272,7 @@ function _buildYFFinanceTable(r, code) {
 
 // ── openStockDrawer: 전종목 탭에서 기업 분석 드로어 오픈 ─────────────
 function openStockDrawer(code, name) {
+  if(window.StockBookAI)return window.StockBookAI.openResearch({code,name});
   // 포트폴리오에 있으면 기존 drawerIdx 방식
   const idx = (state.portfolio || []).findIndex(s => s.ticker === code || s.code === code);
   if (idx >= 0) { openAnalysisDrawer(idx); return; }
@@ -6280,6 +6282,7 @@ function openStockDrawer(code, name) {
 }
 
 async function _openAnalysisForStock(stock) {
+  if(window.StockBookAI)return window.StockBookAI.openResearch({code:stock.ticker,name:stock.name});
   document.getElementById('analysisDrawer').classList.add('open');
   document.getElementById('analysisOverlay').classList.add('open');
   const titleEl = document.getElementById('analysisDrawerTitle');
@@ -7088,8 +7091,8 @@ function renderAllStockTable() {
         <td style="text-align:right;font-size:11px;color:var(--text3);">${per}</td>
         <td style="text-align:right;font-size:11px;color:var(--text3);">${pbr}</td>
         <td style="text-align:right;font-size:11px;color:var(--text3);">${div}</td>
-        <td style="text-align:center;padding:2px 3px;" onclick="event.stopPropagation();allStockOpenChart('${safeCode}','${safeName}')" title="기업분석">
-          <button style="padding:1px 5px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-size:10px;cursor:pointer;line-height:1.5;">분석</button>
+        <td style="text-align:center;padding:2px 3px;" onclick="event.stopPropagation();allStockOpenChart('${safeCode}','${safeName}')" title="기업 리서치">
+          <button style="padding:1px 5px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-size:10px;cursor:pointer;line-height:1.5;">리서치</button>
         </td>
       </tr>`;
     }).join('');
@@ -7166,7 +7169,7 @@ async function openAllStockPopup(code, name) {
         <button onclick="allStockAddWatch('${safeCode}','${safeName}','${_allMkt}');document.getElementById('allStockDetailPopup').remove()" style="flex:1;padding:8px 4px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;">★ 관심</button>
         <button onclick="allStockBuy('${safeCode}','${safeName}');document.getElementById('allStockDetailPopup').remove()" style="flex:1;padding:8px 4px;background:#1b4f3c;color:#4caf81;border:1px solid #2d6a50;border-radius:6px;font-size:11px;cursor:pointer;">매수</button>
         <button onclick="allStockSell('${safeCode}','${safeName}');document.getElementById('allStockDetailPopup').remove()" style="flex:1;padding:8px 4px;background:#4a1c1c;color:#e57373;border:1px solid #6a2e2e;border-radius:6px;font-size:11px;cursor:pointer;">매도</button>
-        <button onclick="allStockOpenChart('${safeCode}','${safeName}');document.getElementById('allStockDetailPopup').remove()" style="flex:1;padding:8px 4px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;">기업분석</button>
+        <button onclick="allStockOpenChart('${safeCode}','${safeName}');document.getElementById('allStockDetailPopup').remove()" style="flex:1;padding:8px 4px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;">기업 리서치</button>
       </div>
     </div>`;
 
@@ -10016,7 +10019,7 @@ function _icRenderDetail() {
   const chips = codes.map(c => `<button type="button" class="ic-chip" onclick="openStockDrawer('${_icEsc(c)}', decodeURIComponent('${encodeURIComponent(_icStockName(c))}'))">${_icEsc(_icStockName(c))}</button>`).join('');
   el.innerHTML = `<h3>${_icEsc(n.title)}</h3>
     <div class="ic-meta">${_icEsc(n.source)}${n.source && (n.time || n.timeLabel) ? ' · ' : ''}${_icEsc(_icTimeFmt(n.time, true) || n.timeLabel || '')}</div>
-    <div class="ic-actions">${n.publisherUrl && n.publisherUrl !== n.url ? _icLinkBtn(n.publisherUrl, '언론사 원문 ↗') + _icLinkBtn(n.url, '네이버 기사 ↗') : _icLinkBtn(n.url, '원문 보기 ↗')}${codes.length ? `<button type="button" class="sb-btn" onclick="openStockDrawer('${_icEsc(codes[0])}', decodeURIComponent('${encodeURIComponent(_icStockName(codes[0]))}'))">기업분석 열기</button>` : ''}</div>
+    <div class="ic-actions">${n.publisherUrl && n.publisherUrl !== n.url ? _icLinkBtn(n.publisherUrl, '언론사 원문 ↗') + _icLinkBtn(n.url, '네이버 기사 ↗') : _icLinkBtn(n.url, '원문 보기 ↗')}${codes.length ? `<button type="button" class="sb-btn" onclick="openStockDrawer('${_icEsc(codes[0])}', decodeURIComponent('${encodeURIComponent(_icStockName(codes[0]))}'))">기업 리서치 열기</button>` : ''}</div>
     ${window.electronAPI?.openNewsPage ? `<div class="sb-news-page-tools" role="group" aria-label="기사 보기 방식">${[['publisher','언론사 원문'],...(n.url?.includes('n.news.naver.com')?[['naver','네이버 기사']]:[]),['text','본문만 보기']].map(([mode,label])=>`<button type="button" class="sb-btn sb-btn--sm${_icPageMode===mode?' sb-btn--primary':''}" aria-pressed="${_icPageMode===mode}" onclick="icSetPageMode('${mode}')">${label}</button>`).join('')}</div>` : ''}
     ${original ? `<div id="icPageStatus" class="sb-news-page-status" role="status">원문 페이지를 불러오는 중…</div><div id="icPageHost" class="sb-news-page-host" aria-label="기사 원문 웹페이지"></div>` : n.articleBody ? `<div class="ic-article-label">기사 본문</div><div class="ic-article-body">${_icEsc(n.articleBody)}</div>` : `${n.articleLoading ? '<p class="ic-article-status" role="status">기사 본문을 불러오는 중…</p>' : `<p class="ic-article-status" role="status">${_icEsc(n.articleError || '본문은 데스크톱 앱에서 조회할 수 있습니다.')}</p>`}${n.summary ? `<div class="ic-article-label">수신 요약</div><div class="ic-sum">${_icEsc(n.summary)}</div>` : ''}`}
     ${!original && chips ? `<div class="ic-chips" style="margin-bottom:var(--sb-space-2)">${chips}</div>` : ''}`;
@@ -12122,8 +12125,8 @@ function renderWatchlist() {
       <td style="text-align:right;font-size:11px;color:var(--text3);">${pbr}</td>
       <td style="text-align:right;font-size:11px;color:var(--text3);">${div}</td>
       <td style="text-align:center;padding:2px 3px;"
-          onclick="event.stopPropagation();allStockOpenChart('${safeCode}','${safeName}')" title="기업분석">
-        <button type="button" style="padding:1px 5px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-size:10px;cursor:pointer;line-height:1.5;">분석</button>
+          onclick="event.stopPropagation();allStockOpenChart('${safeCode}','${safeName}')" title="기업 리서치">
+        <button type="button" style="padding:1px 5px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-size:10px;cursor:pointer;line-height:1.5;">리서치</button>
       </td>
     </tr>`;
   }).join('');
@@ -12203,6 +12206,7 @@ async function sbOpenChart() {
   catch{status.textContent='상세 차트 창을 열지 못했습니다.';}
 }
 function sbDesktopSelection(w) {
+  window.StockBookAI?.select(w);
   sbChartSync();
   document.querySelectorAll('.sb-analysis-stock').forEach(el => { el.textContent = w ? (w.name || w.ticker) : '종목 선택'; });
   const ticker = w?.ticker || null;
@@ -12675,6 +12679,7 @@ async function openAnalysisDrawer(idx) {
   _analysisIdx = idx;
   const stock = state.portfolio[idx];
   if (!stock) return;
+  if(window.StockBookAI)return window.StockBookAI.openResearch({code:stock.ticker,name:stock.name});
 
   // 드로어 열기
   document.getElementById('analysisDrawer').classList.add('open');
@@ -12708,6 +12713,7 @@ async function openAnalysisDrawer(idx) {
 }
 
 function closeAnalysisDrawer() {
+  window.StockBookAI?.closeResearch();
   document.getElementById('analysisDrawer').classList.remove('open');
   document.getElementById('analysisOverlay').classList.remove('open');
 }
@@ -14519,6 +14525,7 @@ function wlAssignGroup(idx, gName) {
         <button type="button" class="sb-hub__nav-btn" data-cat="display" onclick="settingsGo('display')">화면·테마</button>
         <button type="button" class="sb-hub__nav-btn" data-cat="realtime" onclick="settingsGo('realtime')">시세·실시간</button>
         <button type="button" class="sb-hub__nav-btn" data-cat="account" onclick="settingsGo('account')">API 연결</button>
+        <button type="button" class="sb-hub__nav-btn" data-cat="ai" onclick="settingsGo('ai');window.StockBookAI?.checkHome()">AI 연결</button>
         <button type="button" class="sb-hub__nav-btn" data-cat="portfolio" onclick="settingsGo('portfolio')">포트폴리오</button>
         <button type="button" class="sb-hub__nav-btn" data-cat="classify" onclick="settingsGo('classify')">종목 분류</button>
         <button type="button" class="sb-hub__nav-btn" data-cat="news" onclick="settingsGo('news')">뉴스·시황</button>
@@ -14579,6 +14586,7 @@ function wlAssignGroup(idx, gName) {
       </div>
     </div>
 
+    <div class="sb-hub__page" data-page="ai"></div>
     <!-- 계좌·API -->
     <div class="sb-hub__page" data-page="account">
       <div class="sb-hub__row">
@@ -14776,6 +14784,8 @@ function wlAssignGroup(idx, gName) {
 <script src="src/desktop/theme-browser.js"></script>
 <script src="src/news/page-client.js"></script>
 <script src="src/desktop/shortcuts.js"></script>
+<script src="src/ai/policy.js"></script>
+<script src="src/ai/client.js"></script>
 <script>StockBookShortcuts.mount(SB_MODAL_CLOSERS);</script>
 <script src="src/chart/series.js"></script>
 <script src="src/chart/renderer.js"></script>

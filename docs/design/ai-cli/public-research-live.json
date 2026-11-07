@@ -1,0 +1,44 @@
+{
+  "code": "005930",
+  "name": "삼성전자",
+  "collectedAt": "2026-11-07T03:08:20.862Z",
+  "since": "2026-08-06",
+  "missing": [
+    "financeUnits"
+  ],
+  "evidence": [
+    {
+      "id": "finance",
+      "status": "received",
+      "asOf": "2025.12.",
+      "rows": 16,
+      "url": "https://m.stock.naver.com/api/stock/005930/finance/annual"
+    },
+    {
+      "id": "industry",
+      "status": "received",
+      "asOf": "2026-11-06",
+      "url": "https://m.stock.naver.com/domestic/stock/005930/total"
+    },
+    {
+      "id": "news",
+      "status": "received",
+      "asOf": "2026-11-07T12:00:00+09:00",
+      "rows": 20,
+      "url": "https://m.stock.naver.com/api/news/stock/005930?pageSize=20&page=1"
+    },
+    {
+      "id": "prices",
+      "status": "received",
+      "asOf": "2026-11-06",
+      "barCount": 1000,
+      "url": "https://fchart.stock.naver.com/sise.nhn?symbol=005930"
+    },
+    {
+      "id": "profile",
+      "status": "received",
+      "asOf": "2026-11-06T20:20:24+09:00",
+      "url": "https://m.stock.naver.com/api/stock/005930/basic"
+    }
+  ]
+}

@@ -11,7 +11,8 @@ let win;
 const { prepareRendererFiles } = require('./src/desktop/renderer-files.cjs');
 const rendererDirectories = new Set();
 const chartStockSearch = require('./src/chart/stock-search.cjs').createStockSearch({loadMarket:loadNaverStocks,loadBasic:async code=>JSON.parse(await httpsGet(`https://m.stock.naver.com/api/stock/${code}/basic`,8000))});
-const chartWindows = require('./src/chart/window.cjs').registerChartWindow({ ipcMain, BrowserWindow, getMainWindow:()=>win, appDir:__dirname, getChartData:require('./src/chart/provider.cjs').createChartProvider({httpsGet}).get, getTradingValues:require('./src/chart/trading-value.cjs').createTradingValueProvider({httpsGet,getAuth:getKisToken}).get, searchStocks:chartStockSearch.search, resolveStock:chartStockSearch.resolve, getInvestors:require('./src/chart/investor-provider.cjs').createInvestorProvider({httpsGet,getAuth:getKisToken,naverFallback:true}).get });
+const chartDataProvider = require('./src/chart/provider.cjs').createChartProvider({httpsGet});
+const chartWindows = require('./src/chart/window.cjs').registerChartWindow({ ipcMain, BrowserWindow, getMainWindow:()=>win, appDir:__dirname, getChartData:chartDataProvider.get, getTradingValues:require('./src/chart/trading-value.cjs').createTradingValueProvider({httpsGet,getAuth:getKisToken}).get, searchStocks:chartStockSearch.search, resolveStock:chartStockSearch.resolve, getInvestors:require('./src/chart/investor-provider.cjs').createInvestorProvider({httpsGet,getAuth:getKisToken,naverFallback:true}).get });
 
 // ── 데이터 파일 경로: %APPDATA%\StockBook\stockbook-data.json ──────────────
 function getDataFile() {
@@ -1228,6 +1229,9 @@ ipcMain.handle('fetch-naver-finance', async (_event, code) => {
 const newsService = require('./src/news/service.cjs').registerNews({
   ipcMain, getMainWindow: () => win, httpsGet, headers: NAVER_HEADERS,
 });
+const stockAIResearch = require('./src/ai/research.cjs').createResearch({httpsGet,getChartData:chartDataProvider.get,headers:NAVER_HEADERS});
+const stockAI = require('./src/ai/service.cjs').registerAI({ipcMain,getMainWindow:()=>win,research:stockAIResearch});
+app.on('will-quit',()=>stockAI.dispose());
 const newsPage = require('./src/news/page.cjs').registerNewsPage({
   ipcMain, WebContentsView, getMainWindow:()=>win, resolvePage:newsService.resolvePage
 });

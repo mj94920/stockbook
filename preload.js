@@ -1,6 +1,10 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  aiStatus: () => ipcRenderer.invoke('stockbook-ai','status'),
+  aiResearch: value => ipcRenderer.invoke('stockbook-ai','research',value),
+  aiAnalyze: value => ipcRenderer.invoke('stockbook-ai','analyze',value),
+  aiCancel: () => ipcRenderer.invoke('stockbook-ai','cancel'),
   loadState:   ()          => ipcRenderer.invoke('load-state'),
   saveState:   (data)      => ipcRenderer.invoke('save-state', data),
   showConfirm: (message)   => ipcRenderer.invoke('show-confirm', message),
