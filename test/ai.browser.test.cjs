@@ -53,3 +53,31 @@ test('unconfigured HOME is shown as a missing app connection, never as missing C
  await page.locator('#sbAnalysis').getByRole('button',{name:'홈 연결',exact:true}).click();await page.waitForFunction(()=>document.getElementById('sbAIHomeStatus').textContent.includes('등록되지'));
  assert.doesNotMatch(await page.locator('#sbAIHomeStatus').innerText(),/Claude.*미설치|로그인 성공/);
 }));
+
+test('research design exposes missing dates and units, filters evidence and fits desktop viewports',async()=>app(async(page)=>{
+ await page.evaluate(()=>{window.electronAPI.aiResearch=async value=>{const bundle=window.__bundle(value.code,'자료 검토 예시');bundle.missing=['portfolioStructure'];bundle.evidence[0].asOf=null;bundle.evidence[1].data.rows[0].unit=null;bundle.evidence[1].data.rows[0].values[0].value='0';return {ok:true,bundle};};openStockDrawer('005930','자료 검토 예시');});
+ await page.waitForFunction(()=>document.querySelector('.sb-data-health'));
+ assert.match(await page.locator('.sb-data-health').innerText(),/기준 확인 2/);assert.match(await page.locator('.sb-data-health').innerText(),/미수집 1/);
+ assert.match(await page.locator('.sb-research-source[data-source="finance"]').innerText(),/단위 확인 필요/);
+ assert.match(await page.locator('.sb-research-source[data-source="profile"]').innerText(),/기준일 확인/);
+ await page.locator('.sb-research-nav').getByRole('button',{name:'공시 재무',exact:true}).click();assert.equal(await page.locator('.sb-research-source:visible').count(),1);assert.match(await page.locator('.sb-research-source:visible').innerText(),/2025: 0/);
+ await page.locator('.sb-research-nav').getByRole('button',{name:'전체 자료',exact:true}).click();assert.equal(await page.locator('.sb-research-source:visible').count(),3);
+ for(const viewport of [{width:1600,height:1000},{width:1024,height:768}]){
+  await page.setViewportSize(viewport);await page.waitForTimeout(300);
+  const fit=await page.locator('#analysisDrawer').evaluate(drawer=>{const r=drawer.getBoundingClientRect(),body=document.getElementById('analysisDrawerBody');return r.x>=-1&&r.right<=innerWidth+1&&body.scrollWidth<=body.clientWidth+2;});assert.equal(fit,true);
+ }
+ assert.equal(await page.evaluate(()=>window.__aiCalls.length),0);
+}));
+
+test('HOME stays honest and research carries its stock and period into AI review without executing a model',async()=>app(async(page)=>{
+ await page.evaluate(async()=>{window.electronAPI.aiStatus=async()=>({ok:true,configured:false,providers:[],message:'HOME 연동 경로 확인 필요'});await StockBookAI.checkHome();});
+ assert.equal(await page.locator('#sbAIRun').isDisabled(),true);assert.match(await page.locator('#sbAIConnection').innerText(),/확인 필요/);
+ await page.evaluate(()=>openStockDrawer('000660','다른 기업'));await page.waitForFunction(()=>document.querySelector('.sb-data-health'));
+ await page.getByRole('button',{name:'이 종목 AI 검토',exact:true}).click();assert.equal(await page.evaluate(()=>window._dockSel),'000660');assert.equal(await page.evaluate(()=>window.__aiCalls.length),0);assert.match(await page.locator('#sbAIDataStatus').innerText(),/필요 자료 확인/);
+ await page.locator('#sbAIPeriod').selectOption('1y');assert.match(await page.locator('#sbAIDataStatus').innerText(),/수집 범위가 다릅니다/);
+ await page.evaluate(async()=>{window.electronAPI.aiStatus=async()=>({ok:true,configured:true,providers:[{id:'claude',connected:true}]});await StockBookAI.checkHome();});
+ await page.locator('#sbAIRun').click();await page.waitForFunction(()=>document.querySelector('#sbAIResult .sb-ai-summary'));
+ assert.match(await page.locator('#sbAIResult').innerText(),/AI 해석/);assert.match(await page.locator('#sbAIResult').innerText(),/해석과 가설/);assert.match(await page.locator('#sbAIResult').innerText(),/위험과 자료 한계/);assert.match(await page.locator('#sbAIResult').innerText(),/다시 확인할 조건/);
+ assert.equal(await page.evaluate(()=>window.__aiCalls.length),1);
+ await page.getByRole('button',{name:'내 판단 기록하기',exact:true}).click();assert.equal(await page.locator('#j_name').inputValue(),'다른 기업');
+}));
