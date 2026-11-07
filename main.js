@@ -1208,14 +1208,14 @@ ipcMain.handle('fetch-naver-finance', async (_event, code) => {
   if (!code || !/^\d{6}$/.test(code.trim())) return null;
   const base = `https://m.stock.naver.com/api/stock/${code.trim()}`;
   try {
-    const [annualBody, summaryBody] = await Promise.all([
-      httpsGet(`${base}/finance/annual`,  10000, NAVER_HEADERS),
+    const [annualResult, summaryBody] = await Promise.all([
+      httpsGet(`${base}/finance/annual`, 10000, NAVER_HEADERS).then(body => ({
+        annual: JSON.parse(body),
+        annualMetadata: { provider: '네이버 금융', fetchedAt: new Date().toISOString() },
+      })),
       httpsGet(`${base}/finance/summary`, 10000, NAVER_HEADERS),
     ]);
-    return {
-      annual:  JSON.parse(annualBody),
-      summary: JSON.parse(summaryBody),
-    };
+    return { ...annualResult, summary: JSON.parse(summaryBody) };
   } catch (e) {
     console.error('[StockBook] fetch-naver-finance 오류:', e.message);
     return null;
@@ -1231,6 +1231,11 @@ const newsPage = require('./src/news/page.cjs').registerNewsPage({
 });
 
 // ── IPC: API 키 암호화 저장 (safeStorage) ───────────────────────────────────
+require('./src/finance/open-dart.cjs').registerOpenDart({
+  ipcMain, getMainWindow: () => win, safeStorage,
+  getKeyFile: () => path.join(app.getPath('userData'), 'open-dart-key.enc'),
+});
+
 function getCredFile(broker) {
   return path.join(app.getPath('userData'), `${broker}-cred.enc`);
 }
