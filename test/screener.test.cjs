@@ -159,3 +159,122 @@ test('unconfirmed formulas and malformed source data cannot become passing scree
   assert.throws(() => screen.evaluate(data([2, 3]), [volume(-1)]));
   assert.throws(() => screen.evaluate(data([2, 3]), []));
 });
+
+test('SMA and Wilder RSI downward crossings include previous equality, exclude current equality and do not repeat below the line', () => {
+  const sma = { id: 'sma', op: 'crossDown', fast: 2, slow: 3 };
+  assert.equal(screen.evaluate(data([10, 10, 10, 9]), [sma]).state, 'match');
+  assert.equal(screen.evaluate(data([10, 10, 10, 10]), [sma]).state, 'no-match');
+  assert.equal(screen.evaluate(data([10, 10, 10, 9, 8]), [sma]).state, 'no-match');
+  assert.equal(screen.evaluate(data([10, 10, 10, 9, 8]), [{ ...sma, op: 'below' }]).state, 'match');
+  assert.equal(screen.evaluate(data([10, 10, 9]), [sma]).state, 'unknown');
+  const rsi = { id: 'rsi', op: 'crossDown', period: 2, method: 'wilder', level: 50 };
+  const result = screen.evaluate(data([10, 11, 12, 11, 10]), [rsi]);
+  assert.equal(result.state, 'match');
+  assert.equal(result.results[0].previousValue, 50);
+  assert.equal(result.results[0].value, 25);
+  assert.equal(screen.evaluate(data([10, 11, 12, 11]), [rsi]).state, 'no-match');
+  assert.equal(screen.evaluate(data([10, 11, 12, 11, 10, 9]), [rsi]).state, 'no-match');
+  assert.equal(screen.evaluate(data([10, 11]), [rsi]).state, 'unknown');
+});
+
+test('BB lower uses population deviation, has its own shifted threshold and does not confuse upper reentry with lower breakdown', () => {
+  assert.deepEqual(series.bbLowerSeries([{ close: 1 }, { close: 3 }], 2, 1), [null, 1]);
+  assert.deepEqual(series.bbLowerSeries([{ close: 1 }, { close: 3 }], 2, 0), [null, 2]);
+  assert.throws(() => series.bbLowerSeries([], 1, 1));
+  const rule = { id: 'bb', op: 'crossDown', period: 2, multiplier: 1, shift: 1, band: 'lower' };
+  const result = screen.evaluate(data([7, 8, 9, 6]), [rule]).results[0];
+  assert.equal(result.state, 'match');
+  assert.equal(result.reference, 8);
+  assert.equal(result.previousReference, 7);
+  assert.match(result.formula, /평균 -/);
+  assert.equal(result.version, 'close-population-bb-lower-v1');
+  assert.equal(screen.evaluate(data([7, 8, 9, 8]), [rule]).state, 'no-match');
+  const pair = screen.evaluate(data([3, 4, 5, 4]), [{ ...rule, band: 'upper' }, rule]);
+  assert.deepEqual(
+    pair.results.map((r) => r.state),
+    ['match', 'no-match'],
+  );
+  assert.deepEqual(
+    pair.results.map((r) => r.reference),
+    [5, 4],
+  );
+  assert.equal(screen.evaluate(data([7, 8, 9, 6]), [rule], { cycle: 'week' }).state, 'unknown');
+  assert.equal(screen.evaluate(data([7, 8]), [rule]).state, 'unknown');
+  assert.throws(() => screen.validate({ ...rule, band: 'middle' }));
+});
+
+test('bearish Ichimoku mirrors bullish entry and breakout, including cloud edges, polarity and missing previous history', () => {
+  const enter = {
+    id: 'ichimoku',
+    op: 'enterBearish',
+    conversion: 1,
+    base: 2,
+    span: 3,
+    displacement: 2,
+  };
+  const prefix = [18, 17, 16, 15, 14, 16.5];
+  for (const close of [14.25, 14.6, 15])
+    assert.equal(screen.evaluate(data([...prefix, close]), [enter]).state, 'match');
+  for (const close of [14, 15.1])
+    assert.equal(screen.evaluate(data([...prefix, close]), [enter]).state, 'no-match');
+  const down = { ...enter, op: 'breakdown' };
+  assert.equal(screen.evaluate(data([...prefix, 14]), [down]).state, 'match');
+  assert.equal(screen.evaluate(data([...prefix, 14.25]), [down]).state, 'no-match');
+  const equality = data([...prefix, 14]);
+  Object.assign(equality.candles.at(-2), { open: 15.25, high: 16.25, low: 14.25, close: 15.25 });
+  // Previous cloud bottom is (15 + 15.5) / 2 = 15.25; equality can break downward.
+  assert.equal(screen.evaluate(equality, [down]).state, 'match');
+  equality.candles.at(-2).close = 15.2;
+  assert.equal(screen.evaluate(equality, [down]).state, 'no-match');
+  assert.equal(
+    screen.evaluate(data([18, 17, 16, 15, 14]), [{ ...enter, op: 'bearish' }]).state,
+    'match',
+  );
+  assert.equal(screen.evaluate(data([18, 17, 16, 15, 14]), [enter]).state, 'unknown');
+  const neutral = data([10, 10, 10, 10, 10, 10]);
+  for (const op of ['bullish', 'bearish'])
+    assert.equal(screen.evaluate(neutral, [{ ...enter, op }]).state, 'no-match');
+  assert.equal(screen.evaluate(data([2, 3, 4, 5, 6, 3.5, 5.4]), [enter]).state, 'no-match');
+});
+
+test('volume and actual turnover support inclusive lower thresholds without treating missing money as zero', () => {
+  const d = data([2, 3, 4]);
+  const smallVolume = { id: 'volume', op: 'lte', threshold: 100 };
+  assert.equal(screen.evaluate(d, [smallVolume]).state, 'match');
+  assert.equal(screen.evaluate(d, [{ ...smallVolume, threshold: 99 }]).state, 'no-match');
+  const zero = structuredClone(d);
+  zero.candles.at(-1).volume = 0;
+  assert.equal(screen.evaluate(zero, [{ ...smallVolume, threshold: 0 }]).state, 'match');
+  const turnover = {
+    ok: true,
+    source: 'KIS',
+    market: 'KRX',
+    currency: 'KRW',
+    unit: '원',
+    rows: d.candles.map((c) => ({ date: c.date, volume: c.volume, value: 12 })),
+  };
+  const smallMoney = { id: 'turnover', op: 'lte', threshold: 12 };
+  assert.equal(screen.evaluate(d, [smallMoney], { turnover }).state, 'match');
+  assert.equal(
+    screen.evaluate(d, [{ ...smallMoney, threshold: 11 }], { turnover }).state,
+    'no-match',
+  );
+  assert.equal(screen.evaluate(d, [smallMoney]).state, 'unknown');
+  turnover.rows.at(-1).volume++;
+  assert.equal(screen.evaluate(d, [smallMoney], { turnover }).state, 'unknown');
+  assert.throws(() => screen.validate({ ...smallMoney, op: 'lt' }));
+});
+
+test('downward conditions retain unknown under NOT and accept condition time/window settings', () => {
+  const expression = require('../src/screener/expression.js');
+  const rule = { id: 'bb', op: 'crossDown', period: 2, multiplier: 1, shift: 1, band: 'lower' };
+  const doc = expression.migrateLegacy([rule]);
+  doc.root = { type: 'not', child: { type: 'ref', key: 'A' } };
+  assert.equal(expression.evaluateExpression(data([7]), doc).state, 'unknown');
+  assert.equal(expression.evaluateExpression(data([7, 8, 9, 6]), doc).state, 'no-match');
+  doc.conditions[0].time.barsAgo = 1;
+  assert.equal(expression.evaluateExpression(data([7, 8, 9, 6, 5]), doc).state, 'no-match');
+  doc.root = { type: 'ref', key: 'A' };
+  doc.conditions[0].window = { kind: 'count', span: 2, operator: 'gte', threshold: 1 };
+  assert.equal(expression.evaluateExpression(data([7, 8, 9, 6, 5]), doc).state, 'match');
+});

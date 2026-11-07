@@ -46,16 +46,20 @@
       above: '현재 위',
       below: '현재 아래',
       gte: '이상',
+      lte: '이하',
       enter: '아래→양운 내부 진입',
-      breakout: '양운 상단 돌파',
+      enterBearish: '위→음운 내부 진입',
+      breakout: '양운 상단 상향 돌파',
+      breakdown: '음운 하단 하향 돌파',
       bullish: '현재 양운',
+      bearish: '현재 음운',
     }[c.op];
     return c.id === 'sma'
       ? `단순 ${c.fast}·${c.slow}봉 · ${op}`
       : c.id === 'rsi'
         ? `Wilder · ${c.period}봉 · 기준선 ${c.level} · ${op}`
         : c.id === 'bb'
-          ? `${c.period}봉 · ${c.multiplier}배 · 표시 이동 ${c.shift}봉 · ${op}`
+          ? `${c.band === 'lower' ? '하단선' : '상단선'} · ${c.period}봉 · ${c.multiplier}배 · 표시 이동 ${c.shift}봉 · ${op}`
           : c.id === 'ichimoku'
             ? `${c.conversion}·${c.base}·${c.span}봉 · 선행 ${c.displacement}봉 · ${op}`
             : `${number(c.threshold)}${c.id === 'volume' ? '주' : '원'} ${op}`;
@@ -127,6 +131,13 @@
       el(
         'p',
         '차트와 같은 계산식으로 수신 자료를 검색합니다. 결과는 투자 후보이며 매매 신호가 아닙니다.',
+        'sb-screen-note',
+      ),
+    );
+    dialog.append(
+      el(
+        'p',
+        '판정에서 상향·하향을 선택하세요. 이평은 골든·데드크로스, RSI는 기준선 양방향 돌파, BB는 상단·하단선별 양방향 돌파를 지원합니다. 거래량·거래대금은 이상·이하로 비교합니다. 하향 조건은 상향 조건의 단순 NOT이 아닙니다.',
         'sb-screen-note',
       ),
     );
@@ -259,7 +270,8 @@
         read() {
           const value = { id: id.value, op: op.value };
           for (const [key, node] of Object.entries(fields))
-            value[key] = node.value.trim() === '' ? NaN : Number(node.value);
+            value[key] =
+              key === 'band' ? node.value : node.value.trim() === '' ? NaN : Number(node.value);
           if (id.value === 'rsi') value.method = 'wilder';
           return engine.validate(value);
         },
@@ -280,8 +292,11 @@
         for (const [key, text] of id.value === 'ichimoku'
           ? [
               ['enter', '아래→양운 내부 진입'],
+              ['enterBearish', '위→음운 내부 진입'],
               ['breakout', '양운 상단 상향 돌파'],
+              ['breakdown', '음운 하단 하향 돌파'],
               ['bullish', '현재 양운'],
+              ['bearish', '현재 음운'],
             ]
           : crossing
             ? [
@@ -290,7 +305,10 @@
                 ['above', '현재 위'],
                 ['below', '현재 아래'],
               ]
-            : [['gte', '이상']]) {
+            : [
+                ['gte', '이상'],
+                ['lte', '이하'],
+              ]) {
           const item = el('option', text);
           item.value = key;
           op.append(item);
@@ -331,6 +349,13 @@
           if (key === 'multiplier') node.step = '0.1';
           fields[key] = node;
           params.append(field(label, node));
+        }
+        if (id.value === 'bb') {
+          fields.band = select('BB 기준선', [
+            ['upper', '상단선'],
+            ['lower', '하단선'],
+          ]);
+          params.append(field('BB 기준선', fields.band));
         }
         moneyNote.hidden = id.value !== 'turnover';
       }

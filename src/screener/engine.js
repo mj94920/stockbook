@@ -11,7 +11,7 @@
   const registry = Object.freeze({
     sma: { label: '단순이평', formula: '종가 단순평균', version: 'close-sma-v1', unit: '원' },
     bb: {
-      label: 'BB 상단',
+      label: 'BB 상·하단',
       formula: '종가 평균 + 배수 × 모집단 표준편차 · 표시 이동 적용',
       version: 'close-population-bb-v1',
       unit: '원',
@@ -56,7 +56,7 @@
       throw Error('미지원 또는 계산식 미확정 조건');
     const allowed = {
       sma: ['id', 'op', 'fast', 'slow'],
-      bb: ['id', 'op', 'period', 'multiplier', 'shift'],
+      bb: ['id', 'op', 'period', 'multiplier', 'shift', 'band'],
       ichimoku: ['id', 'op', 'conversion', 'base', 'span', 'displacement'],
       rsi: ['id', 'op', 'period', 'method', 'level'],
       volume: ['id', 'op', 'threshold'],
@@ -77,7 +77,8 @@
       throw Error('단기·장기 이평 기간 오류');
     if (
       condition.id === 'bb' &&
-      (!integer(condition.period, 2, 500) ||
+      ((condition.band !== undefined && !['upper', 'lower'].includes(condition.band)) ||
+        !integer(condition.period, 2, 500) ||
         !Number.isFinite(condition.multiplier) ||
         condition.multiplier < 0 ||
         condition.multiplier > 10 ||
@@ -86,7 +87,9 @@
       throw Error('BB 기간·배수·이동 오류');
     if (
       condition.id === 'ichimoku' &&
-      (!['enter', 'breakout', 'bullish'].includes(condition.op) ||
+      (!['enter', 'breakout', 'bullish', 'enterBearish', 'breakdown', 'bearish'].includes(
+        condition.op,
+      ) ||
         ![condition.conversion, condition.base, condition.span].every((n) => integer(n, 1, 1200)) ||
         condition.conversion > condition.base ||
         condition.base > condition.span ||
@@ -104,7 +107,7 @@
       throw Error('RSI 기간·Wilder 방식·기준선 오류');
     if (
       ['volume', 'turnover'].includes(condition.id) &&
-      (condition.op !== 'gte' ||
+      (!['gte', 'lte'].includes(condition.op) ||
         !Number.isSafeInteger(condition.threshold) ||
         condition.threshold < 0)
     )
@@ -152,6 +155,10 @@
       previousValue: null,
       previousReference: null,
     };
+    if (condition.id === 'bb' && condition.band === 'lower') {
+      base.formula = '종가 평균 - 배수 × 모집단 표준편차 · 표시 이동 적용';
+      base.version = 'close-population-bb-lower-v1';
+    }
     const unknown = (reason) => ({ ...base, state: 'unknown', reason });
     if (index < 0) return unknown('완성 봉 이력 없음');
     if (bars[index].incompleteStart) return unknown('첫 봉의 시작 이력 부족');
@@ -176,32 +183,42 @@
         return unknown('일목 선행스팬 이력 부족');
       const top = Math.max(now.spanA, now.spanB),
         bottom = Math.min(now.spanA, now.spanB),
-        bullish = now.spanA > now.spanB;
+        bullish = now.spanA > now.spanB,
+        downward = ['enterBearish', 'breakdown', 'bearish'].includes(condition.op);
       Object.assign(base, {
         value: bars[index].close,
-        reference: top,
+        reference: downward ? bottom : top,
         cloud: now,
         previousValue: bars[index - 1]?.close ?? null,
         previousReference:
           before && Number.isFinite(before.spanA) && Number.isFinite(before.spanB)
-            ? Math.max(before.spanA, before.spanB)
+            ? (downward ? Math.min : Math.max)(before.spanA, before.spanB)
             : null,
       });
       if (
-        condition.op !== 'bullish' &&
+        !['bullish', 'bearish'].includes(condition.op) &&
         (!before || !Number.isFinite(before.spanA) || !Number.isFinite(before.spanB))
       )
         return { ...base, state: 'unknown', reason: '일목 진입·돌파용 직전 구름 이력 부족' };
-      const match =
-        bullish &&
-        (condition.op === 'bullish' ||
-          (condition.op === 'enter' &&
-            bars[index - 1].close < Math.min(before.spanA, before.spanB) &&
-            bars[index].close >= bottom &&
-            bars[index].close <= top) ||
-          (condition.op === 'breakout' &&
-            bars[index - 1].close <= base.previousReference &&
-            bars[index].close > top));
+      const match = downward
+        ? now.spanA < now.spanB &&
+          (condition.op === 'bearish' ||
+            (condition.op === 'enterBearish' &&
+              bars[index - 1].close > Math.max(before.spanA, before.spanB) &&
+              bars[index].close >= bottom &&
+              bars[index].close <= top) ||
+            (condition.op === 'breakdown' &&
+              bars[index - 1].close >= base.previousReference &&
+              bars[index].close < bottom))
+        : bullish &&
+          (condition.op === 'bullish' ||
+            (condition.op === 'enter' &&
+              bars[index - 1].close < Math.min(before.spanA, before.spanB) &&
+              bars[index].close >= bottom &&
+              bars[index].close <= top) ||
+            (condition.op === 'breakout' &&
+              bars[index - 1].close <= base.previousReference &&
+              bars[index].close > top));
       return {
         ...base,
         state: match ? 'match' : 'no-match',
@@ -222,11 +239,19 @@
       );
       right = bars.map(() => condition.level);
     } else if (condition.id === 'bb') {
-      const upper = cached(context, 'bb:' + condition.period + ':' + condition.multiplier, () =>
-        series.bbUpperSeries(bars, condition.period, condition.multiplier),
-      );
+      const band = condition.band || 'upper',
+        values = cached(
+          context,
+          'bb:' + band + ':' + condition.period + ':' + condition.multiplier,
+          () =>
+            (band === 'lower' ? series.bbLowerSeries : series.bbUpperSeries)(
+              bars,
+              condition.period,
+              condition.multiplier,
+            ),
+        );
       left = bars.map((b) => b.close);
-      right = bars.map((_, i) => upper[i - condition.shift] ?? null);
+      right = bars.map((_, i) => values[i - condition.shift] ?? null);
     } else {
       left = condition.id === 'volume' ? bars.map((b) => b.volume) : amounts;
       if (!left) return unknown('실제 거래대금 미수신 · 종가×거래량 대체 금지');
@@ -245,13 +270,15 @@
     const match =
       condition.op === 'gte'
         ? value >= reference
-        : condition.op === 'above'
-          ? value > reference
-          : condition.op === 'below'
-            ? value < reference
-            : condition.op === 'crossUp'
-              ? previousValue <= previousReference && value > reference
-              : previousValue >= previousReference && value < reference;
+        : condition.op === 'lte'
+          ? value <= reference
+          : condition.op === 'above'
+            ? value > reference
+            : condition.op === 'below'
+              ? value < reference
+              : condition.op === 'crossUp'
+                ? previousValue <= previousReference && value > reference
+                : previousValue >= previousReference && value < reference;
     return {
       ...base,
       state: match ? 'match' : 'no-match',

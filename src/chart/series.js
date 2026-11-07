@@ -144,15 +144,23 @@
     });
   }
   // Shared with the chart and condition search; population variance, unshifted values.
-  function bbUpperSeries(bars, n = 40, m = 1.9) {
+  function bbBandSeries(bars, n, m, direction) {
     if (!Number.isInteger(n) || n < 2 || n > 500 || !Number.isFinite(m) || m < 0 || m > 10)
       throw Error('BB 기간·배수 오류');
     return bars.map((_, i) => {
       if (i < n - 1) return null;
       const values = bars.slice(i - n + 1, i + 1).map((c) => c.close),
         mean = values.reduce((sum, v) => sum + v, 0) / n;
-      return mean + m * Math.sqrt(values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / n);
+      return (
+        mean + direction * m * Math.sqrt(values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / n)
+      );
     });
+  }
+  function bbUpperSeries(bars, n = 40, m = 1.9) {
+    return bbBandSeries(bars, n, m, 1);
+  }
+  function bbLowerSeries(bars, n = 40, m = 1.9) {
+    return bbBandSeries(bars, n, m, -1);
   }
   // Independent Ichimoku calculation. This is NOT the renderer's moving-average cloud.
   function ichimokuSeries(bars, { conversion = 9, base = 26, span = 52, displacement = 26 } = {}) {
@@ -616,6 +624,7 @@
     aggregate,
     average,
     bbUpperSeries,
+    bbLowerSeries,
     ichimokuSeries,
     visibleOffset,
     ranges,
