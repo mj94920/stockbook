@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "scope": "Self-contained list-snapshot HTML without article bodies, served internally; not a Windows Electron or direct-file launch test",
+  "checks": [
+    "received market list snapshot displays three publishers",
+    "missing body is labelled summary",
+    "article selection changes publisher",
+    "Bloter tab displays 20 received metadata snapshots",
+    "1024px reader visible",
+    "no runtime external requests"
+  ],
+  "errors": []
+}

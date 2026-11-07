@@ -1,0 +1,160 @@
+{
+  "passed": true,
+  "verifiedAt": "2026-10-26T07:21:19.979Z",
+  "scope": "Actual provider HTTPS + production parser/cache + app HTML/browser with mock preload. Not Windows Electron/NSIS or a proof of every listed symbol.",
+  "received": [
+    {
+      "code": "005930",
+      "name": "삼성전자",
+      "count": 1000,
+      "lastDate": "2026-10-26",
+      "lastClose": 213000,
+      "omitted": 0
+    },
+    {
+      "code": "000660",
+      "name": "SK하이닉스",
+      "count": 1000,
+      "lastDate": "2026-10-26",
+      "lastClose": 1278000,
+      "omitted": 0
+    },
+    {
+      "code": "010130",
+      "name": "고려아연",
+      "count": 1000,
+      "lastDate": "2026-10-26",
+      "lastClose": 845000,
+      "omitted": 0
+    }
+  ],
+  "displayed": [
+    {
+      "code": "000660",
+      "weeklyCount": 215,
+      "monthlyCount": 50,
+      "lastWeeklyAverages": [
+        {
+          "period": 4,
+          "value": 1373000
+        },
+        {
+          "period": 12,
+          "value": 1627750
+        },
+        {
+          "period": 24,
+          "value": 1867083.3333333333
+        },
+        {
+          "period": 46,
+          "value": 1442282.608695652
+        },
+        {
+          "period": 73,
+          "value": 1047780.8219178083
+        }
+      ],
+      "lastMonthlyAverages": [
+        {
+          "period": 1,
+          "value": 1278000
+        },
+        {
+          "period": 5,
+          "value": 1820600
+        },
+        {
+          "period": 19,
+          "value": 989631.5789473684
+        },
+        {
+          "period": 6,
+          "value": 1906000
+        },
+        {
+          "period": 9,
+          "value": 1621111.111111111
+        }
+      ]
+    },
+    {
+      "code": "010130",
+      "weeklyCount": 215,
+      "monthlyCount": 50,
+      "lastWeeklyAverages": [
+        {
+          "period": 4,
+          "value": 919000
+        },
+        {
+          "period": 12,
+          "value": 1101333.3333333333
+        },
+        {
+          "period": 24,
+          "value": 1129166.6666666667
+        },
+        {
+          "period": 46,
+          "value": 1338695.652173913
+        },
+        {
+          "period": 73,
+          "value": 1204191.7808219178
+        }
+      ],
+      "lastMonthlyAverages": [
+        {
+          "period": 1,
+          "value": 845000
+        },
+        {
+          "period": 5,
+          "value": 1054000
+        },
+        {
+          "period": 19,
+          "value": 1165210.5263157894
+        },
+        {
+          "period": 6,
+          "value": 1107166.6666666667
+        },
+        {
+          "period": 9,
+          "value": 1297111.111111111
+        }
+      ]
+    }
+  ],
+  "calls": [
+    {
+      "url": "https://fchart.stock.naver.com/sise.nhn?symbol=005930&timeframe=day&count=1000&requestType=0",
+      "status": 200,
+      "bytes": 67066,
+      "sha256": "5a1f044be6bf5c950f7778f4683343026533634b76ffbef071a4c237f3eb530b"
+    },
+    {
+      "url": "https://fchart.stock.naver.com/sise.nhn?symbol=000660&timeframe=day&count=1000&requestType=0",
+      "status": 200,
+      "bytes": 69107,
+      "sha256": "5f5a8ddf14bb1907909d6d9179f5bd9451001ca1136ac7c3cc8fb96a4515f4b0"
+    },
+    {
+      "url": "https://fchart.stock.naver.com/sise.nhn?symbol=010130&timeframe=day&count=1000&requestType=0",
+      "status": 200,
+      "bytes": 68407,
+      "sha256": "1322b35729e85a452c6c266b7a75916e4626db06e8efb00053967558c8653695"
+    }
+  ],
+  "checks": [
+    "non-Samsung source identity",
+    "watchlist remains empty",
+    "header search selects current instrument",
+    "weekly/monthly actual data",
+    "no Samsung investor data attached",
+    "periodic render retains selection"
+  ],
+  "browserErrors": []
+}

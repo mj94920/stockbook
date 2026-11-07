@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, safeStorage, net } = require('electron');
+const { app, BrowserWindow, WebContentsView, ipcMain, dialog, shell, safeStorage, net } = require('electron');
 const path  = require('path');
 const fs    = require('fs');
 const https = require('https');
@@ -8,6 +8,10 @@ const https = require('https');
 app.name = 'StockBook';
 
 let win;
+const { prepareRendererFiles } = require('./src/desktop/renderer-files.cjs');
+const rendererDirectories = new Set();
+const chartStockSearch = require('./src/chart/stock-search.cjs').createStockSearch({loadMarket:loadNaverStocks,loadBasic:async code=>JSON.parse(await httpsGet(`https://m.stock.naver.com/api/stock/${code}/basic`,8000))});
+const chartWindows = require('./src/chart/window.cjs').registerChartWindow({ ipcMain, BrowserWindow, getMainWindow:()=>win, appDir:__dirname, getChartData:require('./src/chart/provider.cjs').createChartProvider({httpsGet}).get, getTradingValues:require('./src/chart/trading-value.cjs').createTradingValueProvider({httpsGet,getAuth:getKisToken}).get, searchStocks:chartStockSearch.search, resolveStock:chartStockSearch.resolve, getInvestors:require('./src/chart/investor-provider.cjs').createInvestorProvider({httpsGet,getAuth:getKisToken,naverFallback:true}).get });
 
 // ── 데이터 파일 경로: %APPDATA%\StockBook\stockbook-data.json ──────────────
 function getDataFile() {
@@ -15,9 +19,10 @@ function getDataFile() {
 }
 
 // ── 내부 HTTPS 헬퍼 (CORS 제한 없음) ────────────────────────────────────────
-function httpsGet(url, timeoutMs = 8000, extraHeaders = {}) {
+function httpsGet(url, timeoutMs = 8000, extraHeaders = {}, {signal} = {}) {
   return new Promise((resolve, reject) => {
     const req = https.get(url, {
+      ...(signal ? { signal } : {}),
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
         'Accept':     'application/json, text/plain, */*',
@@ -25,6 +30,7 @@ function httpsGet(url, timeoutMs = 8000, extraHeaders = {}) {
       }
     }, res => {
       const chunks = [];
+      res.on('error', reject);
       res.on('data', chunk => { chunks.push(chunk); });
       res.on('end',  () => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -455,7 +461,7 @@ async function fetchNaverStockList(market) {
   return results;
 }
 
-ipcMain.handle('fetch-naver-stocks', async (event, market) => {
+async function loadNaverStocks(market) {
   // ETF는 KRX API 사용 → 별도 캐시 키 (naver-stocks-ETF.json 구 캐시 자동 무력화)
   const cacheFile = path.join(app.getPath('userData'),
     market === 'ETF' ? 'etf-naver-v3.json' : `naver-stocks-${market}.json`);
@@ -497,7 +503,8 @@ ipcMain.handle('fetch-naver-stocks', async (event, market) => {
     }
     return { ok: false, error: e.message };
   }
-});
+}
+ipcMain.handle('fetch-naver-stocks', (_event,market)=>loadNaverStocks(market));
 
 // 종목 상세 정보 (팝업: PER·PBR·EPS, 시총·상장주식수·상장일, 52주 최고·최저, 배당)
 ipcMain.handle('fetch-stock-detail', async (event, code) => {
@@ -1215,66 +1222,12 @@ ipcMain.handle('fetch-naver-finance', async (_event, code) => {
   }
 });
 
-// ── IPC: 정보센터 뉴스 (네이버 모바일 증권) ─────────────────────────────────
-// kind: 'market' | 'stock'(code 필요) → { ok, items:[{id,title,summary,source,time,code,url}] }
-function _naverNewsFlatten(json) {
-  const out = [];
-  const walk = v => {
-    if (!v) return;
-    if (Array.isArray(v)) { v.forEach(walk); return; }
-    if (typeof v !== 'object') return;
-    if (Array.isArray(v.items)) { v.items.forEach(walk); return; }
-    if (v.title && (v.articleId || v.aid || v.id)) out.push(v);
-  };
-  walk(json);
-  return out;
-}
-function _naverNewsTime(dt) {
-  // 'YYYYMMDDHHmm[ss]' → ISO 유사 문자열 (KST)
-  const s = String(dt || '');
-  if (/^\d{12,14}$/.test(s)) return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}T${s.slice(8,10)}:${s.slice(10,12)}:00+09:00`;
-  return s;
-}
-function _stripHtml(s) {
-  return String(s || '').replace(/<[^>]*>/g, '').replace(/&quot;/g, '"').replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#0?39;/g, "'").replace(/&nbsp;/g, ' ').trim();
-}
-ipcMain.handle('fetch-news', async (_event, opts) => {
-  const kind = opts && opts.kind === 'stock' ? 'stock' : 'market';
-  const code = String((opts && opts.code) || '').trim();
-  if (kind === 'stock' && !/^\d{6}$/.test(code)) return { ok: false, error: '국내 종목(6자리 코드)만 지원합니다', items: [] };
-  const urls = kind === 'stock'
-    ? [`https://m.stock.naver.com/api/news/stock/${code}?pageSize=20&page=1`]
-    : [
-        'https://m.stock.naver.com/api/news/mainnews?pageSize=30&page=1',
-        'https://m.stock.naver.com/api/news/category/mainnews?pageSize=30&page=1',
-        'https://m.stock.naver.com/api/news/list?category=mainnews&pageSize=30&page=1',
-      ];
-  let lastErr = '';
-  for (const url of urls) {
-    try {
-      const raw = _naverNewsFlatten(JSON.parse(await httpsGet(url, 10000, NAVER_HEADERS)));
-      if (!raw.length) continue;
-      const items = raw.map(n => {
-        const oid = n.officeId || n.oid || '';
-        const aid = n.articleId || n.aid || n.id || '';
-        return {
-          id:      `${oid}-${aid}`,
-          title:   _stripHtml(n.title),
-          summary: _stripHtml(n.body || n.summary || n.content || ''),
-          source:  n.officeName || n.press || '',
-          time:    _naverNewsTime(n.datetime || n.dt || n.publishedAt),
-          code:    kind === 'stock' ? code : '',
-          url:     oid && aid ? `https://n.news.naver.com/mnews/article/${oid}/${aid}` : '',
-        };
-      }).filter(n => n.title);
-      if (items.length) return { ok: true, items };
-    } catch (e) {
-      lastErr = e.message;
-      console.error('[StockBook] fetch-news 오류:', e.message);
-    }
-  }
-  return { ok: false, error: lastErr || '뉴스 데이터를 찾지 못했습니다', items: [] };
+// ── IPC: 정보센터 뉴스 (목록 및 본문, 메인 화면 요청만 허용) ────────────────
+const newsService = require('./src/news/service.cjs').registerNews({
+  ipcMain, getMainWindow: () => win, httpsGet, headers: NAVER_HEADERS,
+});
+const newsPage = require('./src/news/page.cjs').registerNewsPage({
+  ipcMain, WebContentsView, getMainWindow:()=>win, resolvePage:newsService.resolvePage
 });
 
 // ── IPC: API 키 암호화 저장 (safeStorage) ───────────────────────────────────
@@ -1387,14 +1340,17 @@ function createWindow() {
     ).catch(() => {});
   });
 
-  // HTML 파일을 임시 ASCII 경로에 복사 후 로드 (Electron 파일 로드 안정성)
-  const srcHtml = path.join(__dirname, 'index.html');
-  const tmpHtml = path.join(app.getPath('temp'), 'stockbook-app.html');
-  try { fs.copyFileSync(srcHtml, tmpHtml); } catch (e) {
-    console.error('[StockBook] HTML 복사 실패:', e);
+  // Keep relative renderer scripts and styles together in a launch-specific folder.
+  let renderer;
+  try {
+    renderer = prepareRendererFiles(__dirname, app.getPath('temp'));
+    rendererDirectories.add(renderer.directory);
+  } catch (error) {
+    console.error('[StockBook] 렌더러 파일 준비 실패:', error.message);
+    if (!splash.isDestroyed()) splash.close();
+    dialog.showErrorBox('Stock Book 실행 오류', '화면 파일을 준비하지 못했습니다. 설치 파일을 확인해 주세요.');
+    app.quit();return;
   }
-  // icon-192.png도 임시 디렉터리에 복사 (HTML의 ./icon-192.png 상대경로 참조를 위해)
-  try { fs.copyFileSync(path.join(__dirname, 'icon-192.png'), path.join(app.getPath('temp'), 'icon-192.png')); } catch (e) { /* 무시 */ }
 
   win = new BrowserWindow({
     width:     1440,
@@ -1412,7 +1368,9 @@ function createWindow() {
     }
   });
 
-  win.loadFile(tmpHtml);
+  win.on('closed', () => { chartWindows.close(); newsPage.close(); });
+  win.webContents.on('did-start-loading', () => newsPage.close());
+  win.loadFile(renderer.htmlPath);
   win.setMenuBarVisibility(false);
   // 스플래시 최소 1.4초 표시 후 메인 창 표시, 스플래시 닫기
   win.once('ready-to-show', () => {
@@ -1478,3 +1436,10 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
+
+app.on('will-quit', () => {
+  for (const directory of rendererDirectories) {
+    try { fs.rmSync(directory, {recursive:true,force:true}); }
+    catch (error) { console.warn('[StockBook] 임시 화면 파일 정리 실패:',error.message); }
+  }
+});

@@ -1,0 +1,87 @@
+{
+  "source": "Naver stock integration / 005930",
+  "sourceUrl": "https://m.stock.naver.com/api/stock/005930/integration",
+  "snapshotSavedAt": "2026-10-22T02:56:57.905359+00:00",
+  "rows": [
+    {
+      "itemCode": "005930",
+      "bizdate": "20261021",
+      "foreignerPureBuyQuant": "+2,055,241",
+      "foreignerHoldRatio": "46.14%",
+      "organPureBuyQuant": "+313,027",
+      "individualPureBuyQuant": "-2,324,529",
+      "closePrice": "223,500",
+      "compareToPreviousClosePrice": "12,000",
+      "compareToPreviousPrice": {
+        "code": "2",
+        "text": "상승",
+        "name": "RISING"
+      },
+      "accumulatedTradingVolume": "17,268,762"
+    },
+    {
+      "itemCode": "005930",
+      "bizdate": "20261020",
+      "foreignerPureBuyQuant": "+1,801,659",
+      "foreignerHoldRatio": "46.08%",
+      "organPureBuyQuant": "-2,760,235",
+      "individualPureBuyQuant": "+903,908",
+      "closePrice": "209,000",
+      "compareToPreviousClosePrice": "-9,000",
+      "compareToPreviousPrice": {
+        "code": "5",
+        "text": "하락",
+        "name": "FALLING"
+      },
+      "accumulatedTradingVolume": "16,561,224"
+    },
+    {
+      "itemCode": "005930",
+      "bizdate": "20261019",
+      "foreignerPureBuyQuant": "+1,241,581",
+      "foreignerHoldRatio": "46.04%",
+      "organPureBuyQuant": "-42,900",
+      "individualPureBuyQuant": "-880,224",
+      "closePrice": "223,500",
+      "compareToPreviousClosePrice": "8,000",
+      "compareToPreviousPrice": {
+        "code": "2",
+        "text": "상승",
+        "name": "RISING"
+      },
+      "accumulatedTradingVolume": "17,617,415"
+    },
+    {
+      "itemCode": "005930",
+      "bizdate": "20261016",
+      "foreignerPureBuyQuant": "+906,438",
+      "foreignerHoldRatio": "45.99%",
+      "organPureBuyQuant": "-1,447,523",
+      "individualPureBuyQuant": "-40,774",
+      "closePrice": "217,000",
+      "compareToPreviousClosePrice": "7,000",
+      "compareToPreviousPrice": {
+        "code": "2",
+        "text": "상승",
+        "name": "RISING"
+      },
+      "accumulatedTradingVolume": "18,908,560"
+    },
+    {
+      "itemCode": "005930",
+      "bizdate": "20261015",
+      "foreignerPureBuyQuant": "-7,280,040",
+      "foreignerHoldRatio": "45.98%",
+      "organPureBuyQuant": "+2,391,459",
+      "individualPureBuyQuant": "+4,658,533",
+      "closePrice": "207,500",
+      "compareToPreviousClosePrice": "-24,500",
+      "compareToPreviousPrice": {
+        "code": "5",
+        "text": "하락",
+        "name": "FALLING"
+      },
+      "accumulatedTradingVolume": "34,330,565"
+    }
+  ]
+}

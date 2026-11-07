@@ -1,0 +1,56 @@
+{
+  "verifiedAt": "2026-10-28T07:25:05.884Z",
+  "scope": "Production HTML and real recorded Naver daily candles supplied via mock IPC. No native Windows verification. The HTS screenshot has different OHLCV; only the illustrated signal date matches.",
+  "sourceFetchedAt": "2026-10-28T07:16:27.388Z",
+  "candlesSha256": "606da8f9c9d8be9338ac9af5f9a28613e8eb02a1a080d2e4095539b96e79ab32",
+  "target": "2025-06-20",
+  "candle": {
+    "date": "2025-06-20",
+    "open": 137700,
+    "high": 147600,
+    "low": 137300,
+    "close": 145500,
+    "volume": 1441367
+  },
+  "screenshotCandle": {
+    "open": 134800,
+    "high": 147600,
+    "low": 134000,
+    "close": 145800,
+    "volume": 2324589
+  },
+  "sameOHLCV": false,
+  "matchedSignalDate": true,
+  "detail": {
+    "newLowPeriod": 40,
+    "rsiPeriod": 14,
+    "rsiLevel": 30,
+    "rsiMethod": null,
+    "newLowDates": [
+      "2025-03-11",
+      "2025-03-13",
+      "2025-03-17",
+      "2025-03-19",
+      "2025-03-20",
+      "2025-03-21",
+      "2025-03-24",
+      "2025-03-26",
+      "2025-03-27",
+      "2025-03-31",
+      "2025-04-09",
+      "2025-07-28"
+    ],
+    "oversoldDates": [],
+    "entryDates": [
+      "2025-05-23",
+      "2025-05-26",
+      "2025-05-27",
+      "2025-05-28",
+      "2025-06-20",
+      "2025-06-24",
+      "2025-06-25"
+    ],
+    "entryKnown": 120
+  },
+  "browserErrors": []
+}

@@ -1,0 +1,12 @@
+{
+  "stockCode": "005930",
+  "name": "삼성전자",
+  "snapshotDate": "2026-10-22",
+  "sourceCommit": "6d143e4a0860f3f23341723fcf28d877bd061a68",
+  "automaticRefresh": false,
+  "lastBarComplete": false,
+  "files": {
+    "long-candles.json": "054c45c8bee9755acd45620bef0a1de67f3f27d586103515eafff009d42c6a0c",
+    "investor-snapshot.json": "9c497fe8b6e16e15e115e3fc3aa664772513fd3778f5269f52baba135ecf0132"
+  }
+}

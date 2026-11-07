@@ -1,0 +1,73 @@
+{
+  "passed": true,
+  "verifiedAt": "2026-10-27T02:01:22.595Z",
+  "scope": "Actual proxy HTTPS + production provider and chart HTML/browser mock preload. Windows Electron/NSIS not verified. No complete history is stored.",
+  "years": [
+    {
+      "code": "005930",
+      "count": 13,
+      "sourceCount": 2997,
+      "lastAverages": [
+        {
+          "period": 1,
+          "value": 223750
+        },
+        {
+          "period": 5,
+          "value": 106130
+        },
+        {
+          "period": 10,
+          "value": 83541
+        }
+      ]
+    },
+    {
+      "code": "402340",
+      "count": 6,
+      "sourceCount": 1200,
+      "lastAverages": [
+        {
+          "period": 1,
+          "value": 859000
+        },
+        {
+          "period": 5,
+          "value": 278490
+        },
+        {
+          "period": 10,
+          "value": null
+        }
+      ]
+    }
+  ],
+  "calls": [
+    {
+      "url": "https://fchart.stock.naver.com/sise.nhn?symbol=005930&timeframe=day&count=3000&requestType=0",
+      "status": 200,
+      "bytes": 196934,
+      "sha256": "0669fef726c9eafb84608677b174ea628cd2a4699f9f9bf8443caf71fb3b1fdb"
+    },
+    {
+      "url": "https://fchart.stock.naver.com/sise.nhn?symbol=402340&timeframe=day&count=3000&requestType=0",
+      "status": 200,
+      "bytes": 79005,
+      "sha256": "37b0edec5f383e32f95d7f4d95dfa096b8c967c6ff5ba7474deddd2dfd999cfd"
+    },
+    {
+      "url": "https://fchart.stock.naver.com/sise.nhn?symbol=402340&timeframe=day&count=1000&requestType=0",
+      "status": 200,
+      "bytes": 66133,
+      "sha256": "126a586ec3c7a1eabbc502df74af5a0a695f52764d37c96cf4657b1a11719ca9"
+    }
+  ],
+  "checks": [
+    "annual 1/5/10 and missing history handling",
+    "independent cycle/range selectors",
+    "monthly crosshair and actual candle date",
+    "monthly indicator periods",
+    "monthly fixed-height volume panel"
+  ],
+  "browserErrors": []
+}

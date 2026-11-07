@@ -1,0 +1,20 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict'),{chromium}=require('playwright');
+const root=path.resolve(__dirname,'../../..');
+(async()=>{
+ const server=http.createServer((req,res)=>{try{const file=path.resolve(root,new URL(req.url,'http://x').pathname.slice(1));if(!file.startsWith(root+path.sep))throw Error();res.setHeader('Content-Type',file.endsWith('.html')?'text/html; charset=utf-8':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'application/octet-stream');res.end(fs.readFileSync(file));}catch{res.writeHead(404);res.end();}});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
+ try{
+  browser=await chromium.launch({executablePath:process.env.CHART_CHROMIUM_PATH||undefined});const page=await browser.newPage({viewport:{width:1440,height:1200},timezoneId:'Asia/Seoul'}),errors=[],base='http://127.0.0.1:'+server.address().port;page.on('pageerror',e=>errors.push(e.message));await page.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort());
+  await page.goto(base+'/docs/design/chart-trading-value/preview.html');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.money?.known===100);
+  const search=page.getByRole('combobox',{name:'종목 검색',exact:true});await search.fill('삼성');await page.getByRole('option',{name:'삼성전자 (모의) · 005930 · KOSPI',exact:true}).waitFor();await page.screenshot({path:path.join(__dirname,'detail-search-mock.png'),fullPage:true});await search.press('Escape');
+  const daily=await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.money),colors=await page.locator('.sb-money-bar').evaluateAll(es=>Object.fromEntries(es.map(e=>[e.dataset.band,getComputedStyle(e).fill])));assert.equal(Object.keys(colors).length,6);assert.equal(new Set(Object.values(colors)).size,6);assert.ok(Object.values(colors).every(c=>c!=='rgb(0, 0, 0)'));
+  await page.mouse.move(2,2);await page.screenshot({path:path.join(__dirname,'detail-mock.png'),fullPage:true});
+  await page.locator('#chartCycle').selectOption('month');await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.barCycle==='month'&&document.getElementById('chartViewport').chartEvidence?.money?.matched===100);const monthly=await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.money);assert.ok(monthly.known>0&&monthly.known<monthly.total);
+  const mock=await page.evaluate(()=>structuredClone(mock));await page.addInitScript(payload=>{window.stockBookChart={getData:async()=>structuredClone(payload.data),getTradingValues:async()=>structuredClone(payload.money)};},mock);
+  await page.setViewportSize({width:1600,height:1100});await page.goto(base+'/index.html');await page.evaluate(()=>{state.watchlist=[{ticker:'005930',name:'삼성전자',price:0}];window._dockSel='005930';window._MDI.show('watchlist');document.body.classList.add('light-mode');});
+  await page.waitForFunction(()=>document.getElementById('sbEmbeddedChart').chartEvidence?.money?.known===100);await page.mouse.move(2,2);await page.locator('#sbEmbeddedChart').screenshot({path:path.join(__dirname,'compact-mock.png')});
+  const compact=await page.locator('#sbEmbeddedChart').evaluate(h=>{const p=h.querySelector('[data-chart-id="chart"]').clientHeight,v=h.querySelector('[data-chart-id="pressureChart"]').clientHeight;return {price:p,pressure:v,pressureShare:v/(p+v),money:h.chartEvidence.money};});assert.ok(Math.abs(compact.pressureShare-.3)<.01);assert.deepEqual(errors,[]);
+  fs.writeFileSync(path.join(__dirname,'result.json'),JSON.stringify({passed:true,verifiedAt:new Date().toISOString(),scope:'Synthetic KIS-shaped money responses, recorded Samsung prices, production HTML with mock IPC. No authenticated KIS response, Windows Electron or installer verification.',daily,monthly,colors,compact,browserErrors:errors},null,2)+'\n');console.log('PASS: synthetic money detail/month/compact views; distinct colors; lower pane ratio retained.');
+ }finally{await browser?.close();await new Promise(r=>server.close(r));}
+})().catch(e=>{console.error(e);process.exitCode=1;});

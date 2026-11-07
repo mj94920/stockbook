@@ -1,0 +1,52 @@
+{
+  "passed": true,
+  "verifiedAt": "2026-10-28T02:25:14.149Z",
+  "scope": "Synthetic KIS-shaped money responses, recorded Samsung prices, production HTML with mock IPC. No authenticated KIS response, Windows Electron or installer verification.",
+  "daily": {
+    "source": "KIS",
+    "market": "KRX",
+    "unit": "원",
+    "known": 100,
+    "total": 1000,
+    "matched": 100,
+    "mismatched": 0,
+    "received": 100,
+    "fetchedAt": "2026-10-28T00:00:00Z"
+  },
+  "monthly": {
+    "source": "KIS",
+    "market": "KRX",
+    "unit": "원",
+    "known": 5,
+    "total": 50,
+    "matched": 100,
+    "mismatched": 0,
+    "received": 100,
+    "fetchedAt": "2026-10-28T00:00:00Z"
+  },
+  "colors": {
+    "300": "rgb(59, 130, 246)",
+    "500": "rgb(173, 255, 47)",
+    "1000": "rgb(255, 152, 0)",
+    "3000": "rgb(244, 63, 94)",
+    "5000": "rgb(216, 180, 254)",
+    "10000": "rgb(243, 244, 246)"
+  },
+  "compact": {
+    "price": 227,
+    "pressure": 97,
+    "pressureShare": 0.2993827160493827,
+    "money": {
+      "source": "KIS",
+      "market": "KRX",
+      "unit": "원",
+      "known": 100,
+      "total": 1000,
+      "matched": 100,
+      "mismatched": 0,
+      "received": 100,
+      "fetchedAt": "2026-10-28T00:00:00Z"
+    }
+  },
+  "browserErrors": []
+}

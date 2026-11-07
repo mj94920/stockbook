@@ -8,6 +8,7 @@
 | 용도 | 기준 문서 |
 |---|---|
 | 플랫폼·개발·Android 착수 게이트 | [CLAUDE.md](../CLAUDE.md), [AGENTS.md](../AGENTS.md) |
+| CLI 로그인·앱별 연결 화면·분석 전송 동의 경계 | [CLI-ACCOUNT-CONNECTION.md](CLI-ACCOUNT-CONNECTION.md) — 운영 지침이며 인증 기능 구현은 아님 |
 | UI 토큰·1차 개편 기준 및 결과 | [UI-REVAMP-PLAN.md](UI-REVAMP-PLAN.md) |
 | 2차 작업 순서·보존 범위 | [STRUCTURE-REVAMP-PLAN.md](STRUCTURE-REVAMP-PLAN.md) |
 | Desktop Main v2 검토 기록 | [DESKTOP-MAIN-V2-IMPLEMENTATION-WAIT.md](DESKTOP-MAIN-V2-IMPLEMENTATION-WAIT.md) — 작성 당시 상태는 이슈·PR로 재확인 |

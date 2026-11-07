@@ -1,0 +1,54 @@
+{
+  "verifiedAt": "2026-10-28T07:16:27.404Z",
+  "scope": "Actual public Naver daily response through production provider and price-only entry formula. User HTS screenshot reference is 090430/2025-06-20, entry output 145800. No Windows/NSIS or other signal parity claim.",
+  "calls": [
+    {
+      "url": "https://fchart.stock.naver.com/sise.nhn?symbol=090430&timeframe=day&count=1000&requestType=0",
+      "status": 200,
+      "bytes": 68055,
+      "sha256": "7370440bf65e5e4bbd186763e3f298b9f732cd290ea16785f7433dded0ae2128"
+    }
+  ],
+  "metadata": {
+    "stockCode": "090430",
+    "name": "아모레퍼시픽",
+    "snapshotDate": "2026-10-28",
+    "source": "Naver fchart",
+    "sourceType": "naver-daily",
+    "fetchedAt": "2026-10-28T07:16:27.388Z",
+    "automaticRefresh": false,
+    "lastBarComplete": null,
+    "omittedRows": 0,
+    "normalizedBounds": 0,
+    "priceAdjustment": "공급자 가격 조정 기준 미확인"
+  },
+  "expected": {
+    "open": 134800,
+    "high": 147600,
+    "low": 134000,
+    "close": 145800,
+    "volume": 2324589
+  },
+  "candle": {
+    "date": "2025-06-20",
+    "open": 137700,
+    "high": 147600,
+    "low": 137300,
+    "close": 145500,
+    "volume": 1441367
+  },
+  "sameOHLCV": false,
+  "calculation": {
+    "signal": true,
+    "lineA": 119700,
+    "lineB": 114200,
+    "ma226": 124178.3185840708,
+    "bbUpper": 143397.17395660188,
+    "cloudCross": false,
+    "cloudAbove": true,
+    "maCross": false,
+    "aboveMA": true,
+    "bandCross": true,
+    "openAboveBand": false
+  }
+}
