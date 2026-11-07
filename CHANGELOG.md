@@ -2,6 +2,10 @@
 
 자동 생성 — `scripts/bump-version.mjs`
 
+## v1.13.2 — 2026-11-08
+
+- fix(portfolio): 빠른 매도 수익률과 실현손익 집계 보정
+
 ## v1.13.1 — 2026-11-08
 
 - fix(analysis): 표시된 원칙 키만 체크리스트 점수에 집계
