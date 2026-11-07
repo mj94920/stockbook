@@ -2,6 +2,13 @@
 
 자동 생성 — `scripts/bump-version.mjs`
 
+## v1.13.1 — 2026-11-08
+
+- fix(analysis): 표시된 원칙 키만 체크리스트 점수에 집계
+- fix(ci): Playwright 검사를 Ubuntu 24.04에 고정
+- docs(ai): CLI 로그인 공유와 분석 전송 동의 경계 명시
+- docs(rules): 지지·저항과 역할 전환 원칙 데이터 추가
+
 ## v1.13.0 — 2026-10-29
 
 - docs(chart): 사용자 실기 통과와 미확인 지표 범위 정리
