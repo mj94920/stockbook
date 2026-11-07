@@ -6032,53 +6032,6 @@ function switchTab(name) {
 function switchSubTab(name) {
   // ← MDI 전환 후 이 구버전 함수는 더 이상 사용되지 않음 (하위 호환 stub으로 교체됨)
   return;
-  currentSubTab = name;
-  const isMobile = window.innerWidth <= 1100;
-  const htsLeft   = document.querySelector('.hts-left');
-  const htsLayout = document.querySelector('.hts-layout');
-  const mainRightWrapper = document.getElementById('main-right-wrapper');
-
-  // 탭 버튼 active 처리
-  document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
-  const activeBtn = document.querySelector(`.sub-tab-btn[data-tab="${name}"]`);
-  if (activeBtn) activeBtn.classList.add('active');
-
-  // ── 레이아웃: 종합 탭 = 2컬럼, 나머지 = 풀너비 ──
-  if (name === 'main') {
-    htsLayout.classList.remove('non-balance-mode');
-    htsLayout.classList.add('balance-mode');
-    if (htsLeft) {
-      htsLeft.style.display = '';
-      if (isMobile) htsLeft.classList.add('mobile-show');
-    }
-    if (mainRightWrapper) mainRightWrapper.style.display = '';
-    // 모든 main-tab-panel 숨기기
-    document.querySelectorAll('.main-tab-panel').forEach(p => p.style.display = 'none');
-    // 종합탭 렌더
-    renderPortfolio();
-    renderBalanceSummary();
-    populateQOStockList();
-  } else {
-    htsLayout.classList.remove('balance-mode');
-    htsLayout.classList.add('non-balance-mode');
-    if (htsLeft && isMobile) htsLeft.classList.remove('mobile-show');
-    if (mainRightWrapper) mainRightWrapper.style.display = 'none';
-    // 모든 main-tab-panel 숨기기 후 해당 탭만 표시
-    document.querySelectorAll('.main-tab-panel').forEach(p => p.style.display = 'none');
-    const panel = document.getElementById('stab-' + name);
-    if (panel) panel.style.display = 'block';
-  }
-
-  // 전종목 탭이 아닐 경우 자동 갱신 타이머 중지
-  if (name !== 'allstock') _stopAllStockAutoRefresh();
-
-  // 탭별 렌더 함수
-  if (name === 'journal')   { renderJournals(); updateJournalDatalist(); }
-  if (name === 'trades')    renderTrades();
-  if (name === 'watchlist') renderWatchlist();
-  if (name === 'theme')     renderThemeTab();
-  if (name === 'allstock')  { renderAllStockTab(); _startAllStockAutoRefresh(); } // 탭 진입 시 자동 갱신 시작
-  if (name === 'news')      renderNewsPortfolioLinks();
 }
 
 // ── 우측 미니탭 전환 ──

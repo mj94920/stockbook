@@ -1,0 +1,18 @@
+# Legacy entrypoints require separate scoped extractions, not a bulk rewrite.
+/index.html
+/chart.html
+/splash.html
+# Frozen evidence, generated data, and review artifacts must retain their bytes.
+/test/fixtures/
+/src/chart/proof-data/
+/src/desktop/industry-data.js
+/docs/design/
+/docs/archive/
+/package-lock.json
+# Existing protected automation is not part of bulk formatting.
+/scripts/
+/.github/
+# Repository access exclusions.
+/독새/
+/지소차트/
+/키움증권REST API코드/

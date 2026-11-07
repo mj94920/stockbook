@@ -9,6 +9,7 @@
 |---|---|
 | 플랫폼·개발·Android 착수 게이트 | [CLAUDE.md](../CLAUDE.md), [AGENTS.md](../AGENTS.md) |
 | UI 토큰·1차 개편 기준 및 결과 | [UI-REVAMP-PLAN.md](UI-REVAMP-PLAN.md) |
+| 프로젝트 코드 정리·검증 결과 | [maintenance/README.md](maintenance/README.md) — 모듈 분리 전체 완료와 구분 |
 | 2차 작업 순서·보존 범위 | [STRUCTURE-REVAMP-PLAN.md](STRUCTURE-REVAMP-PLAN.md) |
 | Desktop Main v2 검토 기록 | [DESKTOP-MAIN-V2-IMPLEMENTATION-WAIT.md](DESKTOP-MAIN-V2-IMPLEMENTATION-WAIT.md) — 작성 당시 상태는 이슈·PR로 재확인 |
 | SQLite 설계 | [SQLITE-STORAGE-DESIGN.md](SQLITE-STORAGE-DESIGN.md) — 설계와 구현 구분 |

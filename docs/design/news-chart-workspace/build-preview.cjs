@@ -14,8 +14,7 @@ html=html.replace('<head>','<head><script>window.fetch=async()=>{throw Error("ìŠ
 html=html.replace(/<link\b[^>]*href="https:\/\/[^>]*>\s*/g,'');
 const icon='data:image/png;base64,'+fs.readFileSync(path.join(root,'icon-192.png')).toString('base64');
 html=html.replaceAll('./icon-192.png',icon);
-html=html.replace('<link rel="stylesheet" href="src/chart/chart.css">','<style>'+fs.readFileSync(path.join(root,'src/chart/chart.css'),'utf8')+'</style>');
-html=html.replace(/<script src="(src\/(?:chart\/(?:renderer|client|series|interaction|resize)|news\/page-client|desktop\/(?:stock-selection|shortcuts))\.js)"><\/script>/g,(_,file)=>'<script>\n'+fs.readFileSync(path.join(root,file),'utf8').replace(/<\/script/gi,'<\\/script')+'\n</script>');
+html=require('../lib/embed-renderer.cjs').embedRenderer(html,root);
 const boot=`document.addEventListener('DOMContentLoaded',async()=>{
  const data=${payload};
  window.electronAPI={
@@ -33,4 +32,4 @@ const boot=`document.addEventListener('DOMContentLoaded',async()=>{
 html=html.replace('</body>','<script>'+boot.replace(/<\/script/gi,'<\\/script')+'</script></body>');
 if(!html.includes('newsPreviewReady')||/<script src=|href="src\//.test(html))throw Error('Preview resources were not embedded');
 html=html.replace(/^[ \t]+(?=\r?$)/gm,'');
-fs.writeFileSync(path.join(__dirname,'preview.html'),html);console.log('Built self-contained news preview:',Buffer.byteLength(html),'bytes');
+fs.writeFileSync(process.argv[2]||path.join(__dirname,'preview.html'),html);console.log('Built self-contained news preview:',Buffer.byteLength(html),'bytes');

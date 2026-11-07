@@ -8,8 +8,7 @@ html=html.replace('<head>','<head><script>window.fetch=async()=>{throw Error("�
 html=html.replace(/<link\b[^>]*href="https:\/\/[^>]*>\s*/g,'');
 const icon='data:image/png;base64,'+fs.readFileSync(path.join(root,'icon-192.png')).toString('base64');
 html=html.replaceAll('./icon-192.png',icon);
-html=html.replace(/<link\b[^>]*href="(src\/[^\"]+\.css)"[^>]*>/g,(_,file)=>'<style>'+fs.readFileSync(path.join(root,file),'utf8')+'</style>');
-html=html.replace(/<script src="(src\/[^\"]+\.js)"><\/script>/g,(_,file)=>'<script>\n'+fs.readFileSync(path.join(root,file),'utf8').replace(/<\/script/gi,'<\\/script')+'\n</script>');
+html=require('../lib/embed-renderer.cjs').embedRenderer(html,root);
 const boot=`document.addEventListener('DOMContentLoaded',async()=>{
  const snapshot=${JSON.stringify(snapshot).replaceAll('<','\\u003c')};
  let exampleResponse=false;
@@ -46,4 +45,4 @@ html=html.replace(/\r\n/g,'\n').replace(/[ \t]+$/gm,'');
 const tokens=html.match(/:root\s*\{[\s\S]*?\}/)[0];
 const embedded=html.replaceAll('&','&amp;').replaceAll('"','&quot;');
 html=`<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>StockBook PC 디자인 미리보기</title><style>${tokens}html,body{margin:0;background:var(--sb-bg)}#stage{position:relative;overflow:hidden}iframe{position:absolute;left:0;top:0;border:0;transform-origin:top left}#hint{display:none;margin:0;padding:12px;color:var(--sb-text-1);font:12px/1.6 sans-serif}</style></head><body><p id="hint">PC 화면 비율로 표시합니다. 확대하여 확인하세요. 예시 자료이며 실시간이 아닙니다.</p><div id="stage"><iframe title="StockBook PC 디자인" srcdoc="${embedded}"></iframe></div><script>const frame=document.querySelector('iframe'),stage=document.getElementById('stage'),hint=document.getElementById('hint');function fit(){const compact=innerWidth<1024||innerHeight>innerWidth*1.25;const width=compact?1600:innerWidth,height=compact?1000:innerHeight,scale=Math.min(1,innerWidth/width);hint.style.display=compact?'block':'none';frame.style.width=width+'px';frame.style.height=height+'px';frame.style.transform='scale('+scale+')';stage.style.width=width*scale+'px';stage.style.height=height*scale+'px';}addEventListener('resize',fit);fit();</script></body></html>`;
-if(require.main===module){fs.writeFileSync(path.join(__dirname,'preview.html'),html);console.log('Built standalone design preview',Buffer.byteLength(html),'bytes');}else module.exports=html;
+if(require.main===module){fs.writeFileSync(process.argv[2]||path.join(__dirname,'preview.html'),html);console.log('Built standalone design preview',Buffer.byteLength(html),'bytes');}else module.exports=html;

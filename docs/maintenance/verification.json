@@ -1,0 +1,68 @@
+{
+  "date_utc": "2026-11-07",
+  "branch": "codex/project-code-cleanup",
+  "baseline_sha": "840f371f095c603137ebadd24dc60af60cbf4c5a",
+  "checks": {
+    "npm_test": {
+      "status": "passed",
+      "tests": 145,
+      "passed": 145,
+      "failed": 0,
+      "skipped": 0,
+      "includes_smoke": true
+    },
+    "format_check": {
+      "status": "passed",
+      "formatter": "prettier@3.6.2"
+    },
+    "legacy_condition_differential": {
+      "status": "passed",
+      "comparisons": 3796
+    },
+    "formatting_audit": {
+      "status": "passed",
+      "files": 58,
+      "js_cjs_ast_equivalent": 54,
+      "existing_assertion_files_preserved": 18,
+      "hash_mismatches": []
+    },
+    "regenerated_preview_browser_checks": {
+      "status": "passed",
+      "live_network": "blocked",
+      "results": [
+        {
+          "preview": "ai",
+          "page_errors": [],
+          "ready": true
+        },
+        {
+          "preview": "news",
+          "page_errors": [],
+          "ready": true
+        },
+        {
+          "preview": "chart",
+          "page_errors": [],
+          "ready": true
+        }
+      ],
+      "note": "First ad-hoc run used an incorrect #stockDrawer selector and timed out. Corrected the verification harness to wait for the existing designPreviewReady flag; no product change was needed."
+    }
+  },
+  "not_run": [
+    "Windows/NSIS build and installation",
+    "Live broker data and account integration",
+    "Real AI provider/model call"
+  ],
+  "blocked": [
+    {
+      "action": "Latest GitHub API issue/PR/queue inspection",
+      "status": "denied",
+      "reason": "Current environment GitHub API access restriction; not retried in cleanup."
+    }
+  ],
+  "approval": {
+    "merge": "not_requested_or_performed",
+    "deploy": "not_performed"
+  }
+}

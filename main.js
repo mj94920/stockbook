@@ -1,6 +1,15 @@
-const { app, BrowserWindow, WebContentsView, ipcMain, dialog, shell, safeStorage, net } = require('electron');
-const path  = require('path');
-const fs    = require('fs');
+const {
+  app,
+  BrowserWindow,
+  WebContentsView,
+  ipcMain,
+  dialog,
+  shell,
+  safeStorage,
+  net,
+} = require('electron');
+const path = require('path');
+const fs = require('fs');
 const https = require('https');
 
 // ── userData 경로 통일: 개발 모드(stockbook)와 설치 모드(Stock Book) 동일하게 ──
@@ -10,9 +19,30 @@ app.name = 'StockBook';
 let win;
 const { prepareRendererFiles } = require('./src/desktop/renderer-files.cjs');
 const rendererDirectories = new Set();
-const chartStockSearch = require('./src/chart/stock-search.cjs').createStockSearch({loadMarket:loadNaverStocks,loadBasic:async code=>JSON.parse(await httpsGet(`https://m.stock.naver.com/api/stock/${code}/basic`,8000))});
-const chartDataProvider = require('./src/chart/provider.cjs').createChartProvider({httpsGet});
-const chartWindows = require('./src/chart/window.cjs').registerChartWindow({ ipcMain, BrowserWindow, getMainWindow:()=>win, appDir:__dirname, getChartData:chartDataProvider.get, getTradingValues:require('./src/chart/trading-value.cjs').createTradingValueProvider({httpsGet,getAuth:getKisToken}).get, searchStocks:chartStockSearch.search, resolveStock:chartStockSearch.resolve, getInvestors:require('./src/chart/investor-provider.cjs').createInvestorProvider({httpsGet,getAuth:getKisToken,naverFallback:true}).get });
+const chartStockSearch = require('./src/chart/stock-search.cjs').createStockSearch({
+  loadMarket: loadNaverStocks,
+  loadBasic: async (code) =>
+    JSON.parse(await httpsGet(`https://m.stock.naver.com/api/stock/${code}/basic`, 8000)),
+});
+const chartDataProvider = require('./src/chart/provider.cjs').createChartProvider({ httpsGet });
+const chartWindows = require('./src/chart/window.cjs').registerChartWindow({
+  ipcMain,
+  BrowserWindow,
+  getMainWindow: () => win,
+  appDir: __dirname,
+  getChartData: chartDataProvider.get,
+  getTradingValues: require('./src/chart/trading-value.cjs').createTradingValueProvider({
+    httpsGet,
+    getAuth: getKisToken,
+  }).get,
+  searchStocks: chartStockSearch.search,
+  resolveStock: chartStockSearch.resolve,
+  getInvestors: require('./src/chart/investor-provider.cjs').createInvestorProvider({
+    httpsGet,
+    getAuth: getKisToken,
+    naverFallback: true,
+  }).get,
+});
 
 // ── 데이터 파일 경로: %APPDATA%\StockBook\stockbook-data.json ──────────────
 function getDataFile() {
@@ -20,69 +50,84 @@ function getDataFile() {
 }
 
 // ── 내부 HTTPS 헬퍼 (CORS 제한 없음) ────────────────────────────────────────
-function httpsGet(url, timeoutMs = 8000, extraHeaders = {}, {signal} = {}) {
+function httpsGet(url, timeoutMs = 8000, extraHeaders = {}, { signal } = {}) {
   return new Promise((resolve, reject) => {
-    const req = https.get(url, {
-      ...(signal ? { signal } : {}),
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
-        'Accept':     'application/json, text/plain, */*',
-        ...extraHeaders,
-      }
-    }, res => {
-      const chunks = [];
-      res.on('error', reject);
-      res.on('data', chunk => { chunks.push(chunk); });
-      res.on('end',  () => {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-          const buf = Buffer.concat(chunks);
-          // Content-Type에 EUC-KR이 명시된 경우 TextDecoder로 올바르게 디코딩
-          const ct = (res.headers['content-type'] || '').toLowerCase();
-          if (/charset=(euc-kr|euc_kr|x-windows-949|cp949|ks_c_5601)/.test(ct)) {
-            // Electron 소형-ICU 빌드는 글로벌 TextDecoder가 EUC-KR 미지원 →
-            // Node.js require('util').TextDecoder는 항상 EUC-KR 지원 (KRX 코드와 동일 패턴)
-            try {
-              const { TextDecoder: NodeTD } = require('util');
-              resolve(new NodeTD('euc-kr').decode(buf));
-              return;
-            } catch (_) {}
+    const req = https.get(
+      url,
+      {
+        ...(signal ? { signal } : {}),
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+          'Accept': 'application/json, text/plain, */*',
+          ...extraHeaders,
+        },
+      },
+      (res) => {
+        const chunks = [];
+        res.on('error', reject);
+        res.on('data', (chunk) => {
+          chunks.push(chunk);
+        });
+        res.on('end', () => {
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            const buf = Buffer.concat(chunks);
+            // Content-Type에 EUC-KR이 명시된 경우 TextDecoder로 올바르게 디코딩
+            const ct = (res.headers['content-type'] || '').toLowerCase();
+            if (/charset=(euc-kr|euc_kr|x-windows-949|cp949|ks_c_5601)/.test(ct)) {
+              // Electron 소형-ICU 빌드는 글로벌 TextDecoder가 EUC-KR 미지원 →
+              // Node.js require('util').TextDecoder는 항상 EUC-KR 지원 (KRX 코드와 동일 패턴)
+              try {
+                const { TextDecoder: NodeTD } = require('util');
+                resolve(new NodeTD('euc-kr').decode(buf));
+                return;
+              } catch (_) {}
+            }
+            resolve(buf.toString('utf8'));
+          } else {
+            reject(new Error(`HTTP ${res.statusCode}`));
           }
-          resolve(buf.toString('utf8'));
-        } else {
-          reject(new Error(`HTTP ${res.statusCode}`));
-        }
-      });
-    });
+        });
+      },
+    );
     req.on('error', reject);
-    req.setTimeout(timeoutMs, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.setTimeout(timeoutMs, () => {
+      req.destroy();
+      reject(new Error('Timeout'));
+    });
   });
 }
 
 function httpsPost(url, body, extraHeaders = {}) {
   return new Promise((resolve, reject) => {
-    const json    = JSON.stringify(body);
-    const urlObj  = new URL(url);
+    const json = JSON.stringify(body);
+    const urlObj = new URL(url);
     const options = {
       hostname: urlObj.hostname,
-      port:     parseInt(urlObj.port) || 443,
-      path:     urlObj.pathname + urlObj.search,
-      method:   'POST',
+      port: parseInt(urlObj.port) || 443,
+      path: urlObj.pathname + urlObj.search,
+      method: 'POST',
       headers: {
-        'Content-Type':   'application/json; charset=UTF-8',
+        'Content-Type': 'application/json; charset=UTF-8',
         'Content-Length': Buffer.byteLength(json),
         ...extraHeaders,
       },
     };
-    const req = https.request(options, res => {
+    const req = https.request(options, (res) => {
       let data = '';
-      res.on('data', chunk => { data += chunk; });
-      res.on('end',  () => {
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      res.on('end', () => {
         if (res.statusCode >= 200 && res.statusCode < 300) resolve(data);
         else reject(new Error(`HTTP ${res.statusCode}: ${data.slice(0, 200)}`));
       });
     });
     req.on('error', reject);
-    req.setTimeout(12000, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.setTimeout(12000, () => {
+      req.destroy();
+      reject(new Error('Timeout'));
+    });
     req.write(json);
     req.end();
   });
@@ -91,28 +136,29 @@ function httpsPost(url, body, extraHeaders = {}) {
 // ── URL-encoded Form POST 헬퍼 (KRX API용) ──────────────────────────────────
 function httpsFormPost(url, formBody, extraHeaders = {}, timeoutMs = 20000) {
   return new Promise((resolve, reject) => {
-    const urlObj  = new URL(url);
+    const urlObj = new URL(url);
     const bodyBuf = Buffer.from(formBody, 'utf-8');
     const options = {
       hostname: urlObj.hostname,
-      port:     parseInt(urlObj.port) || 443,
-      path:     urlObj.pathname + urlObj.search,
-      method:   'POST',
+      port: parseInt(urlObj.port) || 443,
+      path: urlObj.pathname + urlObj.search,
+      method: 'POST',
       headers: {
-        'Content-Type':     'application/x-www-form-urlencoded; charset=UTF-8',
-        'Content-Length':   bodyBuf.length,
-        'User-Agent':       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
-        'Referer':          'https://data.krx.co.kr/',
-        'Origin':           'https://data.krx.co.kr',
-        'Accept':           'application/json, text/plain, */*',
-        'Accept-Language':  'ko-KR,ko;q=0.9',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Content-Length': bodyBuf.length,
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+        'Referer': 'https://data.krx.co.kr/',
+        'Origin': 'https://data.krx.co.kr',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'ko-KR,ko;q=0.9',
         'X-Requested-With': 'XMLHttpRequest',
         ...extraHeaders,
       },
     };
-    const req = https.request(options, res => {
+    const req = https.request(options, (res) => {
       const chunks = [];
-      res.on('data', chunk => chunks.push(chunk));
+      res.on('data', (chunk) => chunks.push(chunk));
       res.on('end', () => {
         const data = Buffer.concat(chunks).toString('utf-8');
         if (res.statusCode >= 200 && res.statusCode < 300) resolve(data);
@@ -120,7 +166,10 @@ function httpsFormPost(url, formBody, extraHeaders = {}, timeoutMs = 20000) {
       });
     });
     req.on('error', reject);
-    req.setTimeout(timeoutMs, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.setTimeout(timeoutMs, () => {
+      req.destroy();
+      reject(new Error('Timeout'));
+    });
     req.write(bodyBuf);
     req.end();
   });
@@ -129,12 +178,18 @@ function httpsFormPost(url, formBody, extraHeaders = {}, timeoutMs = 20000) {
 // ── KRX CSV 파서 (OTP 다운로드 응답용) ──────────────────────────────────────
 function parseCsvLine(line) {
   const cols = [];
-  let cur = '', inQ = false;
+  let cur = '',
+    inQ = false;
   for (let i = 0; i < line.length; i++) {
     const c = line[i];
-    if (c === '"') { inQ = !inQ; }
-    else if (c === ',' && !inQ) { cols.push(cur.replace(/,/g, '')); cur = ''; }
-    else { cur += c; }
+    if (c === '"') {
+      inQ = !inQ;
+    } else if (c === ',' && !inQ) {
+      cols.push(cur.replace(/,/g, ''));
+      cur = '';
+    } else {
+      cur += c;
+    }
   }
   cols.push(cur.replace(/,/g, ''));
   return cols;
@@ -142,76 +197,92 @@ function parseCsvLine(line) {
 
 function parseKrxCsv(raw, market) {
   const cleaned = raw.replace(/^﻿/, '').replace(/\r/g, '');
-  const lines   = cleaned.split('\n').filter(l => l.trim());
+  const lines = cleaned.split('\n').filter((l) => l.trim());
   if (lines.length < 2) return [];
 
   // 헤더로 컬럼 인덱스 동적 탐색 (KRX가 컬럼 순서 바꿔도 안전)
   const headers = parseCsvLine(lines[0]);
-  const ci = name => headers.findIndex(h => h.includes(name));
-  const iCode = ci('종목코드'), iName = ci('종목명'),
-        iClose = ci('종가'),   iChg  = ci('대비'),
-        iRate  = ci('등락률'), iVol  = ci('거래량'), iCap = ci('시가총액');
+  const ci = (name) => headers.findIndex((h) => h.includes(name));
+  const iCode = ci('종목코드'),
+    iName = ci('종목명'),
+    iClose = ci('종가'),
+    iChg = ci('대비'),
+    iRate = ci('등락률'),
+    iVol = ci('거래량'),
+    iCap = ci('시가총액');
 
-  return lines.slice(1).map(line => {
-    const c = parseCsvLine(line);
-    const get = (i, fb) => (i >= 0 && c[i]) ? c[i].trim() : (fb >= 0 && c[fb] ? c[fb].trim() : '0');
-    return {
-      ISU_SRT_CD:    (iCode  >= 0 ? c[iCode]  : c[0] || '').trim(),
-      ISU_ABBRV:     (iName  >= 0 ? c[iName]  : c[1] || '').trim(),
-      TDD_CLSPRC:    get(iClose,  4),
-      CMPPREVDD_PRC: get(iChg,    5),
-      FLUC_RT:       get(iRate,   6),
-      ACC_TRDVOL:    get(iVol,   10),
-      MKTCAP:        get(iCap,   12),
-      _market:       market,
-    };
-  }).filter(r => r.ISU_SRT_CD && /^\d{6}$/.test(r.ISU_SRT_CD));
+  return lines
+    .slice(1)
+    .map((line) => {
+      const c = parseCsvLine(line);
+      const get = (i, fb) => (i >= 0 && c[i] ? c[i].trim() : fb >= 0 && c[fb] ? c[fb].trim() : '0');
+      return {
+        ISU_SRT_CD: (iCode >= 0 ? c[iCode] : c[0] || '').trim(),
+        ISU_ABBRV: (iName >= 0 ? c[iName] : c[1] || '').trim(),
+        TDD_CLSPRC: get(iClose, 4),
+        CMPPREVDD_PRC: get(iChg, 5),
+        FLUC_RT: get(iRate, 6),
+        ACC_TRDVOL: get(iVol, 10),
+        MKTCAP: get(iCap, 12),
+        _market: market,
+      };
+    })
+    .filter((r) => r.ISU_SRT_CD && /^\d{6}$/.test(r.ISU_SRT_CD));
 }
 
 // ── httpsFormPost — 응답을 Buffer로 반환하는 변형 (CSV 인코딩 감지용) ──────────
 function httpsFormPostBuf(url, formBody, extraHeaders = {}, timeoutMs = 30000) {
   return new Promise((resolve, reject) => {
-    const urlObj  = new URL(url);
+    const urlObj = new URL(url);
     const bodyBuf = Buffer.from(formBody, 'utf-8');
     const options = {
       hostname: urlObj.hostname,
-      port:     parseInt(urlObj.port) || 443,
-      path:     urlObj.pathname + urlObj.search,
-      method:   'POST',
+      port: parseInt(urlObj.port) || 443,
+      path: urlObj.pathname + urlObj.search,
+      method: 'POST',
       headers: {
-        'Content-Type':     'application/x-www-form-urlencoded; charset=UTF-8',
-        'Content-Length':   bodyBuf.length,
-        'User-Agent':       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
-        'Referer':          'https://data.krx.co.kr/contents/MDC/MAIN/main/index.cmd',
-        'Origin':           'https://data.krx.co.kr',
-        'Accept':           'text/csv, application/octet-stream, */*',
-        'Accept-Language':  'ko-KR,ko;q=0.9',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Content-Length': bodyBuf.length,
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+        'Referer': 'https://data.krx.co.kr/contents/MDC/MAIN/main/index.cmd',
+        'Origin': 'https://data.krx.co.kr',
+        'Accept': 'text/csv, application/octet-stream, */*',
+        'Accept-Language': 'ko-KR,ko;q=0.9',
         ...extraHeaders,
       },
     };
-    const req = https.request(options, res => {
+    const req = https.request(options, (res) => {
       const chunks = [];
-      res.on('data', chunk => chunks.push(chunk));
+      res.on('data', (chunk) => chunks.push(chunk));
       res.on('end', () => {
         if (res.statusCode >= 200 && res.statusCode < 300) resolve(Buffer.concat(chunks));
-        else reject(new Error(`HTTP ${res.statusCode}: ${Buffer.concat(chunks).toString('utf-8').slice(0, 200)}`));
+        else
+          reject(
+            new Error(
+              `HTTP ${res.statusCode}: ${Buffer.concat(chunks).toString('utf-8').slice(0, 200)}`,
+            ),
+          );
       });
     });
     req.on('error', reject);
-    req.setTimeout(timeoutMs, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.setTimeout(timeoutMs, () => {
+      req.destroy();
+      reject(new Error('Timeout'));
+    });
     req.write(bodyBuf);
     req.end();
   });
 }
 
 // ── KRX 전종목 데이터 캐시 ───────────────────────────────────────────────────
-let _krxCache     = null;
+let _krxCache = null;
 let _krxCacheTime = 0;
 const KRX_CACHE_TTL = 60 * 60 * 1000; // 1시간
 
 ipcMain.handle('fetch-krx-stocks', async () => {
   // 메모리 캐시 유효 시 즉시 반환
-  if (_krxCache && (Date.now() - _krxCacheTime) < KRX_CACHE_TTL) {
+  if (_krxCache && Date.now() - _krxCacheTime < KRX_CACHE_TTL) {
     return { ok: true, data: _krxCache, fromCache: true, cachedAt: _krxCacheTime };
   }
 
@@ -220,8 +291,8 @@ ipcMain.handle('fetch-krx-stocks', async () => {
   if (!_krxCache && fs.existsSync(cacheFile)) {
     try {
       const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
-      if (cached.ts && (Date.now() - cached.ts) < KRX_CACHE_TTL) {
-        _krxCache     = cached.data;
+      if (cached.ts && Date.now() - cached.ts < KRX_CACHE_TTL) {
+        _krxCache = cached.data;
         _krxCacheTime = cached.ts;
         console.log('[StockBook] KRX 파일 캐시 로드:', _krxCache.length, '종목');
         return { ok: true, data: _krxCache, fromCache: true, cachedAt: cached.ts };
@@ -232,21 +303,24 @@ ipcMain.handle('fetch-krx-stocks', async () => {
   // KRX API 실시간 조회 — OTP(GET) → CSV(POST Buffer) 2단계 (세션 불필요, pykrx 방식)
   try {
     // OTP 쿼리 — URL 인코딩 없이 그대로 (KRX 서버가 / 포함 그대로 받음)
-    const KRX_OTP_QUERY = mktId =>
+    const KRX_OTP_QUERY = (mktId) =>
       `bld=dbms/MDC/STAT/standard/MDCSTAT01901&locale=ko_KR&mktId=${mktId}&share=1&money=1&csvxls_isNo=false`;
 
     const fetchMarket = async (mktId, label) => {
       // Step 1: OTP 발급 — GET 방식 (pykrx와 동일, POST 하면 다른 응답 반환)
-      const otp = (await httpsGet(
-        `https://data.krx.co.kr/comm/fileDn/GenerateOTP/generate.cmd?${KRX_OTP_QUERY(mktId)}`,
-        15000,
-        {
-          'Referer': 'https://data.krx.co.kr/contents/MDC/MAIN/main/index.cmd',
-          'Accept':  'text/plain, */*; q=0.01',
-          'X-Requested-With': 'XMLHttpRequest',
-        }
-      )).trim();
-      if (!otp || otp.length < 10) throw new Error(`KRX OTP 발급 실패 (${label}): "${otp.slice(0, 100)}"`);
+      const otp = (
+        await httpsGet(
+          `https://data.krx.co.kr/comm/fileDn/GenerateOTP/generate.cmd?${KRX_OTP_QUERY(mktId)}`,
+          15000,
+          {
+            'Referer': 'https://data.krx.co.kr/contents/MDC/MAIN/main/index.cmd',
+            'Accept': 'text/plain, */*; q=0.01',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        )
+      ).trim();
+      if (!otp || otp.length < 10)
+        throw new Error(`KRX OTP 발급 실패 (${label}): "${otp.slice(0, 100)}"`);
       console.log(`[StockBook] KRX ${label} OTP: ${otp.slice(0, 20)}...`);
 
       // Step 2: OTP로 CSV 다운로드 (POST) — Buffer 반환으로 인코딩 감지
@@ -254,12 +328,12 @@ ipcMain.handle('fetch-krx-stocks', async () => {
         'https://data.krx.co.kr/comm/fileDn/download_csv.cmd',
         `code=${otp}`,
         { 'Accept': 'text/csv, application/octet-stream, */*' },
-        30000
+        30000,
       );
 
       // 인코딩 감지: UTF-8 BOM → UTF-8, 그 외 → EUC-KR 시도
       let csv;
-      if (buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF) {
+      if (buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf) {
         csv = buf.toString('utf-8'); // BOM 포함 UTF-8
       } else {
         try {
@@ -273,37 +347,42 @@ ipcMain.handle('fetch-krx-stocks', async () => {
       // CSV 유효성 확인 — 한글 헤더 없으면 오류 페이지 응답
       const firstLine = csv.slice(0, 400);
       if (!firstLine.includes('종목') && !firstLine.includes('ISU')) {
-        throw new Error(`KRX ${label} CSV 형식 오류 (HTML/JSON 응답 추정). 앞부분: "${firstLine.replace(/\n/g, ' ').slice(0, 150)}"`);
+        throw new Error(
+          `KRX ${label} CSV 형식 오류 (HTML/JSON 응답 추정). 앞부분: "${firstLine.replace(/\n/g, ' ').slice(0, 150)}"`,
+        );
       }
 
       const rows = parseKrxCsv(csv, label);
       if (rows.length === 0) {
-        throw new Error(`KRX ${label} CSV 파싱 결과 0종목. 앞부분: "${firstLine.replace(/\n/g, ' ').slice(0, 150)}"`);
+        throw new Error(
+          `KRX ${label} CSV 파싱 결과 0종목. 앞부분: "${firstLine.replace(/\n/g, ' ').slice(0, 150)}"`,
+        );
       }
       console.log(`[StockBook] KRX ${label}: ${rows.length}종목 로드 완료`);
       return rows;
     };
 
-    const toNum = s => parseFloat((s || '0').replace(/,/g, '')) || 0;
+    const toNum = (s) => parseFloat((s || '0').replace(/,/g, '')) || 0;
 
     // KOSPI·KOSDAQ 순차 실행 (KRX 서버 부하 고려)
-    const kospi  = await fetchMarket('STK', 'KOSPI');
+    const kospi = await fetchMarket('STK', 'KOSPI');
     const kosdaq = await fetchMarket('KSQ', 'KOSDAQ');
 
-    const parse = (rows, mkt) => rows.map(r => ({
-      code:      r.ISU_SRT_CD  || '',
-      name:      r.ISU_ABBRV   || '',
-      market:    mkt,
-      price:     toNum(r.TDD_CLSPRC),
-      change:    toNum(r.CMPPREVDD_PRC),
-      changePct: toNum(r.FLUC_RT),
-      volume:    toNum(r.ACC_TRDVOL),
-      marketCap: toNum(r.MKTCAP),
-    }));
+    const parse = (rows, mkt) =>
+      rows.map((r) => ({
+        code: r.ISU_SRT_CD || '',
+        name: r.ISU_ABBRV || '',
+        market: mkt,
+        price: toNum(r.TDD_CLSPRC),
+        change: toNum(r.CMPPREVDD_PRC),
+        changePct: toNum(r.FLUC_RT),
+        volume: toNum(r.ACC_TRDVOL),
+        marketCap: toNum(r.MKTCAP),
+      }));
 
-    const combined    = [...parse(kospi, 'KOSPI'), ...parse(kosdaq, 'KOSDAQ')];
-    _krxCache         = combined;
-    _krxCacheTime     = Date.now();
+    const combined = [...parse(kospi, 'KOSPI'), ...parse(kosdaq, 'KOSDAQ')];
+    _krxCache = combined;
+    _krxCacheTime = Date.now();
 
     try {
       fs.writeFileSync(cacheFile, JSON.stringify({ ts: _krxCacheTime, data: combined }), 'utf-8');
@@ -329,39 +408,43 @@ ipcMain.handle('fetch-krx-stocks', async () => {
 
 // ── 네이버 증권 전종목 데이터 (KOSPI / KOSDAQ / ETF) ─────────────────────────
 const _naverStockCache = {};
-const NAVER_STOCK_TTL  = 60 * 60 * 1000; // 1시간
+const NAVER_STOCK_TTL = 60 * 60 * 1000; // 1시간
 
-const NAVER_MOBILE_UA = 'Mozilla/5.0 (Linux; Android 13; SM-S908B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36';
-const NAVER_HEADERS   = {
-  'User-Agent':      NAVER_MOBILE_UA,
-  'Accept':          'application/json, */*',
-  'Referer':         'https://m.stock.naver.com/',
+const NAVER_MOBILE_UA =
+  'Mozilla/5.0 (Linux; Android 13; SM-S908B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36';
+const NAVER_HEADERS = {
+  'User-Agent': NAVER_MOBILE_UA,
+  'Accept': 'application/json, */*',
+  'Referer': 'https://m.stock.naver.com/',
   'Accept-Language': 'ko-KR,ko;q=0.9',
 };
 
 async function fetchNaverStockList(market) {
   const MIN_CAP = 100_000_000_000; // 시총 1,000억 (원)
-  const PAGE_SZ = 60;              // Naver API 최대 반환 단위 (초과하면 첫 페이지만 로드됨)
-  const isEtf   = market === 'ETF';
+  const PAGE_SZ = 60; // Naver API 최대 반환 단위 (초과하면 첫 페이지만 로드됨)
+  const isEtf = market === 'ETF';
   const results = [];
 
   // ── ETF: 방법1 Naver 모바일 marketValue/ETF → 방법2 etfItemList.nhn 폴백
   if (isEtf) {
-    const toN = s => parseInt((s || '0').replace(/,/g,''), 10) || 0;
-    const pushItem = s => {
-      const cap = parseInt(s.marketValueRaw || '0', 10)
-        || (toN(s.marketValue || s.marketCap || s.quant || '0') * 100_000_000);
+    const toN = (s) => parseInt((s || '0').replace(/,/g, ''), 10) || 0;
+    const pushItem = (s) => {
+      const cap =
+        parseInt(s.marketValueRaw || '0', 10) ||
+        toN(s.marketValue || s.marketCap || s.quant || '0') * 100_000_000;
       results.push({
-        code:      s.stockCode || s.itemCode || s.etfCode || s.cd  || s.code  || '',
-        name:      s.stockName || s.itemName || s.etfName || s.isuNm || s.nm || s.name || '',
-        industry:  '',
-        market:    'ETF',
-        price:     toN(s.closePriceRaw     || s.closePrice    || s.nxtRcpPrice || s.price  || '0'),
-        change:    toN(s.compareToPreviousClosePriceRaw || s.compareToPreviousClosePrice || s.priceChange || '0'),
+        code: s.stockCode || s.itemCode || s.etfCode || s.cd || s.code || '',
+        name: s.stockName || s.itemName || s.etfName || s.isuNm || s.nm || s.name || '',
+        industry: '',
+        market: 'ETF',
+        price: toN(s.closePriceRaw || s.closePrice || s.nxtRcpPrice || s.price || '0'),
+        change: toN(
+          s.compareToPreviousClosePriceRaw || s.compareToPreviousClosePrice || s.priceChange || '0',
+        ),
         changePct: parseFloat(s.fluctuationsRatio || s.changeRate || s.fluctuationRate || '0'),
-        volume:    toN(s.accumulatedTradingVolumeRaw || s.accumulatedTradingVolume || s.volume || '0'),
+        volume: toN(s.accumulatedTradingVolumeRaw || s.accumulatedTradingVolume || s.volume || '0'),
         marketCap: cap,
-        nav:       0,
+        nav: 0,
       });
     };
 
@@ -371,16 +454,26 @@ async function fetchNaverStockList(market) {
         const url = `https://m.stock.naver.com/api/stocks/marketValue/ETF?page=${page}&pageSize=${PAGE_SZ}`;
         const body = await httpsGet(url, 20000, NAVER_HEADERS);
         const parsed = JSON.parse(body);
-        const items = parsed.stocks || parsed.etfs || parsed.etfItems || parsed.etfItemList
-                   || parsed.items  || parsed.list  || parsed.data     || [];
-        if (!items.length) { console.warn('[StockBook] ETF marketValue 종목 없음, 키:', Object.keys(parsed)); break; }
+        const items =
+          parsed.stocks ||
+          parsed.etfs ||
+          parsed.etfItems ||
+          parsed.etfItemList ||
+          parsed.items ||
+          parsed.list ||
+          parsed.data ||
+          [];
+        if (!items.length) {
+          console.warn('[StockBook] ETF marketValue 종목 없음, 키:', Object.keys(parsed));
+          break;
+        }
         for (const s of items) pushItem(s);
         const total = parsed.totalCount || parsed.total || parsed.stockListSize || 0;
         if (total > 0 && results.length >= total) break;
         if (items.length < PAGE_SZ) break;
       }
       console.log(`[StockBook] ETF marketValue: ${results.length}종목`);
-    } catch(e) {
+    } catch (e) {
       console.error('[StockBook] ETF marketValue 실패:', e.message);
     }
 
@@ -389,16 +482,16 @@ async function fetchNaverStockList(market) {
     if (results.length === 0) {
       console.log('[StockBook] ETF 폴백: etfItemList.nhn 시도');
       try {
-        const body = await httpsGet(
-          'https://finance.naver.com/api/sise/etfItemList.nhn',
-          20000,
-          { 'Referer': 'https://finance.naver.com/etf/', 'Accept': '*/*' }
-        );
+        const body = await httpsGet('https://finance.naver.com/api/sise/etfItemList.nhn', 20000, {
+          'Referer': 'https://finance.naver.com/etf/',
+          'Accept': '*/*',
+        });
         const parsed = JSON.parse(body);
-        const items = parsed.etfItemList || parsed.result?.etfItemList || parsed.list || parsed.data || [];
+        const items =
+          parsed.etfItemList || parsed.result?.etfItemList || parsed.list || parsed.data || [];
         for (const s of items) pushItem(s);
         console.log(`[StockBook] ETF etfItemList: ${results.length}종목`);
-      } catch(e) {
+      } catch (e) {
         console.error('[StockBook] ETF etfItemList.nhn 실패:', e.message);
       }
     }
@@ -413,44 +506,82 @@ async function fetchNaverStockList(market) {
     let body;
     try {
       body = await httpsGet(url, 20000, NAVER_HEADERS);
-    } catch(e) {
+    } catch (e) {
       console.error(`[StockBook] 네이버 ${market} p${page} 요청 실패:`, e.message);
       break;
     }
 
     let parsed;
-    try { parsed = JSON.parse(body); }
-    catch(pe) {
-      console.error(`[StockBook] 네이버 ${market} p${page} JSON 파싱 실패, 응답 첫200자:`, body?.slice(0,200));
+    try {
+      parsed = JSON.parse(body);
+    } catch (pe) {
+      console.error(
+        `[StockBook] 네이버 ${market} p${page} JSON 파싱 실패, 응답 첫200자:`,
+        body?.slice(0, 200),
+      );
       break;
     }
 
     // KOSPI/KOSDAQ: 가능한 배열 키 모두 시도
-    const items = parsed.stocks || parsed.etfs || parsed.etfItems || parsed.items
-               || parsed.list   || parsed.data  || [];
+    const items =
+      parsed.stocks ||
+      parsed.etfs ||
+      parsed.etfItems ||
+      parsed.items ||
+      parsed.list ||
+      parsed.data ||
+      [];
     if (!items.length) {
-      console.warn(`[StockBook] 네이버 ${market} p${page} 종목 없음, 응답 키:`, Object.keys(parsed));
+      console.warn(
+        `[StockBook] 네이버 ${market} p${page} 종목 없음, 응답 키:`,
+        Object.keys(parsed),
+      );
       break;
     }
 
     let reachedMin = false;
     for (const s of items) {
       // 시총: Raw 필드 우선 (원 단위), 없으면 문자열 쉼표 제거 후 억→원 환산
-      const cap = parseInt(s.marketValueRaw || '0', 10)
-        || (parseInt((s.marketValue || s.marketCap || s.marketCapitalization ||
-            s.totalMarketCap || s.marketAmount || '0').replace(/,/g, ''), 10) * 100_000_000);
-      if (cap > 0 && cap < MIN_CAP) { reachedMin = true; break; }
+      const cap =
+        parseInt(s.marketValueRaw || '0', 10) ||
+        parseInt(
+          (
+            s.marketValue ||
+            s.marketCap ||
+            s.marketCapitalization ||
+            s.totalMarketCap ||
+            s.marketAmount ||
+            '0'
+          ).replace(/,/g, ''),
+          10,
+        ) * 100_000_000;
+      if (cap > 0 && cap < MIN_CAP) {
+        reachedMin = true;
+        break;
+      }
       results.push({
-        code:      s.stockCode || s.itemCode || s.etfCode || s.code || s.reutersCode?.split('.')[0] || '',
-        name:      s.stockName || s.itemName || s.etfName || s.name || '',
-        industry:  s.industryGroupName || s.industryName || (s.industry?.name) || s.sector || '',
+        code:
+          s.stockCode || s.itemCode || s.etfCode || s.code || s.reutersCode?.split('.')[0] || '',
+        name: s.stockName || s.itemName || s.etfName || s.name || '',
+        industry: s.industryGroupName || s.industryName || s.industry?.name || s.sector || '',
         stockType: s.stockType || '',
         stockEndType: s.stockEndType || '',
         market,
-        price:     parseInt(s.closePriceRaw || (s.closePrice || s.currentPrice || s.price || '0').replace(/,/g,''), 10),
-        change:    parseInt(s.compareToPreviousClosePriceRaw || (s.compareToPreviousClosePrice || s.priceChange || s.change || '0').replace(/,/g,''), 10),
+        price: parseInt(
+          s.closePriceRaw || (s.closePrice || s.currentPrice || s.price || '0').replace(/,/g, ''),
+          10,
+        ),
+        change: parseInt(
+          s.compareToPreviousClosePriceRaw ||
+            (s.compareToPreviousClosePrice || s.priceChange || s.change || '0').replace(/,/g, ''),
+          10,
+        ),
         changePct: parseFloat(s.fluctuationsRatio || s.changeRate || s.rateOfChange || '0'),
-        volume:    parseInt(s.accumulatedTradingVolumeRaw || (s.accumulatedTradingVolume || s.volume || s.tradingVolume || '0').replace(/,/g,''), 10),
+        volume: parseInt(
+          s.accumulatedTradingVolumeRaw ||
+            (s.accumulatedTradingVolume || s.volume || s.tradingVolume || '0').replace(/,/g, ''),
+          10,
+        ),
         marketCap: cap,
       });
     }
@@ -466,23 +597,30 @@ async function fetchNaverStockList(market) {
 
 async function loadNaverStocks(market) {
   // ETF는 KRX API 사용 → 별도 캐시 키 (naver-stocks-ETF.json 구 캐시 자동 무력화)
-  const cacheFile = path.join(app.getPath('userData'),
-    market === 'ETF' ? 'etf-naver-v3.json' : `naver-stocks-${market}.json`);
-  const now       = Date.now();
+  const cacheFile = path.join(
+    app.getPath('userData'),
+    market === 'ETF' ? 'etf-naver-v3.json' : `naver-stocks-${market}.json`,
+  );
+  const now = Date.now();
 
   // 메모리 캐시 유효 시 즉시 반환
-  if (_naverStockCache[market] && (now - _naverStockCache[market].ts) < NAVER_STOCK_TTL) {
-    return { ok: true, data: _naverStockCache[market].data, fromCache: true, cachedAt: _naverStockCache[market].ts };
+  if (_naverStockCache[market] && now - _naverStockCache[market].ts < NAVER_STOCK_TTL) {
+    return {
+      ok: true,
+      data: _naverStockCache[market].data,
+      fromCache: true,
+      cachedAt: _naverStockCache[market].ts,
+    };
   }
   // 파일 캐시 확인
   if (fs.existsSync(cacheFile)) {
     try {
       const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
-      if (cached.ts && (now - cached.ts) < NAVER_STOCK_TTL) {
+      if (cached.ts && now - cached.ts < NAVER_STOCK_TTL) {
         _naverStockCache[market] = { data: cached.data, ts: cached.ts };
         return { ok: true, data: cached.data, fromCache: true, cachedAt: cached.ts };
       }
-    } catch(_) {}
+    } catch (_) {}
   }
 
   try {
@@ -490,10 +628,12 @@ async function loadNaverStocks(market) {
     if (!data.length) throw new Error(`${market} 종목 0건 — 네이버 API 응답 구조 확인 필요`);
     const ts = Date.now();
     _naverStockCache[market] = { data, ts };
-    try { fs.writeFileSync(cacheFile, JSON.stringify({ ts, data }), 'utf-8'); } catch(_) {}
+    try {
+      fs.writeFileSync(cacheFile, JSON.stringify({ ts, data }), 'utf-8');
+    } catch (_) {}
     console.log(`[StockBook] 네이버 ${market}: ${data.length}종목 로드 완료`);
     return { ok: true, data, fromCache: false, cachedAt: ts };
-  } catch(e) {
+  } catch (e) {
     console.error(`[StockBook] 네이버 ${market} 조회 실패:`, e.message);
     // 만료 캐시 폴백
     if (fs.existsSync(cacheFile)) {
@@ -502,20 +642,20 @@ async function loadNaverStocks(market) {
         if (cached.data && cached.data.length) {
           return { ok: true, data: cached.data, fromCache: true, stale: true, cachedAt: cached.ts };
         }
-      } catch(_) {}
+      } catch (_) {}
     }
     return { ok: false, error: e.message };
   }
 }
-ipcMain.handle('fetch-naver-stocks', (_event,market)=>loadNaverStocks(market));
+ipcMain.handle('fetch-naver-stocks', (_event, market) => loadNaverStocks(market));
 
 // 종목 상세 정보 (팝업: PER·PBR·EPS, 시총·상장주식수·상장일, 52주 최고·최저, 배당)
 ipcMain.handle('fetch-stock-detail', async (event, code) => {
   try {
     const base = `https://m.stock.naver.com/api/stock/${code.trim()}`;
     const [basicRes, annualRes] = await Promise.allSettled([
-      httpsGet(`${base}/basic`,           10000),           // NAVER_HEADERS 불필요 (fetchQuote와 동일 경로)
-      httpsGet(`${base}/finance/annual`,  10000, NAVER_HEADERS),
+      httpsGet(`${base}/basic`, 10000), // NAVER_HEADERS 불필요 (fetchQuote와 동일 경로)
+      httpsGet(`${base}/finance/annual`, 10000, NAVER_HEADERS),
     ]);
 
     // basic API 실패 시 ok:false 반환 (빈 data로 ok:true 반환하던 버그 수정)
@@ -527,43 +667,44 @@ ipcMain.handle('fetch-stock-detail', async (event, code) => {
     // annual 데이터에서 재무 지표 추출 (basic에 없는 경우 보완)
     if (annualRes.status === 'fulfilled') {
       try {
-        const ann      = JSON.parse(annualRes.value);
-        const rowList  = ann?.financeInfo?.rowList  || [];
-        const titleList= ann?.financeInfo?.trTitleList || [];
+        const ann = JSON.parse(annualRes.value);
+        const rowList = ann?.financeInfo?.rowList || [];
+        const titleList = ann?.financeInfo?.trTitleList || [];
         // 컨센서스 제외 실제 연도 중 가장 최근 key
-        const realYears = titleList.filter(t => t.isConsensus === 'N');
+        const realYears = titleList.filter((t) => t.isConsensus === 'N');
         const latestKey = realYears[realYears.length - 1]?.key;
-        const getVal = name => {
-          const row = rowList.find(r => r.title === name);
-          const v   = row?.columns?.[latestKey]?.value;
+        const getVal = (name) => {
+          const row = rowList.find((r) => r.title === name);
+          const v = row?.columns?.[latestKey]?.value;
           return v ? v.replace(/,/g, '') : null;
         };
         // basic에 없거나 '0'인 경우에만 annual로 보완
         const setIfMissing = (field, annVal) => {
-          if (annVal && (!data[field] || data[field] === '0' || data[field] === '-')) data[field] = annVal;
+          if (annVal && (!data[field] || data[field] === '0' || data[field] === '-'))
+            data[field] = annVal;
         };
-        setIfMissing('per',           getVal('PER'));
-        setIfMissing('pbr',           getVal('PBR'));
-        setIfMissing('eps',           getVal('EPS'));
-        setIfMissing('bps',           getVal('BPS'));
-        setIfMissing('roe',           getVal('ROE'));
+        setIfMissing('per', getVal('PER'));
+        setIfMissing('pbr', getVal('PBR'));
+        setIfMissing('eps', getVal('EPS'));
+        setIfMissing('bps', getVal('BPS'));
+        setIfMissing('roe', getVal('ROE'));
         setIfMissing('dividendYield', getVal('배당수익률'));
-        setIfMissing('dividend',      getVal('주당배당금'));
+        setIfMissing('dividend', getVal('주당배당금'));
         setIfMissing('operatingMargin', getVal('영업이익률'));
-      } catch(_) {}
+      } catch (_) {}
     }
 
     return { ok: true, data };
-  } catch(e) {
+  } catch (e) {
     return { ok: false, error: e.message };
   }
 });
 
 // ── KIS API 시세 조회 ─────────────────────────────────────────────────────────
 // 토큰 캐시: 메모리 + 파일 영구 저장 (앱 재시작 후에도 유효한 토큰 재사용)
-let _kisToken         = null;
-let _kisTokenExpiry   = 0;
-let _kisTokenPending  = null;  // 동시 토큰 발급 방지
+let _kisToken = null;
+let _kisTokenExpiry = 0;
+let _kisTokenPending = null; // 동시 토큰 발급 방지
 
 function getKisTokenCacheFile() {
   return path.join(app.getPath('userData'), 'kis-token-cache.json');
@@ -575,16 +716,23 @@ function loadKisTokenCache() {
     if (!fs.existsSync(cacheFile)) return;
     const cache = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
     if (cache?.token && cache?.expiry && Date.now() < cache.expiry) {
-      _kisToken       = { token: cache.token, appKey: cache.appKey, appSecret: cache.appSecret };
+      _kisToken = { token: cache.token, appKey: cache.appKey, appSecret: cache.appSecret };
       _kisTokenExpiry = cache.expiry;
-      console.log('[StockBook] KIS 토큰 캐시 로드 — 만료:', new Date(_kisTokenExpiry).toLocaleTimeString());
+      console.log(
+        '[StockBook] KIS 토큰 캐시 로드 — 만료:',
+        new Date(_kisTokenExpiry).toLocaleTimeString(),
+      );
     }
   } catch (_) {}
 }
 
 function saveKisTokenCache(token, appKey, appSecret, expiry) {
   try {
-    fs.writeFileSync(getKisTokenCacheFile(), JSON.stringify({ token, appKey, appSecret, expiry }), 'utf-8');
+    fs.writeFileSync(
+      getKisTokenCacheFile(),
+      JSON.stringify({ token, appKey, appSecret, expiry }),
+      'utf-8',
+    );
   } catch (_) {}
 }
 
@@ -604,17 +752,22 @@ async function getKisToken() {
       let creds;
       try {
         creds = JSON.parse(safeStorage.decryptString(fs.readFileSync(credFile)));
-      } catch (_) { return null; }
+      } catch (_) {
+        return null;
+      }
       if (!creds?.appKey || !creds?.appSecret) return null;
       // 토큰 발급 (하루 1회 제한 — 캐시 미스 시에만 호출됨)
-      const res = JSON.parse(await httpsPost(
-        'https://openapi.koreainvestment.com:9443/oauth2/tokenP',
-        { grant_type: 'client_credentials', appkey: creds.appKey, appsecret: creds.appSecret }
-      ));
+      const res = JSON.parse(
+        await httpsPost('https://openapi.koreainvestment.com:9443/oauth2/tokenP', {
+          grant_type: 'client_credentials',
+          appkey: creds.appKey,
+          appsecret: creds.appSecret,
+        }),
+      );
       if (!res.access_token) return null;
       // 만료 30분 전에 갱신 (expires_in은 초 단위, 기본 86400)
-      const expiry    = Date.now() + ((res.expires_in || 86400) - 1800) * 1000;
-      _kisToken       = { token: res.access_token, appKey: creds.appKey, appSecret: creds.appSecret };
+      const expiry = Date.now() + ((res.expires_in || 86400) - 1800) * 1000;
+      _kisToken = { token: res.access_token, appKey: creds.appKey, appSecret: creds.appSecret };
       _kisTokenExpiry = expiry;
       // 파일에도 저장 → 앱 재시작 후에도 재발급 없이 재사용
       saveKisTokenCache(res.access_token, creds.appKey, creds.appSecret, expiry);
@@ -633,13 +786,13 @@ async function getKisToken() {
 // ── KIS WebSocket 실시간 시세 ──────────────────────────────────────────────
 const WebSocket = require('ws');
 
-let _kisWs                  = null;
-let _kisWsReconnectTimer    = null;
+let _kisWs = null;
+let _kisWsReconnectTimer = null;
 let _kisWsSubscribedTickers = [];
-let _kisApprovalKey         = null;
-let _kisApprovalKeyExpiry   = 0;
-let _kisApprovalKeyPending  = null;  // 동시 approval_key 발급 방지
-const KIS_WS_URL            = 'ws://ops.koreainvestment.com:21000';
+let _kisApprovalKey = null;
+let _kisApprovalKeyExpiry = 0;
+let _kisApprovalKeyPending = null; // 동시 approval_key 발급 방지
+const KIS_WS_URL = 'ws://ops.koreainvestment.com:21000';
 
 // WebSocket용 Approval Key (access_token과 별도 발급)
 async function getKisApprovalKey() {
@@ -653,14 +806,22 @@ async function getKisApprovalKey() {
       let creds;
       try {
         creds = JSON.parse(safeStorage.decryptString(fs.readFileSync(credFile)));
-      } catch (_) { return null; }
+      } catch (_) {
+        return null;
+      }
       if (!creds?.appKey || !creds?.appSecret) return null;
-      const res = JSON.parse(await httpsPost(
-        'https://openapi.koreainvestment.com:9443/oauth2/Approval',
-        { grant_type: 'client_credentials', appkey: creds.appKey, secretkey: creds.appSecret }
-      ));
-      if (!res.approval_key) { console.error('[StockBook] KIS approval_key 없음:', JSON.stringify(res).slice(0,200)); return null; }
-      _kisApprovalKey       = res.approval_key;
+      const res = JSON.parse(
+        await httpsPost('https://openapi.koreainvestment.com:9443/oauth2/Approval', {
+          grant_type: 'client_credentials',
+          appkey: creds.appKey,
+          secretkey: creds.appSecret,
+        }),
+      );
+      if (!res.approval_key) {
+        console.error('[StockBook] KIS approval_key 없음:', JSON.stringify(res).slice(0, 200));
+        return null;
+      }
+      _kisApprovalKey = res.approval_key;
       _kisApprovalKeyExpiry = Date.now() + 23 * 3600 * 1000; // 23시간
       console.log('[StockBook] KIS WebSocket approval_key 발급 완료');
       return _kisApprovalKey;
@@ -675,10 +836,15 @@ async function getKisApprovalKey() {
 }
 
 function stopKisWebSocket() {
-  if (_kisWsReconnectTimer) { clearTimeout(_kisWsReconnectTimer); _kisWsReconnectTimer = null; }
+  if (_kisWsReconnectTimer) {
+    clearTimeout(_kisWsReconnectTimer);
+    _kisWsReconnectTimer = null;
+  }
   if (_kisWs) {
     _kisWs.removeAllListeners();
-    try { _kisWs.terminate(); } catch (_) {}
+    try {
+      _kisWs.terminate();
+    } catch (_) {}
     _kisWs = null;
   }
   _kisWsSubscribedTickers = [];
@@ -708,10 +874,17 @@ async function startKisWebSocket(tickers) {
     console.log('[StockBook] KIS WebSocket 연결됨 → 종목 구독 시작');
     if (win && !win.isDestroyed()) win.webContents.send('kis-ws-status', 'connected');
     for (const ticker of tickers) {
-      ws.send(JSON.stringify({
-        header: { approval_key: approvalKey, custtype: 'P', tr_type: '1', 'content-type': 'utf-8' },
-        body:   { input: { tr_id: 'H0STCNT0', tr_key: ticker } }
-      }));
+      ws.send(
+        JSON.stringify({
+          header: {
+            approval_key: approvalKey,
+            custtype: 'P',
+            tr_type: '1',
+            'content-type': 'utf-8',
+          },
+          body: { input: { tr_id: 'H0STCNT0', tr_key: ticker } },
+        }),
+      );
     }
   });
 
@@ -719,7 +892,10 @@ async function startKisWebSocket(tickers) {
     const msg = raw.toString('utf-8');
 
     // PINGPONG 하트비트
-    if (msg === 'PINGPONG') { ws.send('PINGPONG'); return; }
+    if (msg === 'PINGPONG') {
+      ws.send('PINGPONG');
+      return;
+    }
 
     // JSON 응답 (구독 확인/에러)
     if (msg.startsWith('{')) {
@@ -727,7 +903,7 @@ async function startKisWebSocket(tickers) {
         const j = JSON.parse(msg);
         const b = j?.body;
         if (b?.rt_cd === '0') console.log('[StockBook] KIS 구독 확인:', b.msg1);
-        else if (b?.rt_cd)    console.warn('[StockBook] KIS 구독 응답:', b.msg1, b.msg_cd);
+        else if (b?.rt_cd) console.warn('[StockBook] KIS 구독 응답:', b.msg1, b.msg_cd);
       } catch (_) {}
       return;
     }
@@ -737,20 +913,20 @@ async function startKisWebSocket(tickers) {
     if (parts.length < 4 || parts[0] === '1') return; // 암호화 데이터 무시
     if (parts[1] !== 'H0STCNT0') return;
 
-    const fields     = parts[3].split('^');
-    const ticker     = fields[0];
-    const price      = parseInt(fields[2], 10);
+    const fields = parts[3].split('^');
+    const ticker = fields[0];
+    const price = parseInt(fields[2], 10);
     const changeSign = fields[3]; // 2:상승 5:하락 3:보합
-    const change     = parseInt(fields[4], 10);
-    const changePct  = parseFloat(fields[5]);
+    const change = parseInt(fields[4], 10);
+    const changePct = parseFloat(fields[5]);
     if (!ticker || isNaN(price) || price <= 0) return;
 
-    const signed = (changeSign === '5' || changeSign === '4') ? -1 : 1;
+    const signed = changeSign === '5' || changeSign === '4' ? -1 : 1;
     if (win && !win.isDestroyed()) {
       win.webContents.send('kis-price-update', {
         ticker,
         price,
-        change:    signed * Math.abs(change),
+        change: signed * Math.abs(change),
         changePct: signed * Math.abs(changePct),
       });
     }
@@ -798,26 +974,32 @@ ipcMain.handle('fetch-kis-balance', async (event, acctNum) => {
     return { ok: false, error: '계좌번호를 설정해주세요 (API 설정 > KIS 계좌번호 10자리).' };
   }
 
-  const CANO          = account.slice(0, 8);
-  const ACNT_PRDT_CD  = account.length >= 10 ? account.slice(8, 10) : '01';
+  const CANO = account.slice(0, 8);
+  const ACNT_PRDT_CD = account.length >= 10 ? account.slice(8, 10) : '01';
 
   try {
     const params = new URLSearchParams({
-      CANO, ACNT_PRDT_CD,
-      AFHR_FLPR_YN: 'N', OFL_YN: '', INQR_DVSN: '02',
-      UNPR_DVSN: '01', FUND_STTL_ICLD_YN: 'N',
-      FNCG_AMT_AUTO_RDPT_YN: 'N', PRCS_DVSN: '01',
-      CTX_AREA_FK100: '', CTX_AREA_NK100: '',
+      CANO,
+      ACNT_PRDT_CD,
+      AFHR_FLPR_YN: 'N',
+      OFL_YN: '',
+      INQR_DVSN: '02',
+      UNPR_DVSN: '01',
+      FUND_STTL_ICLD_YN: 'N',
+      FNCG_AMT_AUTO_RDPT_YN: 'N',
+      PRCS_DVSN: '01',
+      CTX_AREA_FK100: '',
+      CTX_AREA_NK100: '',
     });
     const body = await httpsGet(
       `https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/trading/inquire-balance?${params}`,
       15000,
       {
         authorization: `Bearer ${auth.token}`,
-        appkey:        auth.appKey,
-        appsecret:     auth.appSecret,
-        tr_id:         'TTTC8434R',  // 실계좌 (모의투자: VTTC8434R)
-      }
+        appkey: auth.appKey,
+        appsecret: auth.appSecret,
+        tr_id: 'TTTC8434R', // 실계좌 (모의투자: VTTC8434R)
+      },
     );
     const d = JSON.parse(body);
     if (d?.rt_cd !== '0') {
@@ -825,26 +1007,28 @@ ipcMain.handle('fetch-kis-balance', async (event, acctNum) => {
     }
 
     const holdings = (d.output1 || [])
-      .filter(s => parseInt(s.hldg_qty || '0') > 0)
-      .map(s => ({
-        code:      s.pdno || '',
-        name:      s.prdt_name || '',
-        qty:       parseInt(s.hldg_qty || '0'),
-        avgPrice:  Math.round(parseFloat(s.pchs_avg_pric || '0')),
-        price:     parseFloat(s.prpr || '0'),
-        evalAmt:   parseFloat(s.evlu_amt || '0'),
-        profit:    parseFloat(s.evlu_pfls_amt || '0'),
+      .filter((s) => parseInt(s.hldg_qty || '0') > 0)
+      .map((s) => ({
+        code: s.pdno || '',
+        name: s.prdt_name || '',
+        qty: parseInt(s.hldg_qty || '0'),
+        avgPrice: Math.round(parseFloat(s.pchs_avg_pric || '0')),
+        price: parseFloat(s.prpr || '0'),
+        evalAmt: parseFloat(s.evlu_amt || '0'),
+        profit: parseFloat(s.evlu_pfls_amt || '0'),
         profitPct: parseFloat(s.evlu_pfls_rt || '0'),
-        cost:      parseFloat(s.pchs_amt || '0'),
+        cost: parseFloat(s.pchs_amt || '0'),
       }));
 
-    const summary   = Array.isArray(d.output2) ? d.output2[0] : (d.output2 || {});
-    const cash      = parseFloat(summary.dnca_tot_amt || '0');
+    const summary = Array.isArray(d.output2) ? d.output2[0] : d.output2 || {};
+    const cash = parseFloat(summary.dnca_tot_amt || '0');
     const totalEval = parseFloat(summary.tot_evlu_amt || '0');
 
-    console.log(`[StockBook] KIS 잔고: 예수금 ${cash.toLocaleString()}원, 보유 ${holdings.length}종목`);
+    console.log(
+      `[StockBook] KIS 잔고: 예수금 ${cash.toLocaleString()}원, 보유 ${holdings.length}종목`,
+    );
     return { ok: true, holdings, cash, totalEval };
-  } catch(e) {
+  } catch (e) {
     console.error('[StockBook] KIS 잔고 조회 실패:', e.message);
     return { ok: false, error: e.message };
   }
@@ -865,7 +1049,7 @@ ipcMain.handle('get-kis-ws-status', () => {
   if (!_kisWs) return 'disconnected';
   const s = _kisWs.readyState;
   if (s === WebSocket.CONNECTING) return 'connecting';
-  if (s === WebSocket.OPEN)       return 'connected';
+  if (s === WebSocket.OPEN) return 'connected';
   return 'disconnected';
 });
 
@@ -878,30 +1062,33 @@ async function fetchKisPrice(code) {
       10000,
       {
         authorization: `Bearer ${auth.token}`,
-        appkey:        auth.appKey,
-        appsecret:     auth.appSecret,
-        tr_id:         'FHKST01010100',
-      }
+        appkey: auth.appKey,
+        appsecret: auth.appSecret,
+        tr_id: 'FHKST01010100',
+      },
     );
     const d = JSON.parse(body);
     const o = d?.output;
     if (!o?.stck_prpr) return null;
-    const price     = parseFloat(o.stck_prpr);   // 현재가
-    const prevClose = parseFloat(o.stck_sdpr);   // 전일 종가
-    const openPrice = parseFloat(o.stck_oprc);   // 시가
+    const price = parseFloat(o.stck_prpr); // 현재가
+    const prevClose = parseFloat(o.stck_sdpr); // 전일 종가
+    const openPrice = parseFloat(o.stck_oprc); // 시가
     if (!price) return null;
     return {
-      symbol:    code,
+      symbol: code,
       price,
       prevClose: prevClose || null,
       openPrice: openPrice || null,
       highPrice: parseFloat(o.stck_hgpr) || null,
       lowPrice: parseFloat(o.stck_lwpr) || null,
-      volume: o.acml_vol != null && o.acml_vol !== '' && Number.isFinite(Number(o.acml_vol)) ? Number(o.acml_vol) : null,
+      volume:
+        o.acml_vol != null && o.acml_vol !== '' && Number.isFinite(Number(o.acml_vol))
+          ? Number(o.acml_vol)
+          : null,
       high52: parseFloat(o.w52_hgpr) || null,
       low52: parseFloat(o.w52_lwpr) || null,
-      currency:  'KRW',
-      source:    'KIS',
+      currency: 'KRW',
+      source: 'KIS',
     };
   } catch (e) {
     console.error('[StockBook] KIS 시세 조회 실패:', e.message);
@@ -919,10 +1106,10 @@ async function fetchKisHoga(code) {
       8000,
       {
         authorization: `Bearer ${auth.token}`,
-        appkey:        auth.appKey,
-        appsecret:     auth.appSecret,
-        tr_id:         'FHKST01010200',
-      }
+        appkey: auth.appKey,
+        appsecret: auth.appSecret,
+        tr_id: 'FHKST01010200',
+      },
     );
     const d = JSON.parse(body);
     const o = d?.output1;
@@ -930,15 +1117,15 @@ async function fetchKisHoga(code) {
     // 매도호가: askp5(가장 높음)→askp1(가장 낮음) 순으로 배열 (화면 위→아래)
     const asks = [];
     for (let i = 5; i >= 1; i--) {
-      const price = parseInt(o[`askp${i}`]      || '0', 10);
-      const qty   = parseInt(o[`askp_rsqn${i}`] || '0', 10);
+      const price = parseInt(o[`askp${i}`] || '0', 10);
+      const qty = parseInt(o[`askp_rsqn${i}`] || '0', 10);
       if (price > 0) asks.push({ price, qty });
     }
     // 매수호가: bidp1(가장 높음)→bidp5(가장 낮음) 순으로 배열
     const bids = [];
     for (let i = 1; i <= 5; i++) {
-      const price = parseInt(o[`bidp${i}`]      || '0', 10);
-      const qty   = parseInt(o[`bidp_rsqn${i}`] || '0', 10);
+      const price = parseInt(o[`bidp${i}`] || '0', 10);
+      const qty = parseInt(o[`bidp_rsqn${i}`] || '0', 10);
       if (price > 0) bids.push({ price, qty });
     }
     if (!asks.length || !bids.length) return null;
@@ -963,36 +1150,38 @@ ipcMain.handle('fetch-quote', async (_event, rawTicker) => {
   // 야후 v7 quote API 파서 (실시간 시세, 가장 정확)
   const parseYFv7 = (body, symbol) => {
     try {
-      const d      = JSON.parse(body);
-      const r      = d?.quoteResponse?.result?.[0];
+      const d = JSON.parse(body);
+      const r = d?.quoteResponse?.result?.[0];
       if (!r?.regularMarketPrice) return null;
-      const _n = v => (v != null && !isNaN(v) && v !== 0) ? v : null;
+      const _n = (v) => (v != null && !isNaN(v) && v !== 0 ? v : null);
       return {
         symbol,
-        price:          r.regularMarketPrice,
-        prevClose:      r.regularMarketPreviousClose ?? null,
-        openPrice:      r.regularMarketOpen          ?? null,
-        highPrice:      r.regularMarketDayHigh ?? null,
-        lowPrice:       r.regularMarketDayLow ?? null,
-        high52:         r.fiftyTwoWeekHigh ?? null,
-        low52:          r.fiftyTwoWeekLow ?? null,
-        source:         'Yahoo Finance',
-        currency:       r.currency                   ?? 'USD',
+        price: r.regularMarketPrice,
+        prevClose: r.regularMarketPreviousClose ?? null,
+        openPrice: r.regularMarketOpen ?? null,
+        highPrice: r.regularMarketDayHigh ?? null,
+        lowPrice: r.regularMarketDayLow ?? null,
+        high52: r.fiftyTwoWeekHigh ?? null,
+        low52: r.fiftyTwoWeekLow ?? null,
+        source: 'Yahoo Finance',
+        currency: r.currency ?? 'USD',
         // 거래량·시총
-        volume:         _n(r.regularMarketVolume),
-        marketCap:      _n(r.marketCap),
+        volume: _n(r.regularMarketVolume),
+        marketCap: _n(r.marketCap),
         // 업종
-        industry:       r.industryDisp || r.industry || r.sectorDisp || r.sector || null,
+        industry: r.industryDisp || r.industry || r.sectorDisp || r.sector || null,
         // 재무지표
-        per:            _n(r.trailingPE      ?? r.forwardPE),
-        pbr:            _n(r.priceToBook),
-        eps:            _n(r.epsTrailingTwelveMonths ?? r.trailingEps),
-        roe:            null,  // Yahoo quote에 ROE 없음
-        dividendYield:  _n(r.trailingAnnualDividendYield != null
-                            ? r.trailingAnnualDividendYield * 100
-                            : null),
+        per: _n(r.trailingPE ?? r.forwardPE),
+        pbr: _n(r.priceToBook),
+        eps: _n(r.epsTrailingTwelveMonths ?? r.trailingEps),
+        roe: null, // Yahoo quote에 ROE 없음
+        dividendYield: _n(
+          r.trailingAnnualDividendYield != null ? r.trailingAnnualDividendYield * 100 : null,
+        ),
       };
-    } catch (_) { return null; }
+    } catch (_) {
+      return null;
+    }
   };
 
   // 야후 v7 quote 조회 (query1 → query2 순)
@@ -1000,7 +1189,7 @@ ipcMain.handle('fetch-quote', async (_event, rawTicker) => {
     for (const host of ['query1', 'query2']) {
       try {
         const body = await httpsGet(
-          `https://${host}.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(sym)}`
+          `https://${host}.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(sym)}`,
         );
         const result = parseYFv7(body, sym);
         if (result) return result;
@@ -1011,7 +1200,10 @@ ipcMain.handle('fetch-quote', async (_event, rawTicker) => {
 
   if (isKrNum) {
     // KIS(가격) + Naver basic(재무) 병렬 조회 — KIS가 있어도 Naver 재무 데이터를 항상 수집
-    const _nv = v => { const n = parseFloat(String(v ?? '').replace(/,/g, '')); return (!isNaN(n) && n !== 0) ? n : null; };
+    const _nv = (v) => {
+      const n = parseFloat(String(v ?? '').replace(/,/g, ''));
+      return !isNaN(n) && n !== 0 ? n : null;
+    };
 
     const [kisResult, naverRaw] = await Promise.allSettled([
       fetchKisPrice(rawTicker),
@@ -1022,24 +1214,25 @@ ipcMain.handle('fetch-quote', async (_event, rawTicker) => {
     let naverData = null;
     if (naverRaw.status === 'fulfilled') {
       try {
-        const d     = JSON.parse(naverRaw.value);
+        const d = JSON.parse(naverRaw.value);
         const price = parseFloat((d.closePrice || '0').replace(/,/g, ''));
-        const chg   = parseFloat((d.compareToPreviousClosePrice || '0').replace(/,/g, ''));
-        const openP = parseFloat((d.openPrice  || '0').replace(/,/g, ''));
-        if (price) naverData = {
-          price,
-          prevClose:   Math.round((price - chg) * 100) / 100,
-          openPrice:   openP || null,
-          changeRatio: _nv(d.fluctuationsRatio),
-          volume:      _nv(d.accumulatedTradingVolume),
-          marketCap:   _nv(d.marketValue) ?? _nv(d.marketValueAmount),
-          per:         _nv(d.per),
-          pbr:         _nv(d.pbr),
-          eps:         _nv(d.eps),
-          dividendYield: _nv(d.dividendYield),
-          industry:    d.industryGroupName || d.industryName || d.industryCategoryName || null,
-          stockName:   d.stockName || null,
-        };
+        const chg = parseFloat((d.compareToPreviousClosePrice || '0').replace(/,/g, ''));
+        const openP = parseFloat((d.openPrice || '0').replace(/,/g, ''));
+        if (price)
+          naverData = {
+            price,
+            prevClose: Math.round((price - chg) * 100) / 100,
+            openPrice: openP || null,
+            changeRatio: _nv(d.fluctuationsRatio),
+            volume: _nv(d.accumulatedTradingVolume),
+            marketCap: _nv(d.marketValue) ?? _nv(d.marketValueAmount),
+            per: _nv(d.per),
+            pbr: _nv(d.pbr),
+            eps: _nv(d.eps),
+            dividendYield: _nv(d.dividendYield),
+            industry: d.industryGroupName || d.industryName || d.industryCategoryName || null,
+            stockName: d.stockName || null,
+          };
       } catch (_) {}
     }
 
@@ -1048,29 +1241,30 @@ ipcMain.handle('fetch-quote', async (_event, rawTicker) => {
     // 결과 병합: 가격은 KIS 우선, 재무·업종·거래량은 Naver
     if (kis && naverData) {
       return {
-        symbol:      rawTicker,
-        price:       kis.price,
-        prevClose:   kis.prevClose ?? naverData.prevClose,
-        openPrice:   kis.openPrice ?? naverData.openPrice,
-        highPrice:   kis.highPrice,
-        lowPrice:    kis.lowPrice,
-        high52:      kis.high52,
-        low52:       kis.low52,
-        currency:    'KRW',
-        source:      'KIS',
+        symbol: rawTicker,
+        price: kis.price,
+        prevClose: kis.prevClose ?? naverData.prevClose,
+        openPrice: kis.openPrice ?? naverData.openPrice,
+        highPrice: kis.highPrice,
+        lowPrice: kis.lowPrice,
+        high52: kis.high52,
+        low52: kis.low52,
+        currency: 'KRW',
+        source: 'KIS',
         changeRatio: kis.prevClose ? (kis.price / kis.prevClose - 1) * 100 : null,
-        volume:      kis.volume ?? naverData.volume,
-        marketCap:   naverData.marketCap,
-        per:         naverData.per,
-        pbr:         naverData.pbr,
-        eps:         naverData.eps,
+        volume: kis.volume ?? naverData.volume,
+        marketCap: naverData.marketCap,
+        per: naverData.per,
+        pbr: naverData.pbr,
+        eps: naverData.eps,
         dividendYield: naverData.dividendYield,
-        industry:    naverData.industry,
-        stockName:   naverData.stockName,
+        industry: naverData.industry,
+        stockName: naverData.stockName,
       };
     }
-    if (kis)       return kis;           // KIS만 성공 (Naver 실패)
-    if (naverData) return { symbol: rawTicker, currency: 'KRW', source: '네이버 보조 시세', ...naverData };
+    if (kis) return kis; // KIS만 성공 (Naver 실패)
+    if (naverData)
+      return { symbol: rawTicker, currency: 'KRW', source: '네이버 보조 시세', ...naverData };
 
     // 3) 야후 파이낸스 v7 quote .KS / .KQ (최후 폴백)
     for (const suffix of ['.KS', '.KQ']) {
@@ -1087,31 +1281,33 @@ ipcMain.handle('fetch-quote', async (_event, rawTicker) => {
   // v7 실패 시 v8 chart 폴백
   try {
     const body = await httpsGet(
-      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=1d&interval=1d&includePrePost=false`
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=1d&interval=1d&includePrePost=false`,
     );
-    const d    = JSON.parse(body);
+    const d = JSON.parse(body);
     const meta = d?.chart?.result?.[0]?.meta;
-    if (meta?.regularMarketPrice) return {
-      symbol:    sym,
-      price:     meta.regularMarketPrice,
-      prevClose: meta.previousClose ?? meta.chartPreviousClose ?? null,
-      openPrice: meta.regularMarketOpen ?? null,
-      currency:  meta.currency ?? 'USD',
-    };
+    if (meta?.regularMarketPrice)
+      return {
+        symbol: sym,
+        price: meta.regularMarketPrice,
+        prevClose: meta.previousClose ?? meta.chartPreviousClose ?? null,
+        openPrice: meta.regularMarketOpen ?? null,
+        currency: meta.currency ?? 'USD',
+      };
   } catch (_) {}
   try {
     const body = await httpsGet(
-      `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=1d&interval=1d&includePrePost=false`
+      `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=1d&interval=1d&includePrePost=false`,
     );
-    const d    = JSON.parse(body);
+    const d = JSON.parse(body);
     const meta = d?.chart?.result?.[0]?.meta;
-    if (meta?.regularMarketPrice) return {
-      symbol:    sym,
-      price:     meta.regularMarketPrice,
-      prevClose: meta.previousClose ?? meta.chartPreviousClose ?? null,
-      openPrice: meta.regularMarketOpen ?? null,
-      currency:  meta.currency ?? 'USD',
-    };
+    if (meta?.regularMarketPrice)
+      return {
+        symbol: sym,
+        price: meta.regularMarketPrice,
+        prevClose: meta.previousClose ?? meta.chartPreviousClose ?? null,
+        openPrice: meta.regularMarketOpen ?? null,
+        currency: meta.currency ?? 'USD',
+      };
   } catch (_) {}
   return null;
 });
@@ -1127,35 +1323,54 @@ ipcMain.handle('fetch-market-tickers', async () => {
       `https://m.stock.naver.com/api/index/${indexCode}/detail`,
     ]) {
       try {
-        const body   = await httpsGet(tryUrl, 12000, NAVER_HEADERS);
+        const body = await httpsGet(tryUrl, 12000, NAVER_HEADERS);
         const parsed = JSON.parse(body);
         // 쉼표 포함 문자열을 replace 후 파싱
-        const strip = v => parseFloat(String(v || '0').replace(/,/g, ''));
-        const price = strip(parsed.closePrice || parsed.currentValue || parsed.indexValue || parsed.price || '0');
-        const chg   = strip(parsed.compareToPreviousClosePrice || parsed.change || '0');
-        const prev  = price > 0 ? (price - chg) : 0;
+        const strip = (v) => parseFloat(String(v || '0').replace(/,/g, ''));
+        const price = strip(
+          parsed.closePrice || parsed.currentValue || parsed.indexValue || parsed.price || '0',
+        );
+        const chg = strip(parsed.compareToPreviousClosePrice || parsed.change || '0');
+        const prev = price > 0 ? price - chg : 0;
         if (price > 0) {
-          results[key] = { regularMarketPrice: price, previousClose: prev, chartPreviousClose: prev };
+          results[key] = {
+            regularMarketPrice: price,
+            previousClose: prev,
+            chartPreviousClose: prev,
+          };
           return;
         }
-      } catch(_) {}
+      } catch (_) {}
     }
   };
 
   // ② 미국+한국 지수 — Yahoo Finance (Electron net.fetch로 Chromium 쿠키 세션 사용)
   // KOSPI/KOSDAQ는 Naver가 우선이고, 실패 시 Yahoo ^KS11/^KQ11로 보완
   const YF_SYMS = {
-    kospi:  '^KS11',  // 코스피 폴백
-    kosdaq: '^KQ11',  // 코스닥 폴백
-    nasdaq: '^IXIC', sp500: '^GSPC', dow: '^DJI', sox: '^SOX', nikkei: '^N225', wti: 'CL=F',
+    kospi: '^KS11', // 코스피 폴백
+    kosdaq: '^KQ11', // 코스닥 폴백
+    nasdaq: '^IXIC',
+    sp500: '^GSPC',
+    dow: '^DJI',
+    sox: '^SOX',
+    nikkei: '^N225',
+    wti: 'CL=F',
   };
   const yfFetch = async () => {
-    const symStr = Object.values(YF_SYMS).map(s => encodeURIComponent(s)).join(',');
+    const symStr = Object.values(YF_SYMS)
+      .map((s) => encodeURIComponent(s))
+      .join(',');
     for (const host of ['query1', 'query2']) {
       try {
-        const res  = await net.fetch(
+        const res = await net.fetch(
           `https://${host}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent('^IXIC')}?interval=1d&range=1d`,
-          { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'application/json', 'Referer': 'https://finance.yahoo.com/' } }
+          {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+              'Accept': 'application/json',
+              'Referer': 'https://finance.yahoo.com/',
+            },
+          },
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const meta = (await res.json())?.chart?.result?.[0]?.meta;
@@ -1163,46 +1378,73 @@ ipcMain.handle('fetch-market-tickers', async () => {
           // IXIC 성공 시 전체 심볼 v7 quote로 일괄 조회
           const symRes = await net.fetch(
             `https://${host}.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&symbols=${symStr}`,
-            { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'application/json', 'Referer': 'https://finance.yahoo.com/' } }
+            {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'application/json',
+                'Referer': 'https://finance.yahoo.com/',
+              },
+            },
           );
-          const rows = symRes.ok ? ((await symRes.json())?.quoteResponse?.result || []) : [];
+          const rows = symRes.ok ? (await symRes.json())?.quoteResponse?.result || [] : [];
           for (const row of rows) {
-            const key = Object.entries(YF_SYMS).find(([,s]) => s === row.symbol)?.[0];
+            const key = Object.entries(YF_SYMS).find(([, s]) => s === row.symbol)?.[0];
             if (key && row.regularMarketPrice && !results[key]) {
               // Naver가 이미 채운 kospi/kosdaq는 덮어쓰지 않음
-              results[key] = { regularMarketPrice: row.regularMarketPrice, previousClose: row.regularMarketPreviousClose || row.regularMarketPrice, chartPreviousClose: row.regularMarketPreviousClose || row.regularMarketPrice };
+              results[key] = {
+                regularMarketPrice: row.regularMarketPrice,
+                previousClose: row.regularMarketPreviousClose || row.regularMarketPrice,
+                chartPreviousClose: row.regularMarketPreviousClose || row.regularMarketPrice,
+              };
             }
           }
-          if (!results.nasdaq && meta.regularMarketPrice) results.nasdaq = { regularMarketPrice: meta.regularMarketPrice, previousClose: meta.previousClose || meta.regularMarketPrice, chartPreviousClose: meta.previousClose || meta.regularMarketPrice };
+          if (!results.nasdaq && meta.regularMarketPrice)
+            results.nasdaq = {
+              regularMarketPrice: meta.regularMarketPrice,
+              previousClose: meta.previousClose || meta.regularMarketPrice,
+              chartPreviousClose: meta.previousClose || meta.regularMarketPrice,
+            };
           return;
         }
-      } catch(_) {}
+      } catch (_) {}
     }
   };
 
   // ③ 환율 — exchangerate-api.com (무료, API 키 불필요)
   const fxFetch = async () => {
     try {
-      const res    = await net.fetch('https://api.exchangerate-api.com/v4/latest/USD', {
-        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
+      const res = await net.fetch('https://api.exchangerate-api.com/v4/latest/USD', {
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data   = await res.json();
-      const krw    = data?.rates?.KRW;
-      const jpy    = data?.rates?.JPY;
-      if (krw) results.usdkrw  = { regularMarketPrice: krw,             previousClose: krw,             chartPreviousClose: krw };
-      if (jpy) results.jpy     = { regularMarketPrice: 100 / jpy * 100, previousClose: 100 / jpy * 100, chartPreviousClose: 100 / jpy * 100 };
-    } catch(_) {}
+      const data = await res.json();
+      const krw = data?.rates?.KRW;
+      const jpy = data?.rates?.JPY;
+      if (krw)
+        results.usdkrw = { regularMarketPrice: krw, previousClose: krw, chartPreviousClose: krw };
+      if (jpy)
+        results.jpy = {
+          regularMarketPrice: (100 / jpy) * 100,
+          previousClose: (100 / jpy) * 100,
+          chartPreviousClose: (100 / jpy) * 100,
+        };
+    } catch (_) {}
   };
 
   await Promise.all([
-    naverIndexFetch('KOSPI',  'kospi'),
+    naverIndexFetch('KOSPI', 'kospi'),
     naverIndexFetch('KOSDAQ', 'kosdaq'),
     yfFetch(),
     fxFetch(),
   ]);
 
-  console.log('[StockBook] 지수 티커:', Object.entries(results).filter(([,v])=>v).map(([k])=>k).join(', '));
+  console.log(
+    '[StockBook] 지수 티커:',
+    Object.entries(results)
+      .filter(([, v]) => v)
+      .map(([k]) => k)
+      .join(', '),
+  );
   return results;
 });
 
@@ -1212,11 +1454,11 @@ ipcMain.handle('fetch-naver-finance', async (_event, code) => {
   const base = `https://m.stock.naver.com/api/stock/${code.trim()}`;
   try {
     const [annualBody, summaryBody] = await Promise.all([
-      httpsGet(`${base}/finance/annual`,  10000, NAVER_HEADERS),
+      httpsGet(`${base}/finance/annual`, 10000, NAVER_HEADERS),
       httpsGet(`${base}/finance/summary`, 10000, NAVER_HEADERS),
     ]);
     return {
-      annual:  JSON.parse(annualBody),
+      annual: JSON.parse(annualBody),
       summary: JSON.parse(summaryBody),
     };
   } catch (e) {
@@ -1227,13 +1469,27 @@ ipcMain.handle('fetch-naver-finance', async (_event, code) => {
 
 // ── IPC: 정보센터 뉴스 (목록 및 본문, 메인 화면 요청만 허용) ────────────────
 const newsService = require('./src/news/service.cjs').registerNews({
-  ipcMain, getMainWindow: () => win, httpsGet, headers: NAVER_HEADERS,
+  ipcMain,
+  getMainWindow: () => win,
+  httpsGet,
+  headers: NAVER_HEADERS,
 });
-const stockAIResearch = require('./src/ai/research.cjs').createResearch({httpsGet,getChartData:chartDataProvider.get,headers:NAVER_HEADERS});
-const stockAI = require('./src/ai/service.cjs').registerAI({ipcMain,getMainWindow:()=>win,research:stockAIResearch});
-app.on('will-quit',()=>stockAI.dispose());
+const stockAIResearch = require('./src/ai/research.cjs').createResearch({
+  httpsGet,
+  getChartData: chartDataProvider.get,
+  headers: NAVER_HEADERS,
+});
+const stockAI = require('./src/ai/service.cjs').registerAI({
+  ipcMain,
+  getMainWindow: () => win,
+  research: stockAIResearch,
+});
+app.on('will-quit', () => stockAI.dispose());
 const newsPage = require('./src/news/page.cjs').registerNewsPage({
-  ipcMain, WebContentsView, getMainWindow:()=>win, resolvePage:newsService.resolvePage
+  ipcMain,
+  WebContentsView,
+  getMainWindow: () => win,
+  resolvePage: newsService.resolvePage,
 });
 
 // ── IPC: API 키 암호화 저장 (safeStorage) ───────────────────────────────────
@@ -1302,7 +1558,9 @@ ipcMain.handle('save-state', async (_event, data) => {
     const bak = f + '.bak';
     const today = new Date().toDateString();
     let bakDate = null;
-    try { bakDate = fs.statSync(bak).mtime.toDateString(); } catch {}
+    try {
+      bakDate = fs.statSync(bak).mtime.toDateString();
+    } catch {}
     if (bakDate !== today) fs.copyFileSync(f, bak);
     return true;
   } catch (e) {
@@ -1313,11 +1571,11 @@ ipcMain.handle('save-state', async (_event, data) => {
 
 ipcMain.handle('show-confirm', async (_event, message) => {
   const result = await dialog.showMessageBox(win, {
-    type:      'question',
-    buttons:   ['취소', '확인'],
+    type: 'question',
+    buttons: ['취소', '확인'],
     defaultId: 1,
-    cancelId:  0,
-    message:   message
+    cancelId: 0,
+    message: message,
   });
   return result.response === 1;
 });
@@ -1326,24 +1584,26 @@ ipcMain.handle('show-confirm', async (_event, message) => {
 function createWindow() {
   // ── 스플래시 스크린 ───────────────────────────────────────────────────────
   const splash = new BrowserWindow({
-    width:           400,
-    height:          260,
-    frame:           false,
-    transparent:     true,
-    alwaysOnTop:     true,
-    resizable:       false,
-    skipTaskbar:     true,
-    icon:            path.join(__dirname, 'icon-512.png'),
+    width: 400,
+    height: 260,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    resizable: false,
+    skipTaskbar: true,
+    icon: path.join(__dirname, 'icon-512.png'),
     backgroundColor: '#00000000',
-    webPreferences:  { nodeIntegration: false, contextIsolation: true }
+    webPreferences: { nodeIntegration: false, contextIsolation: true },
   });
   splash.loadFile(path.join(__dirname, 'splash.html'));
   splash.center();
   // 스플래시 버전 텍스트를 package.json 버전으로 동적 반영
   splash.webContents.on('did-finish-load', () => {
-    splash.webContents.executeJavaScript(
-      `var el = document.querySelector('.version'); if(el) el.textContent = 'v${app.getVersion()}';`
-    ).catch(() => {});
+    splash.webContents
+      .executeJavaScript(
+        `var el = document.querySelector('.version'); if(el) el.textContent = 'v${app.getVersion()}';`,
+      )
+      .catch(() => {});
   });
 
   // Keep relative renderer scripts and styles together in a launch-specific folder.
@@ -1354,27 +1614,34 @@ function createWindow() {
   } catch (error) {
     console.error('[StockBook] 렌더러 파일 준비 실패:', error.message);
     if (!splash.isDestroyed()) splash.close();
-    dialog.showErrorBox('Stock Book 실행 오류', '화면 파일을 준비하지 못했습니다. 설치 파일을 확인해 주세요.');
-    app.quit();return;
+    dialog.showErrorBox(
+      'Stock Book 실행 오류',
+      '화면 파일을 준비하지 못했습니다. 설치 파일을 확인해 주세요.',
+    );
+    app.quit();
+    return;
   }
 
   win = new BrowserWindow({
-    width:     1440,
-    height:    920,
-    minWidth:  900,
+    width: 1440,
+    height: 920,
+    minWidth: 900,
     minHeight: 600,
     title: 'Stock Book — 주식 포트폴리오',
     icon: path.join(__dirname, 'icon-512.png'),
     backgroundColor: '#0d1421', // 로딩 중 흰 화면 번쩍임 방지
-    show: false,                // 완전히 렌더링된 후 표시
+    show: false, // 완전히 렌더링된 후 표시
     webPreferences: {
-      nodeIntegration:  false,
+      nodeIntegration: false,
       contextIsolation: true,
-      preload:          path.join(__dirname, 'preload.js')
-    }
+      preload: path.join(__dirname, 'preload.js'),
+    },
   });
 
-  win.on('closed', () => { chartWindows.close(); newsPage.close(); });
+  win.on('closed', () => {
+    chartWindows.close();
+    newsPage.close();
+  });
   win.webContents.on('did-start-loading', () => newsPage.close());
   win.loadFile(renderer.htmlPath);
   win.setMenuBarVisibility(false);
@@ -1442,10 +1709,12 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
-
 app.on('will-quit', () => {
   for (const directory of rendererDirectories) {
-    try { fs.rmSync(directory, {recursive:true,force:true}); }
-    catch (error) { console.warn('[StockBook] 임시 화면 파일 정리 실패:',error.message); }
+    try {
+      fs.rmSync(directory, { recursive: true, force: true });
+    } catch (error) {
+      console.warn('[StockBook] 임시 화면 파일 정리 실패:', error.message);
+    }
   }
 });

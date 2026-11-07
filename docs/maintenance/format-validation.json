@@ -1,0 +1,472 @@
+{
+  "formatter": "prettier@3.6.2",
+  "parser": "@babel/parser@7.28.5",
+  "scope": "AST comparison immediately before/after formatting; existing assertion comparison against 840f371",
+  "files": [
+    {
+      "file": "main.js",
+      "before_sha256": "e815ed9ab7626a730c5a6e341a973b6d916c9754d7b7a894f8b7b51ac25ee3e1",
+      "after_sha256": "c3742c76ee398b85efecdd57e4ae04a838bab2f6eff1ff092d1cee216e4b02b5",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "preload.js",
+      "before_sha256": "ac337625fb23f752a940b4981714f2bba3f7aec8d0d159d543a9a4cebe7d03dd",
+      "after_sha256": "b4a204df60eeab810fd9aacb3922e5a47e39fde3758f09e6bd5a97f9d2d1dcaf",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/ai/ai.css",
+      "before_sha256": "055144147e31369ddbe4a110a262ddb1be20490f173071a3b97c95b19b557f2b",
+      "after_sha256": "9b6ccb095668b5a16bc9854e0f36e59ddf67f70c22eefcbb3b3ff0b4b0e002f5",
+      "formatting_ast_equivalent": null,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/ai/client.js",
+      "before_sha256": "3b0fd56f720cd6bf45881dc399979e3e02dedec383df4e432102bd128c430830",
+      "after_sha256": "bc72dcdc1de3d3a844feb56674afab04ddbe7dd1ddd2526ed507092adb183cde",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/ai/policy.js",
+      "before_sha256": "a5ec68cc177639bba9a03002bb22418e42755da352011f94c280f248f080c1b6",
+      "after_sha256": "0fe60e0d313fb44008f3a6b083cf5062b8f565a7ed65f6bab079198e3fb2e1dc",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/ai/research.cjs",
+      "before_sha256": "330f0c8b542d4364a1695107c73f7d25e1822928dee1697729fa5e99ccdc1e36",
+      "after_sha256": "943bcfbde45a45fab9e62efe7a92be3175dba0df2932cf1f7fbb4f408fe31a40",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/ai/service.cjs",
+      "before_sha256": "a08f08103e0ef5146b78e4d45f39da0adbf1f01d03e5057b259251e100d3f8ef",
+      "after_sha256": "1c0ad3770d2f109f716977f778f713f88ee80e12620885ebf26704166e923c5f",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/chart/chart.css",
+      "before_sha256": "56c8792964614cbefb45231cc5beeb8e02a8c29a36cff175e2602830b91a16fb",
+      "after_sha256": "465088e4ab2c8c988dfe6a1bff412386e0d62fd34eae2c2bfdab129322fa5dbb",
+      "formatting_ast_equivalent": null,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/chart/client.js",
+      "before_sha256": "e24e7606126a115fa4c468032f3db33ffe4b6c1e7b69200c43306dace32a34ec",
+      "after_sha256": "7049e2d9a4f3a5ba94d79127e5022f20024f02f54d89353efc79ab442373d908",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/chart/detail.js",
+      "before_sha256": "636164a22272541ee789b9e55ac302b7697289eab5cb231961f9c3b648863182",
+      "after_sha256": "2725dca19e32a1cc74f33464d6b00765fa5cbbd48b02347eab8f296abff71dff",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/chart/interaction.js",
+      "before_sha256": "90af1eb0b29666e157a83fc5c4eabd28d166701edd832ad2c9fc8dc17d8a2ece",
+      "after_sha256": "3a276b5a440a4e188425cb08a4b0252dc9d846a9b5e1ee155a43a1aaa7ed8cef",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/chart/investor-provider.cjs",
+      "before_sha256": "b26e01382d8161813bf496d63cbc8e8216d7ef3d3457fd204c28d73c830a088b",
+      "after_sha256": "05c3e416ba650ba3b33e0c16bc49bda2c476c1614c93678c40053743e5c834ae",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/chart/preload.cjs",
+      "before_sha256": "ee1bcef6febe86140771748ea78b3465c1e0765825125a2e22ddfa62a44fe60f",
+      "after_sha256": "7cad9619d5fdc4a201ed2f46b9685653ad761fee5d8793327c5e5cf503e8713d",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/chart/provider.cjs",
+      "before_sha256": "0adee24a2b91e12dbf6aa02c82a7eeef15cbafeef992b2702afc3eeb81afd7ad",
+      "after_sha256": "3a1d6eb34059b0343e92b59a8a3d5dc89775210391b17518b8addbcd2f77cdff",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/chart/renderer.js",
+      "before_sha256": "077466cfc26493fc9dcc72ce37526cffefa979163ec5e2077b6e145aa5dc2427",
+      "after_sha256": "4a5ebce4a75033cd04f9e5ab06fc5e6ce80fea725c27c0bd15fbb12dd9bf2e4b",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/chart/resize.js",
+      "before_sha256": "25669a232fac70ddc7c13cbddfade41f4221881a8738089a39d645f7249cb97e",
+      "after_sha256": "fb252e05b3518b35eb4e117c2d247444ee5d2e12de2f5f137842051f4cebf72a",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/chart/series.js",
+      "before_sha256": "4bab888ec5547af6790859a1375abe9aa6585a01b1212e8e69456c0c607e7680",
+      "after_sha256": "789f713861fc853b2813a69352f9e16f5de9a6b52503224feb11b1e967c14242",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/chart/snapshot.cjs",
+      "before_sha256": "9b7204734830eb036a10c9bd4f11cac2ff422cba3f3d5a202a251388b2f2b805",
+      "after_sha256": "1ad89a97ab40e8a612d40b3e9e1da249be72b0e405ee07499af8521ebbbde8b1",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/chart/stock-search.cjs",
+      "before_sha256": "8f4ff251ab88576cee7e7af5eaed010bca7df918b2bf04b5dd83d1cc63a7f680",
+      "after_sha256": "d299e9381053b8c09dca4f48bfca83a4baf03a4c5ea58dfe2ac3f91fd39ebf1d",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/chart/trading-value.cjs",
+      "before_sha256": "b461b4dec2a645f31bd5a8f53978238f0cbd60380811bf103b4fcc7091c7e828",
+      "after_sha256": "17523a8dccf32719d71a39f312b5b51437b4130b8fbecea8ecde16019157f136",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/chart/window.cjs",
+      "before_sha256": "aceb163bfe223565166084fc85e11db85139019a1b7bac958a7e32c2df78c4d5",
+      "after_sha256": "34991d77b7c1988a71983905437712c93a7c56cef7895fe24a5992d7cbf50d81",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/desktop/renderer-files.cjs",
+      "before_sha256": "75226fb3281902f68c5fcac1d720c5754b7a461eccbf1117fa81c56f76dd56d9",
+      "after_sha256": "f35a89207d9ec66310f409cb204bc7e6b62ceb67b2968370122e4e78d3030b9e",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/desktop/shortcuts.js",
+      "before_sha256": "9817294b6eef813942db3cf10fb0d712c01782d71a2302d35ec1c4d1341f894d",
+      "after_sha256": "48bbbddb90f20a63f42c7be27db1ccb8dc3df10cbef7b92ffa77395bd1b9cb76",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/desktop/stock-selection.js",
+      "before_sha256": "1dd502445ab11313d06064700419815951db39c982e41c7c289422c6800a7d70",
+      "after_sha256": "a2171eb5952f5953df80562d04c29101cdd6bda289bdfd43ccbe005be3627e42",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/desktop/theme-browser.js",
+      "before_sha256": "3d382e320eef6b9ad868f78553314ffd16e6d2959da3e9524ce49f35865d60eb",
+      "after_sha256": "8a4e0d8cf467c0a4389c5c16a4b5ec0a0e7ae912042d4a296ab3161c6a76d7e0",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/desktop/themes.css",
+      "before_sha256": "177802ab110eb86d870a19095ed865ae407e842803b8ff7ed10af9bb98a7b118",
+      "after_sha256": "fdbead0f4026261f7dee0b271134f18d022b28929c2c8e6432d02ada0fc6fb88",
+      "formatting_ast_equivalent": null,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/desktop/themes.js",
+      "before_sha256": "df5cc0b0670ae9de37ce7e6927dbc524a86bad021b7d1ba2349c703914b502a6",
+      "after_sha256": "d3b5747fc8b0c837e3af8301dcb958a76af0cf32fe1c9a8f18a706e85506ab0c",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/news/article.cjs",
+      "before_sha256": "71b608ded6b1f149eefa57d026810713358d44e826517d208dcc870a8940c995",
+      "after_sha256": "c0c1977cf6ee482ab8f96d4af6158b9aee7be7d5b81a544a394f934b472ec4bc",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/news/bloter.cjs",
+      "before_sha256": "f072a5c1cf47b5b1385c5fb15f337498a83b12a360955084a68116b8ad560c28",
+      "after_sha256": "d98da9ef2192c6dd386d0e05e24d39ec17c0b05985020e86d07b10dc8c094725",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/news/list.cjs",
+      "before_sha256": "6cad8fddba231dddb2e05f752843e20e9a9e66ddb487f9a0893e6d27e2ec19b4",
+      "after_sha256": "4dff3fcbd05929922810601f453a9d8ec843a9e6aeab33dea272b3ebb9167739",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/news/page-client.js",
+      "before_sha256": "cf21ac90415b91b08df6dd23901777f02d0d54124571807d73b08adf843cf702",
+      "after_sha256": "78152d0d319d04a21a7f980a0e9b644c7342660577592fdcc9ad396a792fa2a9",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/news/page.cjs",
+      "before_sha256": "52e3b0b41ceb74b1fd6f9737e10254c9948f4c871d978348e815275e8468e9bd",
+      "after_sha256": "aa1a03eac1f77993f86add319326ad881720fa2f3d90a5ee3986dca75c022831",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/news/service.cjs",
+      "before_sha256": "340c550fbfb371eaacf32803d3d6c7566ba261e9c0530565d280f01da6eccf16",
+      "after_sha256": "7ea29f65e7207c521e29e858b3c09ca8abce01b7e2a9e5347e4599dc67aeb0d2",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/screener/client.js",
+      "before_sha256": "e1f623e5c6af8e7213d067823a6869c6739896c0d9cefec47b19786955dd3c21",
+      "after_sha256": "6d24b7dee747979c90460bb03c91e085b330ade5bccd35616fa2b0d23794d090",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/screener/engine.js",
+      "before_sha256": "f714dd377dd75af446f137684954d113c6f89658688a3955f04ecb4ed1bec1bd",
+      "after_sha256": "9c509f8fe91fef742b81ee67243e622186a01c4c33224511b5f26258ed8b7fb1",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/screener/expression.js",
+      "before_sha256": "afbc5bb78468e7a61f4f9fb414da6c5a71b85348ca4e2dd5b7a5cfe871ea94a1",
+      "after_sha256": "ef92755be6f6c33c466465cd9c2889ba8cf2e771d321ccf9c6ddaccc8ff0920d",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/screener/screener.css",
+      "before_sha256": "1371cb968b980d26e5ff382b0df9e78b2e460d3546b9d341da2aca94e9afca19",
+      "after_sha256": "8fd3f0f38a7aff80dc345ad9ac6f6839cf5e8929d1a8ca4a51f8dc985fbc77c5",
+      "formatting_ast_equivalent": null,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "src/screener/temporal.js",
+      "before_sha256": "dd72a2205146ba50ac1b3f8d03c158d4cc26b5ec3f5d60c17038cadf317c1d3b",
+      "after_sha256": "f3a28b35aa352619dd4edd4322b80d589787b7af4b9e62a30c351556dedf513c",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "test/ai.browser.test.cjs",
+      "before_sha256": "dbebf779445fef60e85024ad042d82cdc0530e9d8117b526b3fa999967af61ad",
+      "after_sha256": "854034f92bdf293a6a1844d30dd4f9ff898b5893690d41eed9178314e6a4a22c",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": true,
+      "changed": true
+    },
+    {
+      "file": "test/ai.test.cjs",
+      "before_sha256": "5c05d78f364138d565803c9f2e8063a8e71395e9c3134c3980549f9cfa416e1f",
+      "after_sha256": "36e54351980daf0bddc6111ca5c1dd8577bf039bc9647f9dd650820cac03aafe",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": true,
+      "changed": true
+    },
+    {
+      "file": "test/chart-interaction.browser.test.cjs",
+      "before_sha256": "be723a74ed5d88396fe19e46ce8b36f900ec22aa86a113c51ecee9f25e05a9c5",
+      "after_sha256": "01eb60d072176f100612252f67fe01f5208661f5bc42ebc666586c9ce7c003f4",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": true,
+      "changed": true
+    },
+    {
+      "file": "test/chart-investors.test.cjs",
+      "before_sha256": "331688a29b96bab6db109e9d2453b7b95366da8b7a221a7be0a14e1d92228512",
+      "after_sha256": "15fe749b8e5043d950b27facde852efcae6d4be412db782735be4e107b9e71f9",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": true,
+      "changed": true
+    },
+    {
+      "file": "test/chart-provider.test.cjs",
+      "before_sha256": "51d3241b515642a208526a597e3b09919a833428efc18364b1166d2bd130e588",
+      "after_sha256": "7ecdd989993a84e2a3a195a6648f56c77216cc0818215df3b88ece8222b57510",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": true,
+      "changed": true
+    },
+    {
+      "file": "test/chart-series.test.cjs",
+      "before_sha256": "e10f5edd64c4870be2dae72745e93c7cdd8f4c6f2178d19f3c6be84243b18c87",
+      "after_sha256": "d50024066a78d93c00bc7ab84c619fa4a1c7b36256b4ba7ce533ab8bed073008",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": true,
+      "changed": true
+    },
+    {
+      "file": "test/chart-trading-value.test.cjs",
+      "before_sha256": "7833d9e8ae9fb517d6df4e6a8806d6330784b49c2019d07b9f32d8eec6a5bac1",
+      "after_sha256": "77c97babf45d3803449600170a1ebd5d98a6a77d451b67a709472ca042306029",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": true,
+      "changed": true
+    },
+    {
+      "file": "test/chart-window.test.cjs",
+      "before_sha256": "a492b56967f6a2831927e0076647840a5ade4efeb5ca2ec0b4696af15f25dcc9",
+      "after_sha256": "1be0035947f86bf386b013a77b10f9232bff3bfdddef30e2b7b7ae182d3d9ae3",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": true,
+      "changed": true
+    },
+    {
+      "file": "test/design-preview.browser.test.cjs",
+      "before_sha256": "3f4a152f4d62ad9bf6e075bd90192c2fb6705b984dd13789c474739bd74dc1d7",
+      "after_sha256": "3b81f00f88d3ba755ecef45bc39575a530dcd6778d2c3ec6c8b22899bf75dbca",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": true,
+      "changed": true
+    },
+    {
+      "file": "test/desktop-package.test.cjs",
+      "before_sha256": "6f19424e9762c0e614d322ad0012b92cc636afdd4418e50e84ac04678e2c7e4e",
+      "after_sha256": "07268c739890ce3c874aebe3bca05f9a3c43461d3d09689193a73798de01ba7a",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    },
+    {
+      "file": "test/news-article.test.cjs",
+      "before_sha256": "6d5331932db5a5353cc762abcc51ae833e445531fff4fb76cfa384583fcad013",
+      "after_sha256": "d95d39ab6be36269626e43e6c47c4a1a2d34007825533dca4b04f1a5e41eb357",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": true,
+      "changed": true
+    },
+    {
+      "file": "test/news-page.test.cjs",
+      "before_sha256": "bf368c9247b408c0ea3cdda403c2d0e844e9ef2ecb73f3d8909e17500e623748",
+      "after_sha256": "d0748e7d9c2f9fbb60152fbb4f1d36490325e4e34cbaaf07c384937feaaeacdf",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": true,
+      "changed": true
+    },
+    {
+      "file": "test/news-reader.browser.test.cjs",
+      "before_sha256": "4e7b8c6cf0e4060799d8b4ce8247f2650c6457adbbfc0b5a8eb81b4e1bd7be64",
+      "after_sha256": "c6eab5c46b0d6847605c8c1618cbc9a46da2239a4b3048048f1d5955c932c3c4",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": true,
+      "changed": true
+    },
+    {
+      "file": "test/screener-expression.browser.test.cjs",
+      "before_sha256": "9814ea5d20e5568cbb10184f67c868f45807caf2e9d1c930ab226f65dcf2e342",
+      "after_sha256": "009dea47cc32ff9934f69b5b1eb1452d172a543d75029c184f6a3e5e4885cf04",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": true,
+      "changed": true
+    },
+    {
+      "file": "test/screener-expression.test.cjs",
+      "before_sha256": "0035aaa92999299154c91c94e8c9c18815ea4393bda4d2ccd9e20944d5598ba8",
+      "after_sha256": "ea0a4022ca93250cda5af1cdd866fd57beb4f96f5c5d5d69c517e8f0aabefbc8",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": true,
+      "changed": true,
+      "idempotence_followup": true
+    },
+    {
+      "file": "test/screener-temporal.browser.test.cjs",
+      "before_sha256": "0da201c8dd2c325b049e3f8ddfe178148420f762111dd3aafab477032082beb5",
+      "after_sha256": "3ba426fc8cc6bb903eab0244f77241b6db61f50a1a8646ab817a8010f24aae79",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": true,
+      "changed": true
+    },
+    {
+      "file": "test/screener-temporal.test.cjs",
+      "before_sha256": "812f7297a732d451b841c19a125b67395812c8e29648c7e7c5db6cd7b0dc6cf2",
+      "after_sha256": "0676611d0e16fb708d801668480f2fa628f6bac72abeb47a99c1bc777d136ac2",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": true,
+      "changed": true
+    },
+    {
+      "file": "test/screener.browser.test.cjs",
+      "before_sha256": "00892b35d4bcfae4f63e616b7309ae010b34f8df7f1db30c0783d6e25fb7660c",
+      "after_sha256": "9e768f9e0e19613ef3d21fe7825fc2a3e15da790abaf5e3fe804c9e2250036aa",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": true,
+      "changed": true
+    },
+    {
+      "file": "test/screener.test.cjs",
+      "before_sha256": "4f264aa1c762996c91492c6f54746be15cd1ce43ce5e83180914180f2199c81e",
+      "after_sha256": "af0c74b65d2a41282057dc0ca358605f3aab1b5b6e537b341fad20b998e070a8",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": true,
+      "changed": true
+    },
+    {
+      "file": "test/helpers/app-server.cjs",
+      "before_sha256": "36275525ec91c3210c28c7bb5123d6b71dc2d73a0605affd3ece64a70d2d3df6",
+      "after_sha256": "421e96298c7a17d7667d31763fdf18acd162a5c7da7b456f6c3624a28650a12a",
+      "formatting_ast_equivalent": true,
+      "existing_assertions_preserved": null,
+      "changed": true
+    }
+  ]
+}
