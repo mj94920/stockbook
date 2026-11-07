@@ -2,6 +2,10 @@
 
 자동 생성 — `scripts/bump-version.mjs`
 
+## v1.16.0 — 2026-11-08
+
+- feat(settings): ChatGPT·Claude 로그인 링크 추가
+
 ## v1.15.0 — 2026-11-08
 
 - feat(finance): Open DART 연간 재무 조회 및 당기순이익 표시
