@@ -9,3 +9,5 @@
 .sb-screen-dialog details{line-height:1.8}.sb-screen-dialog summary{cursor:pointer;color:var(--sb-accent)}
 
 .sb-screen-dialog input[aria-label="중첩 논리식"]{width:min(100%,640px);box-sizing:border-box}
+
+.sb-screen-window{display:flex;flex-basis:100%;gap:8px;align-items:end;flex-wrap:wrap}.sb-screen-window[hidden],.sb-screen-window [hidden]{display:none}

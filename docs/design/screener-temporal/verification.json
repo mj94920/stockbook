@@ -1,0 +1,42 @@
+{
+  "base_commit": "6e6b48adce210cd9edee0be4866b5ee1cef7cd78",
+  "oracle_commit": "f435fbc48767cbb87fa08161027655979d16fe78",
+  "npm_test": {
+    "passed": true,
+    "tests": 136,
+    "failures": 0,
+    "smoke": "passed"
+  },
+  "legacy_differential_inputs": 3796,
+  "temporal_profile": "temporal-bounds-v1",
+  "count_operators": [
+    "gte",
+    "lte",
+    "eq"
+  ],
+  "streak": "all of the last N received bars ending at the selected anchor",
+  "max_span": 1200,
+  "max_displayed_samples": 32,
+  "all_bars_computed": true,
+  "not_unknown": "unknown",
+  "preview": {
+    "source": "recorded 2026-10-22, simulated IPC",
+    "evaluation_date": "2026-10-21",
+    "span": 5,
+    "volume_threshold_shares": 17000000,
+    "matched": 4,
+    "unmatched": 1,
+    "unknown": 0,
+    "count_gte_3": "match",
+    "streak_5": "no-match",
+    "page_errors": 0,
+    "automatic_external_requests": 0,
+    "horizontal_overflow_1024": false
+  },
+  "current_hts_and_kiwoom_equivalence": "not verified",
+  "calendar_gap_detection": "not implemented",
+  "windows_and_live_kis": "not run",
+  "sequential_search": "not implemented",
+  "catalog_623_execution_support": false,
+  "merge_deploy": "not run"
+}

@@ -1,4 +1,4 @@
-(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./engine.js'):root.StockBookScreener);if(typeof module==='object'&&module.exports)module.exports=api;else root.StockBookScreenExpression=api;})(typeof window==='object'?window:globalThis,function(engine){
+(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./engine.js'):root.StockBookScreener,typeof module==='object'&&module.exports?require('./temporal.js'):root.StockBookScreenTemporal);if(typeof module==='object'&&module.exports)module.exports=api;else root.StockBookScreenExpression=api;})(typeof window==='object'?window:globalThis,function(engine,temporal){
  'use strict';
  function combine(type,states){
   if(!['all','any'].includes(type)||!states.length||states.some(s=>!['match','no-match','unknown'].includes(s)))throw Error('논리 판정 자료 오류');
@@ -15,7 +15,7 @@
   const root=document.root,records=document.conditions;
   if(!root||!['all','any'].includes(root.type)||!Array.isArray(root.children)||root.children.length!==records.length||root.children.some((node,i)=>node.type!=='ref'||node.key!==records[i].key))throw Error('평면 이관 식 형식 오류');
   const first=records[0].time;
-  if(records.some(r=>r.time?.cycle!==first.cycle||r.time?.mode!==first.mode||r.time?.barsAgo!==0))throw Error('이관 식 평가 맥락 오류');
+  if(records.some(r=>r.time?.cycle!==first.cycle||r.time?.mode!==first.mode||r.time?.barsAgo!==0||r.window!==undefined))throw Error('이관 식 평가 맥락 오류');
   const context=engine.prepare(dataset,{...first,turnover});
   const results=records.map(r=>engine.evaluateLeaf(context,engine.validate(r.condition)));
   return engine.summarize(context,results,combine(root.type,results.map(r=>r.state)),root.type);
@@ -26,10 +26,10 @@
   if(!keysOnly(document,['version','conditions','root'])||document.version!==2||!Array.isArray(document.conditions)||!document.conditions.length||document.conditions.length>12)throw Error('조건식 버전·항목 오류');
   const keys=new Set();
   const conditions=document.conditions.map(record=>{
-   if(!keysOnly(record,['key','condition','time'])||typeof record.key!=='string'||!/^[A-L]$/.test(record.key)||keys.has(record.key))throw Error('조건 식별자 오류');
+   if(!keysOnly(record,['key','condition','time','window'])||typeof record.key!=='string'||!/^[A-L]$/.test(record.key)||keys.has(record.key))throw Error('조건 식별자 오류');
    keys.add(record.key);const time=record.time;
    if(!keysOnly(time,['cycle','mode','barsAgo'])||!['day','week','month','year'].includes(time.cycle)||!['closed','latest'].includes(time.mode)||!Number.isInteger(time.barsAgo)||time.barsAgo<0||time.barsAgo>1200)throw Error('조건별 봉 주기·봉전 오류');
-   return {key:record.key,condition:engine.validate(record.condition),time:{cycle:time.cycle,mode:time.mode,barsAgo:time.barsAgo}};
+   return {key:record.key,condition:engine.validate(record.condition),time:{cycle:time.cycle,mode:time.mode,barsAgo:time.barsAgo},...(record.window===undefined?{}:{window:temporal.validate(record.window)})};
   });
   let nodes=0;
   function walk(node,depth=0){
@@ -47,7 +47,11 @@
   function prepare(time){const key=time.cycle+':'+time.mode;if(!contexts.has(key))contexts.set(key,engine.prepare(dataset,{cycle:time.cycle,mode:time.mode,turnover}));return contexts.get(key);}
   function visit(node){
    if(node.type==='ref'){
-    if(!memo.has(node.key)){const record=records.get(node.key),context=prepare(record.time),index=context.index-record.time.barsAgo;memo.set(node.key,{...engine.evaluateLeaf(context,record.condition,index),key:node.key,time:record.time,anchorIndex:context.index,barIndex:index});}
+    if(!memo.has(node.key)){
+     const record=records.get(node.key),context=prepare(record.time),index=context.index-record.time.barsAgo,point=engine.evaluateLeaf(context,record.condition,index);
+     const window=record.window?temporal.evaluate(record.window,ago=>ago===0?point:engine.evaluateLeaf(context,record.condition,index-ago)):null;
+     memo.set(node.key,{...point,...(window?{state:window.state,reason:'기간 판정 '+({match:'충족','no-match':'미충족',unknown:'불가'})[window.state],pointState:point.state,window}:{}),key:node.key,time:record.time,anchorIndex:context.index,barIndex:index});
+    }
     return {type:'ref',key:node.key,state:memo.get(node.key).state};
    }
    if(node.type==='not'){const child=visit(node.child);return {type:'not',state:notState(child.state),child};}

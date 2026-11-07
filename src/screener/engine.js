@@ -22,6 +22,9 @@
   if(['volume','turnover'].includes(condition.id)&&(condition.op!=='gte'||!Number.isSafeInteger(condition.threshold)||condition.threshold<0))throw Error('거래량·거래대금 기준값 오류');
   return {...condition};
  }
+ // Reuse immutable indicator arrays inside one prepared context when evaluating a window.
+ const preparedSeries=new WeakMap();
+ function cached(context,key,calculate){let cache=preparedSeries.get(context);if(!cache){cache=new Map();preparedSeries.set(context,cache);}if(!cache.has(key))cache.set(key,calculate());return cache.get(key);}
  function prepare(dataset,{mode='closed',cycle='day',turnover=null}={}){
   if(!['closed','latest'].includes(mode))throw Error('봉 기준 오류');
   if(!dataset?.ok||!/^\d{6}$/.test(dataset.metadata?.stockCode||''))throw Error('종목 일봉 자료 없음');
@@ -40,7 +43,7 @@
    if(bars[index].incompleteStart)return unknown('첫 봉의 시작 이력 부족');
    if(condition.id==='bb'&&cycle!=='day')return unknown('현재 차트 BB는 일봉 전용 · 다른 주기의 BB 계약 미연결');
    if(condition.id==='ichimoku'){
-    const cloud=series.ichimokuSeries(bars,condition),now=cloud[index],before=cloud[index-1];
+    const cloud=cached(context,'ichimoku:'+condition.conversion+':'+condition.base+':'+condition.span+':'+condition.displacement,()=>series.ichimokuSeries(bars,condition)),now=cloud[index],before=cloud[index-1];
     if(!Number.isFinite(now.spanA)||!Number.isFinite(now.spanB))return unknown('일목 선행스팬 이력 부족');
     const top=Math.max(now.spanA,now.spanB),bottom=Math.min(now.spanA,now.spanB),bullish=now.spanA>now.spanB;
     Object.assign(base,{value:bars[index].close,reference:top,cloud:now,previousValue:bars[index-1]?.close??null,previousReference:before&&Number.isFinite(before.spanA)&&Number.isFinite(before.spanB)?Math.max(before.spanA,before.spanB):null});
@@ -49,9 +52,9 @@
     return {...base,state:match?'match':'no-match',reason:match?'조건 충족':'조건 미충족'};
    }
    let left,right;
-   if(condition.id==='sma'){left=series.average(bars,condition.fast,{includePartialStart:cycle==='year'});right=series.average(bars,condition.slow,{includePartialStart:cycle==='year'});}
-   else if(condition.id==='rsi'){left=series.rsiSeries(bars,condition.period,condition.method);right=bars.map(()=>condition.level);}
-   else if(condition.id==='bb'){const upper=series.bbUpperSeries(bars,condition.period,condition.multiplier);left=bars.map(b=>b.close);right=bars.map((_,i)=>upper[i-condition.shift]??null);}
+   if(condition.id==='sma'){left=cached(context,'sma:'+condition.fast,()=>series.average(bars,condition.fast,{includePartialStart:cycle==='year'}));right=cached(context,'sma:'+condition.slow,()=>series.average(bars,condition.slow,{includePartialStart:cycle==='year'}));}
+   else if(condition.id==='rsi'){left=cached(context,'rsi:'+condition.period+':'+condition.method,()=>series.rsiSeries(bars,condition.period,condition.method));right=bars.map(()=>condition.level);}
+   else if(condition.id==='bb'){const upper=cached(context,'bb:'+condition.period+':'+condition.multiplier,()=>series.bbUpperSeries(bars,condition.period,condition.multiplier));left=bars.map(b=>b.close);right=bars.map((_,i)=>upper[i-condition.shift]??null);}
    else{left=condition.id==='volume'?bars.map(b=>b.volume):amounts;if(!left)return unknown('실제 거래대금 미수신 · 종가×거래량 대체 금지');right=bars.map(()=>condition.threshold);}
    const value=left[index],reference=right[index],previousValue=left[index-1]??null,previousReference=right[index-1]??null;
    if(!Number.isFinite(value)||!Number.isFinite(reference))return unknown('지표 이력 부족 또는 일자·거래량 일치 자료 없음');
