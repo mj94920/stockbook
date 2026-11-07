@@ -2,6 +2,10 @@
 
 자동 생성 — `scripts/bump-version.mjs`
 
+## v1.15.0 — 2026-11-08
+
+- feat(finance): Open DART 연간 재무 조회 및 당기순이익 표시
+
 ## v1.14.0 — 2026-11-08
 
 - feat(journal): 투자일지에 읽기 전용 거래 복기 추가
