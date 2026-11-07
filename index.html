@@ -764,6 +764,18 @@
   .journal-detail {
     display: none;
   }
+  .journal-trade-review {
+    margin-top: 8px;
+    padding: 8px;
+    border: 1px solid var(--sb-border);
+    color: var(--sb-text-2);
+    font-size: 12px;
+  }
+  .journal-trade-review h4 { margin: 0 0 6px; color: var(--sb-text-1); }
+  .journal-trade-review dl { margin: 0; }
+  .journal-trade-review dt { font-weight: 700; }
+  .journal-trade-review dd { margin: 0 0 6px; }
+  .journal-trade-review dd:last-child { margin-bottom: 0; }
   .journal-detail.open {
     display: block;
   }
@@ -4919,6 +4931,7 @@
 </div>
 
 <script src="src/portfolio/realized-profit.js"></script>
+<script src="src/journal/trade-review.js"></script>
 <script>
 // ============================================================
 // STATE
@@ -8123,18 +8136,20 @@ function submitQuickOrder() {
       if (acct) { acct.cash = Math.max(0, (parseFloat(acct.cash) || 0) - price * qty); }
     }
     // ★ 거래 기록
-    state.trades.unshift({
+    const trade = {
       id: Date.now(), date: today,
       name: s.name, ticker: s.ticker || '', type: 'buy',
       price, qty, totalAmt: price * qty,
       tradeType: _qoTradeType, pnl: null,
       accountId: selectedAccountId,
       memo: '빠른 주문 입력'
-    });
+    };
+    state.trades.unshift(trade);
     // ★ 투자일지 초안 (중복 방지)
     const hasDraft = state.journals.some(j => j.draft && j.name === s.name && j.buyDate === today);
     if (!hasDraft) {
       state.journals.unshift({
+        ...StockBookJournalReview.linkNewDraft(trade),
         date: today, buyDate: today, addDate: '', sellDate: '', investDays: null,
         name: s.name, type: 'buy', price, qty, total: price * qty, weight: null,
         buyReasons: [], buyNote: '', position: s.position || 'mid', tradeType: _qoTradeType,
@@ -8583,7 +8598,8 @@ function addStock() {
   }
 
   // Record trade
-  state.trades.push({ date, name, type:'buy', price, qty, total: price*qty, tradeType, weight: null, buyReason:[], position: pos, sellReason:[], pnl: null, mental:'', note:'' });
+  const trade = { date, name, type:'buy', price, qty, total: price*qty, tradeType, weight: null, buyReason:[], position: pos, sellReason:[], pnl: null, mental:'', note:'' };
+  state.trades.push(trade);
 
   // 투자일지 자동 연동
   if (isAddBuy) {
@@ -8600,6 +8616,7 @@ function addStock() {
     } else {
       // 기존 일지가 없으면 새 초안 생성
       state.journals.unshift({
+        ...StockBookJournalReview.linkNewDraft(trade),
         date, buyDate: date, addDate: '', sellDate: '', investDays: null,
         name, type: 'buy', price, qty, total: price * qty, weight: null,
         target1: target1||null, target2: target2||null, target3: target3||null, stop1: stop1||null,
@@ -8613,6 +8630,7 @@ function addStock() {
     const existingDraft = state.journals.find(j => j.draft && j.name === name && j.buyDate === date);
     if (!existingDraft) {
       state.journals.unshift({
+        ...StockBookJournalReview.linkNewDraft(trade),
         date, buyDate: date, addDate: '', sellDate: '', investDays: null,
         name, type: 'buy', price, qty, total: price * qty, weight: null,
         target1: target1||null, target2: target2||null, target3: target3||null, stop1: stop1||null,
@@ -8758,12 +8776,13 @@ function confirmSell() {
 
   const { pnl, pnlPct: pct } = StockBookRealizedProfit.calculateSale(price, qty, s.avgPrice);
 
-  state.trades.push({
+  const trade = {
     date, name: s.name, ticker: s.ticker, type:'sell', price, qty,
     total: price*qty, weight:null, buyReason:[], position: s.position,
     sellReason:[], pnl, pnlPct: pct, mental, note,
     tradeType: s.tradeType || 'cash'
-  });
+  };
+  state.trades.push(trade);
 
   // 투자일지 자동 연동 (매도)
   const sellJournal = state.journals.find(j => j.name === s.name && j.type === 'buy');
@@ -8778,6 +8797,7 @@ function confirmSell() {
     sellJournal.draft = true;
   } else {
     state.journals.unshift({
+      ...StockBookJournalReview.linkNewDraft(trade),
       date, buyDate: '', adds: [], sellDate: date, investDays: null,
       name: s.name, type: 'sell', price, qty, total: price * qty, weight: null,
       target1: s.target1||null, target2: s.target2||null, target3: s.target3||null, stop1: s.stop1||null,
@@ -9233,6 +9253,9 @@ function saveJournal() {
         if (tidx >= 0) state.trades[tidx].date = sellDate;
       }
     }
+    if (oldEntry?.reviewTradeId && oldEntry.name === name && oldEntry.type === type) {
+      entry.reviewTradeId = oldEntry.reviewTradeId;
+    }
     state.journals[editJournalIdx] = entry; // draft 플래그 없음 → 완성 처리
     // 보유종목의 목표가/손절가도 동기화 (매매창 _renderTargetStopPanel이 portfolio에서 읽음)
     const portIdx = state.portfolio.findIndex(s => s.name === entry.name && (s.tradeType || 'cash') === (entry.tradeType || 'cash'));
@@ -9348,6 +9371,28 @@ function renderAddsBuyTable(j) {
   </div>`;
 }
 
+function renderJournalTradeReview(journal) {
+  const trade = StockBookJournalReview.linkedTrade(journal, state.trades);
+  const number = (value, unit) => Number.isFinite(value) ? fmt(value) + unit : '확인 불가';
+  let actual = '확인 불가 · 명시적으로 연결된 거래 기록이 없습니다.';
+  if (trade) {
+    const side = trade.type === 'buy' ? '매수' : '매도';
+    const date = escHtml(trade.date || '확인 불가');
+    actual = `${side} · ${date} · 단가 ${number(trade.price, '원')} · 수량 ${number(trade.qty, '주')}`;
+    if (trade.type === 'sell') {
+      const [{ pnlPct }] = StockBookRealizedProfit.summarizeSales([trade]).rows;
+      actual += `<br>실현손익 ${number(trade.pnl, '원')} · 수익률 ${formatRealizedRate(pnlPct)}`;
+    }
+  }
+  return `<section class="journal-trade-review" aria-label="계획과 실제 거래">
+    <h4>계획과 실제 거래</h4>
+    <dl>
+      <dt>진입 당시 계획</dt><dd>확인 불가 · 진입 당시 계획을 증명할 기록이 없습니다.</dd>
+      <dt>실제 거래</dt><dd>${actual}</dd>
+    </dl>
+  </section>`;
+}
+
 function renderJournals() {
   const q = (document.getElementById('journalSearch').value||'').toLowerCase();
   const list = state.journals.filter(j => !q || j.name.toLowerCase().includes(q) || (j.buyDate||j.date||'').includes(q));
@@ -9383,6 +9428,7 @@ function renderJournals() {
         ${j.buyNote ? `<div style="font-size:13px;color:var(--text2);margin-bottom:4px"><span style="color:#10b981;font-size:10px;font-weight:700;margin-right:3px;">●</span>${j.buyNote}</div>` : ''}
         ${j.sellNote ? `<div style="font-size:13px;color:var(--text2);margin-bottom:4px"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#ef4444;margin-right:4px;vertical-align:2px"></span>${j.sellNote}</div>` : ''}
         ${renderAddsBuyTable(j)}
+        ${renderJournalTradeReview(j)}
         ${(j.target1||j.target2||j.target3||j.stop1) ? `<div style="margin-top:8px;padding:6px 8px;background:var(--bg3);border-radius:5px;font-size:12px;display:flex;flex-wrap:wrap;gap:4px 10px;">
           ${j.target1 ? `<span style="color:var(--green)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> 1단계 ${fmt(j.target1)}</span>` : ''}
           ${j.target2 ? `<span style="color:var(--green)">2단계 ${fmt(j.target2)}</span>` : ''}
