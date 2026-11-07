@@ -15,3 +15,23 @@
 - 진입 당시 계획을 입증하는 스냅샷이 없으므로 현재 목표가·손절가는 그대로 기존 일지에만 표시한다. 진입 당시 계획 비교에는 별도의 사전 계획 기록이 필요하다. 한 일지에 추매와 여러 매도를 묶으려면 각 체결과 보유 구간을 명시적으로 연결하는 선행 작업이 필요하다.
 - TraderMonty의 [trader-memory-core](https://github.com/tradermonty/claude-trading-skills/tree/main/skills/trader-memory-core)와 [trade-performance-coach](https://github.com/tradermonty/claude-trading-skills/tree/main/skills/trade-performance-coach)의 로컬 사본에서 계획과 실제의 분리, 근거 부족의 표시 방식을 참고했다. 외부 구현 코드를 복사하지 않았다. 원본의 라이선스는 [MIT](https://github.com/tradermonty/claude-trading-skills/blob/main/LICENSE)다.
 - 기준 커밋의 격리 사본에서 `npm test`를 실행했다. 정적 검사와 테스트 98개, 스모크 검사를 통과했다. 가상 거래로 빠른 매수의 연결 저장, 새로고침 후 복원, 명시적으로 연결된 매도와 미연결 기록의 표시를 확인했다.
+
+## 2026-11-07 · 국내 연간 재무표의 출처와 기준
+
+- 기존 네이버 재무 IPC에 연간 응답 제공처와 조회 시각을 추가했다. 국내 재무 카드와 기업 분석의 연간 표는 같은 표시 로직을 쓴다. 제공처와 조회 시각(KST)은 표 상단에, 회계 기간과 실적 구분은 행에 표시한다.
+- 네이버 공개 연간 응답 두 건에서 회계 연·월과 `isConsensus`를 확인했다. `N`은 실적, `Y`는 추정으로 표시한다. `N`만으로 공시 확정 여부를 판정할 수 없다. 일자와 단위를 추가로 가정하지 않으며, 응답에서 확인되는 단위만 표시한다. 누락값과 실제 0을 구분한다.
+- FinRobot Desktop의 출처 모델에서 회계 기준과 수신 시각을 분리하는 방식을 참고했다. StockBook의 기존 IPC와 JS로 구현했으며 외부 코드를 이식하지 않았다. [FinRobot 출처 모델](https://github.com/AI4Finance-Foundation/FinRobot/blob/63e1884a42ea7b729551a5424b4bd6a65af636e0/finrobot_desktop/finrobot/engine/data/normalize/contracts.py#L169)
+
+## 2026-11-07 · Open DART 연간 주요 재무정보
+
+- Windows 설정의 API 연결에 Open DART 인증키 등록·연결 확인·삭제를 추가했다. Electron 메인 프레임 전용 IPC와 `safeStorage`로 처리하며 기존 증권사 키 파일과 구분한다. IPC는 키 원문과 원격 오류 본문을 반환하지 않는다.
+- 선택한 국내 종목과 사업연도에 대해 명시적으로 조회할 때만 DART를 호출한다. 종목코드는 공식 고유번호 ZIP의 XML과 대조하며, 모호한 매핑은 사용하지 않는다. 기존 네이버 재무와 별도 영역에 표시한다.
+- 첫 범위는 사업보고서(`11011`)의 매출액, 영업이익, 당기순이익, 자산·부채·자본총계다. 연결과 별도, 통화 단위, 조회 시각을 구분하고 접수번호가 확인되면 공시 원문 링크를 제공한다. 누락은 ‘확인 불가’로 표시하며 0을 보존한다.
+- 공식 가이드의 키 오류·접근 IP·요청 한도·자료 없음 응답을 구분한다. 실제 인증키는 사용하지 않았으며 실계정 연결은 로컬 앱에서 등록 후 확인할 항목이다. [고유번호 가이드](https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS001&apiId=2019018), [주요계정 가이드](https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS003&apiId=2019016)
+- 기준 커밋의 격리 사본에서 Playwright 1.65.0과 설치된 Chrome으로 `npm test`를 실행했다. 정적 검사, 테스트 105개, 스모크 검사가 통과했다. DART 요청과 보안 저장은 가짜 키와 응답으로 검증했다.
+
+## 2026-11-07 · Open DART 당기순이익 계정 표시
+
+- 삼성전자 2025년 사업보고서(`20260310002820`)의 실제 주요계정 응답에서 `당기순이익(손실)` 행이 연결·별도에 각각 두 건씩 있음을 확인했다. 기존 필터는 `당기순이익`만 허용해 네 행을 모두 누락했다.
+- 두 이름을 `당기순이익`으로 표시하고 같은 연결/별도 구분, 금액, 통화 및 접수번호의 중복만 제거한다. 확인한 금액은 연결 45,206,805,000,000원과 별도 33,686,601,000,000원이다.
+- 실제 응답을 수정한 파서에 넣어 연결·별도 각각 한 행을 확인했다. 격리 사본의 `npm test`에서 정적 검사, 테스트 106개, 스모크 검사가 통과했다.
