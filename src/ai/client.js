@@ -45,12 +45,14 @@
  function renderResult(value){
   const host=document.getElementById('sbAIResult');if(!host)return;host.replaceChildren();
   if(!value){const empty=el('div',undefined,'sb-ai-empty');empty.append(el('strong','근거를 확인하고 해석을 검토합니다.'),el('p','자료 수집 → 기업 리서치 → AI 분석 → 사용자 판단 기록'),el('small','모델을 실행하지 않은 상태입니다. 연결 확인이나 화면 열기만으로 분석을 요청하지 않습니다.'));host.append(empty);return;}
-  const intro=el('section',undefined,'sb-ai-summary');intro.append(badge('AI 해석'),el('p',value.result.summary));host.append(intro);
+  const intro=el('section',undefined,'sb-ai-summary');intro.append(badge('AI 해석'),el('h4','현재 판단'),el('p',value.result.summary));host.append(intro);
   const facts=el('details',undefined,'sb-ai-evidence');facts.append(el('summary','분석에 사용한 근거 '+value.bundle.evidence.length+'개'));
   for(const source of value.bundle.evidence){const row=el('div');row.append(link(source.title+' ↗',source.url),el('span','기준 '+stamp(source.asOf)));facts.append(row);}host.append(facts);
+  const scenarios=el('section',undefined,'sb-ai-result-section');scenarios.append(el('h4','향후 시나리오'));
+  for(const scenario of value.result.scenarios){const article=el('article');article.append(el('strong',({upside:'상승 시나리오',base:'횡보 시나리오',downside:'하락 시나리오',unassessed:'판단 유보'})[scenario.kind]));for(const [label,key]of [['성립·확인 조건','condition'],['전망','outlook'],['판단 무효화 조건','invalidation']])article.append(el('p',label+': '+scenario[key]));refs(article,scenario.evidenceIds,value.bundle);scenarios.append(article);}host.append(scenarios);
   for(const [key,title]of [['interpretations','해석과 가설'],['risks','위험과 자료 한계']]){const section=el('section',undefined,'sb-ai-result-section');section.append(el('h4',title));for(const entry of value.result[key]){section.append(el('p',entry.text));refs(section,entry.evidenceIds,value.bundle);}host.append(section);}
-  const options=el('section',undefined,'sb-ai-result-section');options.append(el('h4','검토할 선택지'),el('p','투자 판단과 매매 결정은 사용자가 합니다.','sb-data-note'));
-  for(const option of value.result.options){const article=el('article');article.append(el('strong',option.title));for(const [label,key]of [['이유','reason'],['위험','risk'],['다시 확인할 조건','reviewWhen']])article.append(el('p',label+': '+option[key]));refs(article,option.evidenceIds,value.bundle);options.append(article);}host.append(options);
+  const options=el('section',undefined,'sb-ai-result-section');options.append(el('h4','앞으로의 대응 계획'),el('p','투자 판단과 매매 결정은 사용자가 합니다.','sb-data-note'));
+  for(const option of value.result.options){const article=el('article');article.append(el('strong',option.title),badge(({holder:'보유자',nonholder:'미보유자',both:'공통'})[option.audience]));for(const [label,key]of [['대응','action'],['실행 조건','trigger'],['이유','reason'],['위험','risk'],['판단 무효화 조건','invalidation'],['다시 확인할 조건','reviewWhen']])article.append(el('p',label+': '+option[key]));refs(article,option.evidenceIds,value.bundle);options.append(article);}host.append(options);
   if(value.result.missing.length)host.append(el('p','미수집·확인 필요: '+value.result.missing.map(id=>policy.labels[id]||id).join(' · '),'sb-ai-missing'));
   for(const question of value.result.questions)host.append(el('p','확인 질문: '+question));
   host.append(button('내 판단 기록하기',journal));
