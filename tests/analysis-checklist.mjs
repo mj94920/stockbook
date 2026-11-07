@@ -5,11 +5,16 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 
-const html = await readFile('index.html');
+const assets = new Map([
+  ['/index.html', ['text/html; charset=utf-8', await readFile('index.html')]],
+  ['/src/desktop/shortcuts.js', ['text/javascript; charset=utf-8', await readFile('src/desktop/shortcuts.js')]],
+]);
 const server = createServer((req, res) => {
-  if (req.url !== '/index.html') { res.writeHead(404); res.end(); return; }
-  res.setHeader('content-type', 'text/html; charset=utf-8');
-  res.end(html);
+  const asset = assets.get(req.url);
+  if (!asset) { res.writeHead(404); res.end(); return; }
+  const [type, body] = asset;
+  res.setHeader('content-type', type);
+  res.end(body);
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 let browser;
