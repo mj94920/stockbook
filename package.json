@@ -31,6 +31,7 @@
       "src/news/page-client.js",
       "src/desktop/renderer-files.cjs",
       "src/desktop/stock-selection.js",
+      "src/desktop/company-info.js",
       "src/desktop/shortcuts.js",
       "chart.html",
       "src/chart/**",

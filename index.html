@@ -3540,6 +3540,15 @@
   .sb-context-pane .sb-region-title { flex-shrink:0; }
   .sb-chart-loading { color:var(--sb-text-2);padding:12px; }
 
+  .sb-company-info { margin-top:12px;padding:8px;border-top:1px solid var(--sb-border); }
+  .sb-company-info h3 { margin:0 auto 0 0;font-size:13px; }
+  #sbCompanyStatus { color:var(--sb-text-2);font-size:12px;line-height:1.5; }
+  #sbCompanyMetrics { display:grid;grid-template-columns:repeat(3,minmax(70px,1fr) minmax(0,1fr));gap:0;margin:8px 0;font-size:12px; }
+  #sbCompanyMetrics dt,#sbCompanyMetrics dd { padding:6px;margin:0;border-bottom:1px solid var(--sb-border);overflow-wrap:anywhere; }
+  #sbCompanyMetrics dt { color:var(--sb-text-2);background:var(--sb-surface); } #sbCompanyMetrics dd { text-align:right; }
+  #sbCompanyFinance table { width:100%;border-collapse:collapse;font-size:12px; } #sbCompanyFinance :is(th,td) { padding:6px;text-align:right;border-bottom:1px solid var(--sb-border); }
+  #sbCompanyFinance th:first-child { text-align:left; } #sbCompanyFinance caption { text-align:left;color:var(--sb-text-2);margin:6px 0; }
+  @media(max-width:1200px) { #sbCompanyMetrics { grid-template-columns:minmax(100px,1fr) minmax(0,1fr); } }
 </style>
 <link rel="stylesheet" href="src/chart/chart.css">
 </head>
@@ -4544,7 +4553,7 @@
             <div id="sbEmbeddedChart" data-chart-host class="sb-data-empty"><strong>차트 데이터 없음</strong><span>차트 원본 연결 후 가격·거래량을 표시합니다.</span></div><div id="sbChartStatus" role="status"></div>
           </section>
           <section class="sb-context-pane" data-context-pane="hoga" hidden><section class="sb-order-region" aria-label="선택 종목 5호가"><div class="sb-region-title"><strong>5호가</strong><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" id="sbHogaRefresh" onclick="sbDesktopHoga()">조회</button></div><div id="sbHogaStatus" class="dock-ctx__none" role="status">호가 데이터 없음 · 조회 대기</div><table class="sb-hoga-table"><thead><tr><th>매도잔량</th><th>가격</th><th>매수잔량</th></tr></thead><tbody id="sbHogaRows"></tbody></table></section></section>
-          <section class="sb-context-pane" data-context-pane="info" hidden><div class="dock-ctx__rows dock-ctx__quote-grid" id="dockCtxQuote"></div><button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('chart')">기업분석 열기 ↗</button></section>
+          <section class="sb-context-pane" data-context-pane="info" hidden><div class="dock-ctx__rows dock-ctx__quote-grid" id="dockCtxQuote"></div><section class="sb-company-info" aria-label="선택 종목 기업·재무정보"><div class="sb-region-title"><h3>기업·재무정보</h3><button type="button" class="sb-btn sb-btn--sm" id="sbCompanyRefresh" onclick="window.StockBookCompanyInfo?.open(sbSelectedStock(),true)">새로고침</button><button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('chart')">기업분석 열기 ↗</button></div><p id="sbCompanyStatus" role="status">기업정보 조회 대기</p><dl id="sbCompanyMetrics"></dl><div id="sbCompanyFinance" class="table-wrap"></div></section></section>
         </div>
         <details class="sb-context-details"><summary>보유 · 목표/손절 · 일정</summary><div class="sb-detail-content"><div class="dock-ctx__rows" id="dockCtxHold"></div><div class="dock-ctx__rows" id="sbDesktopTargets"></div><div class="dock-ctx__rows" id="dockCtxEvents"></div></div></details>
       </div>
@@ -12387,13 +12396,16 @@ function renderWatchlist() {
 // ── 관심종목 종합: 선택 종목 문맥 패널 ──────────────────────────────────
 let sbHogaSelection = null;
 let sbHogaRequest = 0;
-function sbContextTab(key) {
+let sbHogaPending = null;
+function sbContextTab(key, load=true) {
   if (!['chart','hoga','info'].includes(key)) return;
   document.querySelectorAll('[data-context-pane]').forEach(el=>{el.hidden=el.dataset.contextPane!==key;});
   document.querySelectorAll('[data-context-tab]').forEach(el=>{
     const active=el.dataset.contextTab===key;el.classList.toggle('active',active);
     if(active)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');
   });
+  if(load&&key==='hoga')sbDesktopHoga(false);
+  if(load&&key==='info')window.StockBookCompanyInfo?.open(sbSelectedStock());
 }
 function sbSelectedStock(code=window._dockSel,name) {
   const lists={watchlist:state.watchlist||[],portfolio:state.portfolio||[],catalog:Object.values(_allStockRaw||{}).flat()};
@@ -12435,24 +12447,30 @@ function sbDesktopSelection(w) {
   sbChartSync();
   document.querySelectorAll('.sb-analysis-stock').forEach(el => { el.textContent = w ? (w.name || w.ticker) : '종목 선택'; });
   const ticker = w?.ticker || null;
+  window.StockBookCompanyInfo?.select(w);
   if (ticker !== sbHogaSelection) {
-    sbHogaSelection = ticker; sbHogaRequest++;
+    sbHogaSelection = ticker; sbHogaRequest++;sbHogaPending=null;
     document.getElementById('sbHogaRows').replaceChildren();
     document.getElementById('sbHogaStatus').textContent = ticker ? '호가 데이터 없음 · 조회 대기' : '종목 선택 후 조회하세요.';
     document.getElementById('sbHogaRefresh').disabled = false;
+    if(!document.querySelector('[data-context-pane="hoga"]').hidden)sbDesktopHoga(false);
+    if(!document.querySelector('[data-context-pane="info"]').hidden)window.StockBookCompanyInfo?.open(w);
   }
 }
-async function sbDesktopHoga() {
-  sbContextTab('hoga');
+async function sbDesktopHoga(selectTab=true) {
+  if(selectTab)sbContextTab('hoga',false);
   const ticker = sbHogaSelection;
   const status = document.getElementById('sbHogaStatus');
   if (!ticker) { status.textContent = '종목 선택 후 조회하세요.'; return; }
+  if(!/^\d{6}$/.test(ticker)){status.textContent='국내 종목의 호가만 지원합니다.';return;}
+  if(!selectTab&&sbHogaPending?.ticker===ticker)return;
   if (!window.electronAPI?.fetchHoga) { status.textContent = '연결 필요 · 호가 데이터 없음'; return; }
-  const request = ++sbHogaRequest;
+  const request = ++sbHogaRequest;sbHogaPending={ticker,request};
+  document.getElementById('sbHogaRows').replaceChildren();let timer;
   const button = document.getElementById('sbHogaRefresh'); button.disabled = true;
   status.textContent = '호가 조회 중…';
   try {
-    const data = await window.electronAPI.fetchHoga(ticker);
+    const data = await Promise.race([Promise.resolve(window.electronAPI.fetchHoga(ticker)),new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('timeout')),12000);})]);
     if (request !== sbHogaRequest || ticker !== sbHogaSelection) return;
     const valid = level => Number.isFinite(level?.price) && level.price > 0 && Number.isFinite(level?.qty) && level.qty >= 0;
     if (!data?.asks?.length || !data?.bids?.length || !data.asks.every(valid) || !data.bids.every(valid)) throw new Error('missing');
@@ -12465,9 +12483,9 @@ async function sbDesktopHoga() {
       for (const value of [side==='ask'?fmt(level.qty):'',fmt(level.price),side==='bid'?fmt(level.qty):'']) { const td=document.createElement('td');td.textContent=value;tr.appendChild(td); }
       rows.appendChild(tr);
     }
-    status.textContent = '조회 시각 ' + new Date().toLocaleTimeString('ko-KR') + ' · 수동 조회';
+    status.textContent = '조회 시각 ' + new Date().toLocaleTimeString('ko-KR') + ' · 자동 갱신 아님';
   } catch (_) { if (request===sbHogaRequest) { document.getElementById('sbHogaRows').replaceChildren(); status.textContent='조회 실패 · 호가 데이터 없음 · 다시 조회하세요.'; } }
-  finally { if (request===sbHogaRequest) button.disabled=false; }
+  finally { clearTimeout(timer);if(sbHogaPending?.request===request)sbHogaPending=null;if (request===sbHogaRequest) button.disabled=false; }
 }
 function sbDesktopCash() {
   const balance = document.getElementById('sbDesktopCashBalance');
@@ -15004,6 +15022,7 @@ function wlAssignGroup(idx, gName) {
     </div>
   </div>
 </div>
+<script src="src/desktop/company-info.js"></script>
 <script src="src/desktop/stock-selection.js"></script>
 <script src="src/news/page-client.js"></script>
 <script src="src/desktop/shortcuts.js"></script>

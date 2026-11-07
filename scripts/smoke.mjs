@@ -256,9 +256,10 @@ for (const pg of PAGES) {
           window.electronAPI={fetchHoga:async()=>({asks:[{price:101,qty:0}],bids:[{price:99,qty:2}]})};
           await sbDesktopHoga();
           const book=document.getElementById('sbHogaRows');const real=book.children.length===2 && book.textContent.includes('101') && book.textContent.includes('99');
-          let resolve;window.electronAPI.fetchHoga=()=>new Promise(r=>resolve=r);
+          let resolve,resolveNext;window.electronAPI.fetchHoga=code=>new Promise(r=>{if(code==='005930')resolve=r;else resolveNext=r;});
           const pending=sbDesktopHoga();dockSelectStock('000660');resolve({asks:[{price:101,qty:1}],bids:[{price:99,qty:1}]});await pending;
-          const stale=book.children.length===0 && document.getElementById('sbHogaStatus').textContent.includes('조회 대기');
+          const stale=book.children.length===0 && document.getElementById('sbHogaStatus').textContent.includes('조회 중') && typeof resolveNext==='function';
+          resolveNext(null);
           window.electronAPI.fetchHoga=async()=>{throw new Error('offline')};await sbDesktopHoga();
           const failure=book.children.length===0 && document.getElementById('sbHogaStatus').textContent.includes('조회 실패');
           const checks=[];

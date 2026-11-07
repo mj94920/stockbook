@@ -240,3 +240,45 @@ test('stock news prioritizes current and searched instruments over holdings, ret
   assert.equal(await page.evaluate(()=>state.portfolio[0].ticker),'005930');assert.deepEqual(errors,[]);
  }finally{await browser?.close();await new Promise(r=>server.close(r));}
 });
+
+test('context tabs auto-load selected hoga and inline company finance, keep zeroes safe and ignore stale selections',async()=>{
+ const root=path.resolve(__dirname,'..'),server=createServer(async(req,res)=>{try{const file=path.resolve(root,'.'+new URL(req.url,'http://x').pathname);if(!file.startsWith(root+path.sep))throw Error();res.setHeader('Content-Type',file.endsWith('.html')?'text/html; charset=utf-8':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'application/octet-stream');res.end(await fs.readFile(file));}catch{res.writeHead(404);res.end();}});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;let browser;
+ try{
+  browser=await chromium.launch();const page=await browser.newPage({viewport:{width:1400,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort());await page.goto(base+'/index.html');
+  await page.evaluate(()=>{
+   state.watchlist=[{ticker:'229640',name:'LS에코에너지',price:57900,quoteAt:Date.now()},{ticker:'005930',name:'삼성전자',price:100,quoteAt:Date.now()}];window._dockSel='229640';window.__contextCalls=[];
+   window.__finance=()=>({annual:{financeInfo:{trTitleList:[{key:'Y23',title:'2023',isConsensus:'N'},{key:'Y24',title:'2024',isConsensus:'N'},{key:'Y25',title:'2025 예상',isConsensus:'Y'}],rowList:[{title:'매출액',unit:'억원',columns:{Y23:{value:'0'},Y24:{value:'123'},Y25:{value:'9999'}}},{title:'영업이익',unit:'억원',columns:{Y23:{value:'-20'},Y24:{value:'25'}}}]}}});
+   window.electronAPI={fetchHoga:async code=>{window.__contextCalls.push(['hoga',code]);return {asks:[{price:100,qty:0}],bids:[{price:90,qty:3}]};},fetchStockDetail:async code=>{window.__contextCalls.push(['detail',code]);return {ok:true,data:{industryName:'<img src=x onerror=alert(1)>',per:0,roe:0,eps:120,marketValue:'1조 123억',issuedShareCount:100}};},fetchNaverFinance:async code=>{window.__contextCalls.push(['finance',code]);return window.__finance();}};
+   window._MDI.show('watchlist');
+  });
+  await page.locator('[data-context-tab="hoga"]').click();await page.waitForFunction(()=>document.querySelectorAll('#sbHogaRows tr').length===2);
+  assert.deepEqual(await page.evaluate(()=>window.__contextCalls),[['hoga','229640']]);
+  await page.evaluate(()=>sbSelectInstrument('005930','삼성전자'));await page.waitForFunction(()=>window.__contextCalls.filter(c=>c[0]==='hoga').length===2&&document.querySelectorAll('#sbHogaRows tr').length===2);
+  assert.deepEqual(await page.evaluate(()=>window.__contextCalls.at(-1)),['hoga','005930']);
+  await page.locator('[data-context-tab="info"]').click();await page.waitForFunction(()=>document.getElementById('sbCompanyStatus').textContent.includes('출처'));
+  assert.match(await page.locator('#sbCompanyMetrics').innerText(),/0배/);assert.match(await page.locator('#sbCompanyMetrics').innerText(),/0%/);assert.match(await page.locator('#sbCompanyMetrics').innerText(),/1조 123억/);assert.equal(await page.locator('#sbCompanyMetrics img').count(),0);
+  assert.match(await page.locator('#sbCompanyFinance').innerText(),/2023/);assert.match(await page.locator('#sbCompanyFinance').innerText(),/-20/);assert.doesNotMatch(await page.locator('#sbCompanyFinance').innerText(),/9999|2025 예상/);
+  const count=await page.evaluate(()=>window.__contextCalls.filter(c=>c[0]==='detail').length);await page.locator('[data-context-tab="chart"]').click();await page.locator('[data-context-tab="info"]').click();assert.equal(await page.evaluate(()=>window.__contextCalls.filter(c=>c[0]==='detail').length),count);
+  await page.evaluate(()=>{window.electronAPI.fetchStockDetail=async()=>({ok:false});window.electronAPI.fetchNaverFinance=async()=>null;});await page.locator('#sbCompanyRefresh').click();await page.waitForFunction(()=>!document.getElementById('sbCompanyRefresh').disabled);assert.match(await page.locator('#sbCompanyStatus').innerText(),/조회 실패/);assert.equal(await page.locator('#sbCompanyMetrics dd').count(),0);
+  await page.evaluate(()=>{window.electronAPI.fetchStockDetail=code=>code==='229640'?new Promise(resolve=>window.__lateCompany=resolve):Promise.resolve({ok:true,data:{per:7}});window.electronAPI.fetchNaverFinance=async()=>window.__finance();sbSelectInstrument('229640','LS에코에너지');});await page.waitForFunction(()=>typeof window.__lateCompany==='function');
+  await page.evaluate(()=>sbSelectInstrument('005930','삼성전자'));await page.waitForFunction(()=>document.getElementById('sbCompanyMetrics').textContent.includes('7배'));
+  await page.evaluate(()=>window.__lateCompany({ok:true,data:{per:999}}));assert.doesNotMatch(await page.locator('#sbCompanyMetrics').innerText(),/999/);assert.deepEqual(errors,[]);
+ }finally{await browser?.close();await new Promise(r=>server.close(r));}
+});
+
+test('company queries time out, retry and clearly report disconnected or unsupported instruments',async()=>{
+ const root=path.resolve(__dirname,'..'),server=createServer(async(req,res)=>{try{const file=path.resolve(root,'.'+new URL(req.url,'http://x').pathname);if(!file.startsWith(root+path.sep))throw Error();res.setHeader('Content-Type',file.endsWith('.html')?'text/html; charset=utf-8':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'application/octet-stream');res.end(await fs.readFile(file));}catch{res.writeHead(404);res.end();}});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;let browser;
+ try{
+  browser=await chromium.launch();const page=await browser.newPage();await page.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort());await page.goto(base+'/index.html');await page.clock.install();
+  await page.evaluate(()=>{state.watchlist=[{ticker:'005930',name:'삼성전자',price:100,quoteAt:Date.now()},{ticker:'AAPL',name:'Apple',price:1,quoteAt:Date.now()}];window._dockSel='005930';window.electronAPI={fetchStockDetail:()=>new Promise(()=>{}),fetchNaverFinance:()=>new Promise(()=>{})};window._MDI.show('watchlist');sbContextTab('info');});
+  await page.clock.fastForward(12001);await page.waitForFunction(()=>!document.getElementById('sbCompanyRefresh').disabled);assert.match(await page.locator('#sbCompanyStatus').innerText(),/조회 실패/);
+  await page.evaluate(()=>{window.electronAPI.fetchStockDetail=async()=>({ok:true,data:{per:5}});window.electronAPI.fetchNaverFinance=async()=>null;});await page.locator('#sbCompanyRefresh').click();await page.waitForFunction(()=>document.getElementById('sbCompanyMetrics').textContent.includes('5배'));assert.match(await page.locator('#sbCompanyStatus').innerText(),/연간 재무 조회 실패/);
+  await page.evaluate(()=>sbSelectInstrument('AAPL','Apple'));assert.match(await page.locator('#sbCompanyStatus').innerText(),/국내 종목/);assert.equal(await page.locator('#sbCompanyMetrics dd').count(),0);
+  await page.evaluate(()=>{delete window.electronAPI.fetchStockDetail;sbSelectInstrument('005930','삼성전자');});assert.match(await page.locator('#sbCompanyStatus').innerText(),/연결 필요/);
+  await page.evaluate(()=>{window.electronAPI.fetchHoga=()=>new Promise(()=>{});sbContextTab('hoga');});await page.clock.fastForward(12001);await page.waitForFunction(()=>!document.getElementById('sbHogaRefresh').disabled);assert.match(await page.locator('#sbHogaStatus').innerText(),/조회 실패/);
+  await page.evaluate(()=>{window.electronAPI.fetchHoga=async()=>({asks:[{price:10,qty:1}],bids:[{price:9,qty:1}]});});await page.locator('#sbHogaRefresh').click();await page.waitForFunction(()=>document.querySelectorAll('#sbHogaRows tr').length===2);
+
+ }finally{await browser?.close();await new Promise(r=>server.close(r));}
+});
