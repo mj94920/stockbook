@@ -11,12 +11,13 @@ async function app(run){const root=path.resolve(__dirname,'..'),server=createSer
  state.watchlist=[{ticker:'005930',name:'검증 기업',quoteAt:Date.now()},{ticker:'000660',name:'다른 기업',quoteAt:Date.now()}];window._dockSel='005930';dockCtxRender();
  });await run(page,errors);assert.deepEqual(errors,[]);}finally{await browser?.close();await new Promise(r=>server.close(r));}}
 
-test('AI HOME connection, manual analysis patterns and the source-only corporate research page stay separate',async()=>app(async(page)=>{
+test('AI availability, manual analysis patterns and the source-only corporate research page stay separate',async()=>app(async(page)=>{
  assert.equal(await page.evaluate(()=>window.__aiCalls.length),0);
- await page.locator('#sbAnalysis').getByRole('button',{name:'홈 연결',exact:true}).click();
- await page.waitForFunction(()=>document.getElementById('sbAIHomeStatus').textContent.includes('Codex 연결됨'));
- assert.match(await page.locator('#sbAIHomeStatus').innerText(),/Claude 연결됨/);
- await page.evaluate(()=>closeSettings());await page.locator('#sbAIRun').click();
+ await page.waitForFunction(()=>document.getElementById('sbAIStatus').textContent.includes('Codex 연결됨'));
+ assert.match(await page.locator('#sbAIStatus').innerText(),/Claude 연결됨/);
+ assert.equal(await page.getByRole('button',{name:/홈 연결/}).count(),0);
+ assert.doesNotMatch(await page.locator('#sbAnalysis').innerText(),/HOME/);
+ await page.locator('#sbAIRun').click();
  await page.waitForFunction(()=>document.getElementById('sbAIResult').textContent.includes('검증 분석'));
  assert.equal(await page.locator('#sbAIResult img').count(),0);assert.equal(await page.evaluate(()=>window.BAD_AI),undefined);
  assert.match(await page.locator('#sbAIResult').innerText(),/미국 10년물 국채금리/);assert.match(await page.locator('#sbAIResult').innerText(),/다시 확인할 조건/);
@@ -48,10 +49,14 @@ test('AI selection changes discard late results and research changes never show 
  assert.match(await page.locator('#analysisDrawerTitle').innerText(),/현재 기업/);assert.doesNotMatch(await page.locator('#analysisDrawerBody').innerText(),/이전 기업/);
 }));
 
-test('unconfigured HOME is shown as a missing app connection, never as missing Claude or a successful login',async()=>app(async(page)=>{
+test('unconfigured analysis does not require HOME or claim a successful connection',async()=>app(async(page)=>{
  await page.evaluate(()=>{window.electronAPI.aiStatus=async()=>({ok:true,configured:false,providers:[],message:'홈 연동 경로가 아직 등록되지 않았습니다.'});});
- await page.locator('#sbAnalysis').getByRole('button',{name:'홈 연결',exact:true}).click();await page.waitForFunction(()=>document.getElementById('sbAIHomeStatus').textContent.includes('등록되지'));
- assert.doesNotMatch(await page.locator('#sbAIHomeStatus').innerText(),/Claude.*미설치|로그인 성공/);
+ await page.evaluate(()=>StockBookAI.checkConnection());
+ assert.equal(await page.locator('#sbAIRun').isDisabled(),true);
+ assert.match(await page.locator('#sbAIStatus').innerText(),/아직 준비되지/);
+ assert.doesNotMatch(await page.locator('#sbAnalysis').innerText(),/HOME|홈 연결|Claude.*미설치|로그인 성공/);
+ await page.evaluate(()=>openSettings('ai'));
+ assert.doesNotMatch(await page.locator('#settingsModal [data-page="ai"]').innerText(),/HOME|홈 연결/);
 }));
 
 test('research design exposes missing dates and units, filters evidence and fits desktop viewports',async()=>app(async(page)=>{
@@ -69,13 +74,13 @@ test('research design exposes missing dates and units, filters evidence and fits
  assert.equal(await page.evaluate(()=>window.__aiCalls.length),0);
 }));
 
-test('HOME stays honest and research carries its stock and period into AI review without executing a model',async()=>app(async(page)=>{
- await page.evaluate(async()=>{window.electronAPI.aiStatus=async()=>({ok:true,configured:false,providers:[],message:'HOME 연동 경로 확인 필요'});await StockBookAI.checkHome();});
- assert.equal(await page.locator('#sbAIRun').isDisabled(),true);assert.match(await page.locator('#sbAIConnection').innerText(),/확인 필요/);
+test('AI availability stays honest and research carries its stock and period into AI review without executing a model',async()=>app(async(page)=>{
+ await page.evaluate(async()=>{window.electronAPI.aiStatus=async()=>({ok:true,configured:false,providers:[],message:'HOME 연동 경로 확인 필요'});await StockBookAI.checkConnection();});
+ assert.equal(await page.locator('#sbAIRun').isDisabled(),true);assert.match(await page.locator('#sbAIStatus').innerText(),/아직 준비되지/);
  await page.evaluate(()=>openStockDrawer('000660','다른 기업'));await page.waitForFunction(()=>document.querySelector('.sb-data-health'));
  await page.getByRole('button',{name:'이 종목 AI 검토',exact:true}).click();assert.equal(await page.evaluate(()=>window._dockSel),'000660');assert.equal(await page.evaluate(()=>window.__aiCalls.length),0);assert.match(await page.locator('#sbAIDataStatus').innerText(),/필요 자료 확인/);
  await page.locator('#sbAIPeriod').selectOption('1y');assert.match(await page.locator('#sbAIDataStatus').innerText(),/수집 범위가 다릅니다/);
- await page.evaluate(async()=>{window.electronAPI.aiStatus=async()=>({ok:true,configured:true,providers:[{id:'claude',connected:true}]});await StockBookAI.checkHome();});
+ await page.evaluate(async()=>{window.electronAPI.aiStatus=async()=>({ok:true,configured:true,providers:[{id:'claude',connected:true}]});await StockBookAI.checkConnection();});
  await page.locator('#sbAIRun').click();await page.waitForFunction(()=>document.querySelector('#sbAIResult .sb-ai-summary'));
  assert.match(await page.locator('#sbAIResult').innerText(),/AI 해석/);assert.match(await page.locator('#sbAIResult').innerText(),/해석과 가설/);assert.match(await page.locator('#sbAIResult').innerText(),/위험과 자료 한계/);assert.match(await page.locator('#sbAIResult').innerText(),/다시 확인할 조건/);
  assert.equal(await page.evaluate(()=>window.__aiCalls.length),1);

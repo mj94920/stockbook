@@ -21,7 +21,7 @@ const boot=`document.addEventListener('DOMContentLoaded',async()=>{
   {id:'news',title:'종목 뉴스',status:'received',asOf:'2026-11-07',fetchedAt:'2026-11-07',url:source,data:{rows:[{title:'[기사 표시 예시] 실적·사업 관련 원문을 확인합니다',source:'출처 표시 예시',time:'2026-11-07',url:source,summary:'실제 기사 본문이 아닙니다. 받은 요약과 원문 이동 경로를 구분하는 디자인 예시입니다.'}]}},
  ]});
  window.electronAPI={
-  aiStatus:async()=>exampleResponse?{ok:true,configured:true,providers:[{id:'claude',connected:true}]}:{ok:true,configured:false,providers:[],message:'HOME 연동 경로 확인 필요 · 미리보기에서는 연결하지 않습니다.'},
+  aiStatus:async()=>exampleResponse?{ok:true,configured:true,providers:[{id:'claude',connected:true}]}:{ok:true,configured:false,providers:[],message:'AI 분석 연결 준비 전 · 미리보기에서는 연결하지 않습니다.'},
   aiResearch:async opts=>opts.code==='005930'?{ok:true,bundle:bundle(opts.period)}:{ok:false,error:'디자인 예시는 삼성전자에만 준비되어 있습니다.'},
   aiAnalyze:async opts=>({ok:true,provider:'claude',pattern:opts.pattern,createdAt:'2026-11-07T00:00:00Z',bundle:bundle(opts.period),result:{summary:'[응답 형식 예시 · 모델 호출 없음] 자료의 범위와 단위를 확인한 뒤 판단합니다.',interpretations:[{text:'재무와 뉴스를 함께 비교하는 해석 영역입니다. 예시 숫자로 기업 전망을 판단하지 않습니다.',evidenceIds:['finance','news']}],risks:[{text:'재무 금액 단위와 업종 기준일이 빠져 있습니다. 개인 포트폴리오와 판단 기록도 포함되지 않았습니다.',evidenceIds:['finance','industry']}],options:[{title:'자료를 보완하며 관찰',reason:'단위와 기준일 확인이 먼저입니다.',risk:'누락된 자료로 전체 상황을 설명할 수 없습니다.',reviewWhen:'원문 단위 확인 또는 새 공시 수신 시',evidenceIds:['finance']}],missing:['portfolioStructure','decisionJournal'],questions:['나의 기존 투자 원칙과 일치하는가?']}}),
   aiCancel:async()=>({ok:true,requested:true,confirmed:true}),getChartSnapshot:async code=>code==='005930'?snapshot:{ok:false},
@@ -31,11 +31,11 @@ const boot=`document.addEventListener('DOMContentLoaded',async()=>{
  state.watchlist=[{ticker:'005930',name:'삼성전자',price:snapshot.candles.at(-1).close,quoteAt:0}];
  state.portfolio=[];window._dockSel='005930';dockCtxRender();setTheme('light');
  const bar=document.createElement('div');bar.className='sb-preview-tools';
- const note=document.createElement('span');note.textContent='디자인 검토용 · 예시 자료 · 실제 HOME/모델 호출 없음';bar.append(note);
+ const note=document.createElement('span');note.textContent='디자인 검토용 · 예시 자료 · 실제 모델 호출 없음';bar.append(note);
  const add=(label,fn)=>{const b=document.createElement('button');b.className='sb-btn sb-btn--sm';b.textContent=label;b.onclick=fn;bar.append(b);};
  add('리서치 화면',()=>openStockDrawer('005930','삼성전자'));
- add('HOME 미연결',async()=>{exampleResponse=false;closeAnalysisDrawer();StockBookAI.select(null);StockBookAI.select({code:'005930',name:'삼성전자'});await StockBookAI.checkHome();document.getElementById('sbAnalysis').scrollIntoView({block:'nearest'});});
- add('응답 형식 예시',async()=>{exampleResponse=true;closeAnalysisDrawer();await StockBookAI.checkHome();document.getElementById('sbAIRun').click();await new Promise(resolve=>setTimeout(resolve,80));document.getElementById('sbAIResult').scrollIntoView({block:'nearest'});});
+ add('AI 미연결',async()=>{exampleResponse=false;closeAnalysisDrawer();StockBookAI.select(null);StockBookAI.select({code:'005930',name:'삼성전자'});await StockBookAI.checkConnection();document.getElementById('sbAnalysis').scrollIntoView({block:'nearest'});});
+ add('응답 형식 예시',async()=>{exampleResponse=true;closeAnalysisDrawer();await StockBookAI.checkConnection();document.getElementById('sbAIRun').click();await new Promise(resolve=>setTimeout(resolve,80));document.getElementById('sbAIResult').scrollIntoView({block:'nearest'});});
  add('테마 전환',()=>setTheme(document.body.classList.contains('light-mode')?'dark':'light'));
  document.body.append(bar);await openStockDrawer('005930','삼성전자');await new Promise(resolve=>setTimeout(resolve,80));_allStockRaw.KOSPI=[{code:'005930',name:'삼성전자',price:snapshot.candles.at(-1).close,industry:'보존 자료 · 실시간 아님'}];filterAndRenderAll();document.getElementById('allStockStatus').textContent='디자인 예시 · 보존 자료 · 실시간 아님';window.designPreviewReady=true;
 });`;
