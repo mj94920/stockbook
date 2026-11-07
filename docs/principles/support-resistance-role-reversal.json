@@ -1,0 +1,65 @@
+{
+  "id": "support_resistance_role_reversal",
+  "name": "주요 가격대의 지지·저항과 역할 전환",
+  "approval": {
+    "status": "approved",
+    "approvedBy": "user",
+    "approvedOn": "2026-10-16",
+    "scope": "principle_definition",
+    "basis": "지지·저항 및 역할 전환 원칙의 원칙 데이터 반영을 사용자 승인"
+  },
+  "principle": "과거에 반복적으로 반등·반락하거나 거래가 집중된 가격 구간을 기록하고, 현재 위치와 접근 방향에 따라 지지 또는 저항 후보로 평가한다. 돌파·이탈 뒤 재시험에서 가격대의 역할이 바뀌는지 확인한다.",
+  "interpretations": [
+    {
+      "id": "support_retest",
+      "description": "가격이 위에서 내려와 과거 반응 구간을 재시험하면 지지 후보로 본다. 구간에서의 가격 방어·회복 여부를 확인한다."
+    },
+    {
+      "id": "resistance_retest",
+      "description": "가격이 아래에서 올라와 과거 반응 구간을 재시험하면 저항 후보로 본다. 구간에서의 상승 제한·되밀림 여부를 확인한다."
+    },
+    {
+      "id": "support_to_resistance",
+      "description": "기존 지지 구간을 이탈한 뒤 아래에서 재접근할 때 저항으로 작용하는지 확인한다. 이탈만으로 역할 전환을 확정하지 않는다."
+    },
+    {
+      "id": "resistance_to_support",
+      "description": "기존 저항 구간을 돌파한 뒤 위에서 재접근할 때 지지로 작용하는지 확인한다. 돌파만으로 역할 전환을 확정하지 않는다."
+    }
+  ],
+  "evidenceToRecord": [
+    { "key": "price_zone", "description": "가격 구간의 상·하단과 산출 근거. 한 점으로 정밀도를 과장하지 않는다." },
+    { "key": "time_basis", "description": "봉 주기, 판단 기준 시각, 사용한 자료의 출처·수정주가 및 기업행동 조정 기준." },
+    { "key": "historical_reactions", "description": "당시까지 확인된 과거 반등·반락·거래 집중 시점, 횟수와 반응의 크기." },
+    { "key": "approach_and_role", "description": "현재 가격 위치, 구간에 접근한 방향, 기존 역할과 현재 후보 역할." },
+    { "key": "price_reaction", "description": "지지·저항 반응, 돌파·이탈, 재시험과 회복·실패의 관찰 시점." },
+    { "key": "supporting_evidence", "description": "거래량·거래대금·수급 변화와 데이터 품질. 보강·반박 근거이며 모든 상황의 필수 조건으로 고정하지 않는다." },
+    { "key": "invalidation", "description": "해석을 철회·재평가할 조건과 실제 관측 여부. 무효화된 기록도 근거와 함께 보존한다." }
+  ],
+  "constraints": [
+    "반복해서 반응한 구간은 바닥·천장 후보이지 미래 가격을 보장하지 않는다.",
+    "당시까지 이용 가능했던 자료로만 판단한다. 나중의 반등·반락이나 확인 전인 미래 봉으로 과거 판정을 소급 생성하지 않는다.",
+    "피벗 등 후속 봉으로 확인하는 근거는 실제 확인 가능 시점을 기록한다. 차트의 미래 연장선은 관측값으로 사용하지 않는다.",
+    "기존 지지·저항은 형성·변경 당시의 근거를 보존한다. 신규 자료로 구간을 조정하더라도 과거 판정의 기준을 조용히 바꾸지 않는다.",
+    "주식분할·병합·인적분할 등 기업행동의 가격·수량 조정 여부와 비교 가능성을 확인한다.",
+    "자료나 판정 기준이 부족하면 판단 불가로 구분한다. 미충족·지지 붕괴로 대체하지 않는다.",
+    "차트 이미지의 수동 주석은 참고 근거다. 자동 판정은 원데이터와 승인된 계산 규칙으로 수행하고 AI는 계산 결과와 근거를 해석한다.",
+    "이 원칙의 반영은 자동 매수·매도, 주문 실행, 목표가·손절가 생성 또는 매매 점수 변경 승인이 아니다."
+  ],
+  "automaticEvaluation": {
+    "status": "not_implemented",
+    "implementationIssue": 50,
+    "parameterStatus": "pending",
+    "parameters": {
+      "zoneTolerance": null,
+      "minimumReactionCount": null,
+      "lookbackWindow": null,
+      "reactionSeparation": null,
+      "breakoutBasis": null,
+      "confirmationWindow": null,
+      "retestWindow": null,
+      "invalidationCriteria": null
+    },
+    "parameterNote": "null은 기준 미정이며 0 또는 기본값이 아니다. 허용오차·최소 반응 횟수·탐색 기간·반응 분리·장중/종가 기준·확인 기간·재시험 기간·무효화 기준은 결정 후 자동 판정에 사용한다. 이 데이터는 런타임 계약을 확정하지 않는다."
+  }
+}
