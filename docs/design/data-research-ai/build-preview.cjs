@@ -35,7 +35,7 @@ const boot=`document.addEventListener('DOMContentLoaded',async()=>{
  const add=(label,fn)=>{const b=document.createElement('button');b.className='sb-btn sb-btn--sm';b.textContent=label;b.onclick=fn;bar.append(b);};
  add('리서치 화면',()=>openStockDrawer('005930','삼성전자'));
  add('HOME 미연결',async()=>{exampleResponse=false;closeAnalysisDrawer();StockBookAI.select(null);StockBookAI.select({code:'005930',name:'삼성전자'});await StockBookAI.checkHome();document.getElementById('sbAnalysis').scrollIntoView({block:'nearest'});});
- add('응답 형식 예시',async()=>{exampleResponse=true;closeAnalysisDrawer();await StockBookAI.checkHome();document.getElementById('sbAIRun').click();document.getElementById('sbAnalysis').scrollIntoView({block:'nearest'});});
+ add('응답 형식 예시',async()=>{exampleResponse=true;closeAnalysisDrawer();await StockBookAI.checkHome();document.getElementById('sbAIRun').click();await new Promise(resolve=>setTimeout(resolve,80));document.getElementById('sbAIResult').scrollIntoView({block:'nearest'});});
  add('테마 전환',()=>setTheme(document.body.classList.contains('light-mode')?'dark':'light'));
  document.body.append(bar);await openStockDrawer('005930','삼성전자');await new Promise(resolve=>setTimeout(resolve,80));_allStockRaw.KOSPI=[{code:'005930',name:'삼성전자',price:snapshot.candles.at(-1).close,industry:'보존 자료 · 실시간 아님'}];filterAndRenderAll();document.getElementById('allStockStatus').textContent='디자인 예시 · 보존 자료 · 실시간 아님';window.designPreviewReady=true;
 });`;
