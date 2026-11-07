@@ -4932,6 +4932,7 @@
 
 <script src="src/portfolio/realized-profit.js"></script>
 <script src="src/journal/trade-review.js"></script>
+<script src="src/finance/naver-annual.js"></script>
 <script>
 // ============================================================
 // STATE
@@ -6148,7 +6149,7 @@ async function loadCorpFinance() {
       const r    = json?.quoteSummary?.result?.[0];
       html = r ? _buildYFFinanceTable(r, code) : '<div style="color:var(--text3);font-size:13px;padding:6px 0;">재무 데이터를 불러올 수 없습니다.</div>';
     }
-    if (dataEl)  dataEl.innerHTML = html;
+    if (dataEl) dataEl.innerHTML = renderDartAnnualSection(code) + html;
     if (linksEl) linksEl.style.display = isKr ? 'block' : 'none';
   } catch(e) {
     if (dataEl) dataEl.innerHTML = `<div style="color:var(--text3);font-size:12px;padding:6px 0;">오류: ${e.message}</div>`;
@@ -6171,6 +6172,36 @@ function _colorSign(v, html) {
   return `<span style="color:var(--${+v>=0?'hts-up':'hts-down'})">${html}</span>`;
 }
 
+function financeFetchTime(value) {
+  const stamp = Date.parse(value);
+  return Number.isFinite(stamp)
+    ? new Intl.DateTimeFormat('ko-KR', {
+        dateStyle: 'medium', timeStyle: 'medium', timeZone: 'Asia/Seoul',
+      }).format(stamp) + ' (KST)'
+    : '확인 불가';
+}
+
+function renderNaverAnnualTable(res, includeRoe = false) {
+  const rows = StockBookNaverAnnual.annualRows(res.annual);
+  if (!rows.length) return '';
+  const provider = escHtml(res.annualMetadata?.provider || '확인 불가');
+  const fetchedAt = financeFetchTime(res.annualMetadata?.fetchedAt);
+  const headings = ['회계 기간', '실적 구분', '매출액', '영업이익', '순이익', '영업이익률'];
+  if (includeRoe) headings.push('ROE');
+  return `<div style="overflow-x:auto">
+    <table class="analysis-fin-table" aria-label="국내 연간 재무표">
+      <caption style="text-align:left;color:var(--sb-text-2);padding:var(--sb-space-2)">
+        제공처 ${provider} · 조회 시각 ${fetchedAt}
+      </caption>
+      <thead><tr>${headings.map(heading => `<th scope="col">${heading}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(({period, kind, values}) => `<tr>
+        <td>${period}</td><td>${kind}</td>
+        ${values.slice(0, includeRoe ? 5 : 4).map(value => `<td>${value}</td>`).join('')}
+      </tr>`).join('')}</tbody>
+    </table>
+  </div>`;
+}
+
 function _buildFinanceTable(res, code) {
   if (!res) return '<div style="color:var(--text3);font-size:13px;padding:6px 0;">재무 데이터를 불러올 수 없습니다. (코드 6자리 확인)</div>';
 
@@ -6179,10 +6210,10 @@ function _buildFinanceTable(res, code) {
   const aRows  = ann.financeInfo?.rowList || [];
   const aTitles = ann.financeInfo?.trTitleList || [];
   const getRow = name => aRows.find(r => r.title === name);
-  const getVal = (row, key) => row?.columns?.[key]?.value || null;
+  const getVal = (row, key) => row?.columns?.[key]?.value ?? null;
   const realYears = aTitles.filter(t => t.isConsensus === 'N');
   const latestKey = realYears[realYears.length - 1]?.key;
-  const strip = s => s ? s.replace(/,/g,'') : null;
+  const strip = s => s == null ? null : String(s).replace(/,/g,'');
   const kpiMetrics = [
     ['PER',  strip(getVal(getRow('PER'),latestKey))],
     ['PBR',  strip(getVal(getRow('PBR'),latestKey))],
@@ -6194,8 +6225,8 @@ function _buildFinanceTable(res, code) {
   const hasKpi = kpiMetrics.some(([,v]) => v != null);
   // 펀더멘털 캐시 저장 (전종목 EPS/ROE 컬럼에 표시)
   const _kpiMap = Object.fromEntries(kpiMetrics.filter(([,v])=>v!=null));
-  if (ticker && (_kpiMap['EPS'] || _kpiMap['ROE'])) {
-    _stockFundamentalsCache[ticker] = {
+  if (code && (_kpiMap['EPS'] || _kpiMap['ROE'])) {
+    _stockFundamentalsCache[code] = {
       eps: _kpiMap['EPS'], roe: _kpiMap['ROE'],
       per: _kpiMap['PER'], pbr: _kpiMap['PBR']
     };
@@ -6209,34 +6240,7 @@ function _buildFinanceTable(res, code) {
   };
   const kpiHtml = hasKpi ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:10px;">${kpiMetrics.map(fmtKpi).join('')}</div>` : '';
 
-  // ── 연간 실적 테이블 ──
-  const rows = res.annual?.financeInfo || res.annual?.annualFinance || [];
-  if (!rows.length) return kpiHtml || '<div style="color:var(--text3);font-size:13px;padding:6px 0;">재무 데이터가 없습니다.</div>';
-  const th = s => `<th style="padding:4px 6px;font-weight:600;white-space:nowrap;">${s}</th>`;
-  const td = s => `<td style="padding:4px 6px;text-align:right;">${s}</td>`;
-  const tableHtml = `<div style="overflow-x:auto;">
-  <table style="width:100%;border-collapse:collapse;font-size:11px;">
-    <thead><tr style="background:var(--bg3);color:var(--text3);text-align:right;">
-      ${th('기간')}${th('매출')}${th('영업이익')}${th('순이익')}${th('영업이익률')}
-    </tr></thead>
-    <tbody>
-      ${rows.slice(0,5).map(y => {
-        const yr  = y.stacYymm || y.stacYear || y.year || '-';
-        const rev = y.totSale || y.totRevenue || y.revenue || 0;
-        const op  = y.operProfit || y.operatingIncome || 0;
-        const net = y.netProfit || y.netIncome || 0;
-        const opM = rev ? op/rev : null;
-        return `<tr style="border-bottom:1px solid var(--border)">
-          <td style="padding:4px 6px;color:var(--text2);white-space:nowrap;">${yr}</td>
-          ${td(_fmtBig(rev))}
-          ${td(_colorSign(op, _fmtBig(op)))}
-          ${td(_colorSign(net, _fmtBig(net)))}
-          ${td(_colorSign(opM, _fmtPct(opM)))}
-        </tr>`;
-      }).join('')}
-    </tbody>
-  </table></div>`;
-  return kpiHtml + tableHtml;
+  return kpiHtml + renderNaverAnnualTable(res) || '<div style="color:var(--sb-text-3);padding:6px 0;">재무 데이터가 없습니다.</div>';
 }
 
 function _buildYFFinanceTable(r, code) {
@@ -10452,14 +10456,109 @@ document.addEventListener('click', e => {
 });
 
 function closeSettings() {
+  const dartKeyInput = document.getElementById('dartKeyInput');
+  if (dartKeyInput) dartKeyInput.value = '';
   const modal = document.getElementById('settingsModal');
   if (modal) modal.classList.remove('open');
 }
 
 // ── 설정 허브: 카테고리 전환 ──
 let _settingsCat = 'general';
+const dartErrors = {
+  KEY_MISSING: '설정의 API 연결에서 Open DART 인증키를 등록해 주세요.',
+  KEY_FORMAT: 'Open DART 인증키 40자리를 확인해 주세요.',
+  KEY_INVALID: 'Open DART에서 인증키가 유효하지 않다고 응답했습니다.',
+  KEY_CHANGED: '인증키가 변경됐습니다. 다시 조회해 주세요.',
+  IP_DENIED: 'Open DART에서 현재 IP의 접근을 허용하지 않습니다.',
+  LIMIT: 'Open DART 요청 한도를 초과했습니다.',
+  CORP_NOT_FOUND: '이 종목의 DART 고유번호를 확인할 수 없습니다.',
+  NO_DATA: '선택한 사업연도의 주요 재무정보가 없습니다.',
+  INPUT: '종목코드와 2015년 이후 사업연도를 확인해 주세요.',
+  STORAGE: '인증키 보안 저장소를 사용할 수 없습니다.',
+};
+function dartError(result) {
+  return dartErrors[result?.code] || 'Open DART 요청을 완료하지 못했습니다.';
+}
+async function dartSettings(action) {
+  const status = document.getElementById('dartKeyStatus');
+  const input = document.getElementById('dartKeyInput');
+  const api = window.electronAPI;
+  if (!status || !input) return;
+  if (!api?.dartKeyStatus) {
+    status.textContent = 'Windows 앱에서 설정할 수 있습니다.';
+    return;
+  }
+  const controls = [...status.closest('section').querySelectorAll('button')];
+  controls.forEach(button => { button.disabled = true; });
+  try {
+    if (action === 'save') {
+      const key = input.value;
+      input.value = '';
+      const result = await api.dartKeySave(key);
+      status.textContent = result.ok ? '인증키를 저장했습니다. 연결을 확인할 수 있습니다.' : dartError(result);
+    } else if (action === 'delete') {
+      input.value = '';
+      const result = await api.dartKeyDelete();
+      status.textContent = result.ok ? '인증키를 삭제했습니다.' : dartError(result);
+    } else if (action === 'test') {
+      const result = await api.dartKeyTest();
+      status.textContent = result.ok ? 'Open DART 연결을 확인했습니다.' : dartError(result);
+    } else {
+      const result = await api.dartKeyStatus();
+      status.textContent = result.ok ? (result.registered ? '인증키 등록됨' : '인증키 미등록') : dartError(result);
+    }
+  } catch {
+    status.textContent = dartError();
+  } finally {
+    controls.forEach(button => { button.disabled = false; });
+  }
+}
+function renderDartAnnualSection(code) {
+  if (!window.electronAPI?.fetchDartAnnual || !/^\d{6}$/.test(code)) return '';
+  const year = Number(new Intl.DateTimeFormat('en', { year: 'numeric', timeZone: 'Asia/Seoul' }).format(new Date()));
+  return `<section class="analysis-section" aria-label="Open DART 연간 주요 재무정보">
+    <h3 class="analysis-section-title">Open DART 연간 주요 재무정보</h3>
+    <label>사업연도 <input class="sb-input" type="number" min="2015" max="${year}" value="${year - 1}"></label>
+    <button type="button" class="sb-btn sb-btn--sm" onclick="loadDartAnnual(this, '${code}')">DART 조회</button>
+    <div data-dart-result aria-live="polite"></div>
+  </section>`;
+}
+async function loadDartAnnual(button, code) {
+  const panel = button.closest('section');
+  const resultArea = panel.querySelector('[data-dart-result]');
+  const year = panel.querySelector('input').value;
+  button.disabled = true;
+  resultArea.textContent = 'Open DART에서 조회 중입니다.';
+  try {
+    const result = await window.electronAPI.fetchDartAnnual(code, year);
+    if (!result.ok) {
+      resultArea.textContent = dartError(result);
+      return;
+    }
+    resultArea.innerHTML = `<div style="overflow-x:auto"><table class="analysis-fin-table">
+      <caption>제공처 금융감독원 Open DART · 회계연도 ${escHtml(result.year)}
+        · 사업보고서 · 조회 시각 ${financeFetchTime(result.fetchedAt)}</caption>
+      <thead><tr><th>구분</th><th>계정</th><th>금액</th><th>통화 단위</th><th>공시</th></tr></thead>
+      <tbody>${result.rows.map(row => `<tr>
+        <td>${row.statement === 'CFS' ? '연결' : '별도'}</td><td>${escHtml(row.account)}</td>
+        <td>${escHtml(row.amount ?? '확인 불가')}</td><td>${escHtml(row.currency ?? '확인 불가')}</td>
+        <td>${/^\d{14}$/.test(row.receipt ?? '') ? `<a href="https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${row.receipt}" target="_blank" rel="noopener noreferrer">원문</a>` : '확인 불가'}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+  } catch {
+    resultArea.textContent = dartError();
+  } finally {
+    button.disabled = false;
+  }
+}
+
 function settingsGo(cat) {
   _settingsCat = cat;
+  if (cat === 'account') dartSettings('status');
+  else {
+    const dartKeyInput = document.getElementById('dartKeyInput');
+    if (dartKeyInput) dartKeyInput.value = '';
+  }
   document.querySelectorAll('#settingsNav .sb-hub__nav-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
   document.querySelectorAll('#settingsModal .sb-hub__page').forEach(p => p.classList.toggle('active', p.dataset.page === cat));
 }
@@ -12992,7 +13091,7 @@ function _renderAnalysisBody(body, stock, naverData, yf) {
 
     // rowList를 key→{연도:값} 맵으로 변환
     const getRow = (name) => rows.find(r => r.title === name);
-    const getVal = (row, key) => row?.columns?.[key]?.value || '-';
+    const getVal = (row, key) => row?.columns?.[key]?.value ?? '-';
 
     // 최신 연도(컨센서스 제외) 가져오기
     const realYears = titles.filter(t => t.isConsensus === 'N');
@@ -13008,7 +13107,7 @@ function _renderAnalysisBody(body, stock, naverData, yf) {
     const latestBPS = getVal(getRow('BPS'), latestKey);
     const latestDIV = getVal(getRow('주당배당금'), latestKey);
 
-    const numVal = (s) => parseFloat((s||'').replace(/,/g,''));
+    const numVal = (s) => parseFloat(String(s ?? '').replace(/,/g,''));
     const perN   = numVal(latestPER);
     const roeN   = numVal(latestROE);
     const deN    = numVal(latestDE);
@@ -13016,16 +13115,6 @@ function _renderAnalysisBody(body, stock, naverData, yf) {
     const perCls = (!isNaN(perN) && perN > 0 && perN < 15) ? 'good' : (!isNaN(perN) && perN > 30) ? 'warn' : '';
     const roeCls = (!isNaN(roeN) && roeN > 15) ? 'good' : (!isNaN(roeN) && roeN < 0) ? 'warn' : '';
     const deCls  = (!isNaN(deN)  && deN > 200)  ? 'warn' : '';
-
-    // 연간 실적 테이블 (매출 / 영업이익 / 당기순이익)
-    const annualTableRows = realYears.map(t => `<tr>
-      <td>${t.title}</td>
-      <td>${getVal(getRow('매출액'), t.key)}</td>
-      <td class="${numVal(getVal(getRow('영업이익'),t.key))>0?'up':'dn'}">${getVal(getRow('영업이익'), t.key)}</td>
-      <td class="${numVal(getVal(getRow('당기순이익'),t.key))>0?'up':'dn'}">${getVal(getRow('당기순이익'), t.key)}</td>
-      <td>${getVal(getRow('영업이익률'), t.key)}%</td>
-      <td>${getVal(getRow('ROE'), t.key)}%</td>
-    </tr>`).join('');
 
     // 기업 요약
     const corpSummary = corp ? `<div class="analysis-section">
@@ -13054,15 +13143,8 @@ function _renderAnalysisBody(body, stock, naverData, yf) {
       </div>
     </div>
     <div class="analysis-section">
-      <div class="analysis-section-title">📈 연간 실적 <span style="font-size:11px;color:var(--text3);font-weight:400">(억원)</span></div>
-      <div style="overflow-x:auto">
-        <table class="analysis-fin-table">
-          <thead><tr>
-            <th style="text-align:left">연도</th><th>매출액</th><th>영업이익</th><th>순이익</th><th>영업이익률</th><th>ROE</th>
-          </tr></thead>
-          <tbody>${annualTableRows}</tbody>
-        </table>
-      </div>
+      <div class="analysis-section-title">📈 연간 실적</div>
+      ${renderNaverAnnualTable(naverData, true) || '<p>재무 데이터가 없습니다.</p>'}
     </div>
     <div class="analysis-section">
       <div class="analysis-section-title">💬 AI 코멘트</div>
@@ -13129,7 +13211,7 @@ function _renderAnalysisBody(body, stock, naverData, yf) {
     </div>
   </div>`;
 
-  body.innerHTML = portSection + finSection + checklistSection;
+  body.innerHTML = portSection + renderDartAnnualSection(ticker) + finSection + checklistSection;
 }
 
 function _buildComments(yf) {
@@ -14722,6 +14804,16 @@ function wlAssignGroup(idx, gName) {
         <button type="button" class="sb-btn sb-btn--sm" onclick="closeSettings();openAccountPanel()">계좌 관리 (<span id="acctCountHub">0</span>)</button>
       </div>
 
+     <section class="settings-section">
+       <h3 class="settings-section-label">금융감독원 Open DART</h3>
+       <label class="sb-field">인증키
+         <input id="dartKeyInput" class="sb-input" type="password" autocomplete="off" maxlength="40">
+       </label>
+       <button type="button" class="sb-btn sb-btn--sm" onclick="dartSettings('save')">등록</button>
+       <button type="button" class="sb-btn sb-btn--sm" onclick="dartSettings('test')">연결 확인</button>
+       <button type="button" class="sb-btn sb-btn--sm" onclick="dartSettings('delete')">삭제</button>
+       <p id="dartKeyStatus" role="status"></p>
+     </section>
     <!-- 증권사 API 키 -->
     <div class="settings-section">
       <div class="settings-section-label">증권사 API 키</div>
