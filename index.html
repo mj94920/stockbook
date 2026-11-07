@@ -14749,6 +14749,12 @@ function wlAssignGroup(idx, gName) {
     <!-- 일반 -->
     <div class="sb-hub__page active" data-page="general">
       <div class="sb-hub__h">일반</div>
+      <section class="settings-section">
+        <h3 class="settings-section-label">AI 서비스 로그인</h3>
+        <p class="sb-hint">각 서비스의 웹 로그인 페이지가 열립니다. CLI 로그인은 터미널에서 시작하세요.</p>
+        <a class="sb-btn sb-btn--sm" href="https://chatgpt.com/auth/login" target="_blank" rel="noopener noreferrer">ChatGPT 로그인</a>
+        <a class="sb-btn sb-btn--sm" href="https://claude.ai/login" target="_blank" rel="noopener noreferrer">Claude 로그인</a>
+      </section>
       <label class="sb-hub__row" style="cursor:pointer;">
         <span>시작 시 자동 로그인<br><span class="sb-hint">API 키가 저장돼 있으면 시작 시 로그인 창을 건너뜁니다.</span></span>
         <input type="checkbox" id="settingsAutoLogin" onchange="setAutoLogin(this.checked)" style="accent-color:var(--sb-accent);width:16px;height:16px;">
