@@ -4147,7 +4147,7 @@
         <div id="rs_total" style="font-size:15px;font-weight:700;">-</div>
       </div>
       <div style="border-bottom:1px solid var(--sb-border);padding:6px 8px;text-align:right;">
-        <div style="font-size:12px;color:var(--sb-text-2);margin-bottom:4px;text-align:left;">평균 수익률</div>
+        <div style="font-size:12px;color:var(--sb-text-2);margin-bottom:4px;text-align:left;">매도 건별 평균 수익률</div>
         <div id="rs_avg" style="font-size:15px;font-weight:700;">-</div>
       </div>
     </div>
@@ -4918,6 +4918,7 @@
   </div>
 </div>
 
+<script src="src/portfolio/realized-profit.js"></script>
 <script>
 // ============================================================
 // STATE
@@ -6344,6 +6345,12 @@ function startInlineEdit(event, idx, field) {
   if (field === 'avgPrice') inp.addEventListener('input', () => formatWithComma(inp));
 }
 
+function formatRealizedRate(pnlPct, decimals = 2) {
+  if (pnlPct == null) return '확인 불가';
+  const cls = pnlPct >= 0 ? 'up' : 'dn';
+  return `<span class="${cls}">${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(decimals)}%</span>`;
+}
+
 // ── 실현손익 탭 렌더 ──
 function renderRealizedTab() {
   const yr = document.getElementById('realizedYear')?.value || 'all';
@@ -6364,17 +6371,15 @@ function renderRealizedTab() {
   });
 
   // 요약
-  const count = sells.length;
-  const total = sells.reduce((s,t) => s + (t.pnl||0), 0);
-  const avgPct = count ? sells.reduce((s,t) => s + (t.pnlPct||0), 0) / count : 0;
+  const { rows, count, knownCount, total, avgPct } = StockBookRealizedProfit.summarizeSales(sells);
   const totCls = total >= 0 ? 'up' : 'dn';
-  const avgCls = avgPct >= 0 ? 'up' : 'dn';
+  const countText = `${count}건 (수익률 확인 ${knownCount}건)`;
   const rsCount = document.getElementById('rs_count');
   const rsTotal = document.getElementById('rs_total');
   const rsAvg = document.getElementById('rs_avg');
-  if (rsCount) rsCount.textContent = count + '건';
+  if (rsCount) rsCount.textContent = countText;
   if (rsTotal) rsTotal.innerHTML = `<span class="${totCls}">${total>=0?'+':''}${Math.round(total).toLocaleString('ko-KR')}원</span>`;
-  if (rsAvg) rsAvg.innerHTML = `<span class="${avgCls}">${avgPct>=0?'+':''}${avgPct.toFixed(2)}%</span>`;
+  if (rsAvg) rsAvg.innerHTML = formatRealizedRate(avgPct);
 
   // 테이블
   const tbody = document.getElementById('realizedBody');
@@ -6382,9 +6387,8 @@ function renderRealizedTab() {
   if (!tbody) return;
   if (!sells.length) { tbody.innerHTML=''; if(empty) empty.style.display=''; return; }
   if(empty) empty.style.display='none';
-  tbody.innerHTML = sells.map(t => {
+  tbody.innerHTML = rows.map(({ trade: t, pnlPct }) => {
     const pnlCls = (t.pnl||0)>=0?'up':'dn';
-    const pctCls = (t.pnlPct||0)>=0?'up':'dn';
     return `<tr>
       <td>${t.date||'-'}</td>
       <td><strong>${t.name||'-'}</strong>${t.ticker?`<br><span style="font-size:11px;color:var(--text3)">${t.ticker}</span>`:''}</td>
@@ -6392,7 +6396,7 @@ function renderRealizedTab() {
       <td style="text-align:right">${t.price?t.price.toLocaleString('ko-KR'):'-'}</td>
       <td style="text-align:right">${t.qty?t.qty.toLocaleString('ko-KR'):'-'}</td>
       <td style="text-align:right"><span class="${pnlCls}">${t.pnl!=null?(((t.pnl>=0)?'+':'')+Math.round(t.pnl).toLocaleString('ko-KR')+'원'):'-'}</span></td>
-      <td style="text-align:right"><span class="${pctCls}">${t.pnlPct!=null?(((t.pnlPct>=0)?'+':'')+t.pnlPct.toFixed(2)+'%'):'-'}</span></td>
+      <td style="text-align:right">${formatRealizedRate(pnlPct)}</td>
       <td style="font-size:12px;color:var(--text2)">${t.note||'-'}</td>
     </tr>`;
   }).join('');
@@ -6411,29 +6415,26 @@ function renderRealizedMini() {
     if (yr !== 'all' && t.date && !t.date.startsWith(yr)) return false;
     return true;
   });
-  const count = sells.length;
-  const total = sells.reduce((s,t) => s + (t.pnl||0), 0);
-  const avgPct = count ? sells.reduce((s,t) => s + (t.pnlPct||0), 0) / count : 0;
+  const { rows, count, knownCount, total, avgPct } = StockBookRealizedProfit.summarizeSales(sells);
   const totCls = total >= 0 ? 'up' : 'dn';
-  const avgCls = avgPct >= 0 ? 'up' : 'dn';
+  const countText = `${count}건 (수익률 확인 ${knownCount}건)`;
   const el = id => document.getElementById(id);
-  if (el('rtab_rs_count')) el('rtab_rs_count').textContent = count + '건';
+  if (el('rtab_rs_count')) el('rtab_rs_count').textContent = countText;
   if (el('rtab_rs_total')) el('rtab_rs_total').innerHTML = `<span class="${totCls}">${total>=0?'+':''}${Math.round(total).toLocaleString('ko-KR')}원</span>`;
-  if (el('rtab_rs_avg'))   el('rtab_rs_avg').innerHTML   = `<span class="${avgCls}">${avgPct>=0?'+':''}${avgPct.toFixed(2)}%</span>`;
+  if (el('rtab_rs_avg'))   el('rtab_rs_avg').innerHTML   = formatRealizedRate(avgPct);
   const tbody = el('rtab_realizedBody');
   const empty = el('rtab_realizedEmpty');
   if (!tbody) return;
-  const recent = sells.slice().reverse().slice(0, 10);
+  const recent = rows.slice().reverse().slice(0, 10);
   if (!recent.length) { tbody.innerHTML=''; if(empty) empty.style.display=''; return; }
   if(empty) empty.style.display='none';
-  tbody.innerHTML = recent.map(t => {
+  tbody.innerHTML = recent.map(({ trade: t, pnlPct }) => {
     const pnlCls = (t.pnl||0)>=0?'up':'dn';
-    const pctCls = (t.pnlPct||0)>=0?'up':'dn';
     return `<tr>
       <td style="font-size:11px;white-space:nowrap">${(t.date||'-').substring(2)}</td>
       <td style="font-size:12px"><strong>${t.name||'-'}</strong></td>
       <td style="text-align:right;font-size:12px"><span class="${pnlCls}">${t.pnl!=null?(((t.pnl>=0)?'+':'')+Math.round(t.pnl/1000).toLocaleString('ko-KR')+'K'):'-'}</span></td>
-      <td style="text-align:right;font-size:12px"><span class="${pctCls}">${t.pnlPct!=null?(((t.pnlPct>=0)?'+':'')+t.pnlPct.toFixed(1)+'%'):'-'}</span></td>
+      <td style="text-align:right;font-size:12px">${formatRealizedRate(pnlPct, 1)}</td>
     </tr>`;
   }).join('');
 }
@@ -8146,7 +8147,7 @@ function submitQuickOrder() {
     if (stockIdx === -1) { alert('보유 종목을 찾을 수 없습니다.'); return; }
     const s = state.portfolio[stockIdx];
     if (qty > s.qty) { alert(`보유 수량(${s.qty})보다 많습니다.`); return; }
-    const pnl = (price - s.avgPrice) * qty;
+    const { pnl, pnlPct } = StockBookRealizedProfit.calculateSale(price, qty, s.avgPrice);
     const sellAcctId = selectedAccountId || s.accountId || '';
     // ★ 예수금 증가 (계좌에 cash가 있으면)
     if (sellAcctId) {
@@ -8157,7 +8158,7 @@ function submitQuickOrder() {
       id: Date.now(), date: today,
       name: s.name, ticker: s.ticker || '', type: 'sell',
       price, qty, totalAmt: price * qty,
-      tradeType: _qoTradeType, pnl,
+      tradeType: _qoTradeType, pnl, pnlPct,
       accountId: sellAcctId,
       memo: '빠른 주문 입력'
     });
@@ -8738,8 +8739,7 @@ function calcSellPnl() {
   const price = getNum('sell_price');
   const qty = parseInt(document.getElementById('sell_qty').value);
   if (isNaN(price) || isNaN(qty)) { document.getElementById('sellCalcPreview').innerHTML=''; return; }
-  const pnl = (price - s.avgPrice) * qty;
-  const pct = (price - s.avgPrice) / s.avgPrice * 100;
+  const { pnl, pnlPct: pct } = StockBookRealizedProfit.calculateSale(price, qty, s.avgPrice);
   const cls = pnl >= 0 ? 'return-pos' : 'return-neg';
   document.getElementById('sellCalcPreview').innerHTML =
     `매도금액: <strong>${fmt(price*qty)}</strong> | 손익: <strong class="${cls}">${pnl>=0?'+':''}${fmt(pnl)}</strong> (<span class="${cls}">${fmtPct(pct)}</span>)`;
@@ -8756,8 +8756,7 @@ function confirmSell() {
   if (isNaN(price) || isNaN(qty) || qty < 1) { alert('수량과 가격을 입력해주세요.'); return; }
   if (qty > s.qty) { alert(`보유 수량(${s.qty})을 초과할 수 없습니다.`); return; }
 
-  const pnl = (price - s.avgPrice) * qty;
-  const pct = (price - s.avgPrice) / s.avgPrice * 100;
+  const { pnl, pnlPct: pct } = StockBookRealizedProfit.calculateSale(price, qty, s.avgPrice);
 
   state.trades.push({
     date, name: s.name, ticker: s.ticker, type:'sell', price, qty,
@@ -8773,7 +8772,7 @@ function confirmSell() {
     sellJournal.investDays = sellJournal.buyDate
       ? Math.round((new Date(sellJournal.sellDate) - new Date(sellJournal.buyDate)) / (1000*60*60*24))
       : null;
-    sellJournal.returnRate = parseFloat(pct.toFixed(2));
+    sellJournal.returnRate = pct == null ? null : parseFloat(pct.toFixed(2));
     if (mental && !sellJournal.mental?.length) sellJournal.mental = [mental];
     if (note && !sellJournal.sellNote) sellJournal.sellNote = note;
     sellJournal.draft = true;
@@ -8784,7 +8783,7 @@ function confirmSell() {
       target1: s.target1||null, target2: s.target2||null, target3: s.target3||null, stop1: s.stop1||null,
       tradeType: s.tradeType || 'cash',
       buyReasons: [], buyNote: '', position: s.position,
-      sellReasons: [], sellNote: note||'', returnRate: parseFloat(pct.toFixed(2)),
+      sellReasons: [], sellNote: note||'', returnRate: pct == null ? null : parseFloat(pct.toFixed(2)),
       resultNote: '', mental: mental ? [mental] : [], lesson: '',
       draft: true,
     });
