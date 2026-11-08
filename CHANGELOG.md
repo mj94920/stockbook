@@ -2,6 +2,10 @@
 
 자동 생성 — `scripts/bump-version.mjs`
 
+## v1.16.1 — 2026-11-08
+
+- fix(chart): 종합 차트 높이 유지 및 작은 창 가독성 개선 (#105)
+
 ## v1.16.0 — 2026-11-08
 
 - feat(settings): ChatGPT·Claude 로그인 링크 추가
