@@ -1,0 +1,365 @@
+{
+  "verifiedAt": "2026-10-29T12:33:34.870Z",
+  "scope": "Production HTML with synthetic OHLCV and paged amounts over mock IPC. Not authenticated KIS, Windows or HTS parity.",
+  "before": {
+    "stockCode": "000009",
+    "sourceType": "naver-daily",
+    "count": 400,
+    "sourceCount": 400,
+    "displayed": 280,
+    "barCycle": "day",
+    "indicatorCycle": "day",
+    "viewRange": "all",
+    "periods": [
+      5,
+      10,
+      20,
+      60,
+      120,
+      200,
+      450,
+      350
+    ],
+    "cloudCount": 280,
+    "cloudPeriods": [
+      5,
+      10
+    ],
+    "cloudLast": [
+      103,
+      101.5
+    ],
+    "bbShift": 25,
+    "bbPeriod": 40,
+    "bbMultiplier": 1.9,
+    "referenceBaseCount": 400,
+    "references": [],
+    "chartType": "candle",
+    "profile": null,
+    "hiddenIndicators": [],
+    "lastAverages": [
+      {
+        "period": 5,
+        "value": 103
+      },
+      {
+        "period": 10,
+        "value": 101.5
+      },
+      {
+        "period": 20,
+        "value": 100.75
+      },
+      {
+        "period": 60,
+        "value": 100.25
+      },
+      {
+        "period": 120,
+        "value": 100.125
+      },
+      {
+        "period": 200,
+        "value": 100.175
+      },
+      {
+        "period": 450,
+        "value": null
+      },
+      {
+        "period": 350,
+        "value": 100.1
+      }
+    ],
+    "pressure": {
+      "count": 280,
+      "buy": 2,
+      "sell": 0,
+      "neutral": 278
+    },
+    "money": {
+      "history": null,
+      "source": "KIS",
+      "market": "KRX",
+      "unit": "원",
+      "known": 100,
+      "total": 400,
+      "matched": 100,
+      "mismatched": 0,
+      "received": 100,
+      "fetchedAt": "2026-10-29T00:00:00Z"
+    },
+    "investors": null,
+    "obv": null,
+    "signals": {
+      "newLowPeriod": 40,
+      "rsiPeriod": 14,
+      "rsiLevel": 30,
+      "rsiMethod": null,
+      "entryAmountUnit": "eok",
+      "newLowDates": [],
+      "oversoldDates": [],
+      "entrySmallDates": [
+        "2025-02-03"
+      ],
+      "entryBigDates": [],
+      "entryAmountReceived": 100,
+      "entryWaiting": 1
+    }
+  },
+  "partial": {
+    "stockCode": "000009",
+    "sourceType": "naver-daily",
+    "count": 400,
+    "sourceCount": 400,
+    "displayed": 280,
+    "barCycle": "day",
+    "indicatorCycle": "day",
+    "viewRange": "all",
+    "periods": [
+      5,
+      10,
+      20,
+      60,
+      120,
+      200,
+      450,
+      350
+    ],
+    "cloudCount": 280,
+    "cloudPeriods": [
+      5,
+      10
+    ],
+    "cloudLast": [
+      103,
+      101.5
+    ],
+    "bbShift": 25,
+    "bbPeriod": 40,
+    "bbMultiplier": 1.9,
+    "referenceBaseCount": 400,
+    "references": [],
+    "chartType": "candle",
+    "profile": null,
+    "hiddenIndicators": [],
+    "lastAverages": [
+      {
+        "period": 5,
+        "value": 103
+      },
+      {
+        "period": 10,
+        "value": 101.5
+      },
+      {
+        "period": 20,
+        "value": 100.75
+      },
+      {
+        "period": 60,
+        "value": 100.25
+      },
+      {
+        "period": 120,
+        "value": 100.125
+      },
+      {
+        "period": 200,
+        "value": 100.175
+      },
+      {
+        "period": 450,
+        "value": null
+      },
+      {
+        "period": 350,
+        "value": 100.1
+      }
+    ],
+    "pressure": {
+      "count": 280,
+      "buy": 2,
+      "sell": 0,
+      "neutral": 278
+    },
+    "money": {
+      "history": {
+        "status": "loading",
+        "pages": 2,
+        "maxPages": 10,
+        "target": 400,
+        "start": "2024-01-01",
+        "end": "2025-02-03",
+        "received": 200,
+        "matched": 200,
+        "missing": 200,
+        "partial": true
+      },
+      "source": "KIS",
+      "market": "KRX",
+      "unit": "원",
+      "known": 200,
+      "total": 400,
+      "matched": 200,
+      "mismatched": 0,
+      "received": 200,
+      "fetchedAt": "2026-10-29T00:00:00Z"
+    },
+    "investors": null,
+    "obv": null,
+    "signals": {
+      "newLowPeriod": 40,
+      "rsiPeriod": 14,
+      "rsiLevel": 30,
+      "rsiMethod": null,
+      "entryAmountUnit": "eok",
+      "newLowDates": [],
+      "oversoldDates": [],
+      "entrySmallDates": [
+        "2024-08-27",
+        "2025-02-03"
+      ],
+      "entryBigDates": [
+        "2024-08-27"
+      ],
+      "entryAmountReceived": 200,
+      "entryWaiting": 0
+    }
+  },
+  "complete": {
+    "stockCode": "000009",
+    "sourceType": "naver-daily",
+    "count": 400,
+    "sourceCount": 400,
+    "displayed": 280,
+    "barCycle": "day",
+    "indicatorCycle": "day",
+    "viewRange": "all",
+    "periods": [
+      5,
+      10,
+      20,
+      60,
+      120,
+      200,
+      450,
+      350
+    ],
+    "cloudCount": 280,
+    "cloudPeriods": [
+      5,
+      10
+    ],
+    "cloudLast": [
+      103,
+      101.5
+    ],
+    "bbShift": 25,
+    "bbPeriod": 40,
+    "bbMultiplier": 1.9,
+    "referenceBaseCount": 400,
+    "references": [],
+    "chartType": "candle",
+    "profile": null,
+    "hiddenIndicators": [],
+    "lastAverages": [
+      {
+        "period": 5,
+        "value": 103
+      },
+      {
+        "period": 10,
+        "value": 101.5
+      },
+      {
+        "period": 20,
+        "value": 100.75
+      },
+      {
+        "period": 60,
+        "value": 100.25
+      },
+      {
+        "period": 120,
+        "value": 100.125
+      },
+      {
+        "period": 200,
+        "value": 100.175
+      },
+      {
+        "period": 450,
+        "value": null
+      },
+      {
+        "period": 350,
+        "value": 100.1
+      }
+    ],
+    "pressure": {
+      "count": 280,
+      "buy": 2,
+      "sell": 0,
+      "neutral": 278
+    },
+    "money": {
+      "history": {
+        "status": "complete",
+        "pages": 3,
+        "maxPages": 10,
+        "target": 400,
+        "start": "2024-01-01",
+        "end": "2025-02-03",
+        "received": 400,
+        "matched": 400,
+        "missing": 0,
+        "partial": false
+      },
+      "source": "KIS",
+      "market": "KRX",
+      "unit": "원",
+      "known": 400,
+      "total": 400,
+      "matched": 400,
+      "mismatched": 0,
+      "received": 400,
+      "fetchedAt": "2026-10-29T00:00:00Z"
+    },
+    "investors": null,
+    "obv": null,
+    "signals": {
+      "newLowPeriod": 40,
+      "rsiPeriod": 14,
+      "rsiLevel": 30,
+      "rsiMethod": null,
+      "entryAmountUnit": "eok",
+      "newLowDates": [],
+      "oversoldDates": [],
+      "entrySmallDates": [
+        "2024-08-27",
+        "2025-02-03"
+      ],
+      "entryBigDates": [
+        "2024-08-27"
+      ],
+      "entryAmountReceived": 280,
+      "entryWaiting": 0
+    }
+  },
+  "requests": [
+    {
+      "start": "2024-01-01",
+      "end": "2024-10-26"
+    },
+    {
+      "start": "2024-01-01",
+      "end": "2024-07-18"
+    },
+    {
+      "start": "2024-01-01",
+      "end": "2024-04-09"
+    }
+  ],
+  "browserErrors": []
+}

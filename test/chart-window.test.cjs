@@ -25,7 +25,7 @@ test('recorded chart data is identified and never used for another stock',()=>{
  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'sb-chart-package-'));
  try{
   const staged=prepareRendererFiles(app,temp);
-  for(const file of ['src/desktop/shortcuts.js','src/chart/renderer.js','src/chart/series.js','src/chart/client.js','src/chart/chart.css','src/chart/proof-data/long-candles.json'])assert.equal(fs.existsSync(path.join(staged.directory,file)),true);
+  for(const file of ['src/desktop/shortcuts.js','src/chart/renderer.js','src/chart/series.js','src/chart/client.js','src/chart/trading-history.js','src/chart/chart.css','src/chart/proof-data/long-candles.json'])assert.equal(fs.existsSync(path.join(staged.directory,file)),true);
   const pkg=require('../package.json');assert.ok(pkg.build.files.includes('src/chart/**'));assert.ok(pkg.build.files.includes('src/desktop/renderer-files.cjs'));
  }finally{fs.rmSync(temp,{recursive:true,force:true});}
 });

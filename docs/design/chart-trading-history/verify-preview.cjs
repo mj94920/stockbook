@@ -1,0 +1,10 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict'),{chromium}=require('playwright');
+(async()=>{
+ const server=http.createServer((req,res)=>{res.setHeader('Content-Type','text/html; charset=utf-8');res.end(fs.readFileSync(path.join(__dirname,'preview.html')));});await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await chromium.launch(),page=await browser.newPage({viewport:{width:840,height:1100},hasTouch:true}),base='http://127.0.0.1:'+server.address().port,errors=[],external=[];
+ try{
+  page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(!r.url().startsWith(base))external.push(r.url());});await page.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort());await page.goto(base+'/preview.html');await page.context().setOffline(true);await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence?.money.known===100);assert.equal(await page.locator('.sb-chart-signal[data-kind="entry-big"]').count(),0);
+  await page.getByRole('button',{name:'과거 거래대금 불러오기',exact:true}).tap();await page.waitForFunction(()=>document.getElementById('chartViewport').chartEvidence.money.history?.status==='complete');assert.equal(await page.locator('#chartViewport').evaluate(h=>h.chartEvidence.money.known),400);assert.equal(await page.locator('.sb-chart-signal[data-kind="entry-big"][data-date="2024-08-27"]').count(),1);assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
+  fs.writeFileSync(path.join(__dirname,'preview-result.json'),JSON.stringify({verifiedAt:new Date().toISOString(),scope:'Standalone bundled preview, localhost initial document then offline simulated 840px touch. Synthetic prices/amounts; not native Windows/KIS.',before:100,after:400,oldBigSignalDate:'2024-08-27',externalRequests:external,errors},null,2)+'\n');
+ }finally{await browser.close();await new Promise(r=>server.close(r));}
+})().catch(error=>{console.error(error);process.exitCode=1;});

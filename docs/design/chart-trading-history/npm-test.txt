@@ -1,0 +1,151 @@
+
+> stockbook@1.13.0 test
+> npm run check && node --test test/news-article.test.cjs test/news-page.test.cjs test/chart-window.test.cjs test/chart-series.test.cjs test/chart-provider.test.cjs test/chart-trading-value.test.cjs test/chart-investors.test.cjs test/news-reader.browser.test.cjs test/chart-interaction.browser.test.cjs && npm run smoke
+
+
+> stockbook@1.13.0 check
+> node scripts/check-syntax.mjs
+
+✓ main.js
+✓ preload.js
+✓ index.html#script1 (line 4921)
+✓ index.html#script2 (line 14861)
+✓ index.html#script3 (line 14868)
+✓ package.json
+
+모든 정적 검사 통과
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1
+npm notice To update run: npm install -g npm@12.2.1
+npm notice
+✔ detail controls, indicator settings, annual defaults and monthly bar geometry remain correct on resize (1586.010285ms)
+✔ crosshair OHLC, pan/zoom/scroll and drawing tools work with data anchors and latest edge retained (1863.890869ms)
+✔ tablet touch can draw a horizontal line and pinch zoom without losing the latest candle (874.763403ms)
+✔ range and day/week/month switches reuse received history; failed same-view retry restores indicator settings (1482.881007ms)
+✔ renderer stops waiting for stuck IPC, retries without restart and ignores the late response (512.785468ms)
+✔ embedded chart exposes crosshair labels, persistent bar data and foldable drawing tools (1457.145062ms)
+✔ Space repeatedly zooms out during a held drag, retains the drag baseline and ignores typing (592.621896ms)
+✔ Delete removes the selected indicator or drawing, protects editing and restores indicators; Escape closes one detail panel (1244.589083ms)
+✔ Escape closes the top native/custom modal or drawer once, including focused inputs, before the main panel (754.898702ms)
+✔ individual indicator switches remain available after Delete and reopening; object cursors show grab and grabbing (891.546694ms)
+✔ four chart types preserve OHLC and data anchors, use volume widths and label the estimated daily price profile (999.936123ms)
+✔ chart reset restores current-cycle defaults and saved display preferences without deleting drawings or other data (1230.11917ms)
+✔ hollow bodies are empty for both directions and scrolling stays separate from drag/scale zoom in every chart type (3601.934893ms)
+✔ indicator heights drag independently, resize proportionally, persist and reset without changing data (1081.721776ms)
+✔ workspace split keeps per-tab proportions, clamps small windows and compact indicator split preserves candle alignment (1726.078667ms)
+✔ touch drags the price-height separator without zooming or panning candles (488.364368ms)
+✔ default lower pane takes thirty percent and expanded bars keep text size, bounds and time anchors (859.949677ms)
+✔ trading values load after price, show exact threshold colors with volume heights, and preserve anchors through edit/resize (892.474187ms)
+✔ late or failed trading-value requests never replace another stock or block price retry (723.710608ms)
+✔ compact money stays in its own row, preserves price-volume split, resizes and restores without changing zoom (890.419971ms)
+✔ detail stock search supports tablet choice and keyboard code entry, keeps view/settings, and pins independently of main (1604.313274ms)
+✔ detail search ignores old results, waits for composition, and keeps the chart on lookup or selection failure (1600.8169ms)
+✔ three investor series load after price with reported daily quantities, optional received-only sums and editable height (914.651175ms)
+✔ late, missing or wrong-stock investor data cannot leak into current stock and manual retry restores the actual three groups (716.898565ms)
+✔ compact investors have a separate daily axis with three labeled colors and retain room beside money in small windows (860.74241ms)
+✔ public investor fallback remains explicitly Naver-provided and displays its reported dates and all three groups (539.178796ms)
+✔ OBV follows candle dates through zoom/pan, exposes values, resizes, restores and persists signal settings per cycle (888.337496ms)
+✔ configured new-low and RSI crossdown markers follow candle dates, hide/restore and reset with confirmed 40/14/30 defaults and unselected RSI smoothing (1123.703339ms)
+✔ each cycle exposes its own indicator catalog and settings, and only daily views request money and investor data (1710.093658ms)
+✔ compact weekly OBV replaces pressure with an editable split; annual lower pane uses ordinary volume only (768.232511ms)
+✔ entry tiers use fixed hundred-million units and wait for matched money, prefer big markers, preserve edits and restore independently (1482.047939ms)
+✔ signal shapes retain pixel geometry, contrast and candle anchors through aspect changes, themes and price-height drags (1035.078963ms)
+✔ manual history preserves price interaction, updates old daily entry signals by page and reuses completed history (1006.942974ms)
+✔ history cancellation and stock changes stop subsequent pages and ignore late responses (818.830941ms)
+✔ a later history page failure retains successful older amounts and signals without reporting complete (686.199502ms)
+✔ compact history controls stay in chart tools and share a pending job while cancellation only detaches that view (995.751023ms)
+✔ view-range changes preserve received partial history, pause further pages and reject the old in-flight result (793.365775ms)
+✔ investor quantities retain three reported signed groups and gaps, never infer personal buying or holdings (6.647021ms)
+✔ investor parser rejects missing groups, response failure, contradictory code, bad dates, duplicates and unsafe prefixes (0.435676ms)
+✔ investor provider uses one fixed daily investor request, shares cache, and releases aborted or unauthenticated reads (19.177375ms)
+✔ investor IPC only accepts valid domestic codes from app and known chart main frames (1.670093ms)
+✔ unpublished investor quantities omit the whole date without inventing zero and retain valid history (0.233461ms)
+✔ Naver fallback validates each code and three reported groups, declares a distinct source and never sends KIS credentials (0.882578ms)
+✔ public fallback deadline aborts and errors preserve a safe KIS failure code without a successful cache (31.213295ms)
+✔ daily provider retains requested stock and OHLCV, and never attaches Samsung investor data (2.33985ms)
+✔ daily provider restricts destinations and codes, shares pending fetch, expires cache and retries failures (0.900484ms)
+✔ only the app main frame and known chart window can invoke daily data IPC (0.527944ms)
+✔ catalog and held instruments can be selected without registration, and unstar keeps current instrument (0.236606ms)
+✔ annual data requests use a separate bounded 3000-day history and leave day cache independent (0.508115ms)
+✔ integer-price one-won source bound contradictions are normalized and counted, larger errors still fail (0.19298ms)
+✔ chart total deadline aborts a stalled request, frees its pending cache and allows retry (21.521822ms)
+✔ production HTTPS helper forwards chart cancellation and handles aborted response errors (1.891396ms)
+✔ detail search reuses one catalog, ranks exact names, accepts direct codes without catalog and bounds responses (37.024578ms)
+✔ KRX trading dates group by Monday weeks across years and holidays without zero-filled sessions (4.049032ms)
+✔ month aggregation uses calendar months and sums received volume, including leap day (0.148654ms)
+✔ weekly SMA uses weekly closes with full prehistory and excludes the uncertain first aggregated bucket (0.171668ms)
+✔ invalid OHLCV, duplicate or unordered dates and unsupported cycles are rejected (0.242395ms)
+✔ approved cycle settings keep weekly 1/4 clouds separate from MA 4/12 and leave monthly Fibonacci pending (0.08649ms)
+✔ view range, bar cycle and indicator cycle validate separately while legacy period remains compatible (14.490543ms)
+✔ year bars use calendar years and native close SMA 1/5/10 with insufficient history kept missing (0.524789ms)
+✔ volume candle layout changes widths without losing bar/date hit mapping or reserved future slots (0.321254ms)
+✔ estimated price profile distributes daily volume by range overlap and conserves volume including flat-price days (0.318559ms)
+✔ OBV starts at zero, signs current volume by prior close, preserves ties and seeds SMA/EMA after full periods (1.764725ms)
+✔ OBV rejects missing/unsafe quantities, duplicate dates and invalid settings rather than manufacturing values (0.230216ms)
+✔ new lows require N prior closes, exclude the current candle, and use strict less-than even on equal lows (0.588456ms)
+✔ RSI uses N changes, explicit simple/Wilder smoothing and handles flat/rising/falling prices without false warmup values (1.838776ms)
+✔ Crossdown only fires when moving from at-or-above to strictly below the level, never throughout an oversold run (0.247323ms)
+✔ cycle-specific additions never leak daily signals into week/month/year or weekly OBV settings into other cycles (0.154713ms)
+✔ entry price formula waits for 226 closes and supports high crossing BB or opening above BB without older extra filters (13.304778ms)
+✔ entry needs every logical group and samples cloud lines 25 bars back without future leakage (12.300798ms)
+✔ entry tiers enforce exact volume, confirmed hundred-million-won thresholds, bullish/rise filters and the prior three 226-day averages (48.283209ms)
+✔ actual KIS amounts retain integer won and date, reject other stocks, malformed days and unsafe amounts (6.922907ms)
+✔ KIS requests fixed one-page daily KRX endpoint, shares pending reads and caps cache time (0.855297ms)
+✔ missing KIS auth makes no price call; deadlines release cache, abort and allow retry without exposing errors (21.060749ms)
+✔ money joins require equal date/volume and aggregate only full groups; never modifies OHLCV (0.981367ms)
+✔ only app and chart main frames can request integer domestic trading values through IPC (1.478925ms)
+✔ history ranges keep fixed KRX endpoint, validate before auth, cache each range separately and accept explicit empty pages (0.426211ms)
+✔ history uses cached latest rows, moves the end date backwards, joins multiple pages and retains source amounts (8.152416ms)
+✔ history stops at caps, empty ranges, repeated/wrong responses and preserves prior rows as partial (14.877275ms)
+✔ history cancellation and deadline finish promptly without applying late pages or inventing missing rows (28.802097ms)
+✔ queued history page timeout cancels its delay and never sends a late API request (81.438535ms)
+✔ history caps its target at 1000 received price dates and reaches that target with nine extra full pages (12.818387ms)
+✔ validates stock and supported period (1.20961ms)
+✔ detail window follows selection, pins context, resumes latest and rejects other senders (0.515876ms)
+✔ recorded chart data is identified and never used for another stock (5.631744ms)
+✔ late load failure from a closed window does not close its replacement (0.303837ms)
+✔ detail view changes pin its cycle and range; only the known child may change it, and follow restores latest (0.286521ms)
+✔ detail-only search selects canonical stock, preserves view, pins only detail and rejects stale or foreign selections (0.419982ms)
+✔ only canonical HTTPS article URLs can be requested (0.858753ms)
+✔ Bloter URLs are limited to canonical public article paths and a single numeric id (0.242635ms)
+✔ observed Bloter structure keeps date labels without inventing a year and extracts text only (2.207431ms)
+✔ Bloter IPC uses a fixed list URL, retains article metadata and rejects unsupported stock queries (1.238574ms)
+✔ extracts article text with paragraph boundaries, entities and no executable markup (0.194623ms)
+✔ legacy nested div body is complete and missing/paywall bodies fail instead of inventing content (0.40551ms)
+✔ received market and stock payloads retain publisher, summary, canonical URL and KST seconds (0.470629ms)
+✔ news IPC checks sender and stock code before network; only fixed provider routes are fetched (1.26607ms)
+✔ native news URL and bounds reject local destinations, credentials, protocols and invalid zoomed rectangles (3.968361ms)
+✔ original destination is derived in main from a canonical provider article, even without text body (1.05037ms)
+✔ native article view has no app preload, blocks remote IPC, local resources, popups, permissions and downloads (1.039904ms)
+✔ hide during publisher resolution and loading is retained; stale bounds cannot expose another article (2.672621ms)
+✔ new selection and close cancel late resolution; load failure and renderer crash release native contents (0.650879ms)
+✔ reader renders safe text, keeps source link and discards stale article; chart controls keep context (1795.514267ms)
+✔ original-page controls keep the native view in the reader and hide it for overlays, tabs and failed loads (846.610801ms)
+✔ unregistered catalog, header search and holding selections drive chart data without changing watchlist (1580.971233ms)
+✔ stock news prioritizes current and searched instruments over holdings, retains explicit scope and rejects stale results (805.882576ms)
+ℹ tests 105
+ℹ suites 0
+ℹ pass 105
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 41482.47176
+
+> stockbook@1.13.0 smoke
+> node scripts/smoke.mjs
+
+✓ /index.html  (본문 967자, 초기화 오류 없음)
+
+스모크 테스트 통과
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1
+npm notice To update run: npm install -g npm@12.2.1
+npm notice
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1
+npm notice To update run: npm install -g npm@12.2.1
+npm notice
