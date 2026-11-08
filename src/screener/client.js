@@ -46,7 +46,7 @@
    id.onchange=render;row.dataset.conditionKey=key;row.append(el('strong',key),field('지표',id),field('판정',op),params,field('조건 주기',leafCycle),field('조건 기준',leafMode),field('봉전',barsAgo),field('기간 판정',windowKind),remove,windowBox,moneyNote);rules.append(row);editors.push(editor);render();
   }
   add();const actions=el('div',undefined,'sb-screen-actions'),run=button('검색 실행',scan),stop=button('검색 중단',cancel);stop.disabled=true;actions.append(button('조건 추가',()=>add()),run,stop,button('거래대금 조건 추가',()=>add('turnover')));dialog.append(actions);
-  const pending=el('details');pending.append(el('summary','계산식 확정이 필요한 지표'));for(const item of engine.pending)pending.append(el('p',item.label+' · '+item.reason));dialog.append(pending);
+  const pending=el('details');pending.append(el('summary','조건검색 미지원 지표'));for(const item of engine.pending)pending.append(el('p',item.label+' · '+(item.id==='di'?'마켓레이더에서 Wilder 14기간 신호를 확인할 수 있습니다.':item.reason)));dialog.append(pending);
   const status=el('p','실행 전 · 최신 자료 여부와 거래일은 결과에서 확인하세요.','sb-screen-note');status.setAttribute('role','status');dialog.append(status);
   const resultFilter=select('결과 표시',[['match','충족 종목만'],['all','전체 검사 결과'],['unknown','판정 불가만']]);dialog.append(field('결과 표시',resultFilter));
   const output=el('div',undefined,'sb-screen-results');dialog.append(output);resultFilter.onchange=()=>{for(const item of output.children)item.hidden=resultFilter.value!=='all'&&item.dataset.state!==resultFilter.value;};

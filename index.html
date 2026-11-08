@@ -3269,6 +3269,9 @@
   .sb-detail-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--sb-border-weak); display: flex; justify-content: space-between; gap: 14px; align-items: center; }
   .sb-detail-identity { display: flex; gap: 9px; align-items: baseline; flex-wrap: wrap; }
   .sb-market-radar { height: auto; min-height: var(--sb-control-h-sm); padding-inline: var(--sb-space-2); color: var(--sb-accent); }
+  .sb-radar-dialog { margin: auto; padding: 0; }
+  .sb-radar-dialog::backdrop { background: var(--sb-overlay); }
+  .sb-radar-dialog .sb-hint { margin: 0; }
   .dock-ctx__name { font-size: 22px; letter-spacing: -.6px; }
   .dock-ctx__code { font-size: 12px; }
   .sb-detail-price { display: flex; align-items: baseline; gap: 12px; margin-top: 8px; }
@@ -4544,7 +4547,7 @@
       <div class="dock-ctx__empty" id="dockCtxEmpty">종목을 선택하면 시세·보유 현황이 여기에 표시됩니다.</div>
       <div class="dock-ctx__body" id="dockCtxBody" style="display:none">
         <div class="sb-detail-head"><div>
-          <div class="sb-detail-identity"><strong class="dock-ctx__name" id="dockCtxName">--</strong><span class="dock-ctx__code" id="dockCtxCode">--</span><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm sb-market-radar" id="sbMarketRadar" aria-haspopup="dialog" onclick="window.StockBookScreen?.open()">마켓레이더</button></div>
+          <div class="sb-detail-identity"><strong class="dock-ctx__name" id="dockCtxName">--</strong><span class="dock-ctx__code" id="dockCtxCode">--</span><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm sb-market-radar" id="sbMarketRadar" aria-haspopup="dialog" aria-controls="sbMarketRadarDialog" onclick="sbOpenMarketRadar()">마켓레이더</button></div>
           <div class="sb-detail-price"><strong class="dock-ctx__price" id="dockCtxPrice">--</strong><span class="dock-ctx__chg" id="dockCtxChg">--</span></div>
           <div class="dock-ctx__none" id="dockCtxStatus" role="status"></div>
         </div><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('chart')">기업 정보 ↗</button></div>
@@ -4587,7 +4590,7 @@
             <div class="mj-checklist" id="sbAiPrinciplesList"></div>
           </div>
         </details>
-        <strong id="sbAiResultHeading">분석 데이터 없음</strong><p id="sbAiResultDescription">선택 종목의 보고서가 없습니다.</p><details id="sbAiCheck"><summary>분석 상태·근거 확인</summary><p>분석 결과: <span id="sbAiResultState">없음</span><br>생성 시각: <span id="sbAiResultTime">--</span><br>출처: <span id="sbAiResultSource">연결되지 않음</span></p><p id="sbAiSignalStatus">차트 판정 · 종목 선택 대기</p><div id="sbAiScreeningEvidence"></div><button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('chart')">기업 정보 보기 ↗</button></details></section>
+        <strong id="sbAiResultHeading">분석 데이터 없음</strong><p id="sbAiResultDescription">선택 종목의 보고서가 없습니다.</p><details id="sbAiCheck"><summary>분석 상태·근거 확인</summary><p>분석 결과: <span id="sbAiResultState">없음</span><br>생성 시각: <span id="sbAiResultTime">--</span><br>출처: <span id="sbAiResultSource">연결되지 않음</span></p><p id="sbAiSignalStatus">차트 판정 · 종목 선택 대기</p><div id="sbAiRadarEvidence"></div><div id="sbAiScreeningEvidence"></div><button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('chart')">기업 정보 보기 ↗</button></details></section>
     </aside>
 </div><!-- /mdi-workspace -->
 </div><!-- /mdi-content -->
@@ -12457,11 +12460,45 @@ function sbChartContext() {
   const barCycle=document.getElementById('sbChartCycle')?.value||'day';
   return stock ? {code:stock.ticker,name:stock.name||stock.ticker,period:viewRange,viewRange,barCycle,indicatorCycle:barCycle} : null;
 }
+let sbRadarReading = null;
+let sbRadarStock = null;
+function sbRefreshMarketRadar(context, chart) {
+  const current = context && chart?.stockCode === context.code && chart.barCycle === context.barCycle &&
+    chart.viewRange === context.viewRange;
+  const host = document.getElementById('sbEmbeddedChart');
+  const daily = current ? window.StockBookCharts?.controller(host)?.getDailyData?.() : null;
+  const reading = window.StockBookMarketRadar?.read(daily, context?.viewRange) || null;
+  const find = id => document.getElementById(id);
+  const describe = signal => signal?.state === 'crossed' ? '최근 상향돌파 · ' + signal.point.date
+    : signal?.state === 'absent' ? '상향돌파 없음 · ' + signal.evaluated + '개 봉 판정' : '판정 근거 부족';
+  const labels = [
+    ['sbMarketRadarStock', context?.name || '종목 선택'],
+    ['sbMarketRadarBasis', reading ? `완료 일봉 · ${reading.start} ~ ${reading.end}` : '완료 일봉 자료 대기'],
+    ['sbMarketRadarGolden', describe(reading?.golden)],
+    ['sbMarketRadarDi', describe(reading?.di)],
+  ];
+  for (const [id, value] of labels) {
+    const element = find(id);
+    if (element && element.textContent !== value) element.textContent = value;
+  }
+  if (reading !== sbRadarReading) {
+    const target = find('sbAiRadarEvidence');
+    if (target) target.innerHTML = window.StockBookAiReportData?.radarMarkup(reading) || '';
+  }
+  sbRadarReading = reading;
+  sbRadarStock = context?.code || null;
+}
+function sbOpenMarketRadar() {
+  const dialog = document.getElementById('sbMarketRadarDialog');
+  sbRefreshAiSignalEvidence();
+  if (dialog && !dialog.open) dialog.showModal();
+}
 function sbRefreshAiSignalEvidence() {
   const status = document.getElementById('sbAiSignalStatus');
   const context = sbChartContext();
-  if (!status) return;
   const chart = document.getElementById('sbEmbeddedChart')?.chartEvidence;
+  sbRefreshMarketRadar(context, chart);
+  if (!status) return;
   let text = '차트 판정 · 종목 선택 대기';
   if (context) {
     const current = chart?.stockCode === context.code && chart.barCycle === context.barCycle &&
@@ -14937,12 +14974,28 @@ function wlAssignGroup(idx, gName) {
     </div>
   </div>
 </aside>
+<dialog class="sb-modal sb-modal--s sb-radar-dialog" id="sbMarketRadarDialog" aria-labelledby="sbMarketRadarTitle">
+  <div class="sb-modal__head">
+    <span id="sbMarketRadarTitle">마켓레이더</span>
+    <button type="button" class="sb-btn sb-btn--ghost sb-btn--sm sb-modal__close" onclick="this.closest('dialog')?.close()" aria-label="마켓레이더 닫기">✕</button>
+  </div>
+  <div class="sb-modal__body">
+    <strong id="sbMarketRadarStock">종목 선택</strong>
+    <p id="sbMarketRadarBasis" class="sb-hint">완료 일봉을 기다리는 중입니다.</p>
+    <div class="sb-modal__info"><strong>5·10일 골든크로스</strong><div id="sbMarketRadarGolden">판정 대기</div></div>
+    <div class="sb-modal__info"><strong>DI 상향돌파</strong><div class="sb-hint">Wilder 14기간 · +DI / −DI</div><div id="sbMarketRadarDi">판정 대기</div></div>
+  </div>
+  <div class="sb-modal__foot">
+    <button type="button" class="sb-btn sb-btn--sm" onclick="this.closest('dialog')?.close();sbShowAiEvidence()">AI 분석 근거 보기</button>
+  </div>
+</dialog>
 <script src="src/analysis/report-data.js"></script>
 <script src="src/desktop/stock-selection.js"></script>
 <script src="src/news/page-client.js"></script>
 <script src="src/desktop/shortcuts.js"></script>
 <script>StockBookShortcuts.mount(SB_MODAL_CLOSERS);</script>
 <script src="src/chart/series.js"></script>
+<script src="src/chart/market-radar.js"></script>
 <script src="src/chart/renderer.js"></script>
 <script src="src/chart/interaction.js"></script>
 <script src="src/chart/resize.js"></script>
@@ -14956,6 +15009,7 @@ function wlAssignGroup(idx, gName) {
   sbAiReportPanel = window.StockBookAiReport?.mount(document.getElementById('sbAiReport'), {
     getSelection: sbSelectedStock, getContext: sbChartContext,
     getChecks: key => state.analysisChecks?.[key], getScreening: code => sbScreeningEvidence?.code === code ? sbScreeningEvidence : null,
+    getRadar: code => sbRadarStock === code ? sbRadarReading : null,
     getDisclosure: (code, year) => window.electronAPI?.fetchDartAnnual?.(code, year), api: window.electronAPI?.aiReport,
   });
   sbAiReportPanel?.select(sbSelectedStock());

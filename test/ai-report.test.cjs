@@ -167,7 +167,13 @@ test('narrow AI panel previews, requires a fresh snapshot, shows and saves a rep
       const all = Array.from({ length: 133 }, (_, i) => ({
         date: new Date(Date.UTC(2026, 10, 5 - (133 - i))).toISOString().slice(0, 10), close: 90 + i,
       })).concat(packet.rows);
+      const candles = Array.from({ length: 16 }, (_, i) => {
+        const close = i === 15 ? 105 : 100;
+        return { date: new Date(Date.UTC(2026, 9, 22 + i)).toISOString().slice(0, 10),
+          open: close, high: close + 1, low: close - 1, close, volume: 100 };
+      });
       window.StockBookCharts = { ...window.StockBookCharts, show: async () => {}, controller: () => ({
+        getDailyData: () => ({ candles, lastBarComplete: true }),
         getModel: () => ({ stockCode: packet.code, all, rows: packet.rows, fetchedAt: packet.fetchedAt, signals: [{ entry: true }, { entry: null }],
           investorRows: [{ date: '2026-11-05', foreign: 10, institution: -2, individual: -8 },
             { date: '2026-11-06', foreign: -2, institution: 5, individual: -3 }] }),
@@ -182,9 +188,13 @@ test('narrow AI panel previews, requires a fresh snapshot, shows and saves a rep
     });
     const radar = page.locator('.sb-detail-identity').getByRole('button', { name: '마켓레이더' });
     await radar.click();
-    const screener = page.getByRole('dialog', { name: '지표 조건검색' });
-    await screener.waitFor();
-    await screener.getByRole('button', { name: '닫기' }).click();
+    const radarDialog = page.getByRole('dialog', { name: '마켓레이더', exact: true });
+    await radarDialog.waitFor();
+    assert.match(await radarDialog.locator('#sbMarketRadarGolden').innerText(), /최근 상향돌파 · 2026-11-06/);
+    assert.match(await radarDialog.locator('#sbMarketRadarDi').innerText(), /최근 상향돌파 · 2026-11-06/);
+    assert.equal(await page.getByRole('dialog', { name: '지표 조건검색' }).isVisible(), false);
+    await radarDialog.getByRole('button', { name: 'AI 분석 근거 보기' }).click();
+    assert.match(await page.locator('#sbAiRadarEvidence').innerText(), /Wilder 14.*상향돌파/);
     await page.evaluate(() => window.dispatchEvent(new CustomEvent('stockbook:screening-evidence', { detail: window.screeningFixture })));
     assert.equal(await page.locator('#sbAnalysis .sb-analysis-section').count(), 1);
     assert.equal(await page.locator('#sbSignalCheck').count(), 0);
@@ -203,6 +213,7 @@ test('narrow AI panel previews, requires a fresh snapshot, shows and saves a rep
     assert.equal(previewed.chart.trend.length, 60);
     assert.equal(previewed.chart.averages.find(row => row.period === 300).latest, null);
     assert.equal(previewed.screening.results[0].reference, 10);
+    assert.equal(previewed.radar.di.point.date, '2026-11-06');
     assert.deepEqual(previewed.investorHistory.totals, { foreign: 8, institution: 3, individual: -11 });
     assert.equal(previewed.disclosure.rows[0].amount, '1,000');
     await page.evaluate(() => { state.analysisChecks['합성 종목'].ma20 = false; });

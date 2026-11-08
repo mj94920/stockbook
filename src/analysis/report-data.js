@@ -70,6 +70,24 @@
   }
 
   const averagePeriods = [5, 10, 20, 60, 120, 200, 300];
+  function normalizeRadar(input) {
+    if (!validDate(input?.start) || !validDate(input.end) || input.start > input.end) return null;
+    function signal(item) {
+      const point = item?.point;
+      if (!['crossed', 'absent', 'unknown'].includes(item?.state) || !Number.isSafeInteger(item.evaluated) || item.evaluated < 0) return null;
+      if (item.state === 'unknown') return { state: 'unknown', evaluated: 0, point: null };
+      if (!item.evaluated || !validDate(point?.date) || !validDate(point.previousDate) ||
+          point.date < input.start || point.date > input.end || point.previousDate >= point.date ||
+          ![point.value, point.reference, point.previousValue, point.previousReference].every(Number.isFinite)) return null;
+      const crossed = point.previousValue <= point.previousReference && point.value > point.reference;
+      if (crossed !== (item.state === 'crossed')) return null;
+      const { date, previousDate, value, reference, previousValue, previousReference } = point;
+      return { state: item.state, evaluated: item.evaluated, point: { date, previousDate, value, reference, previousValue, previousReference } };
+    }
+    const golden = signal(input.golden), di = signal(input.di);
+    return golden && di ? { start: input.start, end: input.end, golden, di } : null;
+  }
+
   function normalizeChartEvidence(input) {
     if (!validDate(input?.start) || !validDate(input.end) || input.start > input.end ||
         !Number.isInteger(input.count) || input.count < 2 ||
@@ -143,7 +161,7 @@
       fetchedAt: timestamp(input.fetchedAt), rows, checks, investorFlow, chart: normalizeChartEvidence(input.chart),
       screening: screening?.code === input.code ? screening : null,
       investorHistory: input.cycle === 'day' ? normalizeInvestorHistory(input.investorHistory) : null,
-      disclosure: normalizeDisclosure(input.disclosure, input.code) };
+      disclosure: normalizeDisclosure(input.disclosure, input.code), radar: normalizeRadar(input.radar) };
   }
 
   const schema = {
@@ -167,7 +185,9 @@
         !Array.isArray(result.findings) || result.findings.length < 1 || result.findings.length > 8 ||
         !Array.isArray(result.limitations) || result.limitations.length > 8 ||
         !result.limitations.every(value => validText(value, 600))) return null;
-    const dates = new Set([...packet.rows.map(row => row.date), packet.chart?.start, packet.chart?.end,
+    const radarDates = packet.radar ? [packet.radar.golden.point, packet.radar.di.point]
+      .flatMap(point => [point?.date, point?.previousDate]) : [];
+    const dates = new Set([...packet.rows.map(row => row.date), ...radarDates, packet.chart?.start, packet.chart?.end,
       packet.chart?.previousDate, ...(packet.chart?.trend.map(row => row.date) || []),
       ...(packet.screening?.results.map(row => row.date) || []), packet.investorHistory?.start, packet.investorHistory?.end,
       ...(packet.investorHistory?.rows.map(row => row.date) || [])].filter(Boolean));
@@ -214,6 +234,22 @@
         </table></div></details>` : ''}`;
   }
 
+  function radarMarkup(input) {
+    if (!input) return '';
+    const indicators = [
+      [input.golden, '5·10일 골든크로스', '5일선 / 10일선'],
+      [input.di, 'DI 상향돌파 · Wilder 14', '+DI / −DI'],
+    ];
+    return `<h4>마켓레이더 신호 근거</h4><p>완료 일봉 · ${input.start} ~ ${input.end}</p><ul>
+      ${indicators.map(([signal, label, values]) => {
+        const point = signal.point;
+        const state = signal.state === 'crossed' ? '상향돌파' : signal.state === 'absent' ? '상향돌파 없음' : '판정 근거 부족';
+        return `<li><strong>${label} · ${state}</strong>
+          ${point ? `<br>${point.previousDate} ${number(point.previousValue)} / ${number(point.previousReference)}
+          → ${point.date} ${number(point.value)} / ${number(point.reference)} (${values} · ${signal.evaluated}개 봉 판정)` : ''}</li>`;
+      }).join('')}</ul>`;
+  }
+
   function investorMarkup(history) {
     if (!history) return '';
     const { source, count, start, end, totals, rows } = history;
@@ -252,7 +288,7 @@
     return `
       <h4>종목 ${code} 보고서</h4><p>Codex CLI · ${time(createdAt)}</p>
       <p>${sources[packet.sourceType]} · 상세 표본 ${cycles[packet.cycle]} ${rows.length}개 · ${rows[0].date} ~ ${rows.at(-1).date}<br>원자료 조회 ${time(packet.fetchedAt)}</p>
-      ${screeningMarkup(packet.screening)}${chartEvidenceMarkup(packet.chart)}
+      ${radarMarkup(packet.radar)}${screeningMarkup(packet.screening)}${chartEvidenceMarkup(packet.chart)}
       <h4>요약</h4><p>${escape(result.summary)}</p>
       <h4>근거</h4><ul>${result.findings.map(item => `<li>${escape(item.text)} <small>(${item.dates.join(', ')})</small></li>`).join('')}</ul>
       <h4>${fullTrend ? '선택 범위 종가 흐름' : '상세 표본 종가 흐름'}</h4>
@@ -279,5 +315,5 @@
       .sb-ai-table-scroll{overflow:auto}table{border-collapse:collapse}td,th{border:1px solid;padding:.25rem .5rem;white-space:nowrap}
     </style><h1>StockBook AI 보고서</h1>${reportMarkup(report)}</html>`;
   }
-  return Object.freeze({ principles, maxRows, averagePeriods, validCode, normalizePacket, normalizeReport, normalizeScreening, screeningMarkup, schema, reportMarkup, exportHtml, formatTime: time });
+  return Object.freeze({ principles, maxRows, averagePeriods, validCode, normalizePacket, normalizeReport, normalizeScreening, screeningMarkup, normalizeRadar, radarMarkup, schema, reportMarkup, exportHtml, formatTime: time });
 });

@@ -6,7 +6,27 @@ const {barLayout,volumeProfile}=require('../src/chart/series.js');
 const {obvSeries}=require('../src/chart/series.js');
 const {newLowSignals,rsiSeries,crossdown}=require('../src/chart/series.js');
 const {entrySignalSeries}=require('../src/chart/series.js');
+const marketRadar=require('../src/chart/market-radar.js');
 const bar=(date,open,high,low,close,volume)=>({date,open,high,low,close,volume});
+test('Wilder 14 DI starts after 14 changes and handles ties and zero range',()=>{
+ const candles=Array.from({length:16},(_,i)=>bar(new Date(Date.UTC(2026,0,1+i)).toISOString().slice(0,10),100+i,101+i,99+i,100+i,100));
+ const di=marketRadar.directionalIndicators(candles);
+ assert.deepEqual(di.plus.slice(0,14),Array(14).fill(null));
+ assert.equal(di.plus[14],50);assert.equal(di.plus[15],50);assert.equal(di.minus[15],0);
+ const flat=marketRadar.directionalIndicators(candles.map(row=>({...row,high:100,low:100,close:100})));
+ assert.equal(flat.plus[15],null);assert.equal(flat.minus[15],null);
+});
+test('radar reports the 5/10 and DI cross from equality on a complete daily bar',()=>{
+ const candles=Array.from({length:16},(_,i)=>{const close=i===15?105:100;return bar(new Date(Date.UTC(2026,0,1+i)).toISOString().slice(0,10),close,close+1,close-1,close,100);});
+ const finished=marketRadar.read({candles,lastBarComplete:true},'all');
+ assert.equal(finished.golden.point.date,'2026-01-16');assert.equal(finished.golden.state,'crossed');
+ assert.equal(finished.golden.point.previousValue,finished.golden.point.previousReference);
+ assert.equal(finished.di.point.date,'2026-01-16');assert.equal(finished.di.state,'crossed');
+ assert.equal(finished.di.point.previousValue,0);assert.equal(finished.di.point.previousReference,0);
+ const provisional=marketRadar.read({candles,lastBarComplete:false},'all');
+ assert.equal(provisional.end,'2026-01-15');
+ assert.equal(provisional.golden.state,'absent');assert.equal(provisional.di.state,'unknown');
+});
 test('KRX trading dates group by Monday weeks across years and holidays without zero-filled sessions',()=>{
  const input=[bar('2023-12-28',10,14,8,12,100),bar('2023-12-29',12,15,11,14,200),bar('2024-01-02',20,30,18,25,300),bar('2024-01-05',25,28,17,19,400),bar('2024-01-08',19,21,16,20,500)];
  const rows=aggregate(input,'week');assert.equal(rows.length,3);

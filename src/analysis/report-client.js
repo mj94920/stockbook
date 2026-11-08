@@ -8,7 +8,7 @@
     failed: 'Codex CLI 로그인 상태를 확인하지 못했습니다.',
   };
 
-  function mount(panel, { getSelection, getContext, getChecks, getScreening, getDisclosure, api }) {
+  function mount(panel, { getSelection, getContext, getChecks, getScreening, getRadar, getDisclosure, api }) {
     if (!panel) return null;
     const find = id => document.getElementById(id);
     const host = find('sbEmbeddedChart'), notice = find('sbAiReportNotice');
@@ -62,7 +62,8 @@
       } : null;
       return data.normalizePacket({
         code: context.code, cycle: context.barCycle, range: context.viewRange, sourceType: evidence.sourceType,
-        fetchedAt: model.fetchedAt, checks, rows, chart, screening: getScreening?.(context.code), disclosure, investorHistory,
+        fetchedAt: model.fetchedAt, checks, rows, chart, screening: getScreening?.(context.code),
+        radar: getRadar?.(context.code), disclosure, investorHistory,
         investorFlow: flow && { source: flow.source, date: flow.dates?.at(-1), ...flow.lastDaily },
       });
     }

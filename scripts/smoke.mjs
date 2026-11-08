@@ -271,14 +271,19 @@ for (const pg of PAGES) {
               identity.contains(radar) && radar.checkVisibility() && radar.textContent==='마켓레이더');
           }
           document.getElementById('sbMarketRadar').click();
+          const radarDialog=document.getElementById('sbMarketRadarDialog');
+          const radarFlow=radarDialog.open && radarDialog.textContent.includes('골든크로스') && radarDialog.textContent.includes('DI 상향돌파') &&
+            !document.querySelector('dialog.sb-screen-dialog[open]');
+          radarDialog.close();
+          document.getElementById('sbScreenOpen').click();
           const screener=document.querySelector('dialog.sb-screen-dialog[open]');
-          const radarFlow=screener?.getAttribute('aria-label')==='지표 조건검색';
+          const screenerFlow=screener?.getAttribute('aria-label')==='지표 조건검색' && !radarDialog.open;
           screener?.close();
           const evidence=document.getElementById('sbAiCheck'),signal=document.getElementById('sbAiSignalStatus');
           evidence.open=true;
           const flow=evidence.textContent.includes('생성 시각') && evidence.contains(signal) && signal.textContent.includes('차트 판정');
           evidence.open=false;
-          return {disconnected,real,stale,failure,simultaneous:checks.every(Boolean),radarFlow,flow};
+          return {disconnected,real,stale,failure,simultaneous:checks.every(Boolean),radarFlow,screenerFlow,flow};
         } finally {state.watchlist=backup.wl;window._dockSel=backup.sel;window.electronAPI=backup.api;window._MDI.show('watchlist');}
       });
       for(const [key,value] of Object.entries(result)) check(value, `분석/호가 동시 화면 회귀: ${key}`);
