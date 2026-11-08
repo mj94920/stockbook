@@ -69,7 +69,7 @@
   if(signals.newLowPeriod!==null&&(!Number.isInteger(signals.newLowPeriod)||signals.newLowPeriod<1||signals.newLowPeriod>1200))throw Error('신저가 기간은 1~1200봉입니다. 비우면 표시하지 않습니다.');
   const rsi=[signals.rsiPeriod,signals.rsiLevel,signals.rsiMethod];
   if(rsi.some(value=>value!==null)&&(!Number.isInteger(signals.rsiPeriod)||signals.rsiPeriod<1||signals.rsiPeriod>500||!Number.isFinite(signals.rsiLevel)||signals.rsiLevel<0||signals.rsiLevel>100||(signals.rsiMethod!==null&&!['simple','wilder'].includes(signals.rsiMethod))))throw Error('RSI 기간(1~500)과 하단값(0~100)을 함께 입력하고 계산방식을 확인하세요.');
-  return {periods:[...periods],cloud:cloud?[...cloud]:null,bb,obv,signals};
+  return {periods:[...periods],cloud:cloud?[...cloud]:null,bb,obv,signals,entry:cycle==='day'?entrySignalSettings(input.entry):null};
  }
  // Zero at the first received close: no volume can be signed without its prior close.
  // Compute on all received bars before slicing the viewport; never restart on pan.
@@ -119,7 +119,7 @@
  }
  // User's price-only entry formula. Each A(25)/B(25) is a historical value,
  // distinct from the chart's future-shifted BB display and its editable periods.
- function entrySignalSeries(candles){
+ function entryPriceSeries(candles){
   const bars=aggregate(candles,'day'),ma=average(bars,226),range=n=>bars.map((_,i)=>i<n-1?null:{high:Math.max(...bars.slice(i-n+1,i+1).map(c=>c.high)),low:Math.min(...bars.slice(i-n+1,i+1).map(c=>c.low))}),r9=range(9),r26=range(26),r52=range(52);
   const a=bars.map((_,i)=>r26[i]?(r9[i].high+r9[i].low+r26[i].high+r26[i].low)/4:null),b=bars.map((_,i)=>r52[i]?(r52[i].high+r52[i].low)/2:null);
   const upper=bars.map((_,i)=>{if(i<19)return null;const values=bars.slice(i-19,i+1).map(c=>c.close),mean=values.reduce((s,v)=>s+v,0)/20;return mean+2*Math.sqrt(values.reduce((s,v)=>s+(v-mean)**2,0)/20);});
@@ -131,6 +131,29 @@
    const previous=bars[i-1],cloudCross=cross(c.close,lineA,previous.close,a[i-26]??null)&&cross(c.close,lineB,previous.close,b[i-26]??null),cloudAbove=c.high>lineA&&c.high>lineB;
    const maCross=cross(c.close,ma[i],previous.close,ma[i-1]??null),aboveMA=c.close>ma[i],bandCross=cross(c.high,upper[i],previous.high,upper[i-1]??null),openAboveBand=c.open>upper[i];
    return {signal:(cloudCross||cloudAbove)&&(maCross||aboveMA)&&(bandCross||openAboveBand),lineA,lineB,ma226:ma[i],bbUpper:upper[i],cloudCross,cloudAbove,maCross,aboveMA,bandCross,openAboveBand};
+  });
+ }
+ // Full supplied large-entry formula. Amounts must be actual daily KRW values,
+ // aligned by date/volume by the caller; null means unavailable, never C * V.
+ function entrySignalSettings(input={}){
+  const result={minVolume:70000,minAmount:5000,amountUnit:'eok',...input};
+  if(!Number.isSafeInteger(result.minVolume)||result.minVolume<0||!Number.isFinite(result.minAmount)||result.minAmount<0||!['eok','million'].includes(result.amountUnit)||!Number.isSafeInteger(result.minAmount*(result.amountUnit==='eok'?1e8:1e6)))throw Error('진입 신호의 최소 거래량(주)·거래대금·단위를 확인하세요.');
+  return {minVolume:result.minVolume,minAmount:result.minAmount,amountUnit:result.amountUnit};
+ }
+ function entrySignalSeries(candles,{amounts=null,settings={}}={}){
+  const input=entrySignalSettings(settings),prices=entryPriceSeries(candles),limit=input.minAmount*(input.amountUnit==='eok'?1e8:1e6);
+  if(amounts!==null&&(!Array.isArray(amounts)||amounts.length!==candles.length||amounts.some(v=>v!==null&&(!Number.isSafeInteger(v)||v<0))))throw Error('진입 신호 실제 거래대금 자료 오류');
+  return prices.map((price,i)=>{
+   const c=candles[i],amount=amounts?.[i]??null;
+   const bullish=c.close>c.open,gain25=i>0&&(c.close>=candles[i-1].close*1.025||c.close>=c.open*1.025),volume=c.volume>=input.minVolume;
+   const prior=prices.slice(i-3,i).map(p=>p.ma226),history=i>=228&&prior.length===3&&prior.every(v=>Number.isFinite(v));
+   const declining226=history?prior[0]>prior[1]&&prior[1]>prior[2]:null;
+   const amountPass=amount===null?null:amount>=limit;
+   const checks={price:price.signal,volume,bullish,gain25,declining226,amount:amountPass};
+   // A known failure is false. A possible candidate without actual amount is unknown.
+   const signal=!history||price.signal===null?null:Object.values(checks).some(v=>v===false)?false:amountPass===null?null:true;
+   const reason=signal!==null?null:!history||price.signal===null?'history':'amount';
+   return {...price,baseSignal:price.signal,signal,checks,reason,amount,minAmountKRW:limit};
   });
  }
  function investorSeries(input){
@@ -174,5 +197,5 @@
   }
   return {bins,total};
  }
- return Object.freeze({cycleConfig,aggregate,average,visibleOffset,ranges,indicatorSettings,obvSeries,newLowSignals,rsiSeries,crossdown,entrySignalSeries,chartTypes,barLayout,volumeProfile,investorSeries,tradingValues,tradingValueBand,tradingValueThresholds});
+ return Object.freeze({cycleConfig,aggregate,average,visibleOffset,ranges,indicatorSettings,obvSeries,newLowSignals,rsiSeries,crossdown,entryPriceSeries,entrySignalSettings,entrySignalSeries,chartTypes,barLayout,volumeProfile,investorSeries,tradingValues,tradingValueBand,tradingValueThresholds});
 });
