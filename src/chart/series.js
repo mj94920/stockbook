@@ -49,6 +49,18 @@
    return (!includePartialStart&&window.some(c=>c.incompleteStart))?null:window.reduce((sum,c)=>sum+c.close,0)/n;
   });
  }
+ // Shared with the chart and condition search; population variance, unshifted values.
+ function bbUpperSeries(bars,n=40,m=1.9){
+  if(!Number.isInteger(n)||n<2||n>500||!Number.isFinite(m)||m<0||m>10)throw Error('BB 기간·배수 오류');
+  return bars.map((_,i)=>{if(i<n-1)return null;const values=bars.slice(i-n+1,i+1).map(c=>c.close),mean=values.reduce((sum,v)=>sum+v,0)/n;return mean+m*Math.sqrt(values.reduce((sum,v)=>sum+(v-mean)**2,0)/n);});
+ }
+ // Independent Ichimoku calculation. This is NOT the renderer's moving-average cloud.
+ function ichimokuSeries(bars,{conversion=9,base=26,span=52,displacement=26}={}){
+  if(![conversion,base,span].every(n=>Number.isInteger(n)&&n>=1&&n<=1200)||conversion>base||base>span||!Number.isInteger(displacement)||displacement<0||displacement>120)throw Error('일목 기간·선행 이동 오류');
+  const midpoint=n=>bars.map((_,i)=>{if(i<n-1)return null;const window=bars.slice(i-n+1,i+1);if(window.some(b=>b.incompleteStart))return null;return (Math.max(...window.map(b=>b.high))+Math.min(...window.map(b=>b.low)))/2;});
+  const tenkan=midpoint(conversion),kijun=midpoint(base),b=midpoint(span),a=bars.map((_,i)=>tenkan[i]===null||kijun[i]===null?null:(tenkan[i]+kijun[i])/2);
+  return bars.map((_,i)=>({conversion:tenkan[i],base:kijun[i],spanA:a[i-displacement]??null,spanB:b[i-displacement]??null}));
+ }
  function visibleOffset(bars,range='6m',cycle='day'){
   cycleConfig(cycle);if(!ranges.includes(range))throw Error('조회 범위 오류');
   if(range==='all')return 0;
@@ -174,5 +186,5 @@
   }
   return {bins,total};
  }
- return Object.freeze({cycleConfig,aggregate,average,visibleOffset,ranges,indicatorSettings,obvSeries,newLowSignals,rsiSeries,crossdown,entrySignalSeries,chartTypes,barLayout,volumeProfile,investorSeries,tradingValues,tradingValueBand,tradingValueThresholds});
+ return Object.freeze({cycleConfig,aggregate,average,bbUpperSeries,ichimokuSeries,visibleOffset,ranges,indicatorSettings,obvSeries,newLowSignals,rsiSeries,crossdown,entrySignalSeries,chartTypes,barLayout,volumeProfile,investorSeries,tradingValues,tradingValueBand,tradingValueThresholds});
 });

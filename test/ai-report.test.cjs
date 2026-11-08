@@ -23,6 +23,9 @@ const result = { summary: '<img src=x onerror=alert(1)> 요약',
   findings: [{ text: '종가를 비교했습니다.', dates: ['2026-11-05', '2026-11-06'] }],
   limitations: ['다른 종목은 비교하지 않았습니다.'] };
 const createdAt = '2026-11-08T02:10:00Z';
+const screening = { code: packet.code, state: 'match', fetchedAt: packet.fetchedAt,
+  results: [{ key: 'A', condition: { id: 'volume', op: 'gte', threshold: 10 },
+    time: { cycle: 'day', mode: 'latest', barsAgo: 0 }, state: 'match', date: '2026-11-06', value: 20, reference: 10 }] };
 
 test('report contract limits outbound fields and renders escaped text with original rows', () => {
   const clean = data.normalizePacket({ ...packet, account: 'private', rows: packet.rows.map(row => ({ ...row, note: 'private' })) });
@@ -44,6 +47,10 @@ test('report contract limits outbound fields and renders escaped text with origi
   assert.match(html, /외국인 5주/);
   assert.match(html, /차트 진입 조건/);
   assert.match(html, /판정 근거 없음/);
+  const screened = data.normalizePacket({ ...packet, screening });
+  assert.equal(screened.screening.results[0].value, 20);
+  assert.equal(data.normalizePacket({ ...packet, screening: { ...screening, code: '000660' } }).screening, null);
+  assert.match(data.screeningMarkup(screened.screening), /실제 20 \/ 기준 10/);
 });
 
 test('Codex adapter reuses login, strips key overrides and reads one structured report', async () => {
@@ -123,13 +130,15 @@ test('narrow AI panel previews, requires a fresh snapshot, shows and saves a rep
       const url = new URL(route.request().url());
       return url.origin === 'http://localhost' ? route.fulfill({ path: path.join(__dirname, '..', url.pathname) }) : route.abort();
     });
-    await page.addInitScript(({ packet, result, createdAt }) => {
+    await page.addInitScript(({ packet, result, createdAt, screening }) => {
       window.reportCalls = [];
       let lastPreview;
       window.electronAPI = {
         loadState: async () => null, onPushState() {}, getVersion: async () => 'test',
         checkApiKey: async () => false, onWsStatus() {}, saveState: async () => true,
         setChartContext: async () => {},
+        fetchDartAnnual: async (_code, year) => ({ ok: true, year, reportCode: '11011', fetchedAt: packet.fetchedAt,
+          rows: [{ statement: 'CFS', account: '당기순이익', amount: '1,000', currency: 'KRW', receipt: '20260310002820' }] }),
         aiReport: {
           status: async () => ({ ok: true, status: 'connected' }),
           load: async () => ({ ok: true, report: null }),
@@ -147,28 +156,40 @@ test('narrow AI panel previews, requires a fresh snapshot, shows and saves a rep
         },
       };
       window.reportFixture = packet;
-    }, { packet, result, createdAt });
+      window.screeningFixture = screening;
+    }, { packet, result, createdAt, screening });
     await page.goto('http://localhost/index.html');
     await page.evaluate(() => {
       state.watchlist = [{ ticker: '005930', name: '합성 종목', price: 110, quoteAt: Date.now() }];
       state.analysisChecks = { '합성 종목': { ma20: true } };
       window._dockSel = '005930';
       const packet = window.reportFixture;
+      const all = Array.from({ length: 133 }, (_, i) => ({
+        date: new Date(Date.UTC(2026, 10, 5 - (133 - i))).toISOString().slice(0, 10), close: 90 + i,
+      })).concat(packet.rows);
       window.StockBookCharts = { ...window.StockBookCharts, show: async () => {}, controller: () => ({
-        getModel: () => ({ stockCode: packet.code, rows: packet.rows, fetchedAt: packet.fetchedAt, signals: [{ entry: true }, { entry: null }] }),
+        getModel: () => ({ stockCode: packet.code, all, rows: packet.rows, fetchedAt: packet.fetchedAt, signals: [{ entry: true }, { entry: null }],
+          investorRows: [{ date: '2026-11-05', foreign: 10, institution: -2, individual: -8 },
+            { date: '2026-11-06', foreign: -2, institution: 5, individual: -3 }] }),
       }) };
       window._MDI.show('watchlist');
       dockCtxRender();
       const host = document.getElementById('sbEmbeddedChart');
       host.chartEvidence = { stockCode: packet.code, barCycle: 'day', viewRange: '6m', sourceType: 'naver-daily',
-        signals: { entryKnown: 1, entryDates: [packet.rows[0].date] } };
+        signals: { entryKnown: 1, entryDates: [packet.rows[0].date] },
+        investors: { source: 'KIS', fetchedAt: packet.fetchedAt } };
       host.dispatchEvent(new CustomEvent('stockbook:chart-render'));
     });
     const radar = page.locator('.sb-detail-identity').getByRole('button', { name: '마켓레이더' });
     await radar.click();
+    const screener = page.getByRole('dialog', { name: '지표 조건검색' });
+    await screener.waitFor();
+    await screener.getByRole('button', { name: '닫기' }).click();
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent('stockbook:screening-evidence', { detail: window.screeningFixture })));
     assert.equal(await page.locator('#sbAnalysis .sb-analysis-section').count(), 1);
     assert.equal(await page.locator('#sbSignalCheck').count(), 0);
     assert.match(await page.locator('#sbAiCheck[open] #sbAiSignalStatus').innerText(), /최근 조건 충족 2026-11-05/);
+    assert.match(await page.locator('#sbAiScreeningEvidence').innerText(), /실제 20 \/ 기준 10/);
     assert.deepEqual(await page.evaluate(() => window.reportCalls), []);
     await page.locator('#sbAiReport > summary').click();
     assert.ok((await page.locator('#sbAnalysis').boundingBox()).height > 300);
@@ -178,6 +199,12 @@ test('narrow AI panel previews, requires a fresh snapshot, shows and saves a rep
     const previewed = JSON.parse(await page.locator('#sbAiReportPayload').inputValue());
     assert.equal(previewed.checks.ma20.manuallyChecked, true);
     assert.deepEqual(previewed.rows.map(row => row.entrySignal), [true, null]);
+    assert.equal(previewed.chart.count, 132);
+    assert.equal(previewed.chart.trend.length, 60);
+    assert.equal(previewed.chart.averages.find(row => row.period === 300).latest, null);
+    assert.equal(previewed.screening.results[0].reference, 10);
+    assert.deepEqual(previewed.investorHistory.totals, { foreign: 8, institution: 3, individual: -11 });
+    assert.equal(previewed.disclosure.rows[0].amount, '1,000');
     await page.evaluate(() => { state.analysisChecks['합성 종목'].ma20 = false; });
     await page.getByRole('button', { name: 'Codex로 분석' }).click();
     assert.match(await page.locator('#sbAiReportNotice').textContent(), /다시 확인/);

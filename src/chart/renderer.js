@@ -39,7 +39,7 @@ const dark=['#f8b4cf','#87cefa','#ffe34d','#48bc70','#9ca3af','#ff2929','#b98b48
 const light=['#b52664','#1177ad','#9b7300','#168542','#666c76','#c91c28','#8d5c1f','#763cb5'];
 const averageCache=new Map(),bbCache=new Map(),obvCache=new Map(),signalCache=new Map();let pressureCache=null,entryCache=null,obvSettings={period:9,method:'sma'},obvRows=null,signalRows=null,signalSettings=series.indicatorSettings(barCycle).signals;let hiddenIndicators=new Set(),chartType=config.defaultType,horizontal=null;const profileCache=new Map();
 function average(all,n){if(!averageCache.has(n)){averageCache.set(n,series.average(all,n,{includePartialStart:barCycle==='year'}));while(averageCache.size>32)averageCache.delete(averageCache.keys().next().value);}return averageCache.get(n);}
-function bbUpper(all,n=40,m=1.9){const key=n+':'+m;if(bbCache.has(key))return bbCache.get(key);const result=all.map((_,i)=>{if(i<n-1)return null;const a=all.slice(i-n+1,i+1).map(c=>c.close),mean=a.reduce((s,v)=>s+v,0)/n;return mean+m*Math.sqrt(a.reduce((s,v)=>s+(v-mean)**2,0)/n);});bbCache.set(key,result);while(bbCache.size>8)bbCache.delete(bbCache.keys().next().value);return result;}
+function bbUpper(all,n=40,m=1.9){const key=n+':'+m;if(bbCache.has(key))return bbCache.get(key);const result=series.bbUpperSeries(all,n,m);bbCache.set(key,result);while(bbCache.size>8)bbCache.delete(bbCache.keys().next().value);return result;}
 function render(all){
  const typeNotes={candle:'',hollow:' · 빈 캔들: 양봉·음봉 모두 비움',volume:' · 볼륨캔들: 거래량 비례 너비·최소 폭 적용',profile:' · 매물대 추정: 표시 범위 일봉 고저 구간에 거래량 균등 배분·'+(config.profileBins||12)+'구간'};document.getElementById('notice').textContent=sourceNotice+typeNotes[chartType];
  const isLight=document.body.classList.contains('light'),palette=isLight?light:dark,colors=config.colors.map(i=>palette[i]),grid=isLight?'#dfe5ee':'#2b3547',text=isLight?'#526079':'#a4adbd';
@@ -156,6 +156,7 @@ function renderInvestorPanel(){
  const wrapper=host.querySelector('.sb-proof-extended');if(!config.panels.investors){wrapper.hidden=true;chart.replaceChildren();window.investorEvidence=null;return;}wrapper.hidden=!config.panels.investors||(mode==='compact'&&!investorSnapshot);
  if(!investorSnapshot){chart.replaceChildren();summary.textContent=investorLoading?'투자자별 순매수 · 조회 중…':'투자자별 순매수 · 자료 없음';status.textContent=investorLoading?'투자자별 순매수를 불러오는 중…':investorFailure||'KIS 연결 후 투자자별 순매수를 조회할 수 있습니다.';info.textContent=status.textContent;table.replaceChildren();document.getElementById('investorLegend').replaceChildren();window.investorEvidence=null;return;}
  const rows=cumulativeInvestors(['KIS','Naver'].includes(investorSnapshot.source)?investorSnapshot.rows:normalizeInvestorRows(investorSnapshot.rows)),current=row=>investorDisplay==='daily'?row:row.cumulative;
+ model.investorRows=rows;
  const values=[0,...rows.flatMap(r=>investorGroups.map(([k])=>current(r)[k]))];let lo=Math.min(...values),hi=Math.max(...values);if(lo===hi){lo=-1;hi=1;}
  const height=Math.max(mode==='compact'?32:80,chart.getBoundingClientRect().height||180),top=mode==='compact'?8:30,bottom=height-22,scale=v=>top+(hi-v)/(hi-lo)*Math.max(1,bottom-top),x=i=>rows.length===1?597:65+i*1040/(rows.length-1);
  const colors=['var(--sb-chart-investor-foreign)','var(--sb-chart-investor-institution)','var(--sb-chart-investor-individual)'];let svg='';

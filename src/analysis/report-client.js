@@ -8,7 +8,7 @@
     failed: 'Codex CLI 로그인 상태를 확인하지 못했습니다.',
   };
 
-  function mount(panel, { getSelection, getContext, getChecks, api }) {
+  function mount(panel, { getSelection, getContext, getChecks, getScreening, getDisclosure, api }) {
     if (!panel) return null;
     const find = id => document.getElementById(id);
     const host = find('sbEmbeddedChart'), notice = find('sbAiReportNotice');
@@ -16,14 +16,14 @@
     const payload = find('sbAiReportPayload'), run = find('sbAiReportRun');
     const result = find('sbAiReportResult'), save = find('sbAiReportSave'), exportButton = find('sbAiReportExport');
     const cliStatus = find('sbCodexStatus'), cliCheck = find('sbCodexCheck');
-    let selection = '', preview = null, report = null, busy = false, saving = false, loaded = 0;
+    let selection = '', preview = null, report = null, busy = false, preparing = false, saving = false, loaded = 0;
 
-    function capture() {
+    function capture(disclosure = null) {
       const stock = getSelection(), context = getContext();
       const evidence = host?.chartEvidence, model = root.StockBookCharts?.controller(host)?.getModel();
       if (!context || stock?.ticker !== context.code || model?.stockCode !== context.code ||
           evidence?.stockCode !== context.code || evidence.barCycle !== context.barCycle ||
-          evidence.viewRange !== context.viewRange) return null;
+          evidence.viewRange !== context.viewRange || model.rows.length < 2 || !root.StockBookChartSeries) return null;
       const checks = Object.fromEntries(data.principles.map(({ key }) => [
         key, { manuallyChecked: Boolean(getChecks(stock.name || stock.ticker)?.[key]) },
       ]));
@@ -33,10 +33,36 @@
         tradingValue: model.tradingAmounts?.[start + i],
         entrySignal: model.signals?.[start + i]?.entry,
       }));
+      const series = root.StockBookChartSeries;
+      const all = model.all?.length ? model.all : model.rows;
+      const range = all.slice(series.visibleOffset(all, context.viewRange, context.barCycle));
+      const closes = range.map(row => row.close);
+      const averages = context.barCycle === 'day' ? data.averagePeriods.map(period => {
+        const values = series.average(all, period);
+        return { period, latest: values.at(-1), previous: values.at(-2), fiveBarsAgo: values.at(-6) };
+      }) : [];
+      const chart = {
+        start: range[0]?.date, end: range.at(-1)?.date, count: range.length,
+        firstClose: closes[0], lastClose: closes.at(-1), lowClose: Math.min(...closes), highClose: Math.max(...closes),
+        previousDate: all.at(-2)?.date, averages,
+        trend: Array.from({ length: Math.min(range.length, data.maxRows) }, (_, i) => {
+          const index = Math.round(i * (range.length - 1) / Math.max(1, Math.min(range.length, data.maxRows) - 1));
+          return { date: range[index].date, close: range[index].close };
+        }),
+      };
       const flow = evidence.investors;
+      const marketDates = new Set(range.map(row => row.date));
+      const received = context.barCycle === 'day' && ['KIS', 'Naver'].includes(flow?.source)
+        ? (model.investorRows || []).filter(row => marketDates.has(row.date)) : [];
+      const investorHistory = received.length ? {
+        source: flow.source, fetchedAt: flow.fetchedAt, count: received.length,
+        start: received[0].date, end: received.at(-1).date, rows: received.slice(-20),
+        totals: Object.fromEntries(['foreign', 'institution', 'individual']
+          .map(key => [key, received.reduce((sum, row) => sum + row[key], 0)])),
+      } : null;
       return data.normalizePacket({
         code: context.code, cycle: context.barCycle, range: context.viewRange, sourceType: evidence.sourceType,
-        fetchedAt: model.fetchedAt, checks, rows,
+        fetchedAt: model.fetchedAt, checks, rows, chart, screening: getScreening?.(context.code), disclosure, investorHistory,
         investorFlow: flow && { source: flow.source, date: flow.dates?.at(-1), ...flow.lastDaily },
       });
     }
@@ -48,7 +74,7 @@
     }
 
     function refreshButtons() {
-      previewButton.disabled = !api || !data.validCode(selection) || busy;
+      previewButton.disabled = !api || !data.validCode(selection) || busy || preparing;
       run.disabled = busy || !preview;
       save.disabled = !report || saving;
       exportButton.disabled = !report || saving;
@@ -110,29 +136,41 @@
 
     cliCheck?.addEventListener('click', checkLogin);
     previewButton.addEventListener('click', async () => {
-      if (busy) return;
+      if (busy || preparing) return;
       clearPreview();
       const packet = capture();
       if (!packet) { notice.textContent = '선택 종목의 차트가 표시되고 봉이 2개 이상 있어야 합니다.'; return; }
       const request = ++loaded;
+      preparing = true;
+      refreshButtons();
+      notice.textContent = '차트와 연결된 공시 자료를 정리하는 중입니다…';
       try {
-        const response = await api.preview(packet);
+        const year = String(Number(new Intl.DateTimeFormat('en', { year: 'numeric', timeZone: 'Asia/Seoul' }).format(new Date())) - 1);
+        let disclosure;
+        try {
+          const annual = await getDisclosure?.(packet.code, year);
+          if (annual?.ok && annual.year === year) disclosure = { ...annual, code: packet.code };
+        } catch {}
+        if (request !== loaded) return;
+        const updated = capture(disclosure);
+        if (!updated) { notice.textContent = '차트가 바뀌었습니다. 보낼 자료를 다시 확인하세요.'; return; }
+        const response = await api.preview(updated);
         if (request !== loaded) return;
         if (!response?.ok) { notice.textContent = response?.error || '자료를 준비하지 못했습니다.'; return; }
         preview = response;
         payload.value = JSON.stringify(response.packet, null, 2);
         draft.hidden = false;
-        notice.textContent = '보낼 차트 원자료와 수동 체크 상태를 확인하세요.';
+        notice.textContent = '보낼 차트, 조건검색, 수급·공시 자료와 수동 체크 상태를 확인하세요.';
       } catch { if (request === loaded) notice.textContent = '자료를 준비하지 못했습니다.'; }
-      finally { refreshButtons(); }
+      finally { preparing = false; refreshButtons(); }
     });
 
     run.addEventListener('click', async () => {
       if (busy || !preview) return;
-      if (JSON.stringify(capture()) !== JSON.stringify(preview.packet)) {
+      if (JSON.stringify(capture(preview.packet.disclosure)) !== JSON.stringify(preview.packet)) {
         clearPreview();
         refreshButtons();
-        notice.textContent = '차트나 체크 상태가 바뀌었습니다. 보낼 자료를 다시 확인하세요.';
+        notice.textContent = '차트, 조건검색 또는 체크 상태가 바뀌었습니다. 보낼 자료를 다시 확인하세요.';
         return;
       }
       const request = ++loaded;
