@@ -273,7 +273,7 @@ test('indicator heights drag independently, resize proportionally, persist and r
  }finally{await h.close();}
 });
 
-test('workspace split keeps per-tab proportions, clamps small windows and compact indicator split preserves candle alignment',async()=>{
+test('overview split survives task changes and reload, clamps small windows and preserves candle alignment',async()=>{
  const h=await setup(),{page}=h;
  try{
   await page.setViewportSize({width:1600,height:1000});await page.goto(page.url().replace('/chart.html','/index.html'));
@@ -281,9 +281,19 @@ test('workspace split keeps per-tab proportions, clamps small windows and compac
   const split=page.getByRole('separator',{name:'차트와 하단 작업 패널 높이',exact:true}),ctx=page.locator('#dockCtx'),work=page.locator('#mdi-panel-trading');
   const before=(await ctx.boundingBox()).height,b=await split.boundingBox();await page.mouse.move(b.x+b.width/2,b.y+5);await page.mouse.down();await page.mouse.move(b.x+b.width/2,b.y+75,{steps:6});await page.mouse.up();await page.waitForTimeout(100);
   const after=(await ctx.boundingBox()).height;assert.ok(after>before+50);assert.ok((await work.boundingBox()).height>=178);
-  const fraction=await page.locator('#mdiWorkspace').evaluate(e=>Number(JSON.parse(localStorage.getItem('stockbook:workspace:heights:v1')).ord));assert.ok(fraction>0&&fraction<1);
-  await page.evaluate(()=>sbWorkTab('cash'));await page.waitForFunction(()=>!document.getElementById('mdiWorkspace').classList.contains('sb-user-split'));assert.equal(await page.locator('#mdiWorkspace').evaluate(e=>e.classList.contains('sb-user-split')),false);
-  await page.evaluate(()=>sbWorkTab('ord'));await page.waitForTimeout(80);assert.ok(Math.abs((await ctx.boundingBox()).height-after)<2);
+  const fraction=await page.evaluate(()=>JSON.parse(localStorage.getItem('stockbook:workspace:heights:v1')).overview);
+  assert.ok(fraction>0&&fraction<1);
+  for(const tab of ['cash','pf','calc','ord']){
+   await page.evaluate(key=>sbWorkTab(key),tab);
+   await page.waitForFunction(key=>document.getElementById('mdiWorkspace').dataset.workTab===key,tab);
+   assert.ok(Math.abs((await ctx.boundingBox()).height-after)<2,tab);
+  }
+  await page.evaluate(()=>sbWorkTab('journal'));
+  await page.waitForFunction(()=>!document.getElementById('mdiWorkspace').classList.contains('sb-user-split'));
+  await page.reload();
+  await page.evaluate(()=>{state.watchlist=[{ticker:'000001',name:'합성 검증 종목',price:1000,quoteAt:Date.now()}];window._dockSel='000001';window._MDI.show('watchlist');sbWorkTab('ord');});
+  await page.waitForFunction(()=>document.getElementById('sbEmbeddedChart').chartEvidence?.stockCode==='000001');
+  assert.ok(Math.abs((await ctx.boundingBox()).height-after)<2);
   const host=page.locator('#sbEmbeddedChart'),volume=host.locator('[data-chart-id="pressureChart"]'),price=host.locator('[data-chart-id="chart"]'),vol=(await volume.boundingBox()).height;
   const divider=host.getByRole('separator',{name:'가격·거래량 구간 높이',exact:true}),d=await divider.boundingBox();await page.mouse.move(d.x+d.width/2,d.y+5);await page.mouse.down();await page.mouse.move(d.x+d.width/2,d.y-15,{steps:4});await page.mouse.up();assert.ok((await volume.boundingBox()).height>vol+10);assert.ok((await price.boundingBox()).height>=45);
   const aligned=await host.evaluate(h=>{const a=h.querySelector('.candle').getBoundingClientRect(),b=h.querySelector('.pressure-volume').getBoundingClientRect();return Math.abs(a.x+a.width/2-b.x-b.width/2)<1.5;});assert.equal(aligned,true);
@@ -292,7 +302,10 @@ test('workspace split keeps per-tab proportions, clamps small windows and compac
   const grown=await host.evaluate(h=>{const ctx=document.getElementById('dockCtx').clientHeight,work=document.getElementById('mdi-panel-trading').clientHeight,p=h.querySelector('[data-chart-id="chart"]').clientHeight,v=h.querySelector('[data-chart-id="pressureChart"]').clientHeight;return {workspace:ctx/(ctx+work),volume:v/(v+p)};});
   assert.ok(Math.abs(proportions.workspace-grown.workspace)<.02);assert.ok(Math.abs(proportions.volume-grown.volume)<.02);
   await page.setViewportSize({width:1024,height:768});await page.waitForTimeout(120);assert.ok((await work.boundingBox()).height>=175);assert.ok((await ctx.boundingBox()).height>=215);
+  await split.press('Home');
+  assert.ok((await price.boundingBox()).height>=96);
   await split.dblclick();assert.equal(await page.locator('#mdiWorkspace').evaluate(e=>e.classList.contains('sb-user-split')),false);
+  assert.ok((await price.boundingBox()).height>=96);
   await page.evaluate(()=>window._MDI.show('news'));await page.waitForTimeout(50);assert.equal(await split.isVisible(),false);assert.deepEqual(h.errors,[]);
  }finally{await h.close();}
 });

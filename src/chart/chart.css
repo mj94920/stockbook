@@ -84,6 +84,11 @@
  .mdi-dock.sb-desktop-home.sb-user-split { grid-template-rows:0 minmax(0,1fr) minmax(0,var(--sb-work-height)); }
  .mdi-dock.sb-desktop-home.sb-user-split > :is(#mdi-panel-portfolio,#mdi-panel-trading,.sb-analysis) { max-height:none; }
 }
+@media(min-width:901px) and (max-height:800px) {
+ .mdi-dock.sb-desktop-home:not(.sb-user-split):not([data-dock-screen="journal"]) {
+  grid-template-rows:0 minmax(0,1fr) fit-content(clamp(180px,28vh,205px));
+ }
+}
 
 .sb-proof-chart { --sb-chart-money-300:var(--sb-down,#3b82f6);--sb-chart-money-500:#adff2f;--sb-chart-money-1000:#ff9800;--sb-chart-money-3000:var(--sb-up,#f43f5e);--sb-chart-money-5000:#d8b4fe;--sb-chart-money-10000:var(--sb-text-1); }
 .sb-proof-money { border-top:1px solid var(--sb-border);min-height:0; }
