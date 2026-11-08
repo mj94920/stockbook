@@ -1,4 +1,5 @@
 'use strict';
+// Historical price-only verification for ab025ea. For current tiers use ../chart-entry-tiers/verify.cjs.
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict'),crypto=require('node:crypto'),{chromium}=require('playwright');
 const root=path.resolve(__dirname,'../../..');
 (async()=>{

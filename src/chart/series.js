@@ -61,7 +61,7 @@
   const offset=bars.findIndex(bar=>bar.date>=cutoff);return offset<0?Math.max(0,bars.length-1):offset;
  }
  function indicatorSettings(cycle,input={}){
-  const defaults=cycleConfig(cycle),periods=input.periods??defaults.periods,cloud=defaults.cloud?(input.cloud??defaults.cloud):null,bb={period:40,multiplier:1.9,shift:25,...input.bb},obv={period:9,method:'sma',...(cycle==='week'?input.obv:{})},signals=['day','week'].includes(cycle)?{newLowPeriod:cycle==='day'?40:null,rsiPeriod:14,rsiLevel:30,rsiMethod:null,...input.signals,...(cycle==='week'?{newLowPeriod:null}:{})}:{newLowPeriod:null,rsiPeriod:null,rsiLevel:null,rsiMethod:null};
+  const defaults=cycleConfig(cycle),periods=input.periods??defaults.periods,cloud=defaults.cloud?(input.cloud??defaults.cloud):null,bb={period:40,multiplier:1.9,shift:25,...input.bb},obv={period:9,method:'sma',...(cycle==='week'?input.obv:{})},signals=['day','week'].includes(cycle)?{newLowPeriod:cycle==='day'?40:null,rsiPeriod:14,rsiLevel:30,rsiMethod:null,entryAmountUnit:null,...input.signals,...(cycle==='week'?{newLowPeriod:null,entryAmountUnit:null}:{entryAmountUnit:'eok'})}:{newLowPeriod:null,rsiPeriod:null,rsiLevel:null,rsiMethod:null,entryAmountUnit:null};
   if(!Array.isArray(periods)||periods.length<1||periods.length>8||periods.some(n=>!Number.isInteger(n)||n<1||n>1200))throw Error('이평 기간은 1~1200, 최대 8개입니다.');
   if(cloud&&(!Array.isArray(cloud)||cloud.length!==2||cloud.some(n=>!Number.isInteger(n)||n<1||n>1200)))throw Error('구름 기간 두 개를 확인하세요.');
   if(!Number.isInteger(bb.period)||bb.period<2||bb.period>500||!Number.isFinite(bb.multiplier)||bb.multiplier<0||bb.multiplier>10||!Number.isInteger(bb.shift)||bb.shift<0||bb.shift>120)throw Error('BB 기간·배수·이동값을 확인하세요.');
@@ -133,6 +133,22 @@
    return {signal:(cloudCross||cloudAbove)&&(maCross||aboveMA)&&(bandCross||openAboveBand),lineA,lineB,ma226:ma[i],bbUpper:upper[i],cloudCross,cloudAbove,maCross,aboveMA,bandCross,openAboveBand};
   });
  }
+ // User confirmed amount is in hundred-million KRW; provider amounts are exact won.
+ function entryTierSeries(candles,amounts){
+  const amountUnitWon=100000000;
+  if(!Array.isArray(amounts)||amounts.length!==candles.length||amounts.some(v=>v!==null&&(!Number.isSafeInteger(v)||v<0)))throw Error('세력 입장 거래대금 자료 오류');
+  const base=entrySignalSeries(candles),bars=aggregate(candles,'day'),byDate=new Map(candles.map((c,i)=>[c.date,amounts[i]]));
+  return base.map((r,i)=>{
+   const c=bars[i],previous=bars[i-1],rise=!!previous&&(c.close>=previous.close*1.025||c.close>=c.open*1.025),bullish=c.open<c.close,amount=byDate.get(c.date);
+   const falling226=i>=228?base[i-3].ma226>base[i-2].ma226&&base[i-2].ma226>base[i-1].ma226:null;
+   function tier(volume,minimum,trend){
+    if(r.signal===false||c.volume<volume||!bullish||!rise||trend===false)return false;
+    if(r.signal===null||trend===null||amount===null)return null;
+    return amount>=minimum*amountUnitWon;
+   }
+   return {...r,amount,falling226,small:tier(2000,150,true),big:tier(70000,5000,falling226)};
+  });
+ }
  function investorSeries(input){
   if(!Array.isArray(input)||!input.length||input.length>100)throw Error('수급 자료 없음');const seen=new Set(),sums={foreign:0,institution:0,individual:0};
   return input.map(row=>{dateValue(row.date);if(seen.has(row.date)||['foreign','institution','individual'].some(k=>!Number.isSafeInteger(row[k])))throw Error('수급 날짜/수량 오류');seen.add(row.date);return {date:row.date,foreign:row.foreign,institution:row.institution,individual:row.individual};}).sort((a,b)=>a.date.localeCompare(b.date)).map(row=>{const cumulative={};for(const k of Object.keys(sums)){sums[k]+=row[k];if(!Number.isSafeInteger(sums[k]))throw Error('누적 수량 범위 오류');cumulative[k]=sums[k];}return {...row,cumulative};});
@@ -174,5 +190,5 @@
   }
   return {bins,total};
  }
- return Object.freeze({cycleConfig,aggregate,average,visibleOffset,ranges,indicatorSettings,obvSeries,newLowSignals,rsiSeries,crossdown,entrySignalSeries,chartTypes,barLayout,volumeProfile,investorSeries,tradingValues,tradingValueBand,tradingValueThresholds});
+ return Object.freeze({cycleConfig,aggregate,average,visibleOffset,ranges,indicatorSettings,obvSeries,newLowSignals,rsiSeries,crossdown,entrySignalSeries,entryTierSeries,chartTypes,barLayout,volumeProfile,investorSeries,tradingValues,tradingValueBand,tradingValueThresholds});
 });

@@ -1,0 +1,14 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),{createFixture}=require('./fixture.cjs');
+const root=path.resolve(__dirname,'../../..');
+let html=fs.readFileSync(path.join(root,'chart.html'),'utf8');
+html=html.replace('<link rel="stylesheet" href="src/chart/chart.css">','<style>'+fs.readFileSync(path.join(root,'src/chart/chart.css'),'utf8')+'</style>');
+const payload=JSON.stringify(createFixture()).replaceAll('<','\\u003c');
+const boot=`const mock=${payload};let context={code:'000002',name:'형님 신호 미리보기 · 합성 자료',period:'6m',viewRange:'6m',barCycle:'day',follow:false},apply;
+window.stockBookChart={onContext:fn=>apply=fn,getData:async code=>code==='000002'?structuredClone(mock.data):{ok:false},getTradingValues:async code=>code==='000002'?structuredClone(mock.money):{ok:false},getInvestors:async()=>({ok:false,error:'합성 미리보기에는 투자자 수급이 없습니다.'}),searchStocks:async query=>({ok:true,items:('합성검증'.includes(query)||'000002'.includes(query))?[{code:'000002',name:'합성 검증 종목'}]:[]}),selectStock:async code=>code==='000002'?{ok:true,context}:{ok:false},setView:async view=>{context={...context,...view,period:view.viewRange,indicatorCycle:view.barCycle,follow:false};return {ok:true};},setFollow:async follow=>{context={...context,follow};apply(context);return {ok:true};}};
+document.addEventListener('DOMContentLoaded',async()=>{await apply(context);const controller=StockBookCharts.controller(document.getElementById('chartViewport'));controller.setSettings({signals:{newLowPeriod:3,rsiPeriod:2,rsiLevel:60,rsiMethod:'simple'}});controller.setView(70,mock.data.candles.length);});`;
+html=html.replace('<script src="src/chart/series.js"></script>','<script>'+boot+'</script><script src="src/chart/series.js"></script>');
+html=html.replace(/<script src="(src\/chart\/[a-z-]+\.js)"><\/script>/g,(_,file)=>'<script>'+fs.readFileSync(path.join(root,file),'utf8').replace(/<\/script/gi,'<\\/script')+'</script>');
+if(/<script src=|href="src\//.test(html))throw Error('Missing embedded resource');
+fs.writeFileSync(path.join(__dirname,'preview.html'),html.replace(/^[ \t]+(?=\r?$)/gm,''));
+console.log('Built offline preview with synthetic OHLCV and money; no live requests.');

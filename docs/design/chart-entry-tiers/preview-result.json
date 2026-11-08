@@ -1,0 +1,19 @@
+{
+  "verifiedAt": "2026-10-29T10:14:55.499Z",
+  "scope": "Standalone HTML loaded from localhost, then offline interactions on simulated 390x844 touch device. Synthetic OHLCV and amounts; not a native phone or Windows app check.",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "smallMarkers": 1,
+  "bigMarkers": 1,
+  "touchMarkerInfo": true,
+  "touchHorizontalDrawing": true,
+  "dragZoom": {
+    "before": 70,
+    "after": 47
+  },
+  "externalHttpRequests": [],
+  "offlineInteractions": true,
+  "errors": []
+}
