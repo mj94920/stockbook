@@ -18,14 +18,16 @@ function registerChartWindow({ ipcMain, BrowserWindow, getMainWindow, appDir, ge
     if(event.senderFrame && event.senderFrame!==event.sender.mainFrame)return {ok:false};
     return getChartData?getChartData(code,cycle):{ok:false,error:'일봉 공급자가 연결되지 않았습니다.'};
   });
-  ipcMain.handle('get-chart-trading-values',(event,code)=>{
+  ipcMain.handle('get-chart-trading-values',(event,code,options)=>{
     if((!fromMain(event)&&(!child||event.sender!==child.webContents))||(event.senderFrame&&event.senderFrame!==event.sender.mainFrame))return {ok:false};
     if(typeof code!=='string'||!/^\d{6}$/.test(code))return {ok:false};
-    return getTradingValues?getTradingValues(code):{ok:false,error:'KIS 거래대금 공급자가 연결되지 않았습니다.'};
+    try{if(options!==undefined)require('./history.cjs').countOption(options,100);}catch{return {ok:false};}
+    return getTradingValues?getTradingValues(code,options):{ok:false,error:'KIS 거래대금 공급자가 연결되지 않았습니다.'};
   });
-  ipcMain.handle('get-chart-investors',(event,code)=>{
+  ipcMain.handle('get-chart-investors',(event,code,options)=>{
     if((!fromMain(event)&&(!child||event.sender!==child.webContents))||(event.senderFrame&&event.senderFrame!==event.sender.mainFrame)||typeof code!=='string'||!/^\d{6}$/.test(code))return {ok:false};
-    return getInvestors?getInvestors(code):{ok:false,error:'투자자별 순매수 공급자가 연결되지 않았습니다.'};
+    try{if(options!==undefined)require('./history.cjs').countOption(options,30);}catch{return {ok:false};}
+    return getInvestors?getInvestors(code,options):{ok:false,error:'투자자별 순매수 공급자가 연결되지 않았습니다.'};
   });
   const fromChart=event=>!!child&&event.sender===child.webContents&&(!event.senderFrame||event.senderFrame===child.webContents.mainFrame);
   ipcMain.handle('search-chart-stocks',(event,query)=>{

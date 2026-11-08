@@ -1,3 +1,4 @@
+const until=async fn=>{const end=Date.now()+1000;while(!fn()){if(Date.now()>end)throw Error('request was not sent');await new Promise(r=>setImmediate(r));}};
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),{EventEmitter}=require('node:events');
 const {parseTradingValues,createTradingValueProvider}=require('../src/chart/trading-value.cjs');
@@ -13,12 +14,12 @@ test('KIS requests fixed one-page daily KRX endpoint, shares pending reads and c
  let now=Date.parse('2026-10-27T16:00:00Z'),authCalls=0,calls=[],finish;
  const p=createTradingValueProvider({now:()=>now,getAuth:async()=>{authCalls++;return {token:'mock',appKey:'mock',appSecret:'mock'};},httpsGet:(url,t,headers,options)=>{calls.push({url,t,tr:headers.tr_id,signal:options.signal});return new Promise(r=>finish=r);}});
  for(const code of ['https://evil.test','../005930','AAPL',123])assert.equal((await p.get(code)).ok,false);assert.equal(authCalls,0);
- const a=p.get('005930'),b=p.get('005930');await Promise.resolve();assert.equal(calls.length,1);const url=new URL(calls[0].url);assert.equal(url.origin,'https://openapi.koreainvestment.com:9443');assert.equal(url.pathname,'/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice');assert.equal(url.searchParams.get('FID_INPUT_DATE_2'),'20261028');assert.equal(url.searchParams.get('FID_COND_MRKT_DIV_CODE'),'J');assert.equal(url.searchParams.get('FID_PERIOD_DIV_CODE'),'D');assert.equal(calls[0].tr,'FHKST03010100');finish(response());assert.equal((await a).ok,true);assert.equal((await b).ok,true);
- await p.get('005930');assert.equal(calls.length,1);now+=60001;const next=p.get('005930');await Promise.resolve();finish(response());await next;assert.equal(calls.length,2);
+ const a=p.get('005930'),b=p.get('005930');await until(()=>calls.length===1);assert.equal(calls.length,1);const url=new URL(calls[0].url);assert.equal(url.origin,'https://openapi.koreainvestment.com:9443');assert.equal(url.pathname,'/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice');assert.equal(url.searchParams.get('FID_INPUT_DATE_2'),'20261028');assert.equal(url.searchParams.get('FID_COND_MRKT_DIV_CODE'),'J');assert.equal(url.searchParams.get('FID_PERIOD_DIV_CODE'),'D');assert.equal(calls[0].tr,'FHKST03010100');finish(response());assert.equal((await a).ok,true);assert.equal((await b).ok,true);
+ await p.get('005930');assert.equal(calls.length,1);now+=60001;const next=p.get('005930');await until(()=>calls.length===2);finish(response());await next;assert.equal(calls.length,2);
 });
 test('missing KIS auth makes no price call; deadlines release cache, abort and allow retry without exposing errors',async()=>{
  let count=0;const missing=createTradingValueProvider({getAuth:async()=>null,httpsGet:async()=>count++});assert.equal((await missing.get('005930')).ok,false);assert.equal(count,0);
- let signal,calls=0;const p=createTradingValueProvider({now:()=>Date.parse(at),timeoutMs:15,getAuth:async()=>({token:'mock'}),httpsGet:(_url,_t,_h,opt)=>{signal=opt.signal;return ++calls===1?new Promise(()=>{}):Promise.resolve(response());}});assert.equal((await p.get('005930')).ok,false);assert.equal(signal.aborted,true);assert.equal((await p.get('005930')).ok,true);
+ let signal,calls=0;const p=createTradingValueProvider({now:()=>Date.parse(at),timeoutMs:300,getAuth:async()=>({token:'mock'}),httpsGet:(_url,_t,_h,opt)=>{signal=opt.signal;return ++calls===1?new Promise(()=>{}):Promise.resolve(response());}});assert.equal((await p.get('005930')).ok,false);assert.equal(signal.aborted,true);assert.equal((await p.get('005930')).ok,true);
  const error=await createTradingValueProvider({getAuth:async()=>{throw Error('secret mock');},httpsGet:async()=>{}}).get('005930');assert.equal(error.ok,false);assert.doesNotMatch(error.error,/secret/);
 });
 test('money joins require equal date/volume and aggregate only full groups; never modifies OHLCV',()=>{

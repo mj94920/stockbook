@@ -1,5 +1,7 @@
 # 일봉 진입 신호의 전체 수식 복원
 
+> f726887 당시의 기록이다. 거래대금 최근 100일 제한은 후속 [기간 조회 변경](../overview-market-history/README.md)에서 확대했다.
+
 작업일: 2026-11-08 (한국 시간)
 기준 main: e705b8b816d5edef331abddc9298cbda7ae3f46d
 작업 브랜치: codex/entry-signal-filters

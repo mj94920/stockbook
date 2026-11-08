@@ -40,8 +40,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('news-page-failed',listener);
   },
   getChartData: (code,cycle='day') => ipcRenderer.invoke('get-chart-data', code,cycle),
-  getChartTradingValues: code => ipcRenderer.invoke('get-chart-trading-values',code),
-  getChartInvestors: code => ipcRenderer.invoke('get-chart-investors',code),
+  getChartTradingValues: (code,options) => ipcRenderer.invoke('get-chart-trading-values',code,options),
+  getChartInvestors: (code,options) => ipcRenderer.invoke('get-chart-investors',code,options),
   getChartSnapshot: (code) => ipcRenderer.invoke('get-chart-snapshot', code),
   setChartContext: (value) => ipcRenderer.invoke('set-chart-context', value),
   openChartWindow: (value) => ipcRenderer.invoke('open-chart-window', value),

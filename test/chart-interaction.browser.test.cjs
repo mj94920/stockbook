@@ -548,3 +548,17 @@ test('uploaded Samsung prices render only the two complete-formula signals after
   assert.equal(await page.locator('.sb-chart-signal[data-kind="entry"]').count(),0);assert.match(await page.locator('[data-chart-id="legend"]').innerText(),/실제 대금 판정 대기/);assert.deepEqual(h.errors,[]);
  }finally{await h.close();}
 });
+
+test('chart range changes request matching money/investor history and display beyond former 100/30 limits',async()=>{
+ const h=await setup(),{page}=h;
+ try{
+  await page.evaluate(()=>{window.__historyCalls=[];const rows=()=>StockBookCharts.controller(document.getElementById('chartViewport')).getModel().all;
+   stockBookChart.getTradingValues=async(code,options)=>{window.__historyCalls.push({kind:'money',count:options.count});return {ok:true,stockCode:code,source:'KIS',market:'KRX',currency:'KRW',unit:'원',requestedCount:options.count,rows:rows().slice(-options.count).map(r=>({date:r.date,volume:r.volume,value:50000000000}))};};
+   stockBookChart.getInvestors=async(code,options)=>{window.__historyCalls.push({kind:'investors',count:options.count});return {ok:true,stockCode:code,source:'KIS',market:'KRX',unit:'주',requestedCount:options.count,rows:rows().slice(-options.count).map(r=>({date:r.date,foreign:10,institution:-5,individual:-3}))};};
+   return window.__context({code:'000009',name:'기간 조회 검증',period:'1y',barCycle:'day',follow:false});});
+  await page.waitForFunction(()=>{const e=document.getElementById('chartViewport').chartEvidence;return e?.money?.known===260&&e?.investors?.count===260;});
+  await page.locator('#chartPeriod').selectOption('all');await page.waitForFunction(()=>{const e=document.getElementById('chartViewport').chartEvidence;return e?.money?.known===1000&&e?.investors?.count===1000;});
+  await page.locator('#chartPeriod').selectOption('1m');await page.waitForFunction(()=>{const e=document.getElementById('chartViewport').chartEvidence;return e?.money?.known===22&&e?.investors?.count===22;});
+  assert.deepEqual(await page.evaluate(()=>window.__historyCalls),[{kind:'money',count:260},{kind:'investors',count:260},{kind:'money',count:1000},{kind:'investors',count:1000},{kind:'money',count:22},{kind:'investors',count:22}]);assert.deepEqual(h.errors,[]);
+ }finally{await h.close();}
+});

@@ -1,0 +1,14 @@
+.mdi-dock.sb-desktop-home > .sb-analysis { grid-template-rows:minmax(0,1fr); }
+/* Match the summary chart to the task column and reserve the full right column for AI. */
+@media (min-width:901px) {
+ .mdi-dock.sb-desktop-home > .dock-ctx { grid-column:2; }
+ .mdi-dock.sb-desktop-home > #sbAnalysis.sb-analysis { grid-column:3;grid-row:2/4;grid-template-rows:minmax(0,1fr);max-height:none;min-height:0;align-content:stretch;contain:none;overflow:hidden; }
+ .mdi-dock.sb-desktop-home > .sb-analysis .sb-analysis-section { max-height:none;min-height:0;overflow:auto; }
+}
+.sb-rule-inline { flex-basis:100%; font-size:11px;color:var(--sb-text-2);margin:var(--sb-space-1) 0; }
+.sb-rule-inline > summary { cursor:pointer;overflow-wrap:anywhere; }
+.sb-rule-inline > p { margin:var(--sb-space-1) 0; }
+/* Narrow summaries keep enough plot space; excess content scrolls inside the chart pane. */
+#sbEmbeddedChart { min-height:240px; }
+#sbEmbeddedChart > [data-chart-id="notice"] { white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+#sbEmbeddedChart .sb-chart-compact-controls label { white-space:nowrap; }

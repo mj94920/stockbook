@@ -157,13 +157,13 @@
   });
  }
  function investorSeries(input){
-  if(!Array.isArray(input)||!input.length||input.length>100)throw Error('수급 자료 없음');const seen=new Set(),sums={foreign:0,institution:0,individual:0};
+  if(!Array.isArray(input)||!input.length||input.length>1000)throw Error('수급 자료 없음');const seen=new Set(),sums={foreign:0,institution:0,individual:0};
   return input.map(row=>{dateValue(row.date);if(seen.has(row.date)||['foreign','institution','individual'].some(k=>!Number.isSafeInteger(row[k])))throw Error('수급 날짜/수량 오류');seen.add(row.date);return {date:row.date,foreign:row.foreign,institution:row.institution,individual:row.individual};}).sort((a,b)=>a.date.localeCompare(b.date)).map(row=>{const cumulative={};for(const k of Object.keys(sums)){sums[k]+=row[k];if(!Number.isSafeInteger(sums[k]))throw Error('누적 수량 범위 오류');cumulative[k]=sums[k];}return {...row,cumulative};});
  }
  // Exact daily values are joined only when date and KRX volume match. A group with
  // even one missing/mismatched day has no amount, rather than a partial sum.
  function tradingValues(bars,candles,data){
-  if(!data?.ok||data.source!=='KIS'||data.market!=='KRX'||data.currency!=='KRW'||data.unit!=='원'||!Array.isArray(data.rows)||data.rows.length>100)throw Error('거래대금 자료 오류');
+  if(!data?.ok||data.source!=='KIS'||data.market!=='KRX'||data.currency!=='KRW'||data.unit!=='원'||!Array.isArray(data.rows)||data.rows.length>1000)throw Error('거래대금 자료 오류');
   const values=new Map();for(const row of data.rows){dateValue(row.date);if(values.has(row.date)||!Number.isSafeInteger(row.value)||row.value<0||!Number.isSafeInteger(row.volume)||row.volume<0)throw Error('거래대금 값 오류');values.set(row.date,row);}
   const joined=new Map();let mismatched=0,matched=0;
   for(const candle of candles){const row=values.get(candle.date);if(row&&row.volume===candle.volume){joined.set(candle.date,row.value);matched++;}else if(row)mismatched++;}

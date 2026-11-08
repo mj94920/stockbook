@@ -13,7 +13,7 @@ const PAGES = [
 ];
 const SETTLE_MS = Number(process.env.SMOKE_SETTLE_MS ?? 4000);
 const SHOT_DIR  = process.env.SMOKE_SHOT_DIR ?? 'smoke-shots';   // UI 확인용 스크린샷 (CI 아티팩트로 업로드)
-const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json',
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css':'text/css; charset=utf-8', '.json': 'application/json',
                '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
 
 const root = process.cwd();
@@ -265,7 +265,7 @@ for (const pg of PAGES) {
           for (const screen of ['watchlist','portfolio','journal']) {
             window._MDI.show(screen);
             const region=document.getElementById('sbAnalysis'),r=region.getBoundingClientRect();
-            checks.push(r.width>100 && r.height>100 && r.right<=innerWidth && getComputedStyle(region).display!=='none' && region.textContent.includes('AI 분석') && region.textContent.includes('규칙 신호'));
+            checks.push(r.width>100 && r.height>100 && r.right<=innerWidth && getComputedStyle(region).display!=='none' && region.textContent.includes('AI 분석') && !region.contains(document.getElementById('sbSignalCheck')) && document.getElementById('dockCtx').contains(document.getElementById('sbSignalCheck')));
           }
           document.getElementById('sbAiCheck').open=true;document.getElementById('sbSignalCheck').open=true;
           const flow=document.getElementById('sbAiCheck').textContent.includes('생성 시각') && document.getElementById('sbSignalCheck').textContent.includes('시계열 데이터');
@@ -421,8 +421,8 @@ for (const pg of PAGES) {
           const rect = id => { const r = document.getElementById(id).getBoundingClientRect(); return { x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height }; };
           return { left:rect('mdi-panel-watchlist'),ctx:rect('dockCtx'),work:rect('mdi-panel-portfolio'),analysis:rect('sbAnalysis'),workspace:rect('mdiWorkspace'),header:document.querySelector('.header').getBoundingClientRect().bottom };
         });
-        check(Math.abs(layout.left.width / (layout.left.width + layout.ctx.width) - .4) < .02, `${vp.width}px: 좌우 40:60 비율 오류`);
-        check(layout.work.y >= layout.ctx.bottom && Math.abs(layout.work.x-layout.ctx.x) < 2 && layout.analysis.x >= layout.work.right && Math.abs(layout.analysis.right-layout.ctx.right) < 2 && Math.abs(layout.analysis.y-layout.work.y) < 2, `${vp.width}px: 하단 작업 패널이 우측 종합 패널 아래에 정렬되지 않음`);
+        check(Math.abs(layout.left.width / (layout.left.width + layout.ctx.width + layout.analysis.width) - .4) < .02, `${vp.width}px: 좌우 40:60 비율 오류`);
+        check(layout.work.y >= layout.ctx.bottom && Math.abs(layout.work.x-layout.ctx.x) < 2 && layout.analysis.x >= layout.work.right && Math.abs(layout.work.right-layout.ctx.right) < 2 && Math.abs(layout.analysis.y-layout.ctx.y) < 2 && Math.abs(layout.analysis.bottom-layout.work.bottom) < 2, `${vp.width}px: 하단 작업 패널이 우측 종합 패널 아래에 정렬되지 않음`);
         check(Math.abs(layout.left.bottom-layout.work.bottom)<2 && layout.left.y >= layout.workspace.y, `${vp.width}px: 좌측 종목창 전체 높이 오류`);
         check(layout.workspace.y >= layout.header-1 && layout.work.bottom <= vp.height+1, `${vp.width}px: 상단 겹침 또는 하단 잘림`);
         check(layout.ctx.height >= layout.workspace.height * .4 && layout.work.height >= 180, `${vp.width}px: 차트 우선 배분 또는 하단 작업 최소 공간 오류`);
