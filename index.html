@@ -1271,6 +1271,7 @@
     transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
     box-shadow: -8px 0 40px rgba(0,0,0,0.35);
   }
+  .analysis-drawer:not(.open) { visibility: hidden; }
   .analysis-drawer.open { transform: translateX(0); }
   .analysis-drawer-header {
     display: flex;
@@ -1282,6 +1283,9 @@
     flex-shrink: 0;
   }
   .analysis-drawer-title { font-size: 16px; font-weight: 700; }
+  .sb-company-stock { margin: var(--sb-space-1) 0 0; color: var(--sb-text-2); font-size: 13px; }
+  .sb-company-stock span { margin-inline-start: var(--sb-space-2); color: var(--sb-text-3); }
+  .hts-table .sb-company-info-btn { white-space: nowrap; }
   .analysis-drawer-close {
     background: none; border: 1px solid var(--border);
     color: var(--text2); cursor: pointer;
@@ -1314,8 +1318,6 @@
     padding: 9px 10px;
     min-width: 0;
   }
-  .analysis-metric-card.good { border-color: rgba(34,197,94,.4); background: rgba(34,197,94,.06); }
-  .analysis-metric-card.warn { border-color: rgba(239,68,68,.4); background: rgba(239,68,68,.06); }
   .analysis-metric-label { font-size: 10px; color: var(--text3); margin-bottom: 3px; }
   .analysis-metric-val { font-size: 13px; font-weight: 700; color: var(--text); word-break: break-all; }
   .analysis-metric-sub { font-size: 10px; color: var(--text3); margin-top: 2px; }
@@ -1333,15 +1335,6 @@
   .analysis-fin-table td:first-child { text-align: left; color: var(--text2); }
   .analysis-fin-table td.up { color: var(--red); }
   .analysis-fin-table td.dn { color: var(--blue); }
-  .analysis-comment {
-    font-size: 13px; line-height: 1.6;
-    padding: 8px 10px; border-radius: 7px;
-    margin-bottom: 6px; background: var(--bg3);
-    border: 1px solid var(--border);
-  }
-  .analysis-comment.good  { border-color: rgba(34,197,94,.4); }
-  .analysis-comment.warn  { border-color: rgba(239,68,68,.4); }
-  .analysis-comment.neutral { border-color: var(--border); }
   .analysis-no-data {
     text-align: center; padding: 24px 16px;
     background: var(--bg3); border-radius: 10px;
@@ -1356,17 +1349,19 @@
     transition: all .15s;
   }
   .analysis-ext-link:hover { background: rgba(14,165,233,.2); }
-  .mj-checklist { display: flex; flex-direction: column; gap: 6px; }
+  .sb-ai-principles { margin-block: var(--sb-space-2); }
+  .sb-ai-principles > summary { padding-block: var(--sb-space-1); }
+  .mj-checklist { display: flex; flex-direction: column; gap: var(--sb-space-1); }
   .mj-check-item {
     display: flex; align-items: flex-start; gap: 9px;
-    cursor: pointer; font-size: 13px; line-height: 1.5;
-    padding: 7px 10px; border-radius: 7px; background: var(--bg3);
-    border: 1px solid var(--border); transition: background .15s;
+    cursor: pointer; font-size: 12px; line-height: 1.5;
+    padding: var(--sb-space-1) var(--sb-space-2); border-radius: var(--sb-radius-2); background: var(--sb-surface);
+    border: 1px solid var(--sb-border-weak); transition: background .15s;
   }
-  .mj-check-item:hover { background: var(--bg4); }
+  .mj-check-item:hover { background: var(--sb-hover); }
   .mj-check-item input[type=checkbox] {
     flex-shrink: 0; margin-top: 2px;
-    width: 15px; height: 15px; accent-color: #0ea5e9; cursor: pointer;
+    width: 15px; height: 15px; accent-color: var(--sb-accent); cursor: pointer;
   }
   .analysis-spinner {
     display: inline-block; width: 28px; height: 28px;
@@ -3354,6 +3349,8 @@
   .sb-analysis { display: none; }
   .mdi-dock.sb-desktop-home > .sb-analysis { display: grid; grid-template-rows: repeat(2,minmax(0,1fr)); grid-column: 3; grid-row: 3; min-width: 0; min-height: 0; overflow: auto; border: 1px solid var(--sb-border); border-radius: var(--sb-radius-3); background: var(--sb-panel); }
   .sb-analysis-section { padding: 12px; min-height: 0; overflow: auto; border-bottom: 1px solid var(--sb-border-weak); }
+  .mdi-dock.sb-desktop-home > .sb-analysis:has(.sb-ai-principles[open]) { display: block; }
+  .mdi-dock.sb-desktop-home > .sb-analysis:has(.sb-ai-principles[open]) > .sb-analysis-section { max-height: none; overflow: visible; }
   .sb-analysis-section h3 { font-size: 13px; margin: 0; }
   .sb-analysis-section > strong { display: block; font-size: 15px; margin: 12px 0 8px; }
   .sb-analysis-section p { font-size: 11px; color: var(--sb-text-3); line-height: 1.7; }
@@ -3814,8 +3811,8 @@
           <th style="text-align:right;">등락률</th>
           <th style="text-align:right;">거래량</th>
           <th style="text-align:right;">시총(억)</th>
-          <th style="text-align:right;" title="기업분석 조회 시 자동 기록">EPS</th>
-          <th style="text-align:right;" title="기업분석 조회 시 자동 기록">ROE</th>
+          <th style="text-align:right;" title="기업 정보 조회 시 자동 기록">EPS</th>
+          <th style="text-align:right;" title="기업 정보 조회 시 자동 기록">ROE</th>
           <th style="text-align:right;">PER</th>
           <th style="text-align:right;">PBR</th>
           <th style="text-align:right;">배당률</th>
@@ -3874,7 +3871,7 @@
           </div>
           <!-- 빠른 액션 버튼 -->
           <div id="qo_quick_btns" style="display:none;gap:5px;">
-            <button onclick="_qoOpenAnalysis()" style="font-size:11px;padding:2px 9px;border-radius:4px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font-family:inherit;">기업분석</button>
+            <button onclick="_qoOpenAnalysis()" style="font-size:11px;padding:2px 9px;border-radius:4px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font-family:inherit;">기업 정보</button>
             <button onclick="_qoOpenJournal()" style="font-size:11px;padding:2px 9px;border-radius:4px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font-family:inherit;">일지</button>
           </div>
         </div>
@@ -4532,11 +4529,11 @@
           <div class="sb-detail-identity"><strong class="dock-ctx__name" id="dockCtxName">--</strong><span class="dock-ctx__code" id="dockCtxCode">--</span></div>
           <div class="sb-detail-price"><strong class="dock-ctx__price" id="dockCtxPrice">--</strong><span class="dock-ctx__chg" id="dockCtxChg">--</span></div>
           <div class="dock-ctx__none" id="dockCtxStatus" role="status"></div>
-        </div><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('chart')">기업분석 ↗</button></div>
+        </div><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('chart')">기업 정보 ↗</button></div>
         <div class="sb-context-tabs" aria-label="선택 종목 보기">
           <button type="button" class="active" data-context-tab="chart" onclick="sbContextTab('chart')">차트</button>
           <button type="button" data-context-tab="hoga" onclick="sbContextTab('hoga')">호가</button>
-          <button type="button" data-context-tab="info" onclick="sbContextTab('info')">기업정보</button>
+          <button type="button" data-context-tab="info" onclick="sbContextTab('info')">기업 정보</button>
         </div>
         <div class="sb-market-stage">
           <section class="sb-context-pane" data-context-pane="chart" aria-label="선택 종목 차트">
@@ -4544,13 +4541,22 @@
             <div id="sbEmbeddedChart" data-chart-host class="sb-data-empty"><strong>차트 데이터 없음</strong><span>차트 원본 연결 후 가격·거래량을 표시합니다.</span></div><div id="sbChartStatus" role="status"></div>
           </section>
           <section class="sb-context-pane" data-context-pane="hoga" hidden><section class="sb-order-region" aria-label="선택 종목 5호가"><div class="sb-region-title"><strong>5호가</strong><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" id="sbHogaRefresh" onclick="sbDesktopHoga()">조회</button></div><div id="sbHogaStatus" class="dock-ctx__none" role="status">호가 데이터 없음 · 조회 대기</div><table class="sb-hoga-table"><thead><tr><th>매도잔량</th><th>가격</th><th>매수잔량</th></tr></thead><tbody id="sbHogaRows"></tbody></table></section></section>
-          <section class="sb-context-pane" data-context-pane="info" hidden><div class="dock-ctx__rows dock-ctx__quote-grid" id="dockCtxQuote"></div><button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('chart')">기업분석 열기 ↗</button></section>
+          <section class="sb-context-pane" data-context-pane="info" hidden><div class="dock-ctx__rows dock-ctx__quote-grid" id="dockCtxQuote"></div><button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('chart')">기업 정보 열기 ↗</button></section>
         </div>
         <details class="sb-context-details"><summary>보유 · 목표/손절 · 일정</summary><div class="sb-detail-content"><div class="dock-ctx__rows" id="dockCtxHold"></div><div class="dock-ctx__rows" id="sbDesktopTargets"></div><div class="dock-ctx__rows" id="dockCtxEvents"></div></div></details>
       </div>
     </aside>
     <aside id="sbAnalysis" class="sb-analysis" aria-label="AI 분석과 규칙 신호">
-      <section class="sb-analysis-section"><div class="sb-region-title"><h3>AI 분석</h3><span class="sb-analysis-stock">종목 선택</span></div><strong>분석 데이터 없음</strong><p>선택 종목의 AI 분석 결과가 연결되지 않았습니다.</p><details id="sbAiCheck"><summary>분석 상태 확인</summary><p>분석 결과: 없음<br>생성 시각: --<br>출처: 연결되지 않음</p><button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('chart')">참고 기업자료 확인 ↗</button></details></section>
+      <section class="sb-analysis-section"><div class="sb-region-title"><h3>AI 분석</h3><span class="sb-analysis-stock">종목 선택</span></div>
+        <details class="sb-ai-principles" id="sbAiPrinciples">
+          <summary>매매 원칙 체크리스트 <span id="sbAiPrincipleCount"></span></summary>
+          <p id="sbAiPrinciplesEmpty">종목을 선택하면 체크리스트가 표시됩니다.</p>
+          <div id="sbAiPrinciplesBody" hidden>
+            <p>직접 체크한 항목은 종목별로 저장되며 이후 AI 분석에서 참고합니다.</p>
+            <div class="mj-checklist" id="sbAiPrinciplesList"></div>
+          </div>
+        </details>
+        <strong>분석 데이터 없음</strong><p>선택 종목의 AI 분석 결과가 연결되지 않았습니다.</p><details id="sbAiCheck"><summary>분석 상태 확인</summary><p>분석 결과: 없음<br>생성 시각: --<br>출처: 연결되지 않음</p><button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('chart')">기업 정보 보기 ↗</button></details></section>
       <section class="sb-analysis-section"><div class="sb-region-title"><h3>규칙 신호</h3><span class="sb-analysis-stock">종목 선택</span></div><strong>판정 대기</strong><p>규칙 엔진과 판정에 필요한 시계열 데이터가 아직 연결되지 않았습니다.</p><details id="sbSignalCheck"><summary>판정 조건 확인</summary><p>시계열 데이터: 없음<br>규칙 엔진: 연결 대기<br>마지막 판정: --</p><small>규칙 판정 · 투자 권유 아님</small></details></section>
     </aside>
 </div><!-- /mdi-workspace -->
@@ -6107,7 +6113,7 @@ function switchRightTab(rtab) {
   if (rtab === 'order') populateQOStockList();
 }
 
-// ── 기업정보 탭: 조회 ──
+// ── 기업 정보 탭: 조회 ──
 function openCorpInfo() {
   const q = (document.getElementById('corpSearchInput')?.value || '').trim();
   if (!q) return;
@@ -6286,22 +6292,27 @@ function _buildYFFinanceTable(r, code) {
   return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">${kpis}</div>${histHtml}`;
 }
 
-// ── openStockDrawer: 전종목 탭에서 기업 분석 드로어 오픈 ─────────────
+// ── openStockDrawer: 전종목 탭에서 기업 정보 패널 오픈 ─────────────
 function openStockDrawer(code, name) {
   // 포트폴리오에 있으면 기존 drawerIdx 방식
   const idx = (state.portfolio || []).findIndex(s => s.ticker === code || s.code === code);
-  if (idx >= 0) { openAnalysisDrawer(idx); return; }
+  if (idx >= 0) return openAnalysisDrawer(idx);
   // 포트폴리오에 없는 종목 → 임시 객체로 드로어 열기
-  const fakeStock = { name: name||code, ticker: code, avgPrice: 0, qty: 0, currentPrice: 0 };
-  _openAnalysisForStock(fakeStock);
+  const quote = sbSelectedStock(code);
+  return _openAnalysisForStock({ ...quote, name: name || quote?.name || code, ticker: code });
 }
 
 async function _openAnalysisForStock(stock) {
-  document.getElementById('analysisDrawer').classList.add('open');
-  document.getElementById('analysisOverlay').classList.add('open');
-  const titleEl = document.getElementById('analysisDrawerTitle');
-  titleEl.innerHTML = `<strong>${stock.name}</strong>${stock.ticker ? `<span style="font-size:13px;color:var(--text3);margin-left:8px;">${stock.ticker}</span>` : ''}`;
+  const drawer = document.getElementById('analysisDrawer');
+  const overlay = document.getElementById('analysisOverlay');
+  const title = document.getElementById('analysisDrawerTitle');
   const body = document.getElementById('analysisDrawerBody');
+  if (!drawer || !overlay || !title || !body) return;
+  const request = ++_companyInfoRequest;
+  drawer.classList.add('open');
+  overlay.classList.add('open');
+  title.innerHTML = `<strong>${escHtml(stock.name || stock.ticker || '')}</strong>${stock.ticker ? `<span>${escHtml(stock.ticker)}</span>` : ''}`;
+  body.scrollTop = 0;
   body.innerHTML = `<div style="text-align:center;padding:50px 20px;color:var(--text3)"><div class="analysis-spinner" style="margin:0 auto 14px"></div><div>데이터 불러오는 중...</div></div>`;
 
   const ticker = stock.ticker || '';
@@ -6313,7 +6324,7 @@ async function _openAnalysisForStock(stock) {
   if (!naverData) {
     try { yfData = await _fetchYFSummary(ticker); } catch(_) {}
   }
-  _renderAnalysisBody(body, stock, naverData, yfData);
+  if (request === _companyInfoRequest) _renderAnalysisBody(body, stock, naverData, yfData);
 }
 function openCorpLink(type) {
   const q = (document.getElementById('corpSearchInput')?.value || '').trim();
@@ -6747,7 +6758,7 @@ function showThemeStocks(theme, btn) {
 // ── 전종목 탭 (네이버 증권 API — KOSPI / KOSDAQ / ETF) ───────────────────────
 let _allMkt          = 'KOSPI'; // 현재 선택 시장
 let _allStockRaw     = {};      // { KOSPI: [...], KOSDAQ: [...], ETF: [...] }
-let _stockFundamentalsCache = {}; // 기업분석에서 조회한 EPS/ROE 캐시
+let _stockFundamentalsCache = {}; // 기업 정보에서 조회한 EPS/ROE 캐시
 let _allFiltered     = [];
 let _allPrevPrices   = {};      // 자동 갱신 깜빡임용: { code: price }
 let allStockPage = 1;
@@ -7044,8 +7055,8 @@ function renderAllStockSectorView(searchQ) {
         <td style="text-align:right;font-size:11px;">${s.volume>0?s.volume.toLocaleString():'-'}</td>
         <td style="text-align:right;font-size:11px;">${capStr(s.marketCap)}</td>
         <td colspan="3" style="font-size:11px;color:var(--text3);text-align:center;">-</td>
-        <td style="text-align:center;padding:2px 3px;" onclick="event.stopPropagation();allStockOpenChart('${safeCode}','${safeName}')" title="기업분석">
-          <button style="padding:1px 6px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-size:10px;cursor:pointer;">분석</button>
+        <td style="text-align:center;padding:2px 3px;">
+          <button type="button" class="sb-btn sb-btn--sm sb-company-info-btn" onclick="event.stopPropagation();allStockOpenChart('${safeCode}','${safeName}')">기업 정보</button>
         </td>
       </tr>`;
     });
@@ -7171,7 +7182,7 @@ function renderAllStockTable() {
       const pbr = s.pbr  ? Number(s.pbr ).toFixed(2)+'배' : '-';
       const div = s.dividendYield ? Number(s.dividendYield).toFixed(1)+'%' : (s.dividend ? s.dividend+'%' : '-');
       const isW = (state.watchlist||[]).some(w => w.ticker === safeCode);
-      // EPS/ROE: 기업분석 조회 시 캐시에 저장된 값 사용
+      // EPS/ROE: 기업 정보 조회 시 캐시에 저장된 값 사용
       const _fc = (window._stockFundamentalsCache||{})[safeCode] || {};
       const epsRaw = _fc.eps || s.eps;
       const roeRaw = _fc.roe || s.roe;
@@ -7198,8 +7209,8 @@ function renderAllStockTable() {
         <td style="text-align:right;font-size:11px;color:var(--text3);">${per}</td>
         <td style="text-align:right;font-size:11px;color:var(--text3);">${pbr}</td>
         <td style="text-align:right;font-size:11px;color:var(--text3);">${div}</td>
-        <td style="text-align:center;padding:2px 3px;" onclick="event.stopPropagation();allStockOpenChart('${safeCode}','${safeName}')" title="기업분석">
-          <button style="padding:1px 5px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-size:10px;cursor:pointer;line-height:1.5;">분석</button>
+        <td style="text-align:center;padding:2px 3px;">
+          <button type="button" class="sb-btn sb-btn--sm sb-company-info-btn" onclick="event.stopPropagation();allStockOpenChart('${safeCode}','${safeName}')">기업 정보</button>
         </td>
       </tr>`;
     }).join('');
@@ -7276,7 +7287,7 @@ async function openAllStockPopup(code, name) {
         <button onclick="allStockAddWatch('${safeCode}','${safeName}','${_allMkt}');document.getElementById('allStockDetailPopup').remove()" style="flex:1;padding:8px 4px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;">★ 관심</button>
         <button onclick="allStockBuy('${safeCode}','${safeName}');document.getElementById('allStockDetailPopup').remove()" style="flex:1;padding:8px 4px;background:#1b4f3c;color:#4caf81;border:1px solid #2d6a50;border-radius:6px;font-size:11px;cursor:pointer;">매수</button>
         <button onclick="allStockSell('${safeCode}','${safeName}');document.getElementById('allStockDetailPopup').remove()" style="flex:1;padding:8px 4px;background:#4a1c1c;color:#e57373;border:1px solid #6a2e2e;border-radius:6px;font-size:11px;cursor:pointer;">매도</button>
-        <button onclick="allStockOpenChart('${safeCode}','${safeName}');document.getElementById('allStockDetailPopup').remove()" style="flex:1;padding:8px 4px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;">기업분석</button>
+        <button onclick="allStockOpenChart('${safeCode}','${safeName}');document.getElementById('allStockDetailPopup').remove()" style="flex:1;padding:8px 4px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;">기업 정보</button>
       </div>
     </div>`;
 
@@ -7422,9 +7433,8 @@ function connectToHoga(code, name) {
   const codeEl = document.getElementById('qo_stock_code');
   if (nameEl) nameEl.value = name;
   if (codeEl) codeEl.value = code;
-  // 기업분석 드로어 열려있으면 닫기
-  document.getElementById('analysisDrawer')?.classList.remove('open');
-  document.getElementById('analysisOverlay')?.classList.remove('open');
+  // 기업 정보 드로어 열려있으면 닫기
+  closeAnalysisDrawer();
   // 호가 탭으로 전환
   if (typeof onQONameInput === 'function') onQONameInput();
   if (typeof updateHogaDisplay === 'function') updateHogaDisplay();
@@ -7484,6 +7494,7 @@ function _allStockSearchKey(e) {
 }
 
 function _allRowKey(e, el, code, name) {
+  if (e.target.closest('button')) return;
   const bodyEl = document.getElementById('allStockBody');
   const rows = [...(bodyEl?.querySelectorAll('tr[data-code]') || [])];
   const idx = rows.indexOf(el);
@@ -7712,7 +7723,7 @@ function selectStockForQuickOrder(idx, mode = 'buy') {
   updateQOTotalPreview?.();
 }
 
-// HTS 방식: 종목명 클릭 → 기업정보 탭 자동 연동
+// HTS 방식: 종목명 클릭 → 기업 정보 탭 자동 연동
 function selectStockForCorpInfo(idx) {
   const s = state.portfolio[idx];
   if (!s) return;
@@ -10150,7 +10161,7 @@ function _icRenderDetail() {
   const chips = codes.map(c => `<button type="button" class="ic-chip" onclick="openStockDrawer('${_icEsc(c)}', decodeURIComponent('${encodeURIComponent(_icStockName(c))}'))">${_icEsc(_icStockName(c))}</button>`).join('');
   el.innerHTML = `<h3>${_icEsc(n.title)}</h3>
     <div class="ic-meta">${_icEsc(n.source)}${n.source && (n.time || n.timeLabel) ? ' · ' : ''}${_icEsc(_icTimeFmt(n.time, true) || n.timeLabel || '')}</div>
-    <div class="ic-actions">${n.publisherUrl && n.publisherUrl !== n.url ? _icLinkBtn(n.publisherUrl, '언론사 원문 ↗') + _icLinkBtn(n.url, '네이버 기사 ↗') : _icLinkBtn(n.url, '원문 보기 ↗')}${codes.length ? `<button type="button" class="sb-btn" onclick="openStockDrawer('${_icEsc(codes[0])}', decodeURIComponent('${encodeURIComponent(_icStockName(codes[0]))}'))">기업분석 열기</button>` : ''}</div>
+    <div class="ic-actions">${n.publisherUrl && n.publisherUrl !== n.url ? _icLinkBtn(n.publisherUrl, '언론사 원문 ↗') + _icLinkBtn(n.url, '네이버 기사 ↗') : _icLinkBtn(n.url, '원문 보기 ↗')}${codes.length ? `<button type="button" class="sb-btn" onclick="openStockDrawer('${_icEsc(codes[0])}', decodeURIComponent('${encodeURIComponent(_icStockName(codes[0]))}'))">기업 정보 열기</button>` : ''}</div>
     ${window.electronAPI?.openNewsPage ? `<div class="sb-news-page-tools" role="group" aria-label="기사 보기 방식">${[['publisher','언론사 원문'],...(n.url?.includes('n.news.naver.com')?[['naver','네이버 기사']]:[]),['text','본문만 보기']].map(([mode,label])=>`<button type="button" class="sb-btn sb-btn--sm${_icPageMode===mode?' sb-btn--primary':''}" aria-pressed="${_icPageMode===mode}" onclick="icSetPageMode('${mode}')">${label}</button>`).join('')}</div>` : ''}
     ${original ? `<div id="icPageStatus" class="sb-news-page-status" role="status">원문 페이지를 불러오는 중…</div><div id="icPageHost" class="sb-news-page-host" aria-label="기사 원문 웹페이지"></div>` : n.articleBody ? `<div class="ic-article-label">기사 본문</div><div class="ic-article-body">${_icEsc(n.articleBody)}</div>` : `${n.articleLoading ? '<p class="ic-article-status" role="status">기사 본문을 불러오는 중…</p>' : `<p class="ic-article-status" role="status">${_icEsc(n.articleError || '본문은 데스크톱 앱에서 조회할 수 있습니다.')}</p>`}${n.summary ? `<div class="ic-article-label">수신 요약</div><div class="ic-sum">${_icEsc(n.summary)}</div>` : ''}`}
     ${!original && chips ? `<div class="ic-chips" style="margin-bottom:var(--sb-space-2)">${chips}</div>` : ''}`;
@@ -12350,9 +12361,8 @@ function renderWatchlist() {
       <td style="text-align:right;font-size:11px;color:var(--text3);">${per}</td>
       <td style="text-align:right;font-size:11px;color:var(--text3);">${pbr}</td>
       <td style="text-align:right;font-size:11px;color:var(--text3);">${div}</td>
-      <td style="text-align:center;padding:2px 3px;"
-          onclick="event.stopPropagation();allStockOpenChart('${safeCode}','${safeName}')" title="기업분석">
-        <button type="button" style="padding:1px 5px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-size:10px;cursor:pointer;line-height:1.5;">분석</button>
+      <td style="text-align:center;padding:2px 3px;">
+          <button type="button" class="sb-btn sb-btn--sm sb-company-info-btn" onclick="event.stopPropagation();allStockOpenChart('${safeCode}','${safeName}')">기업 정보</button>
       </td>
     </tr>`;
   }).join('');
@@ -12369,7 +12379,7 @@ function renderWatchlist() {
       <th style="text-align:right;">거래량</th>
       <th>보유 / 평가손익</th><th>메모·태그</th>
       <th style="text-align:right;">시총(억)</th>
-      <th style="text-align:right;" title="기업분석 조회 시 자동 기록">EPS</th>
+      <th style="text-align:right;" title="기업 정보 조회 시 자동 기록">EPS</th>
       ${_wlSortHead('roe','ROE')}
       ${_wlSortHead('per','PER')}
       ${_wlSortHead('pbr','PBR')}
@@ -12434,6 +12444,7 @@ async function sbOpenChart() {
 function sbDesktopSelection(w) {
   sbChartSync();
   document.querySelectorAll('.sb-analysis-stock').forEach(el => { el.textContent = w ? (w.name || w.ticker) : '종목 선택'; });
+  renderAiPrinciples(w);
   const ticker = w?.ticker || null;
   if (ticker !== sbHogaSelection) {
     sbHogaSelection = ticker; sbHogaRequest++;
@@ -12895,50 +12906,20 @@ if ('serviceWorker' in navigator) {
 }
 
 // ============================================================
-// 기업 분석 드로어 (v1.4.4)
+// 기업 정보 패널 (v1.4.4)
 // ============================================================
 
-let _analysisIdx = null;
+let _companyInfoRequest = 0;
 
-async function openAnalysisDrawer(idx) {
-  _analysisIdx = idx;
+function openAnalysisDrawer(idx) {
   const stock = state.portfolio[idx];
-  if (!stock) return;
-
-  // 드로어 열기
-  document.getElementById('analysisDrawer').classList.add('open');
-  document.getElementById('analysisOverlay').classList.add('open');
-
-  // 헤더 타이틀
-  const titleEl = document.getElementById('analysisDrawerTitle');
-  titleEl.innerHTML = `<strong>${stock.name}</strong>${stock.ticker ? `<span style="font-size:13px;color:var(--text3);margin-left:8px;">${stock.ticker}</span>` : ''}`;
-
-  // 로딩 스피너
-  const body = document.getElementById('analysisDrawerBody');
-  body.innerHTML = `<div style="text-align:center;padding:50px 20px;color:var(--text3)"><div class="analysis-spinner" style="margin:0 auto 14px"></div><div>데이터 불러오는 중...</div></div>`;
-
-  const ticker  = stock.ticker || '';
-  const isKr    = /^\d{6}$/.test(ticker.trim());
-  const isElec  = !!window.electronAPI;
-
-  let naverData = null;
-  let yfData    = null;
-
-  if (isKr && isElec) {
-    // 데스크탑 + 한국 주식 → 네이버 금융 IPC
-    try { naverData = await window.electronAPI.fetchNaverFinance(ticker.trim()); } catch (_) {}
-  }
-  if (!naverData) {
-    // 모바일이거나 해외 주식 → Yahoo Finance 폴백
-    try { yfData = await _fetchYFSummary(ticker); } catch (_) {}
-  }
-
-  _renderAnalysisBody(body, stock, naverData, yfData);
+  if (stock) return _openAnalysisForStock(stock);
 }
 
 function closeAnalysisDrawer() {
-  document.getElementById('analysisDrawer').classList.remove('open');
-  document.getElementById('analysisOverlay').classList.remove('open');
+  _companyInfoRequest++;
+  document.getElementById('analysisDrawer')?.classList.remove('open');
+  document.getElementById('analysisOverlay')?.classList.remove('open');
 }
 
 async function _fetchYFSummary(ticker) {
@@ -13009,11 +12990,8 @@ function _renderAnalysisBody(body, stock, naverData, yf) {
   const isElectron = !!window.electronAPI;
   const ticker  = stock.ticker || '';
   const isKr    = /^\d{6}$/.test(ticker.trim());
-  const cur     = stock.currentPrice || stock.avgPrice;
-  const pct     = stock.avgPrice ? ((cur - stock.avgPrice) / stock.avgPrice * 100) : 0;
-  const pnl     = (cur - stock.avgPrice) * stock.qty;
-  const pnlCls  = pnl > 0 ? 'up' : pnl < 0 ? 'dn' : '';
-  const pctCls  = pct > 0 ? 'up' : pct < 0 ? 'dn' : '';
+  const price = Number(stock.currentPrice || stock.price);
+  const marketCap = Number(yf?.marketCap || stock.marketCap);
 
   // 포맷 헬퍼
   const fBig = v => {
@@ -13026,42 +13004,20 @@ function _renderAnalysisBody(body, stock, naverData, yf) {
   };
   const fPct = v => (v != null && !isNaN(v)) ? (v*100).toFixed(1)+'%' : 'N/A';
   const fNum = (v, d=2) => (v != null && !isNaN(v)) ? (+v).toFixed(d) : 'N/A';
-  const mCard = (label, val, sub='', cls='') =>
-    `<div class="analysis-metric-card ${cls}">` +
+  const mCard = (label, val, sub='') =>
+    `<div class="analysis-metric-card">` +
       `<div class="analysis-metric-label">${label}</div>` +
-      `<div class="analysis-metric-val">${val}</div>` +
-      (sub ? `<div class="analysis-metric-sub">${sub}</div>` : '') +
+      `<div class="analysis-metric-val">${escHtml(val)}</div>` +
+      (sub ? `<div class="analysis-metric-sub">${escHtml(sub)}</div>` : '') +
     `</div>`;
 
-  // ── 1. 포트폴리오 현황 (항상 표시) ──────────────────────────
-  const portSection = `<div class="analysis-section" style="padding-bottom:14px;">
-    <div style="display:flex;flex-wrap:wrap;gap:10px;">
-      <div style="flex:1;min-width:100px;">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:2px">보유량</div>
-        <div style="font-weight:700">${fmt(stock.qty)}주</div>
-      </div>
-      <div style="flex:1;min-width:100px;">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:2px">평균단가</div>
-        <div style="font-weight:700">${fmt(stock.avgPrice)}원</div>
-      </div>
-      <div style="flex:1;min-width:100px;">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:2px">현재가</div>
-        <div style="font-weight:700;color:var(--${pct>0?'red':pct<0?'blue':'text'})">${cur ? fmt(cur)+'원' : '-'}</div>
-      </div>
-      <div style="flex:1;min-width:100px;">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:2px">평가손익</div>
-        <div class="${pnlCls}" style="font-weight:700">${pnl>0?'+':''}${fmt(Math.round(pnl))}원</div>
-      </div>
-      <div style="flex:1;min-width:100px;">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:2px">수익률</div>
-        <div class="${pctCls}" style="font-weight:700">${pct>0?'+':''}${pct.toFixed(2)}%</div>
-      </div>
-      <div style="flex:1;min-width:100px;">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:2px">시가총액</div>
-        <div style="font-weight:700">${(()=>{const mc=yf?.marketCap||stock.marketCap||0;return mc>0?fBig(mc):'-';})()}</div>
-      </div>
+  const quoteSection = price > 0 || marketCap > 0 ? `<div class="analysis-section">
+    <div class="analysis-section-title">시세 요약</div>
+    <div class="analysis-metric-grid">
+      ${price > 0 ? mCard('현재가', price.toLocaleString('ko-KR') + (isKr ? '원' : '')) : ''}
+      ${marketCap > 0 ? mCard('시가총액', fBig(marketCap)) : ''}
     </div>
-  </div>`;
+  </div>` : '';
 
   // ── 2. 재무 데이터 ───────────────────────────────────────────
   let finSection = '';
@@ -13095,7 +13051,8 @@ function _renderAnalysisBody(body, stock, naverData, yf) {
 
     // 최신 연도(컨센서스 제외) 가져오기
     const realYears = titles.filter(t => t.isConsensus === 'N');
-    const latestKey = realYears[realYears.length - 1]?.key;
+    const latestActual = realYears.at(-1);
+    const latestKey = latestActual?.key;
 
     const latestPER = getVal(getRow('PER'), latestKey);
     const latestPBR = getVal(getRow('PBR'), latestKey);
@@ -13104,38 +13061,25 @@ function _renderAnalysisBody(body, stock, naverData, yf) {
     const latestOPM = getVal(getRow('영업이익률'), latestKey);
     const latestNPM = getVal(getRow('순이익률'), latestKey);
     const latestEPS = getVal(getRow('EPS'), latestKey);
-    const latestBPS = getVal(getRow('BPS'), latestKey);
     const latestDIV = getVal(getRow('주당배당금'), latestKey);
-
-    const numVal = (s) => parseFloat(String(s ?? '').replace(/,/g,''));
-    const perN   = numVal(latestPER);
-    const roeN   = numVal(latestROE);
-    const deN    = numVal(latestDE);
-
-    const perCls = (!isNaN(perN) && perN > 0 && perN < 15) ? 'good' : (!isNaN(perN) && perN > 30) ? 'warn' : '';
-    const roeCls = (!isNaN(roeN) && roeN > 15) ? 'good' : (!isNaN(roeN) && roeN < 0) ? 'warn' : '';
-    const deCls  = (!isNaN(deN)  && deN > 200)  ? 'warn' : '';
 
     // 기업 요약
     const corpSummary = corp ? `<div class="analysis-section">
       <div class="analysis-section-title">🏢 기업 요약</div>
       <div style="font-size:13px;line-height:1.8;color:var(--text2)">
-        ${[corp.comment1, corp.comment2, corp.comment3].filter(Boolean).map(c=>`<p style="margin:0 0 6px">${c}</p>`).join('')}
+        ${[corp.comment1, corp.comment2, corp.comment3].filter(Boolean).map(c=>`<p style="margin:0 0 6px">${escHtml(c)}</p>`).join('')}
       </div>
     </div>` : '';
-
-    // AI 코멘트
-    const comments = _buildCommentsNaver(perN, roeN, deN, numVal(latestNPM));
 
     finSection = `
     ${corpSummary}
     <div class="analysis-section">
-      <div class="analysis-section-title">📊 핵심 투자지표 <span style="font-size:11px;color:var(--text3);font-weight:400">(${realYears[realYears.length-1]?.title || ''} 기준)</span></div>
+      <div class="analysis-section-title">📊 핵심 투자지표${latestActual?.title ? ` <span style="font-size:11px;color:var(--text3);font-weight:400">(${escHtml(latestActual.title)} 기준)</span>` : ''}</div>
       <div class="analysis-metric-grid">
-        ${mCard('PER', latestPER !== '-' ? latestPER+'배' : 'N/A', '', perCls)}
+        ${mCard('PER', latestPER !== '-' ? latestPER+'배' : 'N/A')}
         ${mCard('PBR', latestPBR !== '-' ? latestPBR+'배' : 'N/A')}
-        ${mCard('ROE', latestROE !== '-' ? latestROE+'%' : 'N/A', '', roeCls)}
-        ${mCard('부채비율', latestDE !== '-' ? latestDE+'%' : 'N/A', '', deCls)}
+        ${mCard('ROE', latestROE !== '-' ? latestROE+'%' : 'N/A')}
+        ${mCard('부채비율', latestDE !== '-' ? latestDE+'%' : 'N/A')}
         ${mCard('영업이익률', latestOPM !== '-' ? latestOPM+'%' : 'N/A')}
         ${mCard('순이익률', latestNPM !== '-' ? latestNPM+'%' : 'N/A')}
         ${mCard('EPS', latestEPS !== '-' ? latestEPS+'원' : 'N/A')}
@@ -13147,155 +13091,78 @@ function _renderAnalysisBody(body, stock, naverData, yf) {
       ${renderNaverAnnualTable(naverData, true) || '<p>재무 데이터가 없습니다.</p>'}
     </div>
     <div class="analysis-section">
-      <div class="analysis-section-title">💬 AI 코멘트</div>
-      <div class="analysis-comments">
-        ${comments.map(c=>`<div class="analysis-comment ${c.type}">${c.text}</div>`).join('') ||
-          '<div style="font-size:13px;color:var(--text3)">데이터가 부족하여 코멘트를 생성할 수 없습니다.</div>'}
-      </div>
       <a href="https://finance.naver.com/item/main.naver?code=${ticker}" target="_blank" class="analysis-ext-link" style="margin-top:10px;display:inline-block;">🔗 네이버 금융 상세보기 →</a>
     </div>`;
 
   } else {
     // ── Yahoo Finance 폴백 (해외 주식) ──
-    const perCls  = (yf.per != null && yf.per < 15) ? 'good' : (yf.per != null && yf.per > 30) ? 'warn' : '';
-    const roeCls  = (yf.roe != null && yf.roe > 0.15) ? 'good' : (yf.roe != null && yf.roe < 0) ? 'warn' : '';
-    const deCls   = (yf.debtToEquity != null && yf.debtToEquity > 200) ? 'warn' : '';
     finSection = `
     <div class="analysis-section">
       <div class="analysis-section-title">📊 핵심 투자지표</div>
       <div class="analysis-metric-grid">
-        ${mCard('PER', yf.per != null ? fNum(yf.per,1)+'배' : 'N/A', yf.forwardPer ? `선행 ${fNum(yf.forwardPer,1)}배` : '', perCls)}
+        ${mCard('PER', yf.per != null ? fNum(yf.per,1)+'배' : 'N/A', yf.forwardPer ? `선행 ${fNum(yf.forwardPer,1)}배` : '')}
         ${mCard('PBR', yf.pbr != null ? fNum(yf.pbr,2)+'배' : 'N/A')}
-        ${mCard('ROE', fPct(yf.roe), '', roeCls)}
-        ${mCard('부채비율', yf.debtToEquity != null ? fNum(yf.debtToEquity,0)+'%' : 'N/A', '', deCls)}
+        ${mCard('ROE', fPct(yf.roe))}
+        ${mCard('부채비율', yf.debtToEquity != null ? fNum(yf.debtToEquity,0)+'%' : 'N/A')}
         ${mCard('순이익률', fPct(yf.netMargin))}
         ${mCard('배당수익률', fPct(yf.divYield))}
       </div>
     </div>
     <div class="analysis-section">
-      <div class="analysis-section-title">💬 AI 코멘트</div>
-      <div class="analysis-comments">
-        ${_buildComments(yf).map(c=>`<div class="analysis-comment ${c.type}">${c.text}</div>`).join('') ||
-          '<div style="font-size:13px;color:var(--text3)">데이터가 부족합니다.</div>'}
-      </div>
       <a href="https://finance.yahoo.com/quote/${ticker}" target="_blank" class="analysis-ext-link" style="margin-top:10px;display:inline-block;">🔗 Yahoo Finance 상세보기 →</a>
     </div>`;
   }
 
-  // ── 3. 매매 원칙 체크리스트 (항상 표시) ─────────────────────────
-  if (!state.analysisChecks) state.analysisChecks = {};
-  const cKey = stock.name;
-  if (!state.analysisChecks[cKey]) state.analysisChecks[cKey] = {};
-  const checks = state.analysisChecks[cKey];
+  body.innerHTML = quoteSection + renderDartAnnualSection(ticker) + finSection;
+}
+
+function renderAiPrinciples(stock) {
+  const list = document.getElementById('sbAiPrinciplesList');
+  const body = document.getElementById('sbAiPrinciplesBody');
+  const empty = document.getElementById('sbAiPrinciplesEmpty');
+  const count = document.getElementById('sbAiPrincipleCount');
+  if (!list || !body || !empty || !count) return;
+
+  const stockKey = stock?.name || stock?.ticker || '';
+  list.dataset.stockKey = stockKey;
+  body.hidden = !stockKey;
+  empty.hidden = Boolean(stockKey);
+  if (!stockKey) {
+    count.textContent = '';
+    return;
+  }
 
   const principles = _getAnalysisPrinciples();
-  const total = principles.length;
-  const cnt   = principles.filter(p => checks[p.key]).length;
-  const pctChk = Math.round(cnt/total*100);
-  const scoreColor = pctChk >= 70 ? '#22c55e' : pctChk >= 40 ? '#f59e0b' : 'var(--text3)';
-  const scoreLabel = pctChk >= 70 ? '✅ 매수 조건 우호적' : pctChk >= 40 ? '⚠️ 조건 일부 미충족' : '🔴 조건 대부분 미충족';
-
-  const checklistSection = `<div class="analysis-section">
-    <div class="analysis-section-title">✅ 매매 원칙 체크리스트</div>
-    <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">차트를 직접 확인하며 체크하세요 · 자동 저장됩니다.</div>
-    <div class="mj-checklist">
-      ${principles.map(p=>`
-        <label class="mj-check-item">
-          <input type="checkbox" ${checks[p.key] ? 'checked' : ''}
-            onchange="_toggleCheck('${cKey.replace(/'/g,"\\'")}','${p.key}',this.checked)">
-          <span>${p.text}</span>
-        </label>`).join('')}
-    </div>
-    <div id="analysisScore" style="margin-top:10px;font-size:13px;padding:8px 10px;background:var(--bg3);border-radius:7px;border:1px solid var(--border);">
-      체크 <strong>${cnt}/${total}</strong> — <span style="color:${scoreColor};font-weight:700">${scoreLabel}</span>
-    </div>
-  </div>`;
-
-  body.innerHTML = portSection + renderDartAnnualSection(ticker) + finSection + checklistSection;
-}
-
-function _buildComments(yf) {
-  const c = [];
-  if (!yf) return c;
-  if (yf.per != null) {
-    if      (yf.per < 0)   c.push({type:'warn',    text:`⚠️ PER이 음수(${yf.per.toFixed(1)}배)입니다. 적자 상태이거나 일시적 손실일 수 있습니다.`});
-    else if (yf.per < 10)  c.push({type:'good',    text:`✅ PER ${yf.per.toFixed(1)}배로 저평가 구간입니다. 저PER의 이유를 반드시 확인하세요.`});
-    else if (yf.per <= 20) c.push({type:'neutral',  text:`📌 PER ${yf.per.toFixed(1)}배로 적정 밸류에이션 구간입니다.`});
-    else if (yf.per <= 35) c.push({type:'neutral',  text:`📌 PER ${yf.per.toFixed(1)}배로 성장 기대가 반영된 수준입니다.`});
-    else                    c.push({type:'warn',    text:`⚠️ PER ${yf.per.toFixed(1)}배로 고평가 구간입니다. 높은 성장이 실현되지 않으면 조정 가능성이 있습니다.`});
+  if (!list.childElementCount) {
+    for (const { key, text } of principles) {
+      const label = document.createElement('label');
+      label.className = 'mj-check-item';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.value = key;
+      input.addEventListener('change', () => {
+        const currentKey = list.dataset.stockKey;
+        if (!currentKey) return;
+        state.analysisChecks = {
+          ...state.analysisChecks,
+          [currentKey]: { ...state.analysisChecks?.[currentKey], [key]: input.checked },
+        };
+        save();
+        renderAiPrinciples({ name: currentKey });
+      });
+      const caption = document.createElement('span');
+      caption.textContent = text;
+      label.append(input, caption);
+      list.append(label);
+    }
   }
-  if (yf.roe != null) {
-    const r = yf.roe * 100;
-    if      (r > 20) c.push({type:'good',   text:`✅ ROE ${r.toFixed(1)}%로 수익성이 매우 우수한 기업입니다.`});
-    else if (r > 10) c.push({type:'good',   text:`✅ ROE ${r.toFixed(1)}%로 양호한 수익성을 보입니다.`});
-    else if (r >  0) c.push({type:'neutral', text:`📌 ROE ${r.toFixed(1)}%로 수익성이 평균 수준입니다.`});
-    else             c.push({type:'warn',   text:`⚠️ ROE가 마이너스(${r.toFixed(1)}%)입니다. 자본 훼손 여부를 확인하세요.`});
+  const checks = state.analysisChecks?.[stockKey] || {};
+  let checked = 0;
+  for (const input of list.querySelectorAll('input')) {
+    input.checked = Boolean(checks[input.value]);
+    if (input.checked) checked++;
   }
-  if (yf.debtToEquity != null) {
-    const d = yf.debtToEquity;
-    if      (d > 300) c.push({type:'warn',   text:`⚠️ 부채비율 ${d.toFixed(0)}%로 재무 안정성에 주의가 필요합니다.`});
-    else if (d > 150) c.push({type:'neutral', text:`📌 부채비율 ${d.toFixed(0)}%로 다소 높은 편입니다.`});
-    else              c.push({type:'good',   text:`✅ 부채비율 ${d.toFixed(0)}%로 재무 구조가 양호합니다.`});
-  }
-  if (yf.divYield != null && yf.divYield > 0) {
-    const dy = yf.divYield * 100;
-    if      (dy > 4) c.push({type:'good',   text:`✅ 배당수익률 ${dy.toFixed(1)}%로 배당 매력이 높습니다.`});
-    else if (dy > 2) c.push({type:'neutral', text:`📌 배당수익률 ${dy.toFixed(1)}%로 준수한 배당 종목입니다.`});
-  }
-  if (yf.earningsGrowth != null) {
-    const eg = yf.earningsGrowth * 100;
-    if      (eg >  20) c.push({type:'good', text:`✅ 전년 대비 이익 성장률 ${eg.toFixed(0)}%로 고성장 중입니다.`});
-    else if (eg < -20) c.push({type:'warn', text:`⚠️ 전년 대비 이익이 ${Math.abs(eg).toFixed(0)}% 감소했습니다. 이익 추세를 모니터링하세요.`});
-  }
-  return c;
-}
-
-// 네이버 재무 데이터 기반 AI 코멘트 (perN, roeN, deN, npmN은 숫자)
-function _buildCommentsNaver(perN, roeN, deN, npmN) {
-  const c = [];
-  if (!isNaN(perN) && perN !== 0) {
-    if      (perN < 0)   c.push({type:'warn',    text:`⚠️ PER이 음수(${perN.toFixed(1)}배)입니다. 적자 또는 일시적 손실 상태일 수 있습니다.`});
-    else if (perN < 10)  c.push({type:'good',    text:`✅ PER ${perN.toFixed(1)}배로 저평가 구간입니다. 저PER의 원인을 반드시 확인하세요.`});
-    else if (perN <= 20) c.push({type:'neutral',  text:`📌 PER ${perN.toFixed(1)}배로 적정 밸류에이션 구간입니다.`});
-    else if (perN <= 35) c.push({type:'neutral',  text:`📌 PER ${perN.toFixed(1)}배로 성장 기대가 반영된 수준입니다.`});
-    else                  c.push({type:'warn',    text:`⚠️ PER ${perN.toFixed(1)}배로 고평가 구간입니다. 높은 성장이 뒷받침되지 않으면 조정 가능성이 있습니다.`});
-  }
-  if (!isNaN(roeN)) {
-    if      (roeN > 20)  c.push({type:'good',    text:`✅ ROE ${roeN.toFixed(1)}%로 수익성이 매우 우수합니다.`});
-    else if (roeN > 10)  c.push({type:'good',    text:`✅ ROE ${roeN.toFixed(1)}%로 양호한 수익성을 보입니다.`});
-    else if (roeN >  0)  c.push({type:'neutral',  text:`📌 ROE ${roeN.toFixed(1)}%로 수익성이 평균 수준입니다.`});
-    else                  c.push({type:'warn',    text:`⚠️ ROE가 마이너스(${roeN.toFixed(1)}%)입니다. 자본 훼손 여부를 확인하세요.`});
-  }
-  if (!isNaN(deN) && deN >= 0) {
-    if      (deN > 300)  c.push({type:'warn',    text:`⚠️ 부채비율 ${deN.toFixed(0)}%로 재무 안정성에 주의가 필요합니다.`});
-    else if (deN > 150)  c.push({type:'neutral',  text:`📌 부채비율 ${deN.toFixed(0)}%로 다소 높은 편입니다.`});
-    else                  c.push({type:'good',    text:`✅ 부채비율 ${deN.toFixed(0)}%로 재무 구조가 안정적입니다.`});
-  }
-  if (!isNaN(npmN)) {
-    if      (npmN > 15)  c.push({type:'good',    text:`✅ 순이익률 ${npmN.toFixed(1)}%로 고마진 구조입니다.`});
-    else if (npmN >  5)  c.push({type:'neutral',  text:`📌 순이익률 ${npmN.toFixed(1)}%로 양호한 수익 구조입니다.`});
-    else if (npmN >= 0)  c.push({type:'neutral',  text:`📌 순이익률 ${npmN.toFixed(1)}%로 수익성 개선 여부를 주시하세요.`});
-    else                  c.push({type:'warn',    text:`⚠️ 순이익률 ${npmN.toFixed(1)}%로 적자 상태입니다.`});
-  }
-  return c;
-}
-
-function _toggleCheck(stockKey, checkKey, val) {
-  if (!state.analysisChecks) state.analysisChecks = {};
-  if (!state.analysisChecks[stockKey]) state.analysisChecks[stockKey] = {};
-  state.analysisChecks[stockKey][checkKey] = val;
-  save();
-  // 점수 업데이트
-  const scoreEl = document.getElementById('analysisScore');
-  if (!scoreEl) return;
-  const checks = state.analysisChecks[stockKey];
-  const principles = _getAnalysisPrinciples();
-  const total  = principles.length;
-  const cnt    = principles.filter(p => checks[p.key]).length;
-  const p      = Math.round(cnt/total*100);
-  const color  = p >= 70 ? '#22c55e' : p >= 40 ? '#f59e0b' : 'var(--text3)';
-  const label  = p >= 70 ? '✅ 매수 조건 우호적' : p >= 40 ? '⚠️ 조건 일부 미충족' : '🔴 조건 대부분 미충족';
-  scoreEl.innerHTML = `체크 <strong>${cnt}/${total}</strong> — <span style="color:${color};font-weight:700">${label}</span>`;
+  count.textContent = `${checked}/${principles.length}`;
 }
 
   // ═══════════════════════════════════════════════════════
@@ -14991,19 +14858,22 @@ function wlAssignGroup(idx, gName) {
   </div>
 </div>
 
-<!-- ── 기업 분석 드로어 ── -->
+<!-- ── 기업 정보 패널 ── -->
 <div class="analysis-drawer-overlay" id="analysisOverlay" onclick="closeAnalysisDrawer()"></div>
-<div class="analysis-drawer" id="analysisDrawer">
+<aside class="analysis-drawer" id="analysisDrawer" aria-label="기업 정보">
   <div class="analysis-drawer-header">
-    <div class="analysis-drawer-title" id="analysisDrawerTitle">기업 분석</div>
-    <button class="analysis-drawer-close" onclick="closeAnalysisDrawer()">✕</button>
+    <div>
+      <div class="analysis-drawer-title">기업 정보</div>
+      <div class="sb-company-stock" id="analysisDrawerTitle"></div>
+    </div>
+    <button type="button" class="analysis-drawer-close" onclick="closeAnalysisDrawer()" aria-label="기업 정보 닫기">✕</button>
   </div>
   <div class="analysis-drawer-body" id="analysisDrawerBody">
     <div style="text-align:center;padding:40px;color:var(--text3)">
       <div class="analysis-spinner"></div>
     </div>
   </div>
-</div>
+</aside>
 <script src="src/desktop/stock-selection.js"></script>
 <script src="src/news/page-client.js"></script>
 <script src="src/desktop/shortcuts.js"></script>
