@@ -1,0 +1,8 @@
+{
+  "name": "stockbook-chart-proof",
+  "private": true,
+  "description": "Standalone chart data connectivity proof; not the StockBook app",
+  "scripts": {"start": "electron .", "check": "node check.cjs"},
+  "main": "main.cjs",
+  "devDependencies": {"electron": "31.7.7"}
+}

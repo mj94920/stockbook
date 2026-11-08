@@ -1,0 +1,18 @@
+{
+  "APPROVALS.md": "6ebfff497b68a76c9632849fb270210261475cb921f04b7a98bea2927c0a70ba",
+  "HANDOFF.md": "222ad718b8607ebe9affdac45b618ca4302023c0cadf7359ab08739c071adbee",
+  "chart-data-review.txt": "a926023a7106c35b8b66125183e4a373a63c9ddcc3b1573cf65cf59b961c33bd",
+  "chart-proof/README.txt": "8e0780d7b1a7d9958d5f2754af265f835d21e35945b6b24e1027d12be99e6955",
+  "chart-proof/chart-display-verified.png": "510c7031a5f6765ecf182646ca68c6b5e7a8d344e3daee554eda8491523d577b",
+  "chart-proof/check.cjs": "9cb20783ca0885aca0bcf237d01999fea7b44229cb0dd89cf26c75c2505e2719",
+  "chart-proof/index.html": "71b289388e698f65dab7fd741ffb67d4fdb1a00c177d4cb4d0ace9225c6a4279",
+  "chart-proof/main.cjs": "d82948d779530b31311bfb57543b2ac9776dc71e80b4a2eab39585cacf33d432",
+  "chart-proof/node-main-check.json": "2bdf5853595bfb256cbf2ebd3132e6ffc69688d7a8743ff0d08282d3c7c3a7ac",
+  "chart-proof/package.json": "820932e6f6882cc486a026784c920b6b4721e88d869618f72a3a76bee95ad8bd",
+  "chart-proof/parse.cjs": "0c7bb63f3e99e72c7d87eed174ec5b6deca13ba7201327c264147229221d680e",
+  "chart-proof/preload.cjs": "1a72bdc26eb08b7b278ee0dd54438d7f1f159353de1f4e15a0f3cd178b97aeef",
+  "chart-proof/python-check.json": "1cf828e66f08b25f81509b8c4f963ca274e3553948d3e5e4b69046b5d5d4f1ef",
+  "chart-proof/received-sample.xml": "14c8ffb489e65648d06b3bb44e65a3dba85226798a629d3a44472f39935b7d1d",
+  "chart-proof/renderer.js": "4315584a0a032af4cb2608c1d4b33580934a88092789e91174f8a252348fabc0",
+  "desktop-usage-npm-test.txt": "e86663ae363b80054b59440838b2495f7c8c2a6d4dc697bc5a4ef634c1d0b0c7"
+}

@@ -1,0 +1,31 @@
+
+> stockbook@1.11.0 test
+> npm run check && npm run smoke
+
+
+> stockbook@1.11.0 check
+> node scripts/check-syntax.mjs
+
+✓ main.js
+✓ preload.js
+✓ index.html#script1 (line 4809)
+✓ package.json
+
+모든 정적 검사 통과
+
+> stockbook@1.11.0 smoke
+> node scripts/smoke.mjs
+
+✓ /index.html  (본문 1106자, 초기화 오류 없음)
+
+스모크 테스트 통과
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice
