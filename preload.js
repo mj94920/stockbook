@@ -1,6 +1,14 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  aiReport: {
+    status: () => ipcRenderer.invoke('ai-report-status'),
+    preview: packet => ipcRenderer.invoke('ai-report-preview', packet),
+    run: id => ipcRenderer.invoke('ai-report-run', id),
+    load: code => ipcRenderer.invoke('ai-report-load', code),
+    save: report => ipcRenderer.invoke('ai-report-save', report),
+    export: report => ipcRenderer.invoke('ai-report-export', report),
+  },
   loadState:   ()          => ipcRenderer.invoke('load-state'),
   saveState:   (data)      => ipcRenderer.invoke('save-state', data),
   showConfirm: (message)   => ipcRenderer.invoke('show-confirm', message),

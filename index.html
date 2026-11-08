@@ -3351,6 +3351,18 @@
   .sb-analysis-section { padding: 12px; min-height: 0; overflow: auto; border-bottom: 1px solid var(--sb-border-weak); }
   .mdi-dock.sb-desktop-home > .sb-analysis:has(.sb-ai-principles[open]) { display: block; }
   .mdi-dock.sb-desktop-home > .sb-analysis:has(.sb-ai-principles[open]) > .sb-analysis-section { max-height: none; overflow: visible; }
+  .mdi-dock.sb-desktop-home:not([data-dock-screen="news"]) > .sb-analysis:has(.sb-ai-report[open]) { display: block; }
+  .mdi-dock.sb-desktop-home:not([data-dock-screen="news"]) > .sb-analysis:has(.sb-ai-report[open]) > .sb-analysis-section { max-height: none; overflow: visible; }
+  .sb-ai-report { margin-block: var(--sb-space-2); }
+  .sb-ai-report > summary { padding-block: var(--sb-space-1); }
+  .sb-ai-report .sb-btn { max-width: 100%; margin-block: var(--sb-space-1); }
+  .sb-ai-report-preview { width: 100%; min-height: 7rem; font-size: 11px; white-space: pre; }
+  .sb-ai-report-result { overflow-wrap: anywhere; }
+  .sb-ai-report-result svg { width: 100%; max-height: 10rem; color: var(--sb-accent); }
+  .sb-ai-report-result ul { margin-block: var(--sb-space-1); padding-inline-start: var(--sb-space-4); font-size: 12px; }
+  .sb-ai-table-scroll { overflow-x: auto; }
+  .sb-ai-table-scroll table { border-collapse: collapse; font-size: 11px; }
+  .sb-ai-table-scroll :is(th,td) { border: 1px solid var(--sb-border-weak); padding: var(--sb-space-1); white-space: nowrap; }
   .sb-analysis-section h3 { font-size: 13px; margin: 0; }
   .sb-analysis-section > strong { display: block; font-size: 15px; margin: 12px 0 8px; }
   .sb-analysis-section p { font-size: 11px; color: var(--sb-text-3); line-height: 1.7; }
@@ -3447,6 +3459,10 @@
     .mdi-dock.sb-desktop-home > :is(#mdi-panel-portfolio,#mdi-panel-trading,.sb-analysis) { max-height:min(44vh,480px); }
     .mdi-dock.sb-desktop-home > .sb-analysis { grid-template-rows:auto auto;align-content:start;contain:size; }
     .mdi-dock.sb-desktop-home > .sb-analysis .sb-analysis-section { max-height:240px; }
+    .mdi-dock.sb-desktop-home:not([data-dock-screen="news"]):has(.sb-ai-report[open]) > .dock-ctx { grid-column: 2; }
+    .mdi-dock.sb-desktop-home > #sbAnalysis:has(.sb-ai-report[open]) {
+      grid-row: 2 / 4; max-height: none; contain: none; min-height: 0;
+    }
     /* Journal writing keeps a larger workspace; its body and analysis scroll independently. */
     .mdi-dock.sb-desktop-home[data-dock-screen="journal"] { grid-template-rows:0 minmax(240px,.8fr) minmax(0,1.2fr); }
     .mdi-dock[data-dock-screen="news"] { grid-template-columns:minmax(240px,1fr) minmax(0,2fr) minmax(0,1fr); }
@@ -4548,6 +4564,19 @@
     </aside>
     <aside id="sbAnalysis" class="sb-analysis" aria-label="AI 분석과 규칙 신호">
       <section class="sb-analysis-section"><div class="sb-region-title"><h3>AI 분석</h3><span class="sb-analysis-stock">종목 선택</span></div>
+        <details class="sb-ai-report" id="sbAiReport">
+          <summary>Codex 보고서</summary>
+          <p id="sbAiReportNotice" role="status">종목을 선택한 뒤 보낼 자료를 확인하세요.</p>
+          <button type="button" class="sb-btn sb-btn--sm" id="sbAiReportPreview" disabled>보낼 자료 보기</button>
+          <div id="sbAiReportDraft" hidden>
+            <p>현재 차트에 표시된 마지막 최대 60개 봉과 수동 체크 상태를 보냅니다.</p>
+            <label class="sb-field">보낼 자료<textarea class="sb-input sb-textarea sb-ai-report-preview" id="sbAiReportPayload" readonly></textarea></label>
+            <button type="button" class="sb-btn sb-btn--primary sb-btn--sm" id="sbAiReportRun" disabled>Codex로 분석</button>
+          </div>
+          <article class="sb-ai-report-result" id="sbAiReportResult" aria-label="AI 분석 보고서" hidden></article>
+          <button type="button" class="sb-btn sb-btn--sm" id="sbAiReportSave" hidden>앱에 저장</button>
+          <button type="button" class="sb-btn sb-btn--sm" id="sbAiReportExport" hidden>HTML 내보내기</button>
+        </details>
         <details class="sb-ai-principles" id="sbAiPrinciples">
           <summary>매매 원칙 체크리스트 <span id="sbAiPrincipleCount"></span></summary>
           <p id="sbAiPrinciplesEmpty">종목을 선택하면 체크리스트가 표시됩니다.</p>
@@ -12418,6 +12447,7 @@ function sbSelectInstrument(code,name) {
   if(!stock.quoteAt||Date.now()-stock.quoteAt>30000)dockLoadQuote(stock).then(()=>renderWatchlist());
   return stock;
 }
+let sbAiReportPanel = null;
 let sbChartContextKey = '';
 function sbChartContext() {
   const stock=sbSelectedStock();
@@ -12445,6 +12475,7 @@ function sbDesktopSelection(w) {
   sbChartSync();
   document.querySelectorAll('.sb-analysis-stock').forEach(el => { el.textContent = w ? (w.name || w.ticker) : '종목 선택'; });
   renderAiPrinciples(w);
+  sbAiReportPanel?.select(w);
   const ticker = w?.ticker || null;
   if (ticker !== sbHogaSelection) {
     sbHogaSelection = ticker; sbHogaRequest++;
@@ -12970,22 +13001,6 @@ async function _fetchYFSummary(ticker) {
   return null;
 }
 
-// 표시와 집계가 같은 원칙 목록을 사용하며 알 수 없는 저장 키는 점수에서 제외한다.
-function _getAnalysisPrinciples() {
-  return [
-    { key:'pos',     text:'주가가 바닥에 가깝고 위로 열려 있는가? (뚜껑 없음)' },
-    { key:'align',   text:'이평선 완전 정배열 상태인가?' },
-    { key:'knee',    text:'5일선이 저점에서 꺾여 상승 중인가? (무릎)' },
-    { key:'golden',  text:'5-10일선 골든크로스 (히말라야) 형성됐는가?' },
-    { key:'ma20',    text:'20일선이 우상향 중인가?' },
-    { key:'ma200',   text:'200일선·300일선이 우상향 중인가?' },
-    { key:'pivot',   text:'대량거래 급등 양봉 기준봉이 있는가?' },
-    { key:'gap',     text:'갭상승 후 추가 상승이 이어졌는가? (갭 유지)' },
-    { key:'monthly', text:'월봉 기준봉 절반 이상 돌파했는가?' },
-    { key:'index',   text:'지수 대비 -10% 이하 이탈하지 않았는가?' },
-  ];
-}
-
 function _renderAnalysisBody(body, stock, naverData, yf) {
   const isElectron = !!window.electronAPI;
   const ticker  = stock.ticker || '';
@@ -13132,7 +13147,7 @@ function renderAiPrinciples(stock) {
     return;
   }
 
-  const principles = _getAnalysisPrinciples();
+  const principles = window.StockBookAiReportData?.principles || [];
   if (!list.childElementCount) {
     for (const { key, text } of principles) {
       const label = document.createElement('label');
@@ -14618,7 +14633,9 @@ function wlAssignGroup(idx, gName) {
       <div class="sb-hub__h">일반</div>
       <section class="settings-section">
         <h3 class="settings-section-label">AI 서비스 로그인</h3>
-        <p class="sb-hint">각 서비스의 웹 로그인 페이지가 열립니다. CLI 로그인은 터미널에서 시작하세요.</p>
+        <p class="sb-hint">각 서비스의 웹 로그인 페이지가 열립니다. 보고서는 PowerShell에서 로그인한 Codex CLI 연결을 사용합니다.</p>
+        <button type="button" class="sb-btn sb-btn--sm" id="sbCodexCheck">Codex CLI 연결 확인</button>
+        <p id="sbCodexStatus" role="status"></p>
         <a class="sb-btn sb-btn--sm" href="https://chatgpt.com/auth/login" target="_blank" rel="noopener noreferrer">ChatGPT 로그인</a>
         <a class="sb-btn sb-btn--sm" href="https://claude.ai/login" target="_blank" rel="noopener noreferrer">Claude 로그인</a>
       </section>
@@ -14874,6 +14891,7 @@ function wlAssignGroup(idx, gName) {
     </div>
   </div>
 </aside>
+<script src="src/analysis/report-data.js"></script>
 <script src="src/desktop/stock-selection.js"></script>
 <script src="src/news/page-client.js"></script>
 <script src="src/desktop/shortcuts.js"></script>
@@ -14883,6 +14901,14 @@ function wlAssignGroup(idx, gName) {
 <script src="src/chart/interaction.js"></script>
 <script src="src/chart/resize.js"></script>
 <script src="src/chart/client.js"></script>
-<script>sbChartContextKey='';sbChartSync();</script>
+<script src="src/analysis/report-client.js"></script>
+<script>
+  sbAiReportPanel = window.StockBookAiReport?.mount(document.getElementById('sbAiReport'), {
+    getSelection: sbSelectedStock, getContext: sbChartContext,
+    getChecks: key => state.analysisChecks?.[key], api: window.electronAPI?.aiReport,
+  });
+  sbAiReportPanel?.select(sbSelectedStock());
+  sbChartContextKey='';sbChartSync();
+</script>
 </body>
 </html>

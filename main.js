@@ -1,5 +1,6 @@
 const { app, BrowserWindow, WebContentsView, ipcMain, dialog, shell, safeStorage, net } = require('electron');
 const path  = require('path');
+const { pathToFileURL } = require('node:url');
 const fs    = require('fs');
 const https = require('https');
 
@@ -8,6 +9,11 @@ const https = require('https');
 app.name = 'StockBook';
 
 let win;
+let aiReportPageUrl = '';
+require('./src/analysis/report-service.cjs').registerAiReports({
+  ipcMain, dialog, getMainWindow: () => win, getPageUrl: () => aiReportPageUrl,
+  userData: () => app.getPath('userData'),
+});
 const { prepareRendererFiles } = require('./src/desktop/renderer-files.cjs');
 const rendererDirectories = new Set();
 const chartStockSearch = require('./src/chart/stock-search.cjs').createStockSearch({loadMarket:loadNaverStocks,loadBasic:async code=>JSON.parse(await httpsGet(`https://m.stock.naver.com/api/stock/${code}/basic`,8000))});
@@ -1375,6 +1381,7 @@ function createWindow() {
 
   win.on('closed', () => { chartWindows.close(); newsPage.close(); });
   win.webContents.on('did-start-loading', () => newsPage.close());
+  aiReportPageUrl = pathToFileURL(renderer.htmlPath).href;
   win.loadFile(renderer.htmlPath);
   win.setMenuBarVisibility(false);
   // 스플래시 최소 1.4초 표시 후 메인 창 표시, 스플래시 닫기
