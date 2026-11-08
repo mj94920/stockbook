@@ -13,7 +13,7 @@ const packet = {
   code: '005930', cycle: 'day', range: '6m', sourceType: 'naver-daily',
   fetchedAt: '2026-11-08T02:00:00Z',
   rows: [
-    { date: '2026-11-05', open: 95, high: 110, low: 90, close: 100, volume: 10, tradingValue: 999 },
+    { date: '2026-11-05', open: 95, high: 110, low: 90, close: 100, volume: 10, tradingValue: 999, entrySignal: true },
     { date: '2026-11-06', open: 100, high: 120, low: 95, close: 110, volume: 20 },
   ],
   investorFlow: { source: 'KIS', date: '2026-11-06', foreign: 5, institution: -4, individual: -1 },
@@ -27,6 +27,8 @@ const createdAt = '2026-11-08T02:10:00Z';
 test('report contract limits outbound fields and renders escaped text with original rows', () => {
   const clean = data.normalizePacket({ ...packet, account: 'private', rows: packet.rows.map(row => ({ ...row, note: 'private' })) });
   assert.equal(clean.rows[1].tradingValue, null);
+  assert.equal(clean.rows[0].entrySignal, true);
+  assert.equal(clean.rows[1].entrySignal, null);
   assert.equal(clean.checks.ma20.manuallyChecked, true);
   assert.equal(Object.values(clean.checks).filter(check => check.manuallyChecked).length, 1);
   assert.doesNotMatch(JSON.stringify(clean), /private|ignored/);
@@ -40,6 +42,8 @@ test('report contract limits outbound fields and renders escaped text with origi
   assert.match(html, /<td>110<\/td>/);
   assert.match(html, /<td>미수신<\/td>/);
   assert.match(html, /외국인 5주/);
+  assert.match(html, /차트 진입 조건/);
+  assert.match(html, /판정 근거 없음/);
 });
 
 test('Codex adapter reuses login, strips key overrides and reads one structured report', async () => {
@@ -149,21 +153,31 @@ test('narrow AI panel previews, requires a fresh snapshot, shows and saves a rep
       state.watchlist = [{ ticker: '005930', name: '합성 종목', price: 110, quoteAt: Date.now() }];
       state.analysisChecks = { '합성 종목': { ma20: true } };
       window._dockSel = '005930';
+      const packet = window.reportFixture;
+      window.StockBookCharts = { ...window.StockBookCharts, show: async () => {}, controller: () => ({
+        getModel: () => ({ stockCode: packet.code, rows: packet.rows, fetchedAt: packet.fetchedAt, signals: [{ entry: true }, { entry: null }] }),
+      }) };
       window._MDI.show('watchlist');
       dockCtxRender();
-      const packet = window.reportFixture;
       const host = document.getElementById('sbEmbeddedChart');
-      host.chartEvidence = { stockCode: packet.code, barCycle: 'day', viewRange: '6m', sourceType: 'naver-daily' };
-      window.StockBookCharts = { ...window.StockBookCharts, controller: () => ({
-        getModel: () => ({ stockCode: packet.code, rows: packet.rows, fetchedAt: packet.fetchedAt }),
-      }) };
+      host.chartEvidence = { stockCode: packet.code, barCycle: 'day', viewRange: '6m', sourceType: 'naver-daily',
+        signals: { entryKnown: 1, entryDates: [packet.rows[0].date] } };
+      host.dispatchEvent(new CustomEvent('stockbook:chart-render'));
     });
+    const radar = page.locator('.sb-detail-identity').getByRole('button', { name: '마켓레이더' });
+    await radar.click();
+    assert.equal(await page.locator('#sbAnalysis .sb-analysis-section').count(), 1);
+    assert.equal(await page.locator('#sbSignalCheck').count(), 0);
+    assert.match(await page.locator('#sbAiCheck[open] #sbAiSignalStatus').innerText(), /최근 조건 충족 2026-11-05/);
+    assert.deepEqual(await page.evaluate(() => window.reportCalls), []);
     await page.locator('#sbAiReport > summary').click();
     assert.ok((await page.locator('#sbAnalysis').boundingBox()).height > 300);
     await page.getByRole('button', { name: '보낼 자료 보기' }).click();
     await page.locator('#sbAiReportDraft').waitFor();
     assert.deepEqual(await page.evaluate(() => window.reportCalls), ['preview']);
-    assert.equal(JSON.parse(await page.locator('#sbAiReportPayload').inputValue()).checks.ma20.manuallyChecked, true);
+    const previewed = JSON.parse(await page.locator('#sbAiReportPayload').inputValue());
+    assert.equal(previewed.checks.ma20.manuallyChecked, true);
+    assert.deepEqual(previewed.rows.map(row => row.entrySignal), [true, null]);
     await page.evaluate(() => { state.analysisChecks['합성 종목'].ma20 = false; });
     await page.getByRole('button', { name: 'Codex로 분석' }).click();
     assert.match(await page.locator('#sbAiReportNotice').textContent(), /다시 확인/);
@@ -172,6 +186,8 @@ test('narrow AI panel previews, requires a fresh snapshot, shows and saves a rep
     await page.getByRole('button', { name: 'Codex로 분석' }).click();
     await page.locator('#sbAiReportResult svg').waitFor();
     assert.match(await page.locator('#sbAiReportResult').textContent(), /종가를 비교했습니다/);
+    assert.equal(await page.locator('#sbAiResultHeading').isVisible(), false);
+    assert.equal(await page.locator('#sbAiResultState').textContent(), '보고서 있음');
     assert.equal(await page.locator('#sbAiReportResult img').count(), 0);
     await page.getByRole('button', { name: '앱에 저장' }).click();
     await page.getByRole('button', { name: 'HTML 내보내기' }).click();

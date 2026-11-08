@@ -265,11 +265,15 @@ for (const pg of PAGES) {
           for (const screen of ['watchlist','portfolio','journal']) {
             window._MDI.show(screen);
             const region=document.getElementById('sbAnalysis'),r=region.getBoundingClientRect();
-            checks.push(r.width>100 && r.height>100 && r.right<=innerWidth && getComputedStyle(region).display!=='none' && region.textContent.includes('AI 분석') && region.textContent.includes('규칙 신호'));
+            const radar=document.getElementById('sbMarketRadar'),identity=document.getElementById('dockCtxName').parentElement;
+            checks.push(r.width>100 && r.height>100 && r.right<=innerWidth && getComputedStyle(region).display!=='none' &&
+              region.getAttribute('aria-label')==='AI 분석' && region.querySelectorAll('.sb-analysis-section').length===1 &&
+              identity.contains(radar) && radar.checkVisibility() && radar.textContent==='마켓레이더');
           }
-          document.getElementById('sbAiCheck').open=true;document.getElementById('sbSignalCheck').open=true;
-          const flow=document.getElementById('sbAiCheck').textContent.includes('생성 시각') && document.getElementById('sbSignalCheck').textContent.includes('시계열 데이터');
-          document.getElementById('sbAiCheck').open=false;document.getElementById('sbSignalCheck').open=false;
+          document.getElementById('sbMarketRadar').click();
+          const evidence=document.getElementById('sbAiCheck'),signal=document.getElementById('sbAiSignalStatus');
+          const flow=evidence.open && evidence.textContent.includes('생성 시각') && evidence.contains(signal) && signal.textContent.includes('차트 판정');
+          evidence.open=false;
           return {disconnected,real,stale,failure,simultaneous:checks.every(Boolean),flow};
         } finally {state.watchlist=backup.wl;window._dockSel=backup.sel;window.electronAPI=backup.api;window._MDI.show('watchlist');}
       });

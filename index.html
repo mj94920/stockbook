@@ -3268,6 +3268,7 @@
   #watchlistBody tr.dock-sel td { background: var(--sb-accent-soft); }
   .sb-detail-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--sb-border-weak); display: flex; justify-content: space-between; gap: 14px; align-items: center; }
   .sb-detail-identity { display: flex; gap: 9px; align-items: baseline; flex-wrap: wrap; }
+  .sb-market-radar { height: auto; min-height: var(--sb-control-h-sm); padding-inline: var(--sb-space-2); color: var(--sb-accent); }
   .dock-ctx__name { font-size: 22px; letter-spacing: -.6px; }
   .dock-ctx__code { font-size: 12px; }
   .sb-detail-price { display: flex; align-items: baseline; gap: 12px; margin-top: 8px; }
@@ -3347,8 +3348,9 @@
   .mdi-dock.sb-desktop-home > .dock-ctx { grid-column: 2 / 4; }
   .mdi-dock.sb-desktop-home > :is(#mdi-panel-portfolio,#mdi-panel-journal) { grid-column: 2; }
   .sb-analysis { display: none; }
-  .mdi-dock.sb-desktop-home > .sb-analysis { display: grid; grid-template-rows: repeat(2,minmax(0,1fr)); grid-column: 3; grid-row: 3; min-width: 0; min-height: 0; overflow: auto; border: 1px solid var(--sb-border); border-radius: var(--sb-radius-3); background: var(--sb-panel); }
-  .sb-analysis-section { padding: 12px; min-height: 0; overflow: auto; border-bottom: 1px solid var(--sb-border-weak); }
+  .mdi-dock.sb-desktop-home > .sb-analysis { display: grid; grid-template-rows: minmax(0,1fr); grid-column: 3; grid-row: 3; min-width: 0; min-height: 0; overflow: auto; border: 1px solid var(--sb-border); border-radius: var(--sb-radius-3); background: var(--sb-panel); }
+  .sb-analysis-section { padding: 12px; min-height: 0; overflow: auto; }
+  .sb-analysis [hidden] { display: none !important; }
   .mdi-dock.sb-desktop-home > .sb-analysis:has(.sb-ai-principles[open]) { display: block; }
   .mdi-dock.sb-desktop-home > .sb-analysis:has(.sb-ai-principles[open]) > .sb-analysis-section { max-height: none; overflow: visible; }
   .mdi-dock.sb-desktop-home:not([data-dock-screen="news"]) > .sb-analysis:has(.sb-ai-report[open]) { display: block; }
@@ -3457,8 +3459,7 @@
     /* Reserve content-sized work space; the chart receives the remaining height. */
     .mdi-dock.sb-desktop-home { grid-template-rows:0 minmax(260px,1fr) fit-content(min(44vh,480px)); }
     .mdi-dock.sb-desktop-home > :is(#mdi-panel-portfolio,#mdi-panel-trading,.sb-analysis) { max-height:min(44vh,480px); }
-    .mdi-dock.sb-desktop-home > .sb-analysis { grid-template-rows:auto auto;align-content:start;contain:size; }
-    .mdi-dock.sb-desktop-home > .sb-analysis .sb-analysis-section { max-height:240px; }
+    .mdi-dock.sb-desktop-home > .sb-analysis { contain:size; }
     .mdi-dock.sb-desktop-home:not([data-dock-screen="news"]):has(.sb-ai-report[open]) > .dock-ctx { grid-column: 2; }
     .mdi-dock.sb-desktop-home > #sbAnalysis:has(.sb-ai-report[open]) {
       grid-row: 2 / 4; max-height: none; contain: none; min-height: 0;
@@ -4542,7 +4543,7 @@
       <div class="dock-ctx__empty" id="dockCtxEmpty">종목을 선택하면 시세·보유 현황이 여기에 표시됩니다.</div>
       <div class="dock-ctx__body" id="dockCtxBody" style="display:none">
         <div class="sb-detail-head"><div>
-          <div class="sb-detail-identity"><strong class="dock-ctx__name" id="dockCtxName">--</strong><span class="dock-ctx__code" id="dockCtxCode">--</span></div>
+          <div class="sb-detail-identity"><strong class="dock-ctx__name" id="dockCtxName">--</strong><span class="dock-ctx__code" id="dockCtxCode">--</span><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm sb-market-radar" id="sbMarketRadar" aria-controls="sbAiCheck" onclick="sbOpenMarketRadar()" disabled>마켓레이더</button></div>
           <div class="sb-detail-price"><strong class="dock-ctx__price" id="dockCtxPrice">--</strong><span class="dock-ctx__chg" id="dockCtxChg">--</span></div>
           <div class="dock-ctx__none" id="dockCtxStatus" role="status"></div>
         </div><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('chart')">기업 정보 ↗</button></div>
@@ -4562,14 +4563,14 @@
         <details class="sb-context-details"><summary>보유 · 목표/손절 · 일정</summary><div class="sb-detail-content"><div class="dock-ctx__rows" id="dockCtxHold"></div><div class="dock-ctx__rows" id="sbDesktopTargets"></div><div class="dock-ctx__rows" id="dockCtxEvents"></div></div></details>
       </div>
     </aside>
-    <aside id="sbAnalysis" class="sb-analysis" aria-label="AI 분석과 규칙 신호">
+    <aside id="sbAnalysis" class="sb-analysis" aria-label="AI 분석">
       <section class="sb-analysis-section"><div class="sb-region-title"><h3>AI 분석</h3><span class="sb-analysis-stock">종목 선택</span></div>
         <details class="sb-ai-report" id="sbAiReport">
           <summary>Codex 보고서</summary>
           <p id="sbAiReportNotice" role="status">종목을 선택한 뒤 보낼 자료를 확인하세요.</p>
           <button type="button" class="sb-btn sb-btn--sm" id="sbAiReportPreview" disabled>보낼 자료 보기</button>
           <div id="sbAiReportDraft" hidden>
-            <p>현재 차트에 표시된 마지막 최대 60개 봉과 수동 체크 상태를 보냅니다.</p>
+            <p>현재 차트의 마지막 최대 60개 봉과 해당 차트 판정, 수동 체크 상태를 보냅니다.</p>
             <label class="sb-field">보낼 자료<textarea class="sb-input sb-textarea sb-ai-report-preview" id="sbAiReportPayload" readonly></textarea></label>
             <button type="button" class="sb-btn sb-btn--primary sb-btn--sm" id="sbAiReportRun" disabled>Codex로 분석</button>
           </div>
@@ -4585,8 +4586,7 @@
             <div class="mj-checklist" id="sbAiPrinciplesList"></div>
           </div>
         </details>
-        <strong>분석 데이터 없음</strong><p>선택 종목의 AI 분석 결과가 연결되지 않았습니다.</p><details id="sbAiCheck"><summary>분석 상태 확인</summary><p>분석 결과: 없음<br>생성 시각: --<br>출처: 연결되지 않음</p><button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('chart')">기업 정보 보기 ↗</button></details></section>
-      <section class="sb-analysis-section"><div class="sb-region-title"><h3>규칙 신호</h3><span class="sb-analysis-stock">종목 선택</span></div><strong>판정 대기</strong><p>규칙 엔진과 판정에 필요한 시계열 데이터가 아직 연결되지 않았습니다.</p><details id="sbSignalCheck"><summary>판정 조건 확인</summary><p>시계열 데이터: 없음<br>규칙 엔진: 연결 대기<br>마지막 판정: --</p><small>규칙 판정 · 투자 권유 아님</small></details></section>
+        <strong id="sbAiResultHeading">분석 데이터 없음</strong><p id="sbAiResultDescription">선택 종목의 보고서가 없습니다.</p><details id="sbAiCheck"><summary>분석 상태·근거 확인</summary><p>분석 결과: <span id="sbAiResultState">없음</span><br>생성 시각: <span id="sbAiResultTime">--</span><br>출처: <span id="sbAiResultSource">연결되지 않음</span></p><p id="sbAiSignalStatus">차트 판정 · 종목 선택 대기</p><button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('chart')">기업 정보 보기 ↗</button></details></section>
     </aside>
 </div><!-- /mdi-workspace -->
 </div><!-- /mdi-content -->
@@ -12455,12 +12455,42 @@ function sbChartContext() {
   const barCycle=document.getElementById('sbChartCycle')?.value||'day';
   return stock ? {code:stock.ticker,name:stock.name||stock.ticker,period:viewRange,viewRange,barCycle,indicatorCycle:barCycle} : null;
 }
+function sbRefreshAiSignalEvidence() {
+  const status = document.getElementById('sbAiSignalStatus');
+  const radar = document.getElementById('sbMarketRadar');
+  const context = sbChartContext();
+  if (radar) radar.disabled = !context;
+  if (!status) return;
+  const chart = document.getElementById('sbEmbeddedChart')?.chartEvidence;
+  let text = '차트 판정 · 종목 선택 대기';
+  if (context) {
+    const current = chart?.stockCode === context.code && chart.barCycle === context.barCycle &&
+      chart.viewRange === context.viewRange;
+    const known = current && chart.signals?.entryKnown;
+    if (context.barCycle !== 'day') text = '차트 판정 · 일봉에서 확인할 수 있습니다.';
+    else if (!known) text = '차트 판정 · 시계열 데이터 또는 판정 근거 대기';
+    else {
+      const last = chart.signals.entryDates?.at(-1);
+      text = `차트 판정 · 표시 범위 ${known}개 봉 판정${last ? ' · 최근 조건 충족 ' + last : ' · 조건 충족 표시 없음'}`;
+    }
+  }
+  if (status.textContent !== text) status.textContent = text;
+}
+function sbOpenMarketRadar() {
+  const evidence = document.getElementById('sbAiCheck');
+  if (!evidence) return;
+  evidence.open = true;
+  const summary = evidence.querySelector('summary');
+  summary?.focus({ preventScroll: true });
+  evidence.scrollIntoView({ block: 'nearest' });
+}
 function sbChartSync() {
   const value=sbChartContext();const key=JSON.stringify(value);
-  if(!value){sbChartContextKey='';window.StockBookCharts?.clear(document.getElementById('sbEmbeddedChart'));return;}
+  if(!value){sbChartContextKey='';window.StockBookCharts?.clear(document.getElementById('sbEmbeddedChart'));sbRefreshAiSignalEvidence();return;}
   if(key===sbChartContextKey)return;
   sbChartContextKey=key;
   window.StockBookCharts?.show(document.getElementById('sbEmbeddedChart'),value,'compact');
+  sbRefreshAiSignalEvidence();
   window.dispatchEvent(new CustomEvent('stockbook:chart-context',{detail:{...value}}));
   window.electronAPI?.setChartContext?.(value).catch(()=>{});
 }
@@ -14908,6 +14938,7 @@ function wlAssignGroup(idx, gName) {
     getChecks: key => state.analysisChecks?.[key], api: window.electronAPI?.aiReport,
   });
   sbAiReportPanel?.select(sbSelectedStock());
+  document.getElementById('sbEmbeddedChart')?.addEventListener('stockbook:chart-render', sbRefreshAiSignalEvidence);
   sbChartContextKey='';sbChartSync();
 </script>
 </body>

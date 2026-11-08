@@ -110,6 +110,7 @@ function createCodex({ discover = findCodex, launch = runProcess, env = process.
           '제공된 JSON만 사용해 한국어 종목 관찰 보고서를 작성하세요. 외부 조회와 로컬 파일 접근은 필요 없습니다.',
           'summary는 핵심 관찰을 짧게 요약하고, findings에는 관찰과 원자료에 실제 존재하는 근거 날짜를 넣으세요.',
           '체크리스트는 사용자가 직접 체크한 항목입니다. 체크 여부를 검증된 신호로 해석하지 마세요.',
+          'entrySignal은 차트에 쓰인 진입 조건 결과입니다. null은 판정 근거 부족이며 조건 미충족이나 실제 매수 주체로 해석하지 마세요.',
           '원자료에서 확인할 수 없는 항목은 limitations에 적고, 누락값을 0으로 바꾸거나 지표·수치를 만들지 마세요.',
           '종가·거래량·수급의 관찰과 해석을 구분하세요. 매매 지시나 가격 목표를 제시하지 마세요.',
           JSON.stringify(packet),
@@ -153,7 +154,7 @@ function registerAiReports({ ipcMain, dialog, getMainWindow, getPageUrl, userDat
     try {
       const answer = await dialog.showMessageBox(win, {
         type: 'question', title: 'Codex CLI 자료 전송', message: '확인한 종목 자료를 OpenAI로 보내 분석할까요?',
-        detail: `종목 ${draft.packet.code}의 차트 원자료 ${draft.packet.rows.length}개와 수동 체크 상태가 전송됩니다. 연결된 ChatGPT 계정의 사용량을 사용합니다.`,
+        detail: `종목 ${draft.packet.code}의 차트 원자료 ${draft.packet.rows.length}개, 해당 차트 판정과 수동 체크 상태가 전송됩니다. 연결된 ChatGPT 계정의 사용량을 사용합니다.`,
         buttons: ['취소', '전송하고 분석'], cancelId: 0, defaultId: 0,
       });
       if (answer.response !== 1) return { ok: false, cancelled: true };

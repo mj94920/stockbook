@@ -31,6 +31,7 @@
       const rows = model.rows.slice(start).map((row, i) => ({
         date: row.date, open: row.open, high: row.high, low: row.low, close: row.close, volume: row.volume,
         tradingValue: model.tradingAmounts?.[start + i],
+        entrySignal: model.signals?.[start + i]?.entry,
       }));
       const flow = evidence.investors;
       return data.normalizePacket({
@@ -58,6 +59,16 @@
       result.innerHTML = report ? data.reportMarkup(report) : '';
       result.hidden = !report;
       save.hidden = exportButton.hidden = !report;
+      find('sbAiResultHeading')?.toggleAttribute('hidden', Boolean(report));
+      find('sbAiResultDescription')?.toggleAttribute('hidden', Boolean(report));
+      for (const [id, text] of [
+        ['sbAiResultState', report ? '보고서 있음' : '없음'],
+        ['sbAiResultTime', report ? data.formatTime(report.createdAt) : '--'],
+        ['sbAiResultSource', report ? 'Codex CLI' : '연결되지 않음'],
+      ]) {
+        const el = find(id);
+        if (el) el.textContent = text;
+      }
       refreshButtons();
     }
 

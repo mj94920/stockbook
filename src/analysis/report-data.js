@@ -41,7 +41,8 @@
       const { date, open, high, low, close, volume } = row;
       if (![open, high, low, close].every(value => amount(value) > 0) ||
           low > Math.min(open, close) || high < Math.max(open, close) || amount(volume) === null) return null;
-      rows.push({ date, open, high, low, close, volume, tradingValue: amount(row.tradingValue) });
+      const entrySignal = input.cycle === 'day' && typeof row.entrySignal === 'boolean' ? row.entrySignal : null;
+      rows.push({ date, open, high, low, close, volume, tradingValue: amount(row.tradingValue), entrySignal });
     }
     const checks = Object.fromEntries(principles.map(({ key, text }) => [
       key, { criterion: text, manuallyChecked: input.checks?.[key]?.manuallyChecked === true },
@@ -102,6 +103,8 @@
       (max === min ? 44 : 84 - 80 * (value - min) / (max - min)).toFixed(1),
     ].join(',')).join(' ');
     const money = rows.some(row => row.tradingValue !== null);
+    const signals = rows.some(row => row.entrySignal !== null);
+    const signalLabel = value => value === true ? '충족' : value === false ? '미충족' : '판정 근거 없음';
     const checked = Object.values(checks).filter(item => item.manuallyChecked);
     return `
       <h4>종목 ${code} 보고서</h4><p>Codex CLI · ${time(createdAt)}</p>
@@ -115,8 +118,8 @@
       <p>최저 ${number(min)}원 · 최고 ${number(max)}원</p>
       <details class="sb-ai-report-table"><summary>원자료 표 (${rows.length}개)</summary><div class="sb-ai-table-scroll">
       <table><caption>가격·거래량${money ? ' · KIS 거래대금' : ''}</caption>
-        <thead><tr><th scope="col">일자</th><th scope="col">시가(원)</th><th scope="col">고가(원)</th><th scope="col">저가(원)</th><th scope="col">종가(원)</th><th scope="col">거래량(주)</th>${money ? '<th scope="col">거래대금(원)</th>' : ''}</tr></thead>
-        <tbody>${rows.map(row => `<tr><th scope="row">${row.date}</th><td>${number(row.open)}</td><td>${number(row.high)}</td><td>${number(row.low)}</td><td>${number(row.close)}</td><td>${number(row.volume)}</td>${money ? `<td>${number(row.tradingValue)}</td>` : ''}</tr>`).join('')}</tbody>
+        <thead><tr><th scope="col">일자</th><th scope="col">시가(원)</th><th scope="col">고가(원)</th><th scope="col">저가(원)</th><th scope="col">종가(원)</th><th scope="col">거래량(주)</th>${money ? '<th scope="col">거래대금(원)</th>' : ''}${signals ? '<th scope="col">차트 진입 조건</th>' : ''}</tr></thead>
+        <tbody>${rows.map(row => `<tr><th scope="row">${row.date}</th><td>${number(row.open)}</td><td>${number(row.high)}</td><td>${number(row.low)}</td><td>${number(row.close)}</td><td>${number(row.volume)}</td>${money ? `<td>${number(row.tradingValue)}</td>` : ''}${signals ? `<td>${signalLabel(row.entrySignal)}</td>` : ''}</tr>`).join('')}</tbody>
       </table></div></details>
       ${investorFlow ? `<p>${investorFlow.source} 수급 · ${investorFlow.date} · 외국인 ${number(investorFlow.foreign)}주 · 기관 ${number(investorFlow.institution)}주 · 개인 ${number(investorFlow.individual)}주</p>` : ''}
       <h4>수동 체크 ${checked.length}/${principles.length}</h4>
@@ -130,5 +133,5 @@
       .sb-ai-table-scroll{overflow:auto}table{border-collapse:collapse}td,th{border:1px solid;padding:.25rem .5rem;white-space:nowrap}
     </style><h1>StockBook AI 보고서</h1>${reportMarkup(report)}</html>`;
   }
-  return Object.freeze({ principles, maxRows, validCode, normalizePacket, normalizeReport, schema, reportMarkup, exportHtml });
+  return Object.freeze({ principles, maxRows, validCode, normalizePacket, normalizeReport, schema, reportMarkup, exportHtml, formatTime: time });
 });
