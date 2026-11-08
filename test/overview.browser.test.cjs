@@ -9,3 +9,36 @@ test('header replaces S&P/Dow, migrates preferences once and formats Treasury yi
  await page.evaluate(()=>setHdrIdxVisible('sox',false));assert.doesNotMatch(await page.locator('#hdrIdxList').innerText(),/필라델피아 반도체/);await page.evaluate(()=>renderHeaderIndexCards());assert.doesNotMatch(await page.locator('#hdrIdxList').innerText(),/필라델피아 반도체/);
  await page.evaluate(async()=>{electronAPI.fetchMarketTickers=async()=>({});await fetchMarketTicker();});assert.equal(await page.locator('#tkUs10y').textContent(),'미수신');assert.equal(await page.locator('#tkUs10yChg').textContent(),'');
 }));
+
+test('short desktop shows a usable price plot alongside the work and AI panels by default', async () => app(async page => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.evaluate(() => {
+    const candles = Array.from({ length: 132 }, (_, i) => ({
+      date: new Date(Date.UTC(2026, 0, i + 1)).toISOString().slice(0, 10),
+      open: 100 + i, high: 103 + i, low: 99 + i, close: 101 + i, volume: 1000,
+    }));
+    window.electronAPI.getChartData = async code => ({
+      ok: true, candles, investors: null,
+      metadata: { stockCode: code, name: '삼성전자', sourceType: 'naver-daily',
+        snapshotDate: candles.at(-1).date, fetchedAt: '2026-11-06T00:00:00Z' },
+    });
+    state.watchlist = [{ ticker: '005930', name: '삼성전자', price: 193500 }];
+    window._dockSel = '005930';
+    window._MDI.show('watchlist');
+    dockCtxRender();
+  });
+  await page.locator('#sbEmbeddedChart [data-chart-id="chart"]').waitFor();
+  const layout = await page.evaluate(() => {
+    const box = selector => document.querySelector(selector).getBoundingClientRect();
+    const plot = box('#sbEmbeddedChart [data-chart-id="chart"]');
+    const stage = box('.sb-market-stage');
+    const work = box('#mdi-panel-portfolio');
+    const ai = box('#sbAnalysis');
+    return {
+      visiblePlot: Math.min(plot.bottom, stage.bottom) - Math.max(plot.top, stage.top),
+      work: work.height, ai: ai.height, bottom: Math.max(work.bottom, ai.bottom), viewport: innerHeight,
+    };
+  });
+  assert.ok(layout.visiblePlot >= 48, JSON.stringify(layout));
+  assert.ok(layout.work >= 180 && layout.ai >= layout.work && layout.bottom <= layout.viewport + 1, JSON.stringify(layout));
+}));

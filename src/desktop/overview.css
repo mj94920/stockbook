@@ -12,3 +12,13 @@
 #sbEmbeddedChart { min-height:240px; }
 #sbEmbeddedChart > [data-chart-id="notice"] { white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
 #sbEmbeddedChart .sb-chart-compact-controls label { white-space:nowrap; }
+
+/* Keep the price plot visible before the user adjusts the divider on short desktops. */
+@media (min-width:901px) and (max-width:1100px) and (max-height:800px) {
+ .mdi-dock.sb-desktop-home:not(.sb-user-split):not([data-dock-screen="journal"]) {
+  grid-template-rows:0 minmax(0,1fr) fit-content(var(--sb-short-work-height,clamp(180px,30vh,230px)));
+ }
+ .mdi-dock.sb-desktop-home:not(.sb-user-split)[data-work-tab="cash"] {
+  --sb-short-work-height:clamp(180px,25vh,200px);
+ }
+}
