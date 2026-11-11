@@ -1,0 +1,19 @@
+{
+  "referencePr": 76,
+  "designCommit": "d3fa9719b840164d0e27a661ef467badac287c74",
+  "baseCommit": "77c7497a2694cd4bf4ca9344d90f56bd22d6583f",
+  "files": {
+    "VALIDATION.md": "805a0a6800c2ffb0ca3927b3f914d5fdeade017a37719ddf1270d109d9b176bb",
+    "check.py": "114495261320e38e8feae574e77c78dea88f38b2815e9524927e8ac8548df5fb",
+    "README.md": "df026405330212949f1eb219ba99a8e5ed63950078796f8874fa97e8446b9298",
+    "news-data.js": "ad31918690a650a326d49b072a632f9dad561a8915bc870baa814207cea259e4",
+    "index.html": "94a0805bcece24e7147861113493b964d84c4955c0ced9845b66accc2f51ea51",
+    "tokens.css": "72bf87a672330536f6063cf32b002eb004d27e8bd9f1a846350dccdcdee48954",
+    "app.js": "85a896debeb5374147cb86cb364d91b2ca9dd2e47c058ee631bdb91b81e2e9f4",
+    "SCREEN-COMPARISON.csv": "ccc4fd007347f64b4d8cc844fdabcb2ef80045a6f4af605312c3b1502527006e",
+    "source-manifest.json": "256a95e9f7abc3f4b8d70fccd9233153f603e9e16ceae90240116a52a46f43e2",
+    "SCREEN-COMPARISON.md": "f283612f836b31543541dc049fbdf619b122a8a1ffebc82691c51d5091b31ca1",
+    "ui.css": "9bd93c831e8e37b177906421e6c58aede632ad81e27b16d58a44a8e1f2240eba"
+  },
+  "newsReading": "internal reader; user correction approved 2026-10-20"
+}
