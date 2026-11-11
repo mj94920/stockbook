@@ -10,6 +10,24 @@ test('header replaces S&P/Dow, migrates preferences once and formats Treasury yi
  await page.evaluate(async()=>{electronAPI.fetchMarketTickers=async()=>({});await fetchMarketTicker();});assert.equal(await page.locator('#tkUs10y').textContent(),'미수신');assert.equal(await page.locator('#tkUs10yChg').textContent(),'');
 }));
 
+test('integrated settings preserve login, KRX history and an independent condition editor', async () => app(async page => {
+ for (const width of [1024, 540]) {
+  await page.setViewportSize({width, height:768});
+  await page.evaluate(()=>openSettings('general'));
+  assert.equal(await page.locator('#aiServiceLogin [data-ai-provider]').count(),2);
+  assert.equal(await page.locator('#sbCodexCheck').count(),1);
+  await page.evaluate(()=>settingsGo('account'));
+  assert.equal(await page.locator('#krxHistory').count(),1);
+  assert.equal(await page.locator('#krxHistory [data-history="cycle"]').count(),1);
+  assert.ok(await page.evaluate(()=>document.querySelector('#settingsModal .sb-modal__foot').getBoundingClientRect().bottom<=innerHeight+1));
+  await page.evaluate(()=>closeSettings());
+  await page.evaluate(()=>{window._MDI.show('watchlist');window._MDIPanelTab('watchlist','as');});
+  await page.locator('#sbScreenOpen').click();
+  assert.equal(await page.locator('dialog.sb-screen-dialog[open]').count(),1);
+  assert.equal(await page.locator('#sbMarketRadarDialog[open]').count(),0);
+  await page.evaluate(()=>document.querySelector('dialog.sb-screen-dialog[open]').close());
+ }
+}));
 test('short desktop shows a usable price plot alongside the work and AI panels by default', async () => app(async page => {
   await page.setViewportSize({ width: 1024, height: 768 });
   await page.evaluate(() => {

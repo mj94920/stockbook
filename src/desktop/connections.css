@@ -1,0 +1,40 @@
+.sb-connection-card {
+  margin-block: var(--sb-space-3);
+  border: 1px solid var(--sb-border);
+  border-radius: var(--sb-radius-3);
+  background: var(--sb-panel);
+}
+.sb-connection-card > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sb-space-3);
+  padding: var(--sb-space-4);
+  cursor: pointer;
+  color: var(--sb-text-1);
+}
+.sb-connection-card > summary::after { content: '+'; color: var(--sb-text-2); }
+.sb-connection-card[open] > summary::after { content: '−'; }
+.sb-connection-card > summary > span:first-child { flex: 1; }
+.sb-connection-card small { display: block; margin-top: var(--sb-space-1); color: var(--sb-text-2); }
+.sb-connection-body { border-top: 1px solid var(--sb-border); padding: var(--sb-space-4); }
+.sb-connection-body .sb-field { display: grid; gap: var(--sb-space-2); margin-bottom: var(--sb-space-3); }
+.sb-connection-body .sb-input { width: 100%; min-width: 0; box-sizing: border-box; }
+.sb-connection-body hr { border: 0; border-top: 1px solid var(--sb-border); margin-block: var(--sb-space-4); }
+.sb-connection-body h4 { margin: 0 0 var(--sb-space-2); color: var(--sb-text-1); }
+.sb-connection-actions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sb-space-2); }
+.sb-connection-actions > .sb-hint { flex: 1; }
+.sb-connection-fields { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: var(--sb-space-3); }
+.sb-connection-row { display: flex; align-items: center; justify-content: space-between; gap: var(--sb-space-3); padding-block: var(--sb-space-3); border-bottom: 1px solid var(--sb-border); }
+.sb-connection-row p { margin: var(--sb-space-1) 0 0; }
+[data-krx=result] { overflow-wrap: anywhere; }
+.sb-krx-history-chart { display: block; width: 100%; height: auto; border: 1px solid var(--sb-border); border-radius: var(--sb-radius-2); }
+.sb-krx-audit { width: 100%; font-size: 11px; border-collapse: collapse; }
+.sb-krx-audit td { padding: var(--sb-space-2); border-bottom: 1px solid var(--sb-border); overflow-wrap: anywhere; }
+.sb-krx-audit td:first-child { white-space: nowrap; }
+#krxHistory .sb-connection-actions > .sb-field { margin-bottom: 0; display: flex; align-items: center; gap: var(--sb-space-2); }
+#krxHistory [data-history=cancel][hidden] { display: none; }
+@media (max-width: 600px) {
+  .sb-connection-fields { grid-template-columns: minmax(0,1fr); gap: 0; }
+  .sb-connection-card > summary { flex-wrap: wrap; }
+}

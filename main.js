@@ -4,6 +4,7 @@ const { pathToFileURL } = require('node:url');
 const fs    = require('fs');
 const https = require('https');
 
+
 // ── userData 경로 통일: 개발 모드(stockbook)와 설치 모드(Stock Book) 동일하게 ──
 // 반드시 app.whenReady() 이전에 설정해야 한다.
 app.name = 'StockBook';
@@ -14,6 +15,7 @@ require('./src/analysis/report-service.cjs').registerAiReports({
   ipcMain, dialog, getMainWindow: () => win, getPageUrl: () => aiReportPageUrl,
   userData: () => app.getPath('userData'),
 });
+let mainPageUrl;
 const { prepareRendererFiles } = require('./src/desktop/renderer-files.cjs');
 const rendererDirectories = new Set();
 const chartStockSearch = require('./src/chart/stock-search.cjs').createStockSearch({loadMarket:loadNaverStocks,loadBasic:async code=>JSON.parse(await httpsGet(`https://m.stock.naver.com/api/stock/${code}/basic`,8000))});
@@ -1216,6 +1218,17 @@ function getCredFile(broker) {
   return path.join(app.getPath('userData'), `${broker}-cred.enc`);
 }
 
+require('./src/finance/krx-open.cjs').registerKrxOpen({
+  ipcMain, getMainWindow: () => win, safeStorage, httpsGet, getKisToken,
+  getPageUrl: () => mainPageUrl,
+  getKeyFile: () => path.join(app.getPath('userData'), 'krx-open-key.enc'),
+  getHistoryFile: () => path.join(app.getPath('userData'), 'krx-history.enc'),
+});
+
+require('./src/desktop/ai-login.cjs').registerAiLogin({
+  ipcMain, getMainWindow: () => win, getPageUrl: () => mainPageUrl, dialog,
+});
+
 ipcMain.handle('save-api-key', async (_event, { broker, fields }) => {
   try {
     if (!safeStorage.isEncryptionAvailable()) return { ok: false, error: 'safeStorage 불가' };
@@ -1352,6 +1365,7 @@ function createWindow() {
   win.on('closed', () => { chartWindows.close(); newsPage.close(); });
   win.webContents.on('did-start-loading', () => newsPage.close());
   aiReportPageUrl = pathToFileURL(renderer.htmlPath).href;
+  mainPageUrl = pathToFileURL(renderer.htmlPath).href;
   win.loadFile(renderer.htmlPath);
   win.setMenuBarVisibility(false);
   // 스플래시 최소 1.4초 표시 후 메인 창 표시, 스플래시 닫기

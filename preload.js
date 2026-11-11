@@ -21,6 +21,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   dartKeyDelete: () => ipcRenderer.invoke('dart-key-delete'),
   dartKeyTest: () => ipcRenderer.invoke('dart-key-test'),
   fetchDartAnnual: (code, year) => ipcRenderer.invoke('dart-annual', code, year),
+  krxOpenStatus: () => ipcRenderer.invoke('krx-open-status'),
+  krxOpenSave: key => ipcRenderer.invoke('krx-open-save', key),
+  krxOpenDelete: () => ipcRenderer.invoke('krx-open-delete'),
+  krxOpenLookup: (code, date) => ipcRenderer.invoke('krx-open-lookup', code, date),
+  krxOpenHistory: (code, start, end, collect) => ipcRenderer.invoke('krx-open-history', code, start, end, collect),
+  krxOpenCancel: () => ipcRenderer.invoke('krx-open-cancel'),
+  aiLogin: (provider, action) => ipcRenderer.invoke('ai-login', provider, action),
   // API 키 암호화 저장/불러오기/삭제/확인 (safeStorage)
   saveApiKey:   (broker, fields) => ipcRenderer.invoke('save-api-key', { broker, fields }),
   loadApiKey:   (broker)         => ipcRenderer.invoke('load-api-key', broker),
@@ -34,7 +41,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   fetchNaverStocks: (market) => ipcRenderer.invoke('fetch-naver-stocks', market),
   // 종목 상세 정보 (팝업: PER·PBR·EPS, 시총·상장주식수·상장일, 52주 최고·최저, 배당)
   fetchStockDetail: (code) => ipcRenderer.invoke('fetch-stock-detail', code),
-  // 시장 지수 티커 일괄 조회 (KOSPI·KOSDAQ·나스닥·S&P·DOW·SOX·환율·WTI 등)
+  // 시장 지수 티커 일괄 조회 (KOSPI·KOSDAQ·나스닥·SOX·환율·WTI 등)
   fetchMarketTickers: () => ipcRenderer.invoke('fetch-market-tickers'),
   // 정보센터 뉴스 — { kind:'market'|'stock', code } → { ok, items, error }
   fetchNews: (opts) => ipcRenderer.invoke('fetch-news', opts),
