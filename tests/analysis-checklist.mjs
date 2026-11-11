@@ -9,6 +9,7 @@ const assets = new Map([
   ['/index.html', ['text/html; charset=utf-8', await readFile('index.html')]],
   ['/src/desktop/shortcuts.js', ['text/javascript; charset=utf-8', await readFile('src/desktop/shortcuts.js')]],
   ['/src/desktop/stock-selection.js', ['text/javascript; charset=utf-8', await readFile('src/desktop/stock-selection.js')]],
+  ['/src/analysis/report-data.js', ['text/javascript; charset=utf-8', await readFile('src/analysis/report-data.js')]],
   ['/src/finance/naver-annual.js', ['text/javascript; charset=utf-8', await readFile('src/finance/naver-annual.js')]],
 ]);
 const server = createServer((req, res) => {
