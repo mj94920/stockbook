@@ -5,7 +5,7 @@ const {chartContext}=require('../src/chart/window.cjs');
 const {barLayout,volumeProfile}=require('../src/chart/series.js');
 const {obvSeries}=require('../src/chart/series.js');
 const {newLowSignals,rsiSeries,crossdown}=require('../src/chart/series.js');
-const {entrySignalSeries}=require('../src/chart/series.js');
+const {entryPriceSeries:entrySignalSeries}=require('../src/chart/series.js');
 const bar=(date,open,high,low,close,volume)=>({date,open,high,low,close,volume});
 test('KRX trading dates group by Monday weeks across years and holidays without zero-filled sessions',()=>{
  const input=[bar('2023-12-28',10,14,8,12,100),bar('2023-12-29',12,15,11,14,200),bar('2024-01-02',20,30,18,25,300),bar('2024-01-05',25,28,17,19,400),bar('2024-01-08',19,21,16,20,500)];
