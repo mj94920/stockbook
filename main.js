@@ -1,13 +1,21 @@
 const { app, BrowserWindow, WebContentsView, ipcMain, dialog, shell, safeStorage, net } = require('electron');
 const path  = require('path');
+const { pathToFileURL } = require('node:url');
 const fs    = require('fs');
 const https = require('https');
+
 
 // ── userData 경로 통일: 개발 모드(stockbook)와 설치 모드(Stock Book) 동일하게 ──
 // 반드시 app.whenReady() 이전에 설정해야 한다.
 app.name = 'StockBook';
 
 let win;
+let aiReportPageUrl = '';
+require('./src/analysis/report-service.cjs').registerAiReports({
+  ipcMain, dialog, getMainWindow: () => win, getPageUrl: () => aiReportPageUrl,
+  userData: () => app.getPath('userData'),
+});
+let mainPageUrl;
 const { prepareRendererFiles } = require('./src/desktop/renderer-files.cjs');
 const rendererDirectories = new Set();
 const chartStockSearch = require('./src/chart/stock-search.cjs').createStockSearch({loadMarket:loadNaverStocks,loadBasic:async code=>JSON.parse(await httpsGet(`https://m.stock.naver.com/api/stock/${code}/basic`,8000))});
@@ -1114,6 +1122,7 @@ ipcMain.handle('fetch-quote', async (_event, rawTicker) => {
 });
 
 // ── IPC: 시장 지수 티커 일괄 조회 ──────────────────────────────────────────────
+const marketProvider = require('./src/market/provider.cjs').createMarketProvider({fetch:(url,options)=>net.fetch(url,options)});
 ipcMain.handle('fetch-market-tickers', async () => {
   const results = {};
 
@@ -1141,40 +1150,9 @@ ipcMain.handle('fetch-market-tickers', async () => {
 
   // ② 미국+한국 지수 — Yahoo Finance (Electron net.fetch로 Chromium 쿠키 세션 사용)
   // KOSPI/KOSDAQ는 Naver가 우선이고, 실패 시 Yahoo ^KS11/^KQ11로 보완
-  const YF_SYMS = {
-    kospi:  '^KS11',  // 코스피 폴백
-    kosdaq: '^KQ11',  // 코스닥 폴백
-    nasdaq: '^IXIC', sp500: '^GSPC', dow: '^DJI', sox: '^SOX', nikkei: '^N225', wti: 'CL=F',
-  };
   const yfFetch = async () => {
-    const symStr = Object.values(YF_SYMS).map(s => encodeURIComponent(s)).join(',');
-    for (const host of ['query1', 'query2']) {
-      try {
-        const res  = await net.fetch(
-          `https://${host}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent('^IXIC')}?interval=1d&range=1d`,
-          { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'application/json', 'Referer': 'https://finance.yahoo.com/' } }
-        );
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const meta = (await res.json())?.chart?.result?.[0]?.meta;
-        if (meta?.regularMarketPrice) {
-          // IXIC 성공 시 전체 심볼 v7 quote로 일괄 조회
-          const symRes = await net.fetch(
-            `https://${host}.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&symbols=${symStr}`,
-            { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'application/json', 'Referer': 'https://finance.yahoo.com/' } }
-          );
-          const rows = symRes.ok ? ((await symRes.json())?.quoteResponse?.result || []) : [];
-          for (const row of rows) {
-            const key = Object.entries(YF_SYMS).find(([,s]) => s === row.symbol)?.[0];
-            if (key && row.regularMarketPrice && !results[key]) {
-              // Naver가 이미 채운 kospi/kosdaq는 덮어쓰지 않음
-              results[key] = { regularMarketPrice: row.regularMarketPrice, previousClose: row.regularMarketPreviousClose || row.regularMarketPrice, chartPreviousClose: row.regularMarketPreviousClose || row.regularMarketPrice };
-            }
-          }
-          if (!results.nasdaq && meta.regularMarketPrice) results.nasdaq = { regularMarketPrice: meta.regularMarketPrice, previousClose: meta.previousClose || meta.regularMarketPrice, chartPreviousClose: meta.previousClose || meta.regularMarketPrice };
-          return;
-        }
-      } catch(_) {}
-    }
+    const data = await marketProvider.get();
+    for (const [key,value] of Object.entries(data)) if (value && !results[key]) results[key] = value;
   };
 
   // ③ 환율 — exchangerate-api.com (무료, API 키 불필요)
@@ -1239,6 +1217,17 @@ require('./src/finance/open-dart.cjs').registerOpenDart({
 function getCredFile(broker) {
   return path.join(app.getPath('userData'), `${broker}-cred.enc`);
 }
+
+require('./src/finance/krx-open.cjs').registerKrxOpen({
+  ipcMain, getMainWindow: () => win, safeStorage, httpsGet, getKisToken,
+  getPageUrl: () => mainPageUrl,
+  getKeyFile: () => path.join(app.getPath('userData'), 'krx-open-key.enc'),
+  getHistoryFile: () => path.join(app.getPath('userData'), 'krx-history.enc'),
+});
+
+require('./src/desktop/ai-login.cjs').registerAiLogin({
+  ipcMain, getMainWindow: () => win, getPageUrl: () => mainPageUrl, dialog,
+});
 
 ipcMain.handle('save-api-key', async (_event, { broker, fields }) => {
   try {
@@ -1375,6 +1364,8 @@ function createWindow() {
 
   win.on('closed', () => { chartWindows.close(); newsPage.close(); });
   win.webContents.on('did-start-loading', () => newsPage.close());
+  aiReportPageUrl = pathToFileURL(renderer.htmlPath).href;
+  mainPageUrl = pathToFileURL(renderer.htmlPath).href;
   win.loadFile(renderer.htmlPath);
   win.setMenuBarVisibility(false);
   // 스플래시 최소 1.4초 표시 후 메인 창 표시, 스플래시 닫기

@@ -3268,6 +3268,10 @@
   #watchlistBody tr.dock-sel td { background: var(--sb-accent-soft); }
   .sb-detail-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--sb-border-weak); display: flex; justify-content: space-between; gap: 14px; align-items: center; }
   .sb-detail-identity { display: flex; gap: 9px; align-items: baseline; flex-wrap: wrap; }
+  .sb-market-radar { height: auto; min-height: var(--sb-control-h-sm); padding-inline: var(--sb-space-2); color: var(--sb-accent); }
+  .sb-radar-dialog { margin: auto; padding: 0; }
+  .sb-radar-dialog::backdrop { background: var(--sb-overlay); }
+  .sb-radar-dialog .sb-hint { margin: 0; }
   .dock-ctx__name { font-size: 22px; letter-spacing: -.6px; }
   .dock-ctx__code { font-size: 12px; }
   .sb-detail-price { display: flex; align-items: baseline; gap: 12px; margin-top: 8px; }
@@ -3347,10 +3351,23 @@
   .mdi-dock.sb-desktop-home > .dock-ctx { grid-column: 2 / 4; }
   .mdi-dock.sb-desktop-home > :is(#mdi-panel-portfolio,#mdi-panel-journal) { grid-column: 2; }
   .sb-analysis { display: none; }
-  .mdi-dock.sb-desktop-home > .sb-analysis { display: grid; grid-template-rows: repeat(2,minmax(0,1fr)); grid-column: 3; grid-row: 3; min-width: 0; min-height: 0; overflow: auto; border: 1px solid var(--sb-border); border-radius: var(--sb-radius-3); background: var(--sb-panel); }
-  .sb-analysis-section { padding: 12px; min-height: 0; overflow: auto; border-bottom: 1px solid var(--sb-border-weak); }
+  .mdi-dock.sb-desktop-home > .sb-analysis { display: grid; grid-template-rows: minmax(0,1fr); grid-column: 3; grid-row: 3; min-width: 0; min-height: 0; overflow: auto; border: 1px solid var(--sb-border); border-radius: var(--sb-radius-3); background: var(--sb-panel); }
+  .sb-analysis-section { padding: 12px; min-height: 0; overflow: auto; }
+  .sb-analysis [hidden] { display: none !important; }
   .mdi-dock.sb-desktop-home > .sb-analysis:has(.sb-ai-principles[open]) { display: block; }
   .mdi-dock.sb-desktop-home > .sb-analysis:has(.sb-ai-principles[open]) > .sb-analysis-section { max-height: none; overflow: visible; }
+  .mdi-dock.sb-desktop-home:not([data-dock-screen="news"]) > .sb-analysis:has(.sb-ai-report[open]) { display: block; }
+  .mdi-dock.sb-desktop-home:not([data-dock-screen="news"]) > .sb-analysis:has(.sb-ai-report[open]) > .sb-analysis-section { max-height: none; overflow: visible; }
+  .sb-ai-report { margin-block: var(--sb-space-2); }
+  .sb-ai-report > summary { padding-block: var(--sb-space-1); }
+  .sb-ai-report .sb-btn { max-width: 100%; margin-block: var(--sb-space-1); }
+  .sb-ai-report-preview { width: 100%; min-height: 7rem; font-size: 11px; white-space: pre; }
+  .sb-ai-report-result { overflow-wrap: anywhere; }
+  .sb-ai-report-result svg { width: 100%; max-height: 10rem; color: var(--sb-accent); }
+  .sb-ai-report-result ul { margin-block: var(--sb-space-1); padding-inline-start: var(--sb-space-4); font-size: 12px; }
+  .sb-ai-table-scroll { overflow-x: auto; }
+  .sb-ai-table-scroll table { border-collapse: collapse; font-size: 11px; }
+  .sb-ai-table-scroll :is(th,td) { border: 1px solid var(--sb-border-weak); padding: var(--sb-space-1); white-space: nowrap; }
   .sb-analysis-section h3 { font-size: 13px; margin: 0; }
   .sb-analysis-section > strong { display: block; font-size: 15px; margin: 12px 0 8px; }
   .sb-analysis-section p { font-size: 11px; color: var(--sb-text-3); line-height: 1.7; }
@@ -3445,8 +3462,11 @@
     /* Reserve content-sized work space; the chart receives the remaining height. */
     .mdi-dock.sb-desktop-home { grid-template-rows:0 minmax(260px,1fr) fit-content(min(44vh,480px)); }
     .mdi-dock.sb-desktop-home > :is(#mdi-panel-portfolio,#mdi-panel-trading,.sb-analysis) { max-height:min(44vh,480px); }
-    .mdi-dock.sb-desktop-home > .sb-analysis { grid-template-rows:auto auto;align-content:start;contain:size; }
-    .mdi-dock.sb-desktop-home > .sb-analysis .sb-analysis-section { max-height:240px; }
+    .mdi-dock.sb-desktop-home > .sb-analysis { contain:size; }
+    .mdi-dock.sb-desktop-home:not([data-dock-screen="news"]):has(.sb-ai-report[open]) > .dock-ctx { grid-column: 2; }
+    .mdi-dock.sb-desktop-home > #sbAnalysis:has(.sb-ai-report[open]) {
+      grid-row: 2 / 4; max-height: none; contain: none; min-height: 0;
+    }
     /* Journal writing keeps a larger workspace; its body and analysis scroll independently. */
     .mdi-dock.sb-desktop-home[data-dock-screen="journal"] { grid-template-rows:0 minmax(240px,.8fr) minmax(0,1.2fr); }
     .mdi-dock[data-dock-screen="news"] { grid-template-columns:minmax(240px,1fr) minmax(0,2fr) minmax(0,1fr); }
@@ -3539,6 +3559,9 @@
 
 </style>
 <link rel="stylesheet" href="src/chart/chart.css">
+<link rel="stylesheet" href="src/desktop/overview.css">
+<script src="src/market/quotes.js"></script>
+<link rel="stylesheet" href="src/screener/screener.css">
 </head>
 <body>
 
@@ -3608,8 +3631,8 @@
     <span class="mt-item"><span class="mt-name">KOSDAQ</span><span class="mt-val" id="tkKosdaq">--</span><span class="mt-chg" id="tkKosdaqChg"></span></span>
     <span class="mt-item"><span class="mt-name">USD/KRW</span><span class="mt-val" id="tkUsdKrw">--</span><span class="mt-chg" id="tkUsdKrwChg"></span></span>
     <span class="mt-item"><span class="mt-name">NASDAQ</span><span class="mt-val" id="tkNasdaq">--</span><span class="mt-chg" id="tkNasdaqChg"></span></span>
-    <span class="mt-item"><span class="mt-name">S&amp;P500</span><span class="mt-val" id="tkSp500">--</span><span class="mt-chg" id="tkSp500Chg"></span></span>
-    <span class="mt-item"><span class="mt-name">DOW</span><span class="mt-val" id="tkDow">--</span><span class="mt-chg" id="tkDowChg"></span></span>
+    <span class="mt-item"><span class="mt-name">나스닥100 선물</span><span class="mt-val" id="tkNasdaqFuture">--</span><span class="mt-chg" id="tkNasdaqFutureChg"></span></span>
+    <span class="mt-item"><span class="mt-name">미 10년물 금리</span><span class="mt-val" id="tkUs10y">--</span><span class="mt-chg" id="tkUs10yChg"></span></span>
     <span class="mt-item"><span class="mt-name">SOX</span><span class="mt-val" id="tkSox">--</span><span class="mt-chg" id="tkSoxChg"></span></span>
     <span class="mt-item"><span class="mt-name">원/100엔</span><span class="mt-val" id="tkJpyKrw">--</span><span class="mt-chg" id="tkJpyKrwChg"></span></span>
     <span class="mt-item"><span class="mt-name">니케이</span><span class="mt-val" id="tkNikkei">--</span><span class="mt-chg" id="tkNikkeiChg"></span></span>
@@ -4526,7 +4549,7 @@
       <div class="dock-ctx__empty" id="dockCtxEmpty">종목을 선택하면 시세·보유 현황이 여기에 표시됩니다.</div>
       <div class="dock-ctx__body" id="dockCtxBody" style="display:none">
         <div class="sb-detail-head"><div>
-          <div class="sb-detail-identity"><strong class="dock-ctx__name" id="dockCtxName">--</strong><span class="dock-ctx__code" id="dockCtxCode">--</span></div>
+          <div class="sb-detail-identity"><strong class="dock-ctx__name" id="dockCtxName">--</strong><span class="dock-ctx__code" id="dockCtxCode">--</span><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm sb-market-radar" id="sbMarketRadar" aria-haspopup="dialog" aria-controls="sbMarketRadarDialog" onclick="sbOpenMarketRadar()">마켓레이더</button></div>
           <div class="sb-detail-price"><strong class="dock-ctx__price" id="dockCtxPrice">--</strong><span class="dock-ctx__chg" id="dockCtxChg">--</span></div>
           <div class="dock-ctx__none" id="dockCtxStatus" role="status"></div>
         </div><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" onclick="dockCtxAction('chart')">기업 정보 ↗</button></div>
@@ -4546,8 +4569,21 @@
         <details class="sb-context-details"><summary>보유 · 목표/손절 · 일정</summary><div class="sb-detail-content"><div class="dock-ctx__rows" id="dockCtxHold"></div><div class="dock-ctx__rows" id="sbDesktopTargets"></div><div class="dock-ctx__rows" id="dockCtxEvents"></div></div></details>
       </div>
     </aside>
-    <aside id="sbAnalysis" class="sb-analysis" aria-label="AI 분석과 규칙 신호">
+    <aside id="sbAnalysis" class="sb-analysis" aria-label="AI 분석">
       <section class="sb-analysis-section"><div class="sb-region-title"><h3>AI 분석</h3><span class="sb-analysis-stock">종목 선택</span></div>
+        <details class="sb-ai-report" id="sbAiReport">
+          <summary>Codex 보고서</summary>
+          <p id="sbAiReportNotice" role="status">종목을 선택한 뒤 보낼 자료를 확인하세요.</p>
+          <button type="button" class="sb-btn sb-btn--sm" id="sbAiReportPreview" disabled>보낼 자료 보기</button>
+          <div id="sbAiReportDraft" hidden>
+            <p>선택 범위 요약·이동평균과 화면의 상세 봉 최대 60개를 포함합니다. 해당 종목의 조건검색 판정·수신 수급·연결된 Open DART 공시를 함께 표시합니다.</p>
+            <label class="sb-field">보낼 자료<textarea class="sb-input sb-textarea sb-ai-report-preview" id="sbAiReportPayload" readonly></textarea></label>
+            <button type="button" class="sb-btn sb-btn--primary sb-btn--sm" id="sbAiReportRun" disabled>Codex로 분석</button>
+          </div>
+          <article class="sb-ai-report-result" id="sbAiReportResult" aria-label="AI 분석 보고서" hidden></article>
+          <button type="button" class="sb-btn sb-btn--sm" id="sbAiReportSave" hidden>앱에 저장</button>
+          <button type="button" class="sb-btn sb-btn--sm" id="sbAiReportExport" hidden>HTML 내보내기</button>
+        </details>
         <details class="sb-ai-principles" id="sbAiPrinciples">
           <summary>매매 원칙 체크리스트 <span id="sbAiPrincipleCount"></span></summary>
           <p id="sbAiPrinciplesEmpty">종목을 선택하면 체크리스트가 표시됩니다.</p>
@@ -4556,8 +4592,7 @@
             <div class="mj-checklist" id="sbAiPrinciplesList"></div>
           </div>
         </details>
-        <strong>분석 데이터 없음</strong><p>선택 종목의 AI 분석 결과가 연결되지 않았습니다.</p><details id="sbAiCheck"><summary>분석 상태 확인</summary><p>분석 결과: 없음<br>생성 시각: --<br>출처: 연결되지 않음</p><button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('chart')">기업 정보 보기 ↗</button></details></section>
-      <section class="sb-analysis-section"><div class="sb-region-title"><h3>규칙 신호</h3><span class="sb-analysis-stock">종목 선택</span></div><strong>판정 대기</strong><p>규칙 엔진과 판정에 필요한 시계열 데이터가 아직 연결되지 않았습니다.</p><details id="sbSignalCheck"><summary>판정 조건 확인</summary><p>시계열 데이터: 없음<br>규칙 엔진: 연결 대기<br>마지막 판정: --</p><small>규칙 판정 · 투자 권유 아님</small></details></section>
+        <strong id="sbAiResultHeading">분석 데이터 없음</strong><p id="sbAiResultDescription">선택 종목의 보고서가 없습니다.</p><details id="sbAiCheck"><summary>분석 상태·근거 확인</summary><p>분석 결과: <span id="sbAiResultState">없음</span><br>생성 시각: <span id="sbAiResultTime">--</span><br>출처: <span id="sbAiResultSource">연결되지 않음</span></p><p id="sbAiSignalStatus">차트 판정 · 종목 선택 대기</p><div id="sbAiRadarEvidence"></div><div id="sbAiScreeningEvidence"></div><button type="button" class="sb-btn sb-btn--sm" onclick="dockCtxAction('chart')">기업 정보 보기 ↗</button></details></section>
     </aside>
 </div><!-- /mdi-workspace -->
 </div><!-- /mdi-content -->
@@ -8221,28 +8256,17 @@ function toggleCalcPanel() {
 }
 
 /* ── 시장 지수 티커 ── */
+let _marketTickerRequest = 0;
 async function fetchMarketTicker() {
+  const request = ++_marketTickerRequest;
   const isElectron = !!window.electronAPI;
   // Yahoo Finance: 국내/미국/일본 지수 + 환율 + 원자재
-  const symbols = {
-    kospi:  '^KS11',   // 코스피
-    kosdaq: '^KQ11',   // 코스닥
-    nasdaq: '^IXIC',   // 나스닥
-    sp500:  '^GSPC',   // S&P500
-    dow:    '^DJI',    // 다우
-    sox:    '^SOX',    // 필라델피아 반도체
-    usdkrw: 'KRW=X',  // 원/달러
-    jpy:    'JPY=X',   // 엔/달러 (원/100엔 계산용)
-    usdkrw2:'KRW=X',  // KRW=X 재사용 (jpykrw 계산)
-    nikkei: '^N225',   // 닛케이
-    wti:    'CL=F',    // WTI 유가
-  };
   const ids = {
     kospi:  ['tkKospi',  'tkKospiChg'],
     kosdaq: ['tkKosdaq', 'tkKosdaqChg'],
     nasdaq: ['tkNasdaq', 'tkNasdaqChg'],
-    sp500:  ['tkSp500',  'tkSp500Chg'],
-    dow:    ['tkDow',    'tkDowChg'],
+    nasdaqFuture:['tkNasdaqFuture','tkNasdaqFutureChg'],
+    us10y:['tkUs10y','tkUs10yChg'],
     sox:    ['tkSox',    'tkSoxChg'],
     usdkrw: ['tkUsdKrw', 'tkUsdKrwChg'],
     nikkei: ['tkNikkei', 'tkNikkeiChg'],
@@ -8262,20 +8286,16 @@ async function fetchMarketTicker() {
         return (await r.json())?.chart?.result?.[0]?.meta ?? null;
       } catch { return null; }
     };
-    const [a,b,c,d,e,f,g,h,i,j] = await Promise.all([
-      fetchSym('^KS11'), fetchSym('^KQ11'), fetchSym('^IXIC'), fetchSym('^GSPC'),
-      fetchSym('^DJI'),  fetchSym('^SOX'),  fetchSym('KRW=X'), fetchSym('JPY=X'),
-      fetchSym('^N225'), fetchSym('CL=F'),
-    ]);
-    raw = { kospi:a, kosdaq:b, nasdaq:c, sp500:d, dow:e, sox:f, usdkrw:g, jpy:h, nikkei:i, wti:j };
+    const keys=Object.keys(window.StockBookMarketQuotes.symbols);
+    const values=await Promise.all(keys.map(async key=>{
+      try{const meta=await fetchSym(window.StockBookMarketQuotes.symbols[key]);return meta?window.StockBookMarketQuotes.parse(key,{chart:{result:[{meta}]}},new Date().toISOString()):null;}catch{return null;}
+    }));
+    raw=Object.fromEntries(keys.map((key,i)=>[key,values[i]]));
+    const [fx,jpy]=await Promise.all([fetchSym('KRW=X'),fetchSym('JPY=X')]);raw.usdkrw=fx;raw.jpy=jpy;
   }
-
-  const { kospi:metaKospi, kosdaq:metaKosdaq, nasdaq:metaNasdaq, sp500:metaSp500,
-          dow:metaDow, sox:metaSox, usdkrw:metaUsdKrw, jpy:metaJpy,
-          nikkei:metaNikkei, wti:metaWti } = raw;
-
-  const metas = { kospi: metaKospi, kosdaq: metaKosdaq, nasdaq: metaNasdaq, sp500: metaSp500,
-                  dow: metaDow, sox: metaSox, usdkrw: metaUsdKrw, nikkei: metaNikkei, wti: metaWti };
+  if (request !== _marketTickerRequest) return;
+  const metaUsdKrw=raw.usdkrw,metaJpy=raw.jpy;
+  const metas=Object.fromEntries(Object.keys(ids).map(key=>[key,raw[key]||null]));
 
   const setTicker = (valId, chgId, price, prevClose, fmt) => {
     const valEl = document.getElementById(valId);
@@ -8301,12 +8321,14 @@ async function fetchMarketTicker() {
   const fmtWti  = p => '$' + p.toFixed(2);
 
   for (const [key, meta] of Object.entries(metas)) {
-    if (!meta) continue;
+    if (!meta || !Number.isFinite(meta.regularMarketPrice)) { const [v,c]=ids[key];const value=document.getElementById(v),change=document.getElementById(c);if(value){value.textContent='미수신';value.className='mt-val';value.title='데이터 수신 실패 또는 미지원';}if(change){change.textContent='';change.dataset.abs='';}continue; }
     const price     = meta.regularMarketPrice;
     const prevClose = meta.previousClose || meta.chartPreviousClose || price;
     const [valId, chgId] = ids[key];
     const fmt = (key === 'usdkrw') ? fmtFx : (key === 'wti') ? fmtWti : fmtIndex;
     setTicker(valId, chgId, price, prevClose, fmt);
+    if(['us10y','sox','nasdaqFuture'].includes(key)){const d=window.StockBookMarketQuotes.display(key,meta),v=document.getElementById(valId),c=document.getElementById(chgId);if(v){v.textContent=d.value;v.className='mt-val '+(d.direction==='up'?'mt-up':d.direction==='dn'?'mt-dn':'');}if(c){c.textContent=d.change;c.dataset.abs=d.absolute;}}
+    const valueEl=document.getElementById(valId);if(valueEl)valueEl.title=(meta.source||'시장 데이터')+(meta.symbol?' · '+meta.symbol:'')+' · 기준 '+(meta.asOf?new Date(meta.asOf).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})+' (한국 시간)':'시각 미확인')+' · 실시간 보장 아님';
   }
 
   // 원/100엔 계산: (USD/KRW) / (USD/JPY) * 100
@@ -10467,6 +10489,7 @@ document.addEventListener('click', e => {
 });
 
 function closeSettings() {
+  window.StockBookKrxSettings?.clear();
   const dartKeyInput = document.getElementById('dartKeyInput');
   if (dartKeyInput) dartKeyInput.value = '';
   const modal = document.getElementById('settingsModal');
@@ -10522,6 +10545,11 @@ async function dartSettings(action) {
     status.textContent = dartError();
   } finally {
     controls.forEach(button => { button.disabled = false; });
+    const summary = document.getElementById('dartConnectionSummary');
+    if (summary) {
+      const saved = await api.dartKeyStatus().catch(() => null);
+      summary.textContent = saved?.ok ? (saved.registered ? '인증키 등록됨' : '인증키 미등록') : '상태 확인 필요';
+    }
   }
 }
 function renderDartAnnualSection(code) {
@@ -10565,6 +10593,8 @@ async function loadDartAnnual(button, code) {
 
 function settingsGo(cat) {
   _settingsCat = cat;
+  if (cat === 'account') window.StockBookKrxSettings?.refresh();
+  else window.StockBookKrxSettings?.clear();
   if (cat === 'account') dartSettings('status');
   else {
     const dartKeyInput = document.getElementById('dartKeyInput');
@@ -10572,6 +10602,7 @@ function settingsGo(cat) {
   }
   document.querySelectorAll('#settingsNav .sb-hub__nav-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
   document.querySelectorAll('#settingsModal .sb-hub__page').forEach(p => p.classList.toggle('active', p.dataset.page === cat));
+  if (cat === 'general') window.StockBookAiLogin?.refresh();
 }
 
 function setAutoLogin(on) {
@@ -11243,21 +11274,22 @@ const _IDX_DEFS = [
   ['kosdaq', 'KOSDAQ',  'tkKosdaq', 'tkKosdaqChg'],
   ['usdkrw', 'USD/KRW', 'tkUsdKrw', 'tkUsdKrwChg'],
   ['nasdaq', 'NASDAQ',  'tkNasdaq', 'tkNasdaqChg'],
-  ['sp500',  'S&P500',  'tkSp500',  'tkSp500Chg'],
-  ['dow',    'DOW',     'tkDow',    'tkDowChg'],
-  ['sox',    'SOX',     'tkSox',    'tkSoxChg'],
+  ['nasdaqFuture','나스닥100 선물','tkNasdaqFuture','tkNasdaqFutureChg'],
+  ['us10y','미 10년물 금리','tkUs10y','tkUs10yChg'],
+  ['sox',    '필라델피아 반도체',     'tkSox',    'tkSoxChg'],
   ['jpykrw', '원/100엔', 'tkJpyKrw', 'tkJpyKrwChg'],
   ['nikkei', '니케이',   'tkNikkei', 'tkNikkeiChg'],
   ['wti',    'WTI',     'tkWti',    'tkWtiChg'],
 ];
-const _IDX_DEFAULT = ['kospi', 'kosdaq', 'usdkrw', 'nasdaq'];
+const _IDX_DEFAULT = ['kospi','kosdaq','usdkrw','nasdaq','sox','nasdaqFuture','us10y'];
 const _IDX_LS_KEY = 'sbHdrIndices';
 
 function _getHdrIdxSel() {
   try {
     const v = JSON.parse(localStorage.getItem(_IDX_LS_KEY) || 'null');
-    if (Array.isArray(v)) return v.filter(k => _IDX_DEFS.some(d => d[0] === k));
+    if (Array.isArray(v)) { const next=v.flatMap(k=>k==='sp500'?['sox']:k==='dow'?['nasdaqFuture','us10y']:[k]);if(!localStorage.getItem('sbHdrIndices:market-v2')){next.push('sox','nasdaqFuture','us10y');localStorage.setItem('sbHdrIndices:market-v2','1');localStorage.setItem(_IDX_LS_KEY,JSON.stringify([...new Set(next)]));}return [...new Set(next)].filter(k=>_IDX_DEFS.some(d=>d[0]===k)); }
   } catch (e) {}
+  try{localStorage.setItem('sbHdrIndices:market-v2','1');}catch{}
   return _IDX_DEFAULT.slice();
 }
 
@@ -11272,7 +11304,7 @@ function renderHeaderIndexCards() {
     const pct = chgEl ? (chgEl.textContent || '') : '';
     const abs = chgEl ? (chgEl.dataset.abs || '') : '';
     const cls = pct.startsWith('▲') ? 'up' : pct.startsWith('▼') ? 'dn' : '';
-    return `<div class="hdr-idx-card ${cls}">` +
+    return `<div class="hdr-idx-card ${cls}" title="${escHtml(valEl?.title||'미수신')}">` +
       `<span class="hdr-idx-name">${escHtml(name)}</span>` +
       `<span class="hdr-idx-val">${escHtml(val)}</span>` +
       `<span class="hdr-idx-chg"><span>${escHtml(abs)}</span><span>${escHtml(pct)}</span></span>` +
@@ -12418,6 +12450,8 @@ function sbSelectInstrument(code,name) {
   if(!stock.quoteAt||Date.now()-stock.quoteAt>30000)dockLoadQuote(stock).then(()=>renderWatchlist());
   return stock;
 }
+let sbAiReportPanel = null;
+let sbScreeningEvidence = null;
 let sbChartContextKey = '';
 function sbChartContext() {
   const stock=sbSelectedStock();
@@ -12425,12 +12459,89 @@ function sbChartContext() {
   const barCycle=document.getElementById('sbChartCycle')?.value||'day';
   return stock ? {code:stock.ticker,name:stock.name||stock.ticker,period:viewRange,viewRange,barCycle,indicatorCycle:barCycle} : null;
 }
+let sbRadarReading = null;
+let sbRadarStock = null;
+function sbRefreshMarketRadar(context, chart) {
+  const current = context && chart?.stockCode === context.code && chart.barCycle === context.barCycle &&
+    chart.viewRange === context.viewRange;
+  const host = document.getElementById('sbEmbeddedChart');
+  const daily = current ? window.StockBookCharts?.controller(host)?.getDailyData?.() : null;
+  const reading = window.StockBookMarketRadar?.read(daily, context?.viewRange) || null;
+  const find = id => document.getElementById(id);
+  const describe = signal => signal?.state === 'crossed' ? '최근 상향돌파 · ' + signal.point.date
+    : signal?.state === 'absent' ? '상향돌파 없음 · ' + signal.evaluated + '개 봉 판정' : '판정 근거 부족';
+  const labels = [
+    ['sbMarketRadarStock', context?.name || '종목 선택'],
+    ['sbMarketRadarBasis', reading ? `완료 일봉 · ${reading.start} ~ ${reading.end}` : '완료 일봉 자료 대기'],
+    ['sbMarketRadarGolden', describe(reading?.golden)],
+    ['sbMarketRadarDi', describe(reading?.di)],
+  ];
+  for (const [id, value] of labels) {
+    const element = find(id);
+    if (element && element.textContent !== value) element.textContent = value;
+  }
+  if (reading !== sbRadarReading) {
+    const target = find('sbAiRadarEvidence');
+    if (target) target.innerHTML = window.StockBookAiReportData?.radarMarkup(reading) || '';
+  }
+  sbRadarReading = reading;
+  sbRadarStock = context?.code || null;
+}
+function sbOpenMarketRadar() {
+  const dialog = document.getElementById('sbMarketRadarDialog');
+  sbRefreshAiSignalEvidence();
+  if (dialog && !dialog.open) dialog.showModal();
+}
+function sbRefreshAiSignalEvidence() {
+  const status = document.getElementById('sbAiSignalStatus');
+  const context = sbChartContext();
+  const chart = document.getElementById('sbEmbeddedChart')?.chartEvidence;
+  sbRefreshMarketRadar(context, chart);
+  if (!status) return;
+  let text = '차트 판정 · 종목 선택 대기';
+  if (context) {
+    const current = chart?.stockCode === context.code && chart.barCycle === context.barCycle &&
+      chart.viewRange === context.viewRange;
+    const known = current && chart.signals?.entryKnown;
+    if (context.barCycle !== 'day') text = '차트 판정 · 일봉에서 확인할 수 있습니다.';
+    else if (!known) text = '차트 판정 · 시계열 데이터 또는 판정 근거 대기';
+    else {
+      const last = chart.signals.entryDates?.at(-1);
+      text = `차트 판정 · 표시 범위 ${known}개 봉 판정${last ? ' · 최근 조건 충족 ' + last : ' · 조건 충족 표시 없음'}`;
+    }
+  }
+  if (status.textContent !== text) status.textContent = text;
+}
+function sbRenderScreeningEvidence(code) {
+  const element = document.getElementById('sbAiScreeningEvidence');
+  const evidence = sbScreeningEvidence?.code === code ? sbScreeningEvidence : null;
+  if (!element || element._screeningEvidence === evidence) return;
+  element._screeningEvidence = evidence;
+  element.innerHTML = evidence ? window.StockBookAiReportData.screeningMarkup(evidence) : '';
+}
+window.addEventListener('stockbook:screening-evidence', event => {
+  const evidence = window.StockBookAiReportData?.normalizeScreening(event.detail);
+  const code = sbSelectedStock()?.ticker;
+  if (!evidence || evidence.code !== code) return;
+  sbScreeningEvidence = evidence;
+  sbRenderScreeningEvidence(code);
+  sbShowAiEvidence();
+});
+function sbShowAiEvidence() {
+  const evidence = document.getElementById('sbAiCheck');
+  if (!evidence) return;
+  evidence.open = true;
+  const summary = evidence.querySelector('summary');
+  summary?.focus({ preventScroll: true });
+  evidence.scrollIntoView({ block: 'nearest' });
+}
 function sbChartSync() {
   const value=sbChartContext();const key=JSON.stringify(value);
-  if(!value){sbChartContextKey='';window.StockBookCharts?.clear(document.getElementById('sbEmbeddedChart'));return;}
+  if(!value){sbChartContextKey='';window.StockBookCharts?.clear(document.getElementById('sbEmbeddedChart'));sbRefreshAiSignalEvidence();return;}
   if(key===sbChartContextKey)return;
   sbChartContextKey=key;
   window.StockBookCharts?.show(document.getElementById('sbEmbeddedChart'),value,'compact');
+  sbRefreshAiSignalEvidence();
   window.dispatchEvent(new CustomEvent('stockbook:chart-context',{detail:{...value}}));
   window.electronAPI?.setChartContext?.(value).catch(()=>{});
 }
@@ -12445,6 +12556,8 @@ function sbDesktopSelection(w) {
   sbChartSync();
   document.querySelectorAll('.sb-analysis-stock').forEach(el => { el.textContent = w ? (w.name || w.ticker) : '종목 선택'; });
   renderAiPrinciples(w);
+  sbRenderScreeningEvidence(w?.ticker);
+  sbAiReportPanel?.select(w);
   const ticker = w?.ticker || null;
   if (ticker !== sbHogaSelection) {
     sbHogaSelection = ticker; sbHogaRequest++;
@@ -12970,22 +13083,6 @@ async function _fetchYFSummary(ticker) {
   return null;
 }
 
-// 표시와 집계가 같은 원칙 목록을 사용하며 알 수 없는 저장 키는 점수에서 제외한다.
-function _getAnalysisPrinciples() {
-  return [
-    { key:'pos',     text:'주가가 바닥에 가깝고 위로 열려 있는가? (뚜껑 없음)' },
-    { key:'align',   text:'이평선 완전 정배열 상태인가?' },
-    { key:'knee',    text:'5일선이 저점에서 꺾여 상승 중인가? (무릎)' },
-    { key:'golden',  text:'5-10일선 골든크로스 (히말라야) 형성됐는가?' },
-    { key:'ma20',    text:'20일선이 우상향 중인가?' },
-    { key:'ma200',   text:'200일선·300일선이 우상향 중인가?' },
-    { key:'pivot',   text:'대량거래 급등 양봉 기준봉이 있는가?' },
-    { key:'gap',     text:'갭상승 후 추가 상승이 이어졌는가? (갭 유지)' },
-    { key:'monthly', text:'월봉 기준봉 절반 이상 돌파했는가?' },
-    { key:'index',   text:'지수 대비 -10% 이하 이탈하지 않았는가?' },
-  ];
-}
-
 function _renderAnalysisBody(body, stock, naverData, yf) {
   const isElectron = !!window.electronAPI;
   const ticker  = stock.ticker || '';
@@ -13132,7 +13229,7 @@ function renderAiPrinciples(stock) {
     return;
   }
 
-  const principles = _getAnalysisPrinciples();
+  const principles = window.StockBookAiReportData?.principles || [];
   if (!list.childElementCount) {
     for (const { key, text } of principles) {
       const label = document.createElement('label');
@@ -14616,11 +14713,18 @@ function wlAssignGroup(idx, gName) {
     <!-- 일반 -->
     <div class="sb-hub__page active" data-page="general">
       <div class="sb-hub__h">일반</div>
-      <section class="settings-section">
+      <section class="settings-section" id="aiServiceLogin">
         <h3 class="settings-section-label">AI 서비스 로그인</h3>
-        <p class="sb-hint">각 서비스의 웹 로그인 페이지가 열립니다. CLI 로그인은 터미널에서 시작하세요.</p>
-        <a class="sb-btn sb-btn--sm" href="https://chatgpt.com/auth/login" target="_blank" rel="noopener noreferrer">ChatGPT 로그인</a>
-        <a class="sb-btn sb-btn--sm" href="https://claude.ai/login" target="_blank" rel="noopener noreferrer">Claude 로그인</a>
+        <div class="sb-connection-row" data-ai-provider="codex">
+          <div><strong>ChatGPT · Codex</strong><p class="sb-hint" role="status">로그인 상태 확인 중…</p></div>
+          <button type="button" class="sb-btn sb-btn--sm" data-ai-action="login">로그인</button>
+        </div>
+        <div class="sb-connection-row" data-ai-provider="claude">
+          <div><strong>Claude</strong><p class="sb-hint" role="status">로그인 상태 확인 중…</p></div>
+          <button type="button" class="sb-btn sb-btn--sm" data-ai-action="login">로그인</button>
+        </div>
+        <div class="sb-connection-actions"><span class="sb-hint">이 PC의 CLI 로그인 상태</span><button type="button" class="sb-btn sb-btn--ghost sb-btn--sm" data-ai-refresh>연결 확인</button></div>
+        <button type="button" class="sb-btn sb-btn--sm" id="sbCodexCheck">Codex CLI 연결 확인</button><p id="sbCodexStatus" role="status"></p>
       </section>
       <label class="sb-hub__row" style="cursor:pointer;">
         <span>시작 시 자동 로그인<br><span class="sb-hint">API 키가 저장돼 있으면 시작 시 로그인 창을 건너뜁니다.</span></span>
@@ -14677,16 +14781,65 @@ function wlAssignGroup(idx, gName) {
         <button type="button" class="sb-btn sb-btn--sm" onclick="closeSettings();openAccountPanel()">계좌 관리 (<span id="acctCountHub">0</span>)</button>
       </div>
 
-     <section class="settings-section">
-       <h3 class="settings-section-label">금융감독원 Open DART</h3>
+     <div class="sb-hub__h">통계·공시 데이터</div>
+     <details class="sb-connection-card">
+       <summary><span><strong>금융감독원 Open DART</strong><small>공시·연간 재무제표</small></span><span class="sb-hint" id="dartConnectionSummary">연결 확인 중</span></summary>
+       <section class="sb-connection-body">
        <label class="sb-field">인증키
          <input id="dartKeyInput" class="sb-input" type="password" autocomplete="off" maxlength="40">
        </label>
-       <button type="button" class="sb-btn sb-btn--sm" onclick="dartSettings('save')">등록</button>
+       <div class="sb-connection-actions">
+       <button type="button" class="sb-btn sb-btn--primary sb-btn--sm" onclick="dartSettings('save')">등록</button>
        <button type="button" class="sb-btn sb-btn--sm" onclick="dartSettings('test')">연결 확인</button>
        <button type="button" class="sb-btn sb-btn--sm" onclick="dartSettings('delete')">삭제</button>
+       </div>
        <p id="dartKeyStatus" role="status"></p>
      </section>
+     </details>
+     <details class="sb-connection-card" id="krxOpenSettings" hidden>
+       <summary><span><strong>한국거래소 통계정보</strong><small>일별 시세·종목 기본정보</small></span><span class="sb-hint" data-krx-summary>연결 확인 중</span></summary>
+       <section class="sb-connection-body">
+       <label class="sb-field">인증키
+         <input class="sb-input" data-krx="key" type="password" autocomplete="off" maxlength="256">
+       </label>
+       <div class="sb-connection-actions">
+       <button type="button" class="sb-btn sb-btn--primary sb-btn--sm" data-krx="save">키 등록</button>
+       <button type="button" class="sb-btn sb-btn--sm" data-krx="delete">키 삭제</button>
+       </div>
+       <p data-krx="status" role="status"></p>
+       <hr>
+       <h4>데이터 조회·대조</h4>
+       <p class="sb-hint">삼성전자(005930)는 같은 기준일의 KIS 일봉과 대조합니다.</p>
+       <div class="sb-connection-fields">
+       <label class="sb-field">유가증권 종목코드
+         <input class="sb-input" data-krx="stock" type="text" inputmode="numeric" maxlength="6" value="005930">
+       </label>
+       <label class="sb-field">기준일
+         <input class="sb-input" data-krx="date" type="date" min="2010-01-04">
+       </label>
+       </div>
+       <button type="button" class="sb-btn sb-btn--sm" data-krx="lookup">조회 및 연결 확인</button>
+       <div data-krx="result"></div>
+       <hr>
+       <div id="krxHistory">
+         <h4>과거 차트·통계</h4>
+         <p class="sb-hint">2010년 이후 원하는 기간을 수집해 이 PC에 암호화 보관합니다. 중단 후 같은 기간으로 다시 수집하면 보관된 날짜를 재사용합니다.</p>
+         <div class="sb-connection-fields">
+           <label class="sb-field">시작일<input class="sb-input" data-history="start" type="date" min="2010-01-04"></label>
+           <label class="sb-field">종료일<input class="sb-input" data-history="end" type="date" min="2010-01-04"></label>
+         </div>
+         <div class="sb-connection-actions">
+           <button type="button" class="sb-btn sb-btn--primary sb-btn--sm" data-history="collect">기간 자료 수집</button>
+           <button type="button" class="sb-btn sb-btn--sm" data-history="read">보관 자료 보기</button>
+           <button type="button" class="sb-btn sb-btn--sm" data-history="cancel" hidden>수집 중단</button>
+           <label class="sb-field">봉 주기<select class="sb-select" data-history="cycle"><option value="day">일봉</option><option value="week">주봉</option><option value="month">월봉</option><option value="year" selected>연봉</option></select></label>
+           <label class="sb-field">가격 기준<select class="sb-select" data-history="basis"><option value="split-adjusted">수정주가 · 분할 반영</option><option value="raw">원주가 · KRX 원본</option></select></label>
+         </div>
+         <p data-history="status" class="sb-hint" role="status"></p>
+         <div data-history="view"></div>
+       </div>
+       </section>
+     </details>
     <!-- 증권사 API 키 -->
     <div class="settings-section">
       <div class="settings-section-label">증권사 API 키</div>
@@ -14721,25 +14874,6 @@ function wlAssignGroup(idx, gName) {
       <!-- API 키 입력은 카드 클릭 시 별도 팝업에서 처리 -->
       <div style="font-size:11px;color:var(--text3);margin-top:8px;padding:6px 8px;background:var(--bg3);border-radius:6px;">
         💡 증권사 카드를 클릭하면 API 키 입력 팝업이 열립니다.
-      </div>
-    </div>
-
-    <!-- 공시·재무제표 API (DART) -->
-    <div class="settings-section">
-      <div class="settings-section-label">공시·재무제표 API</div>
-      <div class="broker-tab-group" style="grid-template-columns:1fr;">
-        <button type="button" class="broker-tab-btn" id="brokerTab_dart"
-          style="--broker-color:#C47400;flex-direction:row;gap:10px;padding:10px 14px;height:auto;min-height:54px;" onclick="selectBroker('dart')">
-          <div class="broker-logo-box" style="font-size:9px;font-weight:800;background:#C47400;letter-spacing:0;flex-shrink:0;">DART</div>
-          <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:1;min-width:0;">
-            <span class="broker-tab-name" style="font-size:11px;">금융감독원 DART OpenAPI</span>
-            <span style="font-size:10px;color:var(--text3);line-height:1.3;">공시·재무제표 자동 조회 (무료)</span>
-          </div>
-          <span class="broker-tab-check" id="brokerCheck_dart"></span>
-        </button>
-      </div>
-      <div style="font-size:11px;color:var(--text3);margin-top:8px;padding:6px 8px;background:var(--bg3);border-radius:6px;">
-        💡 DART 카드를 클릭하면 인증키 등록 팝업이 열립니다.
       </div>
     </div>
 
@@ -14874,15 +15008,52 @@ function wlAssignGroup(idx, gName) {
     </div>
   </div>
 </aside>
+<dialog class="sb-modal sb-modal--s sb-radar-dialog" id="sbMarketRadarDialog" aria-labelledby="sbMarketRadarTitle">
+  <div class="sb-modal__head">
+    <span id="sbMarketRadarTitle">마켓레이더</span>
+    <button type="button" class="sb-btn sb-btn--ghost sb-btn--sm sb-modal__close" onclick="this.closest('dialog')?.close()" aria-label="마켓레이더 닫기">✕</button>
+  </div>
+  <div class="sb-modal__body">
+    <strong id="sbMarketRadarStock">종목 선택</strong>
+    <p id="sbMarketRadarBasis" class="sb-hint">완료 일봉을 기다리는 중입니다.</p>
+    <div class="sb-modal__info"><strong>5·10일 골든크로스</strong><div id="sbMarketRadarGolden">판정 대기</div></div>
+    <div class="sb-modal__info"><strong>DI 상향돌파</strong><div class="sb-hint">Wilder 14기간 · +DI / −DI</div><div id="sbMarketRadarDi">판정 대기</div></div>
+  </div>
+  <div class="sb-modal__foot">
+    <button type="button" class="sb-btn sb-btn--sm" onclick="this.closest('dialog')?.close();sbShowAiEvidence()">AI 분석 근거 보기</button>
+  </div>
+</dialog>
+<script src="src/analysis/report-data.js"></script>
 <script src="src/desktop/stock-selection.js"></script>
+<link rel="stylesheet" href="src/desktop/connections.css">
+<script src="src/desktop/ai-login.js"></script>
+<script src="src/finance/krx-open-settings.js"></script>
 <script src="src/news/page-client.js"></script>
 <script src="src/desktop/shortcuts.js"></script>
 <script>StockBookShortcuts.mount(SB_MODAL_CLOSERS);</script>
 <script src="src/chart/series.js"></script>
+<script src="src/chart/market-radar.js"></script>
+<script src="src/finance/krx-corporate-actions.js"></script>
+<script src="src/finance/krx-history.js"></script>
 <script src="src/chart/renderer.js"></script>
 <script src="src/chart/interaction.js"></script>
 <script src="src/chart/resize.js"></script>
 <script src="src/chart/client.js"></script>
-<script>sbChartContextKey='';sbChartSync();</script>
+<script src="src/screener/engine.js"></script>
+<script src="src/screener/temporal.js"></script>
+<script src="src/screener/expression.js"></script>
+<script src="src/screener/client.js"></script>
+<script src="src/analysis/report-client.js"></script>
+<script>
+  sbAiReportPanel = window.StockBookAiReport?.mount(document.getElementById('sbAiReport'), {
+    getSelection: sbSelectedStock, getContext: sbChartContext,
+    getChecks: key => state.analysisChecks?.[key], getScreening: code => sbScreeningEvidence?.code === code ? sbScreeningEvidence : null,
+    getRadar: code => sbRadarStock === code ? sbRadarReading : null,
+    getDisclosure: (code, year) => window.electronAPI?.fetchDartAnnual?.(code, year), api: window.electronAPI?.aiReport,
+  });
+  sbAiReportPanel?.select(sbSelectedStock());
+  document.getElementById('sbEmbeddedChart')?.addEventListener('stockbook:chart-render', sbRefreshAiSignalEvidence);
+  sbChartContextKey='';sbChartSync();
+</script>
 </body>
 </html>

@@ -21,28 +21,7 @@ function parseTradingValues(body,code,fetchedAt,{start,end}){
  return {ok:true,stockCode:code,source:'KIS',market:'KRX',currency:'KRW',unit:'원',fetchedAt,rows};
 }
 function createTradingValueProvider({httpsGet,getAuth,now=()=>Date.now(),timeoutMs=8000}){
- const cache=new Map();
- return {async get(code){
-  try{
-   stockCode(code);const old=cache.get(code);if(old&&now()-old.at<60000)return await old.task;
-   const entry={at:now(),task:null};
-   entry.task=(async()=>{
-    const controller=new AbortController();let timer;
-    try{
-     const deadline=new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error('거래대금 수신 시간 초과'));},timeoutMs);});
-     const request=(async()=>{
-      const auth=await getAuth();if(!auth)return {ok:false,error:'KIS 연결 후 실제 거래대금을 조회할 수 있습니다.'};if(controller.signal.aborted)throw Error('거래대금 수신 시간 초과');
-      const at=new Date(now()),end=new Date(at.getTime()+9*3600000).toISOString().slice(0,10).replaceAll('-',''),start=new Date(at.getTime()-366*86400000+9*3600000).toISOString().slice(0,10).replaceAll('-','');
-      const params=new URLSearchParams({FID_COND_MRKT_DIV_CODE:'J',FID_INPUT_ISCD:code,FID_INPUT_DATE_1:start,FID_INPUT_DATE_2:end,FID_PERIOD_DIV_CODE:'D',FID_ORG_ADJ_PRC:'1'});
-      const body=await httpsGet('https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice?'+params,timeoutMs,{authorization:'Bearer '+auth.token,appkey:auth.appKey,appsecret:auth.appSecret,tr_id:'FHKST03010100',custtype:'P'},{signal:controller.signal});
-      return parseTradingValues(body,code,at.toISOString(),{start,end});
-     })();
-     return await Promise.race([request,deadline]);
-    }finally{clearTimeout(timer);}
-   })();
-   cache.set(code,entry);while(cache.size>20)cache.delete(cache.keys().next().value);
-   try{const value=await entry.task;if(!value.ok&&cache.get(code)===entry)cache.delete(code);return value;}catch(error){if(cache.get(code)===entry)cache.delete(code);throw error;}
-  }catch{return {ok:false,error:'실제 거래대금을 불러오지 못했습니다. 가격 차트는 계속 사용할 수 있습니다.'};}
- }};
+ return require('./history.cjs').createHistory({httpsGet,getAuth,now,timeoutMs,kind:'거래대금',pageSize:100,defaultCount:100,
+  request:(code,end)=>({url:'https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice?'+new URLSearchParams({FID_COND_MRKT_DIV_CODE:'J',FID_INPUT_ISCD:code,FID_INPUT_DATE_1:'20100101',FID_INPUT_DATE_2:end,FID_PERIOD_DIV_CODE:'D',FID_ORG_ADJ_PRC:'1'}),tr:'FHKST03010100'}),parse:parseTradingValues});
 }
 module.exports={parseTradingValues,createTradingValueProvider};

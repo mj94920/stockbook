@@ -1,0 +1,8 @@
+{
+  "commit": "f435fbc48767cbb87fa08161027655979d16fe78",
+  "purpose": "Frozen differential baseline; never used by production",
+  "sha256": {
+    "src/screener/engine.js": "c082a3d5f8bda55b6ad23c4553bceb65ec9778eb2b16bdb97a99ef003d471546",
+    "src/chart/series.js": "4bab888ec5547af6790859a1375abe9aa6585a01b1212e8e69456c0c607e7680"
+  }
+}
